@@ -19,6 +19,6 @@
 #
 
 
-SUBDIRS = src doc
+SUBDIRS = src doc scripts
 
-EXTRA_DIST = scripts TODO RELNOTES
+EXTRA_DIST = TODO RELNOTES

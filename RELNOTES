@@ -1,0 +1,100 @@
+Release Notes for siproxd-0.1.4
+===============================
+ - 
+ 
+ 
+-----
+md5sum for siproxd-0.1.4.tar.gz: 
+
+GnuPG signature for siproxd-0.1.4.tar.gz archive:
+
+
+
+Release Notes for siproxd-0.1.3
+===============================
+ - Bugfixes in the SIP proxy part
+ - Performance imporvement in RTP proxy part
+ - some documentation updates
+ - include ./scripts subdirectory in the distribution,
+   was an error in the autoconf/automake setup
+
+ 
+ 
+-----
+md5sum for siproxd-0.1.3.tar.gz: 82405c104267ad48c2d3421580625972
+
+GnuPG signature for siproxd-0.1.3.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj1/eUwACgkQPOYHDi42pIq0agCgn46GkmeoOpTWnVJoQSl+5oTl
+b1cAn331fJVdvaVyRJz0AVjUnD7v+fx6
+=Sm6d
+-----END PGP SIGNATURE-----
+
+
+
+Release Notes for siproxd-0.1.2
+===============================
+ - New: experimental proxying incomming RTP data streams
+   (please send me feedback if you try it out)
+ - optimizations in DNS resolving
+ - fix in client registration concept (Contact Header)
+
+ 
+ 
+-----
+md5sum for siproxd-0.1.2.tar.gz: 622762081dfb8e6b4b521b4e4e9ae568
+
+GnuPG signature for siproxd-0.1.2.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj16c+gACgkQPOYHDi42pIrgwwCfe66NjapoeyG6By8/cvRlMjiJ
+YAoAoLsJBZTimXDISVqMsxK4NmjdKevF
+=Yc5X
+-----END PGP SIGNATURE-----
+
+
+
+Release Notes for siproxd-0.1.1
+===============================
+ - configurable using a config file
+ - can run as daemon in background
+
+-----
+md5sum for siproxd-0.1.1.tar.gz: d0b7b691801f4138c271a8ebae5b7a24
+
+GnuPG signature for siproxd-0.1.1.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+iEYEABECAAYFAj1pUuMACgkQPOYHDi42pIpkwgCeOheMIeE9EmmPONsXpKMNshMc
+0YAAnic4Tzj709IuYEtTdwIcPildot6g
+=Wa6O
+-----END PGP SIGNATURE-----
+
+
+
+Release Notes for siproxd-0.1.0
+===============================
+ - This is the first published release.
+   Be warned, this (and all the other) documentantation is far from
+   complete. This is just a *very* preliminary pre-alpha release. Don't
+   expect anything!
+
+-----
+md5sum for siproxd-0.1.0.tar.gz: 53288af6ec8c0a92e52226df1a89fc98
+
+GnuPG signature for siproxd-0.1.0.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+iEYEABECAAYFAj1nzOsACgkQPOYHDi42pIpruACffBef8M3EkvIOIzu+Ds8bxGCs
+S5gAoMWLl9GVFmGzPTG2X0BK850eIfWc
+=OGXj
+-----END PGP SIGNATURE-----
+
+
+
+
+
+GnuPG Public Key is available on wwwkeys.pgp.net
+pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
+Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
