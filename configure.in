@@ -15,7 +15,7 @@ dnl ******************************************************************
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=2
-SPD_MICRO_VERSION=0
+SPD_MICRO_VERSION=1
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
 dnl *********************************************************************
@@ -51,10 +51,11 @@ AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strerror)
 AC_CHECK_FUNCS(gethostbyname)
-AC_CHECK_FUNCS(getopt_long_only daemon)
+AC_CHECK_FUNCS(getopt_long_only daemon syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
 AC_CHECK_FUNCS(socket bind select read send sendto)
-AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf fgets sscanf)
+AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf vsnprintf)
+AC_CHECK_FUNCS(fgets sscanf)
 
 
 AC_OUTPUT(Makefile \

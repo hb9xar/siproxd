@@ -21,4 +21,4 @@
 
 SUBDIRS = src doc scripts
 
-EXTRA_DIST = TODO RELNOTES
+EXTRA_DIST = TODO RELNOTES siproxd.spec

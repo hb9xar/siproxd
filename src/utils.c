@@ -179,7 +179,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') continue;
       if ( (dns_cache[i].timestamp+DNS_MAX_AGE) < t ) {
-         DEBUGC(DBCLASS_DNS, "cleaning DNS cache, entry %i)", i);
+         DEBUGC(DBCLASS_DNS, "cleaning DNS cache (entry %i)", i);
          memset (&dns_cache[i], 0, sizeof(dns_cache[0]));
       }
    }

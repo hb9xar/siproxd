@@ -30,10 +30,14 @@
 #define DBCLASS_NETTRAF	0x00000080	// network traffic
 #define DBCLASS_CONFIG	0x00000100	// configuration
 #define DBCLASS_RTP	0x00000200	// RTP proxy
+#define DBCLASS_ACCESS	0x00000400	// Access list evaluation
+#define DBCLASS_AUTH	0x00000800	// Authentication
 
+
+void log_set_pattern(int pattern);
+void log_set_tosyslog(int tosyslog);
 
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)
-void log_set_pattern(int pattern);
 
 #define DEBUGC(C,F...) log_debug(C,__FILE__, __LINE__,F)
 void log_debug(int class, char *file, int line, const char *format, ...);

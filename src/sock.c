@@ -78,9 +78,12 @@ int sipsock_wait(void) {
    return sts;
 }
 
-int sipsock_read(void *buf, size_t bufsize) {
+int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    int count;
-   count=read(listen_socket, buf, bufsize);
+   socklen_t fromlen;
+
+   fromlen=sizeof(struct sockaddr);
+   count=recvfrom(listen_socket, buf, bufsize, 0, from, &fromlen);
 
    DEBUGC(DBCLASS_NET,"received UDP packet, count=%i", count);
    DUMP_BUFFER(DBCLASS_NETTRAF, buf, count);

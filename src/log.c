@@ -25,11 +25,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <syslog.h>
+
 
 static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 			  BUILDSTR " $";
 
 
+int log_to_syslog=0;
 int debug_pattern=0;
 
 
@@ -37,6 +40,9 @@ void log_set_pattern(int pattern) {
    debug_pattern=pattern;
 }
 
+void log_set_tosyslog(int tosyslog) {
+   log_to_syslog=tosyslog;
+}
 
 /* for all the LOGGING routines:
    They should figure out if we are running as a daemon, then write
@@ -48,18 +54,27 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
    va_list ap;
    time_t t;
    struct tm *tim;
+   char string[128];
+
 
    if ((debug_pattern & class) == 0) return;
 
    va_start(ap, format);
 
-   time(&t);
-   tim=localtime(&t);
-   fprintf(stderr,"%2.2i:%2.2i:%2.2i %s:%i ", tim->tm_hour,
-                   tim->tm_min, tim->tm_sec, file, line);
-   vfprintf(stderr, format, ap);
-   fprintf(stderr,"\n");
-   
+   if (! log_to_syslog) {
+      /* not running as daemon - log to STDERR */
+      time(&t);
+      tim=localtime(&t);
+      fprintf(stderr,"%2.2i:%2.2i:%2.2i %s:%i ", tim->tm_hour,
+                      tim->tm_min, tim->tm_sec, file, line);
+      vfprintf(stderr, format, ap);
+      fprintf(stderr,"\n");
+   } else {
+      /* running as daemon - log via SYSLOG facility */
+      vsnprintf(string, sizeof(string), format, ap);
+      syslog(LOG_USER|LOG_DEBUG, "%s:%i %s", file, line, string);
+   }
+
    va_end(ap);
    fflush(stderr);
    return;
@@ -71,16 +86,24 @@ void log_error(char *file, int line, const char *format, ...) {
    va_list ap;
    time_t t;
    struct tm *tim;
+   char string[128];
 
    va_start(ap, format);
 
-   time(&t);
-   tim=localtime(&t);
-   fprintf(stderr,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",tim->tm_hour,
-                   tim->tm_min, tim->tm_sec,file,line);
-   vfprintf(stderr, format, ap);
-   fprintf(stderr,"\n");
-   
+   if (! log_to_syslog) {
+      /* not running as daemon - log to STDERR */
+      time(&t);
+      tim=localtime(&t);
+      fprintf(stderr,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",tim->tm_hour,
+                      tim->tm_min, tim->tm_sec, file, line);
+      vfprintf(stderr, format, ap);
+      fprintf(stderr,"\n");
+   } else {
+      /* running as daemon - log via SYSLOG facility */
+      vsnprintf(string, sizeof(string), format, ap);
+      syslog(LOG_USER|LOG_WARNING, "%s:%i %s", file, line, string);
+   }
+
    va_end(ap);
    fflush(stderr);
    return;
@@ -92,15 +115,23 @@ void log_warn(char *file, int line, const char *format, ...) {
    va_list ap;
    time_t t;
    struct tm *tim;
+   char string[128];
 
    va_start(ap, format);
 
-   time(&t);
-   tim=localtime(&t);
-   fprintf(stderr,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",tim->tm_hour,
-                   tim->tm_min, tim->tm_sec,file,line);
-   vfprintf(stderr, format, ap);
-   fprintf(stderr,"\n");
+   if (! log_to_syslog) {
+      /* not running as daemon - log to STDERR */
+      time(&t);
+      tim=localtime(&t);
+      fprintf(stderr,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",tim->tm_hour,
+                      tim->tm_min, tim->tm_sec,file,line);
+      vfprintf(stderr, format, ap);
+      fprintf(stderr,"\n");
+   } else {
+      /* running as daemon - log via SYSLOG facility */
+      vsnprintf(string, sizeof(string), format, ap);
+      syslog(LOG_USER|LOG_NOTICE, "%s:%i %s", file, line, string);
+   }
    
    va_end(ap);
    fflush(stderr);
@@ -114,6 +145,7 @@ void log_dump_buffer(int class, char *file, int line,
    int i;
 
    if ((debug_pattern & class) == 0) return;
+   if (log_to_syslog) return;
 
    fprintf(stderr,"---BUFFER DUMP follows---\n");
    for (i=0;i<length;i++) {

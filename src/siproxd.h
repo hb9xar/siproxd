@@ -23,7 +23,7 @@
 /* sock.c */
 int sipsock_listen (void);
 int sipsock_wait(void);
-int sipsock_read(void *buf, size_t bufsize);
+int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from);
 int sipsock_send_udp(int *sock, struct in_addr addr, int port,
                      char *buffer, int size, int allowdump);
 int sockbind(struct in_addr ipaddr, int localport);
@@ -50,7 +50,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr);
 int compare_url(url_t *url1, url_t *url2);
 void secure_enviroment (void);
 
-/* config.c */
+/* readconf.c */
 int read_config(char *name, int search);
 
 /* rtpproxy.c */
@@ -59,6 +59,17 @@ int rtp_start_fwd (call_id_t *callid,
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
 int rtp_stop_fwd (call_id_t *callid);
+
+/* accessctl.c */
+int check_accesslist (struct sockaddr_in from);
+
+/* security.c */
+int securitycheck(char *sip_buffer, int size);
+
+/* auth.c */
+int authenticate_proxy(sip_t *request);
+int auth_include_authrq(sip_t *response);
+
 
 
 /*
@@ -88,6 +99,11 @@ struct siproxd_config {
    int rtp_proxy_enable;
    char *user;
    char *chrootjail;
+   char *hosts_allow_reg;
+   char *hosts_allow_sip;
+   char *hosts_deny_sip;
+   char *proxy_auth_realm;
+   char *proxy_auth_passwd;
 };
 
 
@@ -106,6 +122,11 @@ struct siproxd_config {
 #define DNS_CACHE_SIZE  32	// number of entries in internal DNS cache
 #define DNS_MAX_AGE	60	// maximum age of an cache entry (sec)
 #define HOSTNAME_SIZE	32	// max string length of a hostname
+
+
+#define ACCESSCTL_SIP	1	// for access control - SIP allowed
+#define ACCESSCTL_REG	2	// --"--              - registrations allowed
+
 
 /*
  * optional hacks

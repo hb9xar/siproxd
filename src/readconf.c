@@ -111,17 +111,23 @@ static int parse_config (FILE *configfile) {
       enum type {TYP_INT4, TYP_STRING, TYP_FLOAT} type;
       void *dest;
    } configoptions[] = {
-      { "debug_level",      TYP_INT4,   &configuration.debuglevel },
-      { "sip_listen_port",  TYP_INT4,   &configuration.sip_listen_port },
-      { "daemonize",        TYP_INT4,   &configuration.daemonize },
-      { "host_inbound",     TYP_STRING, &configuration.inboundhost },
-      { "host_outbound",    TYP_STRING, &configuration.outboundhost },
-      { "rtp_port_low",     TYP_INT4,   &configuration.rtp_port_low },
-      { "rtp_port_high",    TYP_INT4,   &configuration.rtp_port_high },
-      { "rtp_timeout",      TYP_INT4,   &configuration.rtp_timeout },
-      { "rtp_proxy_enable", TYP_INT4,   &configuration.rtp_proxy_enable },
-      { "user",             TYP_STRING, &configuration.user },
-      { "chrootjail",       TYP_STRING, &configuration.chrootjail },
+      { "debug_level",         TYP_INT4,   &configuration.debuglevel },
+      { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
+      { "daemonize",           TYP_INT4,   &configuration.daemonize },
+      { "host_inbound",        TYP_STRING, &configuration.inboundhost },
+      { "host_outbound",       TYP_STRING, &configuration.outboundhost },
+      { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
+      { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
+      { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
+      { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
+      { "user",                TYP_STRING, &configuration.user },
+      { "chrootjail",          TYP_STRING, &configuration.chrootjail },
+      { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },
+      { "hosts_allow_sip",     TYP_STRING, &configuration.hosts_allow_sip },
+      { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
+      { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
+      { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
+      { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
       {0, 0, 0}
    };
 
@@ -168,6 +174,7 @@ static int parse_config (FILE *configfile) {
 	      break;	    
 
 	    case TYP_STRING:
+//	         num=sscanf(ptr,"%a[^#]",(char**)configoptions[j].dest);
 	         num=sscanf(ptr,"%as",(char**)configoptions[j].dest);
                  DEBUGC(DBCLASS_BABBLE,"STRING=%s",*(char**)configoptions[j].dest);
 	      break;	    

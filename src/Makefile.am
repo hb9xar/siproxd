@@ -23,9 +23,10 @@ CFLAGS =@CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
 bin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
-		  log.c readconf.c rtpproxy.c
+		  log.c readconf.c rtpproxy.c accessctl.c \
+		  security.c auth.c
 
-noinst_HEADERS = log.h siproxd.h
+noinst_HEADERS = log.h siproxd.h digcalc.h
 
 EXTRA_DIST = .buildno
 

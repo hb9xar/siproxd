@@ -188,6 +188,9 @@ int proxy_request (sip_t *request) {
    
    default:
       DEBUGC(DBCLASS_PROXY,"request: refuse to proxy - UA not registered?");
+      WARN("request from/to unregistered UA (%s@%s)",
+	        request->from->url->username,
+		request->from->url->host);
 /* some clients seem to run amok when passing back a negative response */
 //      proxy_gen_response(request, 403 /*forbidden*/);
       return 1;
@@ -201,7 +204,7 @@ int proxy_request (sip_t *request) {
 /* linphone-0.9.0pre4
    take To address and place it into URI (at least the host part)
    Linphone-0.9.0pre4 puts the proxy host in the request URI
-   if OUTBOUNT proxy is activated!
+   if OUTBOUND proxy is activated!
    This is only a hack to recreate the proper final request URI.
    This issue has been fixed in 0.9.1pre1
 */
@@ -504,6 +507,8 @@ int proxy_del_myvia (sip_t *response) {
 /*
  * PROXY_REWRITE_INVITATION_BODY
  *
+ * rewrites the outgoing INVITATION packet
+ * 
  */
 int proxy_rewrite_invitation_body(sip_t *mymsg){
    body_t *body;

@@ -54,15 +54,32 @@ void register_init(void) {
  * handles register requests and updates the URL mapping table
  *    sts = 0 : successfully registered
  *    sts = 1 : registration failed
+ *    sts = 2 : authentication needed
  */
 int register_client(sip_t *my_msg) {
-   int i,j;
+   int i, j, sts;
    int expires;
    time_t time_now;
    url_t *url1_to, *url1_contact;
    url_t *url2_to, *url2_contact;
    header_t *expires_hdr;
    
+/*
+   do proxy authentication
+*/
+   sts = authenticate_proxy(my_msg);
+   if (sts == 1) {
+   /* failed */
+      WARN("proxy authentication failed for %s@%s",
+           my_msg->to->url->username,my_msg->to->url->host);
+      return (1);
+   } else if (sts == 2) {
+      /* needed */
+      DEBUGC(DBCLASS_REG,"proxy authentication needed for %s@%s",
+             my_msg->to->url->username,my_msg->to->url->host);
+      return (2);
+   }
+
 /*
    fetch 1st Via entry and remember this address. Incomming requests
    for the registered address have to be passed on to that host.
@@ -181,8 +198,9 @@ void register_agemap(void) {
 
 /*
  * send answer to a registration request.
- *  flag =  0 -> positive answer
- *  flag != 0 -> negative answer
+ *  flag = 0  -> positive answer (200)
+ *  flag = 1  -> negative answer (503)
+ *  flag = 2  -> proxy authentication needed (407)
  */
 int register_response(sip_t *request, int flag) {
    sip_t *response;
@@ -195,8 +213,20 @@ int register_response(sip_t *request, int flag) {
    header_t *expires_hdr;
 
    /* ok -> 200, fail -> 503 */
-   if (flag == 0) code = 200;
-   else code = 503;
+   switch (flag) {
+   case 0:
+      code = 200;	/* OK */
+      break;
+   case 1:
+      code = 503;	/* failed */
+      break;
+   case 2:
+      code = 407;	/* proxy authentication needed */
+      break;
+   default:
+      code = 503;	/* failed */
+      break;
+   }
 
    /* create the response template */
    if ((response=msg_make_template_reply(request, code))==NULL) {
@@ -209,7 +239,12 @@ int register_response(sip_t *request, int flag) {
    if (expires_hdr) {
       msg_setexpires(response, expires_hdr->hvalue);
    }
-  
+
+   /* if we send back an proxy authentication needed, 
+      include the Proxy-Authenticate field */
+   if (code == 407) {
+      auth_include_authrq(response);
+   }
 
    /* get the IP address from existing VIA header */
    msg_getvia (response, 0, &via);

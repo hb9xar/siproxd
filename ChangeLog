@@ -1,3 +1,12 @@
+0.2.1
+=====
+- 28-Sep-2002:	- Released version 0.2.1
+- 27-Sep-2002:	- first implementation of proxy authentication (for REGISTER)
+- 24-Sep-2002:	- if daemonized, log to syslog
+- 22-Sep-2002:	- added access list support for registration and incomming
+		  SIP packets.
+- 21-Sep-2002:	- added RPM support (Spec File)
+
 0.2.0
 =====
 - 17-Sep-2002:	- Released version 0.2.0

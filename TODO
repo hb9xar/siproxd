@@ -1,20 +1,22 @@
 TODOs, in random order:
 =======================
 
-- re-think the registration mechanism (mapping and decision criteria
-  for in- and outgoing stuff...
-  
-- logging via syslog if running in daemon mode
+- client authentication for registration - multiple user feature
 
-- get_ip_by_host: reduce DNS timeouts
+- redo return status (make then at least DEFINED constants)
 
-- Documentation
+- Documentation (yeah, yeah...)
+
+- general security issues
 
 - automagically create a proper config file during install
 
-- client authentication
+- get_ip_by_host: reduce DNS timeouts
+
+- support for "full duplex" RTP proxying
 
 - portability to other platforms / operating systems
   first goal: other Unixes
+
 
 

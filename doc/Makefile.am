@@ -19,4 +19,4 @@
 #
 
 
-EXTRA_DIST = siproxd.conf.example
+EXTRA_DIST = siproxd.conf.example FAQ

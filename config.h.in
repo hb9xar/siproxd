@@ -87,8 +87,14 @@
 /* Define if you have the strstr function.  */
 #undef HAVE_STRSTR
 
+/* Define if you have the syslog function.  */
+#undef HAVE_SYSLOG
+
 /* Define if you have the vfprintf function.  */
 #undef HAVE_VFPRINTF
+
+/* Define if you have the vsnprintf function.  */
+#undef HAVE_VSNPRINTF
 
 /* Define if you have the <errno.h> header file.  */
 #undef HAVE_ERRNO_H

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <getopt.h>
 
@@ -60,6 +61,8 @@ int main (int argc, char *argv[])
 {
    int sts;
    int i;
+   int access;
+   struct sockaddr_in from;
    char buff [BUFFER_SIZE];
    sip_t *my_msg=NULL;
 
@@ -69,13 +72,11 @@ int main (int argc, char *argv[])
    char configfile[64]="siproxd";	/* basename of configfile */
    int  config_search=1;		/* search the config file */
 
-   /* prepare default configuration */
-   configuration.debuglevel=0;
-   configuration.daemonize=0;
+/*
+ * prepare default configuration
+ */
+   memset (&configuration, 0, sizeof(configuration));
    configuration.sip_listen_port=SIP_PORT;
-   configuration.inboundhost=NULL;
-   configuration.outboundhost=NULL;
-   configuration.user=NULL;
 
    log_set_pattern(configuration.debuglevel);      
 
@@ -161,6 +162,7 @@ int main (int argc, char *argv[])
       /* close STDIN, STDOUT, STDERR */
       close(0);close(1);close(2);
 #endif
+      log_set_tosyslog(1);
    }
 
 
@@ -178,17 +180,28 @@ int main (int argc, char *argv[])
       /* got input, process */
       DEBUGC(DBCLASS_BABBLE,"back from sip_wait");
 
-      i=sipsock_read(&buff, sizeof(buff));
-/*
- * more integrity checks of received packet needed !!
- * it's possible to crash msg_parse with some crap-input.
- */
+      i=sipsock_read(&buff, sizeof(buff), &from);
+
+      /* evaluate the access lists */
+      access=check_accesslist(from);
+      if (access == 0) continue; /* there are no resources to free */
+
+      /* integrity checks */
+      sts=securitycheck(buff, i);
+      if (sts == 0) continue; /* there are no resources to free */
+
+      /* parse the received message */
       sts=msg_init(&my_msg);
-      sts=msg_parse( my_msg, buff);
-/*
- * if message parsing was ok go on - otherwise skip
- */
-      if (sts != 0) continue;
+      if (sts != 0) {
+         ERROR("msg_init() failed... this is not good");
+	 continue; /* skip, there are no resources to free */
+      }
+
+      sts=msg_parse(my_msg, buff);
+      if (sts != 0) {
+         ERROR("msg_parse() failed... this is not good");
+         goto end_loop; /* skip and free resources */
+      }
 
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
@@ -196,19 +209,34 @@ int main (int argc, char *argv[])
 
       /* if RQ REGISTER, just register and send an answer */
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {
-         sts = register_client(my_msg);
-         sts = register_response(my_msg, sts);
+         if (access & ACCESSCTL_REG) {
+            sts = register_client(my_msg);
+            sts = register_response(my_msg, sts);
+	 } else {
+            WARN("non-authorized registration attempt from %s",
+	            inet_ntoa(from.sin_addr));
+	 }
 
       /* MSG is a request, add current via entry,
        * do a lookup in the URLMAP table and
        * send to the final destination */
       } else if (MSG_IS_REQUEST(my_msg)) {
-         sts = proxy_request(my_msg);
+         if (access & ACCESSCTL_SIP) {
+            sts = proxy_request(my_msg);
+	 } else {
+            WARN("non-authorized request received from %s",
+	            inet_ntoa(from.sin_addr));
+	 }
 
       /* MSG is a response, remove current via and
        * send to next via in chain */
       } else if (MSG_IS_RESPONSE(my_msg)) {
-         sts = proxy_response(my_msg);
+         if (access & ACCESSCTL_SIP) {
+            sts = proxy_response(my_msg);
+	 } else {
+            WARN("non-authorized response received from %s",
+	            inet_ntoa(from.sin_addr));
+	 }
 	 
       /* unsupported message */
       } else {
@@ -221,6 +249,7 @@ int main (int argc, char *argv[])
 /*
  * free the SIP message buffers
  */
+      end_loop:
       msg_free(my_msg);
       free(my_msg);
 

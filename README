@@ -130,7 +130,7 @@ IMPORTANT NOTICE
 The gethostbyname() function leaks memory in glibc 2.1.1 (-> RedHat 6.0).
 The quick fix is to delete the nisplus service from hosts entry in
 /etc/nsswitch.conf.
-In my tests, memory use remained stable after I made the mentioned change.
+In my tests, memory usage remained stable after I made the mentioned change.
 
 (source: http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
 
@@ -145,7 +145,7 @@ Please feel free to contact the author to:
 
 and visit the website at http://siproxd.sourceforge.net/
 
-There also is a siproxd mailinglist available on sourceforge.
+There is a siproxd mailinglist available on sourceforge.
 
 Thomas Ries  (tries@gmx.net)
    GnuPG Public Key:
@@ -159,4 +159,7 @@ CREDITS
 
 Thanks to sourceforge.net for providing the distribution platform and
 infrastructure.
+
+Also credits to the maintainers of linphone from where I have taken some
+code parts for MD5 proxy authentication.
 
