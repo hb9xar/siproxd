@@ -20,7 +20,7 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=2
-SPD_MICRO_VERSION=5
+SPD_MICRO_VERSION=6
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -92,7 +92,7 @@ case "$target" in
     AC_DEFINE(_BSD,,[building on BSD platform])
     AC_DEFINE(_OPENBSD,,[building on OpenBSD platform])
     CPPFLAGS="$CPPFLAGS -I/usr/local/include/"
-    LIBS="$LIBS -L/usr/local/lib/ -lgnugetopt"
+    LIBS="$LIBS -L/usr/local/lib/"
     ;;
   *-*-netbsd*)
     AC_MSG_RESULT("NetBSD")

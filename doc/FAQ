@@ -11,10 +11,10 @@ A: The goal is that every softphone (that is SIP compliant) should be
    - linphone (0.9.0)
    - kphone (1.0.2)
 ---------------------------------------------------------------------------
-Q: Siproxd's RTP proxying does only work for incomming RTP audio data.
+Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
    Should it not also proxy outgoing RTP data?
 
-A: Curently (0.2.0) that is the correct behaviour. Incomming RTP traffic
+A: Curently (0.2.0) that is the correct behaviour. Incoming RTP traffic
    is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
    to be handled by the firewall (IP masquerading).
 ---------------------------------------------------------------------------
@@ -83,9 +83,9 @@ A: Scenario
   To make an outgoing call from IntHost simply use the SIP address of the
   target ( -> sip:test@xxx.org).
 
-  test@xxx.org can make a incomming calls - it simply has to use the registered
+  test@xxx.org can make a incoming calls - it simply has to use the registered
   SIP address of the softphone running on IntHost (sip:johndoe@foo.bar.org).
-  Siproxd will then rewrite and forward the incomming request to Inthost.
+  Siproxd will then rewrite and forward the incoming request to Inthost.
 
   The externalHost does not need to know anything about the proxy. For the
   user sip:test@xxx.org it looks as he directly sends the traffic to
@@ -107,7 +107,7 @@ A: The mapping mechanism of SIP addresses works basically like:
    IntHosts (each of them using a different user name) running at the
    same time.
 
-   For an incomming call, siproxd will search its registration table for
+   For an incoming call, siproxd will search its registration table for
    the requested SIP address and so finds the internal host that belong to it.
 
    This of course *requires* that the username part of the SIP address is

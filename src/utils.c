@@ -303,18 +303,22 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 int compare_url(url_t *url1, url_t *url2) {
    int sts;
 
+   /* sanity checks */
    if ((url1 == NULL) || (url2 == NULL)) {
       ERROR("compare_url: NULL ptr: url1=0x%p, url2=0x%p",url1, url2);
       return STS_FAILURE;
    }
+
+   /* sanity checks: host part is a MUST */
    if ((url1->host == NULL) || (url2->host == NULL)) {
       ERROR("compare_url: NULL ptr: url1->host=0x%p, url2->host=0x%p",
             url1->host, url2->host);
       return STS_FAILURE;
    }
+
+   /* Broken(?) MSN messenger - does not supply a user name part.
+      So we simply compare the host part then */
    if ((url1->username == NULL) || (url2->username == NULL)) {
-      /* Broken(?) MSN messenger - does not supply a user name part.
-         So we simply compare the host part then */
       WARN("compare_url: NULL username pointer: MSN messenger is known to "
            "trigger this one! [url1->username=0x%p, url2->username=0x%p]",
             url1->username, url2->username);
@@ -325,6 +329,7 @@ int compare_url(url_t *url1, url_t *url2) {
       } else {
          sts = STS_FAILURE;
       }
+      return sts;
    }
 
    /* we have a proper URL */

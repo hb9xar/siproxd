@@ -65,7 +65,7 @@ int proxy_request (sip_t *request) {
    int port;
    char *buffer;
 
-#define REQTYP_INCOMMING	1
+#define REQTYP_INCOMING		1
 #define REQTYP_OUTGOING		2
 
    DEBUGC(DBCLASS_PROXY,"proxy_request");
@@ -81,10 +81,10 @@ int proxy_request (sip_t *request) {
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
 
-      /* incomming request ('to' == 'masq') */
+      /* incoming request ('to' == 'masq') */
       if (compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
-         type=REQTYP_INCOMMING;
-         DEBUGC(DBCLASS_PROXY,"incomming request from %s@%s from outbound",
+         type=REQTYP_INCOMING;
+         DEBUGC(DBCLASS_PROXY,"incoming request from %s@%s from outbound",
 	        request->from->url->username,
 		request->from->url->host);
 	 break;
@@ -108,12 +108,12 @@ int proxy_request (sip_t *request) {
   /*
    * from an external host to the internal masqueraded host
    */
-   case REQTYP_INCOMMING:
+   case REQTYP_INCOMING:
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
 
       /* THIS IS UGLY!!! I dont like it */
-      DEBUGC(DBCLASS_PROXY,"rewriting incomming Request URI");
+      DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
       url=msg_geturi(request);
       free(url->host);url->host=NULL;
 {
@@ -198,10 +198,13 @@ int proxy_request (sip_t *request) {
       break;
    
    default:
+      url=msg_geturi(request);
       DEBUGC(DBCLASS_PROXY,"proxy_request: refused to proxy");
-      WARN("request from/to unregistered UA (%s@%s)",
+      WARN("request from/to unregistered UA (RQ: %s@%s -> %s@%s)",
 	        request->from->url->username,
-		request->from->url->host);
+		request->from->url->host,
+	        url->username,
+		url->host);
 /* some clients seem to run amok when passing back a negative response
  * so we simply drop the request silently
  */
@@ -279,7 +282,7 @@ int proxy_response (sip_t *response) {
    int port;
    char *buffer;
 
-#define RESTYP_INCOMMING	1
+#define RESTYP_INCOMING		1
 #define RESTYP_OUTGOING		2
 
    DEBUGC(DBCLASS_PROXY,"proxy_response");
@@ -299,7 +302,7 @@ int proxy_response (sip_t *response) {
       return STS_FAILURE;
    }
 
-   /* figure out if this is an request comming from the outside
+   /* figure out if this is an request coming from the outside
     * world to one of our registered clients
     */
 
@@ -315,10 +318,10 @@ int proxy_response (sip_t *response) {
       if (urlmap[i].active == 0) continue;
 
 
-      /* incomming response ('from' == 'masq') */
+      /* incoming response ('from' == 'masq') */
       if (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
-         type=RESTYP_INCOMMING;
-         DEBUGC(DBCLASS_PROXY,"incomming response for %s@%s from outbound",
+         type=RESTYP_INCOMING;
+         DEBUGC(DBCLASS_PROXY,"incoming response for %s@%s from outbound",
 	        response->from->url->username,
 		response->from->url->host);
 	 break;
@@ -341,7 +344,7 @@ int proxy_response (sip_t *response) {
   /*
    * from an external host to the internal masqueraded host
    */
-   case RESTYP_INCOMMING:
+   case RESTYP_INCOMING:
       break;
    
   /*
@@ -614,7 +617,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
  * TODO: redo the rewriting section below,
  * using the nice sdp_ routines of libosip!
  *
- * Up to now, also only ONE incomming media port per session
+ * Up to now, also only ONE incoming media port per session
  * is supported! I guess, there may be more allowed.
  */
 {

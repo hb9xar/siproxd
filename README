@@ -72,6 +72,20 @@ The easiest way to do this:
 3) reproduce the error
 4) include the debug.log in your error report.
 
+If siproxd crashes (core dump), a stack backtrace usually is helpful to me:
+1) reproduce the crash -> core file
+2) use gdb to print the stack backtrace:
+   $ gdb ./src/siproxd core
+   (gdb) bt
+   #0  0x400ec9ee in __select ()
+   #1  0xbffff6f8 in ?? ()
+   #2  0x804a5c2 in main (argc=3, argv=0xbffffc54) at siproxd.c:186
+   #3  0x4005bcb3 in __libc_start_main (main=0x804a30c <main>, argc=3, 
+       argv=0xbffffc54, init=0x8049a08 <_init>, fini=0x804edac <_fini>, 
+       rtld_fini=0x4000a350 <_dl_fini>, stack_end=0xbffffc4c)
+       at ../sysdeps/generic/libc-start.c:78
+   (gdb) 
+
 
 
 WHAT SIPROXD DOES
@@ -83,9 +97,9 @@ There usually will be a masquerading firewall in between to 'hide' the
 private IP range (either via NAT - network address translation or 
 masuerading). Check the scenario drawn below.
 
-With release 0.1.2 siproxd is also able to proxy incomming RTP data
+With release 0.1.2 siproxd is also able to proxy incoming RTP data
 streams. The config parameters 'rtp_port_low' and rtp_port_high' define
-the port range that siproxd will use for incomming RTP data streams.
+the port range that siproxd will use for incoming RTP data streams.
 'rtp_timeout' defines after what time an unused  (no data received)
 rtp stream is considered dead and removed.
 
@@ -124,7 +138,7 @@ Scenario
    of the firewall (eg use some dynamic DNS service [1])
 
 IPCHAINS:
- Firewall rules for incomming traffic:
+ Firewall rules for incoming traffic:
  $ ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
  $ ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
 
@@ -132,7 +146,7 @@ IPCHAINS:
  $ ipchains -A forward -i ppp0 -j MASQ -s 10.0.0.0/24 -d 0.0.0.0/0
 
 IPTABLES:
- Firewall rules for incomming traffic:
+ Firewall rules for incoming traffic:
  $iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
  $iptables -A INPUT -i ppp0 -p udp -m udp --dport 7070:7080 -j ACCEPT 
 
@@ -140,9 +154,9 @@ IPTABLES:
  $ iptables -t nat -A POSTROUTING -s 10.0.0.0/255.255.255.0 -j MASQUERADE
 
 
- The first line will allow incomming SIP traffic. The second line will
- allow incomming RTP traffic on the ports 7070 - 7080 (the default port
- range used by siproxd for incomming RTP traffic).
+ The first line will allow incoming SIP traffic. The second line will
+ allow incoming RTP traffic on the ports 7070 - 7080 (the default port
+ range used by siproxd for incoming RTP traffic).
 
  The rule for masquerading will ensure that the outgoing RTP data stream
  is masqueraded properly and sent to the remote host.

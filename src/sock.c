@@ -47,7 +47,7 @@ extern struct siproxd_config configuration;
 static int listen_socket=0;
 
 /*
- * binds to SIP UDP socket for listening to incomming packets
+ * binds to SIP UDP socket for listening to incoming packets
  *
  * RETURNS
  *	STS_SUCCESS on success
@@ -65,7 +65,7 @@ int sipsock_listen (void) {
 }
 
 /*
- * Wait for incomming SIP message. After a 5 sec timeout
+ * Wait for incoming SIP message. After a 5 sec timeout
  * this function returns with sts=0
  *
  * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
@@ -99,7 +99,8 @@ int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    count=recvfrom(listen_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
 
-   DEBUGC(DBCLASS_NET,"received UDP packet, count=%i", count);
+   DEBUGC(DBCLASS_NET,"received UDP packet from %s, count=%i",
+          inet_ntoa(from->sin_addr), count);
    DUMP_BUFFER(DBCLASS_NETTRAF, buf, count);
 
    return count;
@@ -134,7 +135,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
 
 
    if (allowdump) {
-      DEBUGC(DBCLASS_NET,"send UDP packet to %s:%i",
+      DEBUGC(DBCLASS_NET,"send UDP packet to %s: %i",
              inet_ntoa(addr),port);
       DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
    }
@@ -144,7 +145,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
-         ERROR("sendto() call failed:%s",strerror(errno));
+         ERROR("sendto() call failed: %s",strerror(errno));
          return STS_FAILURE;
       }
      DEBUGC(DBCLASS_BABBLE,"sendto() call failed:%s",strerror(errno));

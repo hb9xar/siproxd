@@ -146,7 +146,7 @@ int main (int argc, char *argv[])
    /* initialize the registration facility */
    register_init();
 
-   /* listen for incomming messages */
+   /* listen for incoming messages */
    sts=sipsock_listen();
    if (sts == STS_FAILURE) {
       /* failure to allocate SIP socket... */

@@ -82,7 +82,7 @@ int register_client(sip_t *my_msg) {
    }
 
 /*
-   fetch 1st Via entry and remember this address. Incomming requests
+   fetch 1st Via entry and remember this address. Incoming requests
    for the registered address have to be passed on to that host.
 
    To: -> address to be registered
@@ -147,7 +147,9 @@ int register_client(sip_t *my_msg) {
       /* entry not existing, create new one */
       i=j;
       DEBUGC(DBCLASS_REG,"create new entry for %s@%s at slot=%i",
-             url1_contact->username, url1_contact->host, i);
+             (url1_contact->username) ? url1_contact->username : "*NULL*",
+             (url1_contact->host) ? url1_contact->host : "*NULL*",
+             i);
 
       /* write entry */
       urlmap[i].active=1;

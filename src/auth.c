@@ -109,7 +109,12 @@ int auth_include_authrq(sip_t *response) {
 		configuration.proxy_auth_realm,
 		auth_generate_nonce());
 
+   DEBUGC(DBCLASS_AUTH,"msg_setproxy_authenticate [%s]",str);
    sts = msg_setproxy_authenticate(response, str);
+/*
+   this does not work with libosip 0.9.3 - msg_setproxy_authenticate
+   fails with sts=-1 there. Bug ?
+*/
 
    DEBUGC(DBCLASS_AUTH,"msg_setproxy_authenticate sts=%i",sts);
 

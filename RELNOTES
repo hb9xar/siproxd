@@ -1,3 +1,56 @@
+Release Notes for siproxd-0.2.6
+===============================
+ This release mainly fixes some annoying (and stupid) bugs.
+ See the ChangeLog for details.
+
+ - supports Linux and FreeBSD (other BSD derivates not tested)
+ - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
+   masquerading firewall
+ - Includes an RTP data stream proxy for *incoming* audio data
+   (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user-ID after startup (if started as root)
+ - All configuration done via one simple ascii configuration file
+ - Proxy Authentication for registration of local clients (User Agents)
+   with individual passwords for each user
+ - Logging to syslog in daemon mode
+ - Access control (IP based) for incoming traffic
+ - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
+ - works with "dial-up" conenctions (dynamic IP addresses)
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 (using libosip 0.9.6, proxy authentication does *not*
+                  work. Unclear if this is a bug in libosip or not)
+
+Currently tested on:
+- Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2), should run
+  on others Linux distributions as well.
+- FreeBSD 4.7-STABLE (compilation)
+
+Reported to build on:
+- OpenBSD 2.9
+
+
+Reported interoperability (tested with softphones):
+ - Linphone (local UA) (http://www.linphone.org)
+ - Kphone (local UA) (http://www.wirlab.net/kphone/)
+ - MSN messenger 4.6 (remote UA)
+
+
+-----
+md5sum for siproxd-0.2.6.tar.gz: 	042986602efeaaa77a14bb0b1a416083
+md5sum for siproxd-0.2.6-1rh60.i386.rpm:
+md5sum for siproxd-0.2.6-1rh72.i386.rpm:
+md5sum for siproxd-0.2.6-1.src.rpm:	
+
+GnuPG signature for siproxd-0.2.6.tar.gz archive:
+
+
+
 Release Notes for siproxd-0.2.5
 ===============================
  This release mainly fixes some annoying (and stupid) bugs.
@@ -5,10 +58,10 @@ Release Notes for siproxd-0.2.5
 
  - supports Linux and FreeBSD (other BSD derivates not tested)
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for *incomming* audio data
+ - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Port range to be used for incomming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail (configurable)
  - Supports changing user-ID after startup (if started as root)
@@ -16,7 +69,7 @@ Release Notes for siproxd-0.2.5
  - Proxy Authentication for registration of local clients (User Agents)
    with individual passwords for each user
  - Logging to syslog in Daemon mode
- - Access control (IP based) for incomming traffic
+ - Access control (IP based) for incoming traffic
  - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
  - should now works with "dial-up" conenctions (changing IP addresses)
 
@@ -60,10 +113,10 @@ Release Notes for siproxd-0.2.4
 ===============================
  - supports Linux and FreeBSD (other BSD derivates not tested)
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for *incomming* audio data
+ - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Port range to be used for incomming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail (configurable)
  - Supports changing user-ID after startup (if started as root)
@@ -71,7 +124,7 @@ Release Notes for siproxd-0.2.4
  - Proxy Authentication for registration of local clients (User Agents)
    with individual passwords for each user
  - Logging to syslog in Daemon mode
- - Access control (IP based) for incomming traffic
+ - Access control (IP based) for incoming traffic
  - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
  - should now works with "dial-up" conenctions (changing IP addresses)
 
@@ -109,10 +162,10 @@ rMwAn3VjqrmeBZ9s9mHyCtmvTaZPNsPX
 Release Notes for siproxd-0.2.3
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for *incomming* audio data
+ - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Port range to be used for incomming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail (configurable)
  - Supports changing user-ID after startup (if started as root)
@@ -120,7 +173,7 @@ Release Notes for siproxd-0.2.3
  - Proxy Authentication for registration of local clients (User Agents)
    with individual passwords for each user
  - Logging to syslog in Daemon mode
- - Access control (IP based) for incomming traffic
+ - Access control (IP based) for incoming traffic
  - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
 
 Requirements:
@@ -154,10 +207,10 @@ z28AoONvmvpy+uS7khruF18SPfb6znvl
 Release Notes for siproxd-0.2.2
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for *incomming* audio data
+ - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Port range to be used for incomming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail (configurable)
  - Supports changing user-ID after startup (if started as root)
@@ -165,7 +218,7 @@ Release Notes for siproxd-0.2.2
  - Proxy Authentication for registration of local clients (User Agents)
    now supports per user passwords
  - Logging to syslog in Daemon mode
- - Access control (IP based) for incomming traffic
+ - Access control (IP based) for incoming traffic
  - RPM support (spec file)
 
 Requirements:
@@ -196,17 +249,17 @@ MNUAn2dOBHIfOJLy3CaqM1AUt8PC8iN6
 Release Notes for siproxd-0.2.1
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for *incomming* audio data
+ - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Port range to be used for incomming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail (configurable)
  - Supports changing user-ID after startup (if started as root)
  - All configuration done via one simple ascii configuration file
  - Proxy Authentication for registration of local clients (User Agents)
  - Logging to syslog in Daemon mode
- - Access control (IP based) for incomming traffic
+ - Access control (IP based) for incoming traffic
  - RPM support (spec file)
 
 Requirements:
@@ -237,7 +290,7 @@ IX4AnAtYcNxJJhLXEKcj2ziKKvkectL9
 Release Notes for siproxd-0.2.0
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
- - Includes an RTP data stream proxy for incomming audio data
+ - Includes an RTP data stream proxy for incoming audio data
  - Supports running in a chroot jail (configurable)
  - Supports changing user ID after startup (if started as root)
  - All configuration done via config file
@@ -289,7 +342,7 @@ b1cAn331fJVdvaVyRJz0AVjUnD7v+fx6
 
 Release Notes for siproxd-0.1.2
 ===============================
- - New: experimental proxying incomming RTP data streams
+ - New: experimental proxying incoming RTP data streams
    (please send me feedback if you try it out)
  - optimizations in DNS resolving
  - fix in client registration concept (Contact Header)

@@ -24,7 +24,7 @@ if_outbound = ppp0
 
 
 ######################################################################
-# Port to listen for incomming SIP messages.
+# Port to listen for incoming SIP messages.
 #    Access lists in the form: IP/mask (ex. 10.0.0.1/24)
 #    multiple entries may be separated by commas NO SPACES ARE ALLOWED!!
 #    Empty list means 'does not apply' - no filtering is done then.
@@ -40,7 +40,7 @@ if_outbound = ppp0
 #
 #    Example for usage:
 #      local private net -> allow_reg list
-#      external nets (where we accept incomming calls from) -> allow_sip
+#      external nets (where we accept incoming calls from) -> allow_sip
 #
 #hosts_allow_reg = 192.168.1.8/24
 #hosts_allow_sip = 123.45.0.0/16,123.46.0.0/16
@@ -73,7 +73,7 @@ user = nobody
 rtp_proxy_enable = 1
 
 ######################################################################
-# Port range where to allocate listen ports for incomming RTP traffic
+# Port range where to allocate listen ports for incoming RTP traffic
 #    this should be a range that is not blocked by the firewall
 #    
 rtp_port_low  = 7070
