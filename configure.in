@@ -21,6 +21,7 @@ dnl	18-Nov-2003	tries	include sysconfdir to search for config
 dnl	19-Nov-2003	tries	changes to support Solaris & BSD/OS
 dnl	22-Nov-2003	tries	test for gethostbyname_r() & # of args
 dnl	22-Jan-2004	tries	add --enable-static option
+dnl	06-Mar-2004	tries	del daemon(), add setsid()
 dnl
 dnl
 dnl
@@ -325,7 +326,7 @@ AC_CHECK_FUNCS(strerror)
 AC_CHECK_FUNCS(gethostbyname gethostbyname_r)
 ACX_WHICH_GETHOSTBYNAME_R()
 
-AC_CHECK_FUNCS(getopt_long daemon syslog)
+AC_CHECK_FUNCS(getopt_long setsid syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
 AC_CHECK_FUNCS(socket bind select read send sendto fcntl)
 AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf vsnprintf)

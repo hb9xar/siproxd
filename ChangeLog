@@ -1,5 +1,7 @@
 0.5.4
 =====
+   6-Mar-2004:  - Released 0.5.4
+                - Some FAQ updates
   21-Feb-2004:  - Proxy Authorization: enclose strings with quotes
                   and fixed an error that did not let REGISTER
                   requests pass through to a 3rd party registrar.
