@@ -271,12 +271,13 @@ void secure_enviroment (void) {
          DEBUGC(DBCLASS_CONFIG,"changed gid to %i - %s",
 	        passwd->pw_gid, (sts==0)?"Ok":"Failed");
 
-         sts = setegid(passwd->pw_uid);
+         sts = setegid(passwd->pw_gid);
          DEBUGC(DBCLASS_CONFIG,"changed egid to %i - %s",
 	        passwd->pw_gid, (sts==0)?"Ok":"Failed");
 
 /* don't set the real user id - as we need to elevate privs
    when setting up an RTP masquerading tunnel */
+/*&&& Actually this is no longer true (7-Jul-2004/xar) */
 //         sts = setuid(passwd->pw_uid);
 //         DEBUGC(DBCLASS_CONFIG,"changed uid to %i - %s",
 //	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
