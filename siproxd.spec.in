@@ -12,7 +12,8 @@ Name:		%{name}
 Summary:	A SIP masquerading proxy with RTP support
 Version: 	%{ver}
 Release: 	%{release}
-Copyright: 	GPL
+Copyright: 	(c) 2002-2004 Thomas Ries
+License: 	GPL
 Group:		Applications/Communications
 Source0: 	%{name}-%{ver}.tar.gz
 

@@ -1,7 +1,7 @@
-Release Notes for siproxd-0.5.9
+Release Notes for siproxd-0.5.10
 ===============================
 
-Major changes since 0.5.8:
+Major changes since 0.5.9:
    Several bugfixes and better support for Record-Route headers.
 
 General Overview:
@@ -80,16 +80,9 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.9.tar.gz: 	7428bc04eb8d60a5741d68190b06f10b
+md5sum for siproxd-0.5.10.tar.gz: 	
 
-GnuPG signature for siproxd-0.5.9.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.3 (GNU/Linux)
-
-iD8DBQBBiU0nCfzBioe83JQRAr7zAKCmGQSmgigXuZewX7TAn5qt0PcYsACfbE4H
-J351yL2YttRZXxnd6C2HSSU=
-=Xoms
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.10.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

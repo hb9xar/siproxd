@@ -6,21 +6,24 @@ complete. This is still considered an alpha release.
 
 OVERVIEW
 ========
-Siproxd is an proxy/masquerading daemon for the SIP protocol.
+Siproxd is a proxy/masquerading daemon for the SIP protocol.
 It handles registrations of SIP clients on a private IP network
 and performs rewriting of the SIP message bodies to make SIP
-connections possible via an masquerading firewall.
+connections work via an masquerading firewall (NAT).
 It allows SIP software clients (like kphone, linphone) or SIP
 hardware clients (Voice over IP phones which are SIP-compatible,
 such as those from Cisco, Grandstream or Snom) to work behind
-an IP masquerading firewall or router.
+an IP masquerading firewall or NAT router.
 
 SIP (Session Initiation Protocol, RFC3261) is the protocol of
-choiche for most VoIP (Voice over IP) phones to initiate
+choice for most VoIP (Voice over IP) phones to initiate
 communication. By itself, SIP does not work via masquerading
 firewalls as the transfered data contains IP addresses and
-port numbers.
-
+port numbers. There do exist other solutions to traverse NAT existing
+(like STUN, or SIP aware NAT routers), but such a solutions has its
+disadvantages or may not be applied to a given situation.
+Siproxd does not aim to be a replacement for these solutions,
+however in some situations siproxd may bring advantages.
 
 
 PREREQUISITES
@@ -28,7 +31,9 @@ PREREQUISITES
 - OS of either:
   * Linux (preferred kernel 2.2.x or 2.4.x)
   * FreeBSD
-  * Solaris (porting is being worked on but you may try it)
+  * OpenBSD
+  * SunOS
+  * Mac OS X
   
 - libosip2 package (http://www.fsf.org/software/osip/)
 
@@ -37,6 +42,8 @@ PREREQUISITES
 HOW TO GET STARTED
 ==================
 - make sure libosip2 is installed
+  If your libposip2 libraries are installed in
+  /usr/local/lib, be sure to include this library path to /etc/ld.so.conf
 
 - ./configure
   For Flifl: see doc/FLI4L_HOWTO.txt
@@ -74,7 +81,7 @@ The easiest way to generate a debug log is:
 2) start siproxd:
    $ ./siproxd -d -1 2>debug.log
 3) reproduce the error
-4) include the debug.log in your error report.
+4) include the file debug.log in your error report.
 
 If siproxd crashes, a stack backtrace usually is helpful to me:
 1) start siproxd in the debugger (daemonize set to 0):
@@ -94,30 +101,28 @@ If siproxd crashes, a stack backtrace usually is helpful to me:
        rtld_fini=0x4000a350 <_dl_fini>, stack_end=0xbffffc4c)
        at ../sysdeps/generic/libc-start.c:78
    (gdb) 
-4) copy-paste all the output and include it in your problem report.
+4) copy-paste all the output and include it in your error report.
 
 
 
 SENDING A PATCH
 ===============
 If you send a patch, please make the diff using "diff -Naur" and
-include the version of siproxd you used to patch. It makes it a lot
+include the version of siproxd you used to patch. This makes it a lot
 easier for me to merge it.
 
 
 WHAT SIPROXD DOES
 =================
-Siproxd's purpose is to act as an SIP proxy for softphones located
-in private IP ranges. Therefore it will rewrite SIP messages to allow a
-softphone to communicate to a counterpart that is located in the Internet.
-There usually will be a masquerading firewall in between to 'hide' the
-private IP range (either via NAT - network address translation or 
-masquerading). Check the scenario drawn below.
+Siproxd's purpose is to act as an SIP proxy for SIP softphones/hardphones
+located behind an masquerading router (NAT). It will rewrite SIP messages
+to allow a SIP phone to communicate to a counterpart that is located in
+the Internet. Check the scenarios drawn below.
 
 
 
-Scenario
---------
+Scenario 1
+----------
 
  private IP address range             :          Internet
  10.0.0.x                             :          (public IP address range)
@@ -130,33 +135,59 @@ Scenario
  +-------------+	       +--------------+
                            eth0       :        ppp0
 
+ - The Firewall does IP masquerading (NAT) and is running siproxd
 
+ - IntHost is running an SIP phone (like linphone, kphone)
 
- - The Firewall does IP masquerading and is running siproxd
+ - The SIP address used by the SIP phone is sip:johndoe@foo.bar.org
 
- - IntHost is running an SIP softphone (like linphone, kphone)
-
- - The SIP address used by the softphone is sip:johndoe@foo.bar.org
-
- - The softphone is configured to register itself at siproxd
+ - The SIP phone is configured to register itself at siproxd
    running on the firewall host (10.0.0.1) as sip:johndoe@foo.bar.org
 
  - foo.bar.org is the domain name corresponding to the public IP address
    of the firewall (e.g. use some dynamic DNS service [1])
 
+
+Scenario 2
+----------
+
+ private IP address range             :          Internet
+ 10.0.0.x                             :          (public IP address range)
+                                      :
+                                      :     foo.bar.org
+ +-------------+	       +--------------+              +--------------+
+ !             !.10	    .1 ! masquerading ! publicIP     ! external SIP !
+ ! IntHost     !---------------! Firewall     !------------>>! Registrar    !
+ !             !               !              !              !              !
+ +-------------+	       +--------------+              +--------------+
+                           eth0       :        ppp0
+
+ - The Firewall does IP masquerading (NAT) and is running siproxd
+
+ - IntHost is running an SIP phone (like linphone, kphone)
+
+ - The SIP address used by the SIP phone is sip:johndoe@foo.bar.org
+
+ - The SIP phone is configured to register itself at the external<BR>
+   registrar as sip:johndoe@foo.bar.org
+
+ - foo.bar.org is the domain name corresponding to the public IP address
+   of the firewall (e.g. use some dynamic DNS service [1])
+
+
 IPCHAINS:
  Firewall rules for incoming traffic:
- $ ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
- $ ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
+ # ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
+ # ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
 
 IPTABLES:
  Firewall rules for incoming traffic:
- $iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
- $iptables -A INPUT -i ppp0 -p udp -m udp --dport 7070:7080 -j ACCEPT 
+ # iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
+ # iptables -A INPUT -i ppp0 -p udp -m udp --dport 7070:7080 -j ACCEPT 
 
- The first line will allow incoming SIP traffic. The second line will
- allow incoming RTP traffic on the ports 7070 - 7080 (the default port
- range used by siproxd for incoming RTP traffic).
+ The first line will allow incoming SIP traffic (UDP port 5060). The second
+ line will allow incoming RTP traffic on the ports 7070-7080 (the default port
+ range used by siproxd for incoming RTP traffic).<P>
 
 
 REFERENCES
@@ -199,7 +230,7 @@ Thomas Ries  (tries@gmx.net)
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
 -      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
 -      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
-VoIP:  sip:17476691342@proxy01.sipphone.com | sip:thomas@ries.homeip.net
+VoIP:  sip:17476691342@proxy01.sipphone.com | sip:431783@fwd.pulver.com
 
 
 CREDITS
