@@ -192,6 +192,26 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
     */
    if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
+      /* RFC3261:
+       * To contains a display name (Bob) and a SIP or SIPS URI
+       * (sip:bob@biloxi.com) towards which the request was originally
+       * directed.  Display names are described in RFC 2822 [3].
+       */
+
+      /* So this means, that we must check the SIP URI supplied with the
+       * INVITE method, as this points to the real wanted target.
+       * Q: does there exist a situation where the SIP URI itself does
+       *    point to "somewhere" but the To: points to the correct UA?
+       * So for now, we just look at both of them (SIP URI and To: header)
+       */
+
+      /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
+      if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
+          (!MSG_IS_REGISTER(request) &&
+           (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
+         type=REQTYP_INCOMING;
+	 break;
+      }
       /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
       if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
           (!MSG_IS_REGISTER(request) &&
