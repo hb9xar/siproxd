@@ -550,7 +550,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
       }
    }   
 
-   sts = comp_osip_message_to_str(response, &buffer);
+   sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
       ERROR("register_response: msg_2char failed");
       return STS_FAILURE;

@@ -30,8 +30,6 @@ dnl				(there seems to be a bug somewhere)
 dnl	18-Aug-2004	tries	fli4l-uclibc -> fli4l-21-uclibc, fli4l-22-uclibc
 dnl				2.1.x has no pthread support, link -static
 dnl				2.2.x has (maybe) pthread support
-dnl	09-Oct-2004	tries	libosip2 compatibility >= 2.0.9
-dnl
 dnl
 dnl
 
@@ -349,10 +347,6 @@ AC_CHECK_TYPE(socklen_t,
 dnl
 dnl Checks for library functions.
 dnl
-
-dnl
-dnl libosip specifics: version dependencies
-ACX_WHICH_OSIP()
 
 
 AC_FUNC_MEMCMP

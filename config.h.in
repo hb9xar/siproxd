@@ -30,18 +30,6 @@
 /* gethostbyname_r takes 6 arguments */
 #undef HAVE_FUNC_GETHOSTBYNAME_R_6
 
-/* osip_body_to_str takes 3 arguments */
-#undef HAVE_FUNC_OSIP_BODY_TO_STR_3
-
-/* osip_message_parse takes 3 arguments */
-#undef HAVE_FUNC_OSIP_MESSAGE_PARSE_3
-
-/* osip_message_set_body takes 3 arguments */
-#undef HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3
-
-/* osip_message_to_str takes 3 arguments */
-#undef HAVE_FUNC_OSIP_MESSAGE_TO_STR_3
-
 /* Define to 1 if you have the `getgid' function. */
 #undef HAVE_GETGID
 

@@ -528,7 +528,7 @@ int proxy_request (sip_ticket_t *ticket) {
    * RFC 3261, Section 16.6 step 10
    * Proxy Behavior - Forward the new request
    */
-   sts = comp_osip_message_to_str(request, &buffer);
+   sts = osip_message_to_str(request, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: osip_message_to_str failed");
       return STS_FAILURE;
@@ -932,7 +932,7 @@ int proxy_response (sip_ticket_t *ticket) {
       }
    }
 
-   sts = comp_osip_message_to_str(response, &buffer);
+   sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
       ERROR("proxy_response: osip_message_to_str failed");
       return STS_FAILURE;
@@ -988,7 +988,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
       }
    }
 
-   sts = comp_osip_body_to_str(body, &bodybuff);
+   sts = osip_body_to_str(body, &bodybuff);
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, bodybuff);
    osip_free(bodybuff);
@@ -1003,7 +1003,7 @@ if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
    sts = osip_message_get_body(mymsg, 0, &body);
-   sts = comp_osip_body_to_str(body, &tmp);
+   sts = osip_body_to_str(body, &tmp);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
          tmp2, strlen(tmp), tmp);
@@ -1226,7 +1226,7 @@ if (configuration.debuglevel)
    sdp_message_free(sdp);
 
    /* include new body */
-   comp_osip_message_set_body(mymsg, bodybuff);
+   osip_message_set_body(mymsg, bodybuff);
 
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
@@ -1241,7 +1241,7 @@ if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
    sts = osip_message_get_body(mymsg, 0, &body);
-   sts = comp_osip_body_to_str(body, &tmp);
+   sts = osip_body_to_str(body, &tmp);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body after rewrite (clen=%s, strlen=%i):\n%s\n----",
          tmp2, strlen(tmp), tmp);

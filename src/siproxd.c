@@ -308,7 +308,7 @@ int main (int argc, char *argv[])
        * Proxy Behavior - Request Validation - Reasonable Syntax
        * (parse the received message)
        */
-      sts=comp_osip_message_parse(ticket.sipmsg, buff);
+      sts=osip_message_parse(ticket.sipmsg, buff);
       if (sts != 0) {
          ERROR("osip_message_parse() failed... this is not good");
          DUMP_BUFFER(-1, buff, i);
