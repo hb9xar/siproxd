@@ -327,7 +327,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
    /* find a local outbound port number to use and bind to it*/
    sock=0;
    port=0;
-   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i++) {
+   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i+=2) {
       for (j=0; j<RTPPROXY_SIZE; j++) {
          /* outbound port already in use */
          if ((memcmp(&rtp_proxytable[j].outbound_ipaddr,

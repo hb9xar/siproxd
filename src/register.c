@@ -82,7 +82,7 @@ void register_init(void) {
                if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
                if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
                if (strlen(buff) > 0) {\
-                  size = strnlen(buff, sizeof(buff));\
+                  size = strlen(buff);\
                   X    =(char*)malloc(size);\
                   sts=sscanf(buff,"%s",X);\
                } else {\

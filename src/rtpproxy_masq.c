@@ -198,9 +198,10 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
 
 /*
  * do loop over the range of available ports (7070-...) until able to 
- * allocate a UDP tunnel. If not successful - Buh! return port=0
+ * allocate a UDP tunnel with an even port number.  If none can be found
+ * available - Buh! return port=0
  */
-   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i++) {
+   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i+=2) {
       /* check if this port is already allocated in another stream.
        * IPCHAINS will print errors in SYSLOG when I try to use
        * the same port twice (IF it is still 'open' - no DST address

@@ -631,7 +631,7 @@ if (configuration.debuglevel)
          } // port > 0
       } else {
          /* no port defined - skip entry */
-         WARN("no port defined in m=(media) stream_no=&i", media_stream_no);
+         WARN("no port defined in m=(media) stream_no=%i", media_stream_no);
          continue;
       }
    }

@@ -100,6 +100,26 @@ int read_config(char *name, int search) {
 
    sts = parse_config(configfile);
    fclose(configfile);
+
+   /*
+    * Post-process configuration variables that have conditions that
+    * must be met; warn if we have to adjust any.
+    */
+   if (configuration.rtp_port_low & 0x01) {
+      /* rtp_port_low must be an even number... */
+      configuration.rtp_port_low = (configuration.rtp_port_low + 1) & ~0x01;
+      WARN("rtp_port_low should be an even number; it's been rounded up to %i",
+	   configuration.rtp_port_low);
+   }
+   if (configuration.rtp_port_high & 0x01) {
+      /* rtp_high_port should be either the top RTP port allowed, */
+      /* or the top RTCP port allowed.  If the latter, then reset */
+      /* to the former... Don't need a warning here.  It's okay.  */
+      configuration.rtp_port_high = configuration.rtp_port_high & ~0x01;
+      DEBUGC(DBCLASS_CONFIG, "rounded rtp_port_high down to %i",
+	     configuration.rtp_port_high);
+   }
+
    return sts;
 }
 

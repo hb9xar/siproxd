@@ -1,6 +1,7 @@
 0.5.1
 =====
-  05-Dec-2003:	- some changes & enhancements inspired by Cris Ross:
+  15-Dec-2003:	- use even port numbers for RTP traffic
+  05-Dec-2003:	- some changes & enhancements inspired by Chris Ross:
 		  * 183 Trying *may* contain SDP data
                   * compare_url: now does compare the scheme,
                     if a host is not resolveable hostnames will be

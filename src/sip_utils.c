@@ -288,7 +288,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       }
    } else {
       /* compare hostname strings case INsensitive */
-      if (osip_strcasecmp(url1->host, url2->host) != 0) {
+      if (strcasecmp(url1->host, url2->host) != 0) {
          DEBUGC(DBCLASS_PROXY, "compare_url: host name mismatch");
          return STS_FAILURE;
       }
