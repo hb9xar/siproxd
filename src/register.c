@@ -60,7 +60,7 @@ void register_init(void) {
  *    STS_NEED_AUTH : authentication needed
  */
 int register_client(sip_t *my_msg) {
-   int i, j, sts;
+   int i, j, n, sts;
    int expires;
    time_t time_now;
    url_t *url1_to, *url1_contact;
@@ -111,7 +111,7 @@ int register_client(sip_t *my_msg) {
 
 
 /* Update registration. There are two possibilities:
- * - already registered, the update the existing record
+ * - already registered, then update the existing record
  * - not registered, then create a new record
  */
    url1_to=my_msg->to->url;
@@ -156,7 +156,40 @@ int register_client(sip_t *my_msg) {
       url_clone( ((contact_t*)(my_msg->contacts->node->element))->url, 
         	 &urlmap[i].true_url);	/* Contact: field */
       url_clone( my_msg->to->url, 
-        	 &urlmap[i].masq_url);	/* To: field */
+        	 &urlmap[i].reg_url);	/* To: field */
+
+      /*
+       * try to figure out if we ought to do some masquerading
+       */
+      url_clone( my_msg->to->url, 
+        	 &urlmap[i].masq_url);
+
+      n=configuration.mask_host.used;
+      if (n != configuration.masked_host.used) {
+         ERROR("# of mask_host is not equal to # of masked_host in config!");
+         n=0;
+      }
+
+      DEBUG("%i entries in MASK config table", n);
+      for (j=0; j<n; j++) {
+         DEBUG("compare [%s] <-> [%s]",configuration.mask_host.string[j],
+               my_msg->to->url->host);
+         if (strcmp(configuration.mask_host.string[j],
+             my_msg->to->url->host)==0)
+            break;
+      }
+      if (j<n) { 
+         /* we are masquerading this UA, replace the host part of the url */
+         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s as %s@%s",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                (url1_contact->host) ? url1_contact->host : "*NULL*",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                configuration.masked_host.string[j]);
+         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                 strlen(configuration.masked_host.string[j])+1);
+         strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
+      }
+
       via_clone( ((via_t*)(my_msg->vias->node->element)),
                  &urlmap[i].via);	/* via field */
    }
@@ -189,9 +222,11 @@ void register_agemap(void) {
          urlmap[i].active=0;
          url_free(urlmap[i].true_url);
          url_free(urlmap[i].masq_url);
+         url_free(urlmap[i].reg_url);
 	 via_free(urlmap[i].via);
          free(urlmap[i].true_url);
 	 free(urlmap[i].masq_url);
+	 free(urlmap[i].reg_url);
 	 free(urlmap[i].via);
       }
    }

@@ -1,15 +1,25 @@
+0.2.7
+=====
+-  9-Mar-2003:	- replaced get_ip_by_ifname by a simple one (to be *BSD tested)
+		- removed old host-name based style for in/outbound interface
+                  configuration. This is only not done via interface names
+                - experimental: The host part of UA registration entries
+                  can be masqueraded (mask_host, masked_host config items)
+                  Siemens SIP phones seem to need this 'feature'.
+
 0.2.6
 =====
--  28-Jan-2003:	- New Feature: RTP proxy should be able to handle multiple
+- 28-Jan-2003:	- released 0.2.6
+		- New Feature: RTP proxy should be able to handle multiple
 		  media stream in the same session (audio + video)
--  21-Jan-2003:	- Bugfix: crash in compare_url (MSN Messenger issue)
--  19-Jan-2003:	- use of libosip-0.9.3 not possible yet -
+- 21-Jan-2003:	- Bugfix: crash in compare_url (MSN Messenger issue)
+- 19-Jan-2003:	- use of libosip-0.9.3 not possible yet -
                   libosip fails in msg_setproxy_authenticate
                   -> Bug in libosip? to be investigated!
 		- give IP address in debug for 'received packet'
                 - 'WARNING:proxy.c:202 request from/to unregistered UA' now
                   includes sender and destination url
--  17-Jan-2003:	- OpenBSD: do not link against gnugetopt (Luke Renn)
+- 17-Jan-2003:	- OpenBSD: do not link against gnugetopt (Luke Renn)
 
 0.2.5a
 ======

@@ -79,19 +79,30 @@ int auth_include_authrq(sip_t *response);				/*X*/
 struct urlmap_s {
    int  active;
    int  expires;
-   url_t *true_url;
-   url_t *masq_url;
+   url_t *true_url;		// true URL of UA  (inbound URL)
+   url_t *masq_url;		// masqueraded URL (outbound URL)
+   url_t *reg_url;		// registered URL  (masq URL as wished by UA)
    via_t *via;
 };
+/*
+ * the difference between masq_url and reg_url is, 
+ * the reg URL *always* holds the url registered by the UA.
+ * the masq_url may contain a different URL due to an additional
+ * masquerading feature (mask_host, masked_host config options)
+ */
 
 
 /*
  * configuration option table
  */
+#define CFG_STRARR_SIZE		128
+typedef struct {
+   int  used;
+   char *string[CFG_STRARR_SIZE];
+} stringa_t;
+
 struct siproxd_config {
    int debuglevel;
-   char *inboundhost;
-   char *outboundhost;
    char *inbound_if;
    char *outbound_if;
    int sip_listen_port;
@@ -108,6 +119,8 @@ struct siproxd_config {
    char *proxy_auth_realm;
    char *proxy_auth_passwd;
    char *proxy_auth_pwfile;
+   stringa_t mask_host;
+   stringa_t masked_host;
 };
 
 
@@ -116,8 +129,8 @@ struct siproxd_config {
  */
 #define SIP_PORT	5060
 
-#define URLMAP_SIZE	8	/* number of URL mapping table entries	*/
-#define RTPPROXY_SIZE	8	/* number of rtp proxy entries		*/
+#define URLMAP_SIZE	32	/* number of URL mapping table entries	*/
+#define RTPPROXY_SIZE	64	/* number of rtp proxy entries		*/
 
 #define BUFFER_SIZE	1024	/* input buffer for read from socket	*/
 #define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/
@@ -125,9 +138,9 @@ struct siproxd_config {
 #define STATUSCODE_SIZE 5	/* size of string representation of status */
 #define DNS_CACHE_SIZE  32	/* number of entries in internal DNS cache */
 #define DNS_MAX_AGE	60	/* maximum age of an cache entry (sec)	*/
-#define HOSTNAME_SIZE	32	/* max string length of a hostname	*/
-#define USERNAME_SIZE	32	/* max string length of a username (auth) */
-#define PASSWORD_SIZE	32	/* max string length of a password (auth) */
+#define HOSTNAME_SIZE	64	/* max string length of a hostname	*/
+#define USERNAME_SIZE	64	/* max string length of a username (auth) */
+#define PASSWORD_SIZE	64	/* max string length of a password (auth) */
 
 
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/

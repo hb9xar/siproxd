@@ -120,14 +120,12 @@ static int parse_config (FILE *configfile) {
 
    struct cfgopts {
       char *keyword;
-      enum type {TYP_INT4, TYP_STRING, TYP_FLOAT} type;
+      enum type {TYP_INT4, TYP_STRING, TYP_FLOAT, TYP_STRINGA} type;
       void *dest;
    } configoptions[] = {
       { "debug_level",         TYP_INT4,   &configuration.debuglevel },
       { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
       { "daemonize",           TYP_INT4,   &configuration.daemonize },
-      { "host_inbound",        TYP_STRING, &configuration.inboundhost },
-      { "host_outbound",       TYP_STRING, &configuration.outboundhost },
       { "if_inbound",          TYP_STRING, &configuration.inbound_if },
       { "if_outbound",         TYP_STRING, &configuration.outbound_if },
       { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
@@ -143,6 +141,8 @@ static int parse_config (FILE *configfile) {
       { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
       { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
       { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
+      { "mask_host",           TYP_STRINGA, &configuration.mask_host },
+      { "masked_host",         TYP_STRINGA, &configuration.masked_host },
       {0, 0, 0}
    };
 
@@ -186,11 +186,18 @@ static int parse_config (FILE *configfile) {
 
 	    num=0;
 	    switch (configoptions[k].type) {
+
+	    //
+            // Integer4
+            //
 	    case TYP_INT4:
 	         num=sscanf(ptr,"%i",(int*)configoptions[k].dest);
                  DEBUGC(DBCLASS_BABBLE,"INT4=%i",*(int*)configoptions[k].dest);
 	      break;	    
 
+	    //
+	    // String
+	    //
 	    case TYP_STRING:
 	         /* the %as within sscanf seems to be not too portable.
                   * it is supposed to allocate the memory
@@ -205,6 +212,32 @@ static int parse_config (FILE *configfile) {
                  DEBUGC(DBCLASS_BABBLE,"STRING=%s",
                          *(char**)configoptions[k].dest);
 	      break;	    
+
+	    //
+	    // String array
+	    //
+	    case TYP_STRINGA:
+            {
+		 /* figure out the amount of space we need */
+                 char **dst;
+                 int used=((stringa_t*)(configoptions[k].dest))->used;
+		 // do I hace space left?
+                 if (used<=CFG_STRARR_SIZE){
+	            num=strlen(ptr)+1; /* include terminating zero!*/
+                    tmpptr=(char*)malloc(num);
+		    dst=&((stringa_t*)(configoptions[k].dest))->
+                         string[used];
+                    memcpy(dst, &tmpptr, sizeof(tmpptr));
+	            num=sscanf(ptr,"%s",tmpptr);
+		    DEBUGC(DBCLASS_BABBLE,"STRINGA[%i]=%s", used, (char*) (
+			   ((stringa_t*)(configoptions[k].dest))->string[used]) );
+		    ((stringa_t*)(configoptions[k].dest))->used++;
+                 } else {
+		    ERROR("no more space left in config string array %s",
+                          configoptions[k].keyword);
+                 }
+	      break;
+            }
 
 	    default:
 	      break;

@@ -7,18 +7,8 @@
 #
 
 ######################################################################
-# The IP addresses of the INBOUND and OUTBOUND interface can
-# be specified as hostnames or in dotted decimal form:
+# The interafce names of INBOUND and OUTBOUND interface.
 #
-# host_inbound=foo.bar.org
-#
-#   or as dotted decimal IP:
-#
-# this is the old style - specifying IP addresses:
-#host_inbound  = 10.0.0.1
-#host_outbound = my.external-ip.address
-#
-# the new way, simply give the interface name:
 if_inbound  = eth0
 if_outbound = ppp0
 
@@ -122,4 +112,20 @@ rtp_timeout = 60
 #  DBCLASS_AUTH    0x00000800      // Authentication
 #
 debug_level =      0x00000000
+
+######################################################################
+# Mask feature (experimental)
+#
+# Some UAs will always use the host/ip they register to as
+# host part in the registration record (which will be the inbound
+# ip address / hostname of the proxy) and can not be told to register a
+# different host (public IP address). This Mask feature allows to force
+# such a UA to be masqueraded to a different host.
+# -> Siemens SIP Phones seem to need this feature.
+#
+# mask_host=<inbound_ip/hostname>
+# masked_host=<hostname_to_be_masqueraded_as>
+#
+# mask_host=<10.0.1.1>			-- inbound IP address of proxy
+# masked_host=<my.public.host>		-- outbound hostname proxy
 

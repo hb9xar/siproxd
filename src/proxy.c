@@ -74,6 +74,7 @@ int proxy_request (sip_t *request) {
    sts=check_vialoop(request);
    if (sts == STS_TRUE) {
       DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring request");
+      /* according to the SIP RFC we are supposed to return an 482 error */
       return STS_FAILURE;
    }
 
@@ -90,8 +91,8 @@ int proxy_request (sip_t *request) {
 	 break;
       }
 
-      /* outgoing request ('from' == 'masq') */
-      if (compare_url(request->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
+      /* outgoing request ('from' == 'reg') */
+      if (compare_url(request->from->url, urlmap[i].reg_url)==STS_SUCCESS) {
          type=REQTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	        request->from->url->username,
@@ -292,6 +293,7 @@ int proxy_response (sip_t *response) {
    sts=check_vialoop(response);
    if (sts == STS_TRUE) {
       DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring response");
+      /* according to the SIP RFC we are supposed to return an 482 error */
       return STS_FAILURE;
    }
 
@@ -327,7 +329,7 @@ int proxy_response (sip_t *response) {
 	 break;
       }
 
-      /* outgoing response ('to' == 'masq') */
+      /* outgoing response ('to' == 'reg') */
       if (compare_url(response->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
@@ -499,12 +501,16 @@ int proxy_add_myvia (sip_t *request, int interface) {
    if (interface == 0) {
       sts = get_ip_by_ifname(configuration.outbound_if, &addr);
       if (sts == STS_FAILURE) {
-         sts = get_ip_by_host(configuration.outboundhost, &addr);
+         ERROR("can't find outbound interface %s - configuration error?",
+               configuration.outbound_if);
+         return STS_FAILURE;
       }
    } else {
       sts = get_ip_by_ifname(configuration.inbound_if, &addr);
       if (sts == STS_FAILURE) {
-         sts = get_ip_by_host(configuration.inboundhost, &addr);
+         ERROR("can't find inbound interface %s - configuration error?",
+               configuration.inbound_if);
+         return STS_FAILURE;
       }
    }
 
@@ -601,7 +607,9 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
    sts = get_ip_by_ifname(configuration.outbound_if, &outb_addr);
    if (sts == STS_FAILURE) {
-      sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
+      ERROR("can't find outbound interface %s - configuration error?",
+            configuration.inbound_if);
+      return STS_FAILURE;
    }
 
    for (media_stream_no=0;;media_stream_no++) {
