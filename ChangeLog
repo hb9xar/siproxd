@@ -1,26 +1,34 @@
+0.3.5
+=====
+ 20-Aug-2003:   - security tests: responses may have empty SIP URI
+                  don't fail there.
+                - increase size of call_id for RTP proxy table and
+                  include a size check.
+                - rtpproxy: cleaned up some stuff with handling of FD's
+
 0.3.4
 =====
- 05-Aug-2003:	- released 0.3.4
- 31-Jul-2003:	- now supports only OSIP2 only (due to rather big changes
-		  in the API libosip -> libosip2). Compiles cleanly w/
+ 05-Aug-2003:   - released 0.3.4
+ 31-Jul-2003:   - now supports OSIP2 only (due to rather big changes
+                  in the API libosip -> libosip2). Compiles cleanly w/
                   libosip2 2.0.2
 
 0.3.3
 =====
- 05-Jul-2003:	- released 0.3.3
- 10-May-2003:	- rewritten code in proxy_rewrite_invitation_body
-		  should now work (better) with multiple media streams
- 23-Apr-2003:	- FAQ updates: RTP internals
-		- more debug and error testing (MOREDEBUG)
-  6-Apr-2003:	- build options for FLI4L builds (libc5 & uClibc)
+ 05-Jul-2003:   - released 0.3.3
+ 10-May-2003:   - rewritten code in proxy_rewrite_invitation_body
+                  should now work (better) with multiple media streams
+ 23-Apr-2003:   - FAQ updates: RTP internals
+                - more debug and error testing (MOREDEBUG)
+  6-Apr-2003:   - build options for FLI4L builds (libc5 & uClibc)
 
 0.3.2
 =====
- 5-Apr-2003:	- released 0.3.2
- 4-Apr-2003:	- introduced config option 'silence_log' - this allows
- 		  to control how much logging is done to syslog - 
+ 5-Apr-2003:    - released 0.3.2
+ 4-Apr-2003:    - introduced config option 'silence_log' - this allows
+                   to control how much logging is done to syslog - 
                   logging can even completely be switched off...
- 1-Apr-2003:	- should now be able to deal with an outbound interface
+ 1-Apr-2003:    - should now be able to deal with an outbound interface
                   that is "temporary" DOWN (dial up internet access)
                   if outbounf IF is down, send back a response to
                   inbound UAs "408 Request Timeout".
@@ -34,49 +42,49 @@
                   that produced a bunch of "ERROR:Error in close(0): Bad file
                   descriptor" errors each time a RTP stream timed out
                 - fixed daemonizing (libc5) - now it properly detaches
-30-May-2003:	- always log ERROR, WARNING and INFO to syslog (also
+30-May-2003:    - always log ERROR, WARNING and INFO to syslog (also
                   if not running as daemon)
                 - minor corrections on ERROR printouts
 
 0.3.1
 =====
-- 29-May-2003:	- released 0.3.1
-		- fix in configure.in for statically linking to libosip
-		- fix in rewriting SIP messages, figure out proper
-		  destination if *not* rewriting the SIP URI
-		- another NULL pointer related crash (no UA header present)
+- 29-May-2003:  - released 0.3.1
+                - fix in configure.in for statically linking to libosip
+                - fix in rewriting SIP messages, figure out proper
+                  destination if *not* rewriting the SIP URI
+                - another NULL pointer related crash (no UA header present)
 
 0.3.0
 =====
-- 29-May-2003:	- released 0.3.0
-		- supports libosip2 (automatically detect osip1/osip2)
-		- redone authentication - now should work with libosip2
-		  libosip0.8.8 has a bug (fails in parse_msg)
-- 28-May-2003:	- changes in rewriting SIP messages - not everything
-		  is blindly rewritten now (e.g. SUBSCRIBE is NOT)
-		- fixed resource leak (sockets) in get_ip_by_ifname
-- 26-Mar-2003:	- Bugfix: some potential NULL pointers passed to atoi()
-		  of optional fields in SIP message could lead to crash
-- 23-Mar-2003:	- send 403 FORBIDDEN response to requests addressed
-		  to proxy itself (-> SUBSCRIBE bug) 
+- 29-May-2003:  - released 0.3.0
+                - supports libosip2 (automatically detect osip1/osip2)
+                - redone authentication - now should work with libosip2
+                  libosip0.8.8 has a bug (fails in parse_msg)
+- 28-May-2003:  - changes in rewriting SIP messages - not everything
+                  is blindly rewritten now (e.g. SUBSCRIBE is NOT)
+                - fixed resource leak (sockets) in get_ip_by_ifname
+- 26-Mar-2003:  - Bugfix: some potential NULL pointers passed to atoi()
+                  of optional fields in SIP message could lead to crash
+- 23-Mar-2003:  - send 403 FORBIDDEN response to requests addressed
+                  to proxy itself (-> SUBSCRIBE bug) 
 
 0.2.8
 =====
-- 23-Mar-2003:	- released 0.2.8
-		- made compile with uClibc (see doc/FLI4L_HOWTO.txt)
-- 22-Mar-2003:	- made compile on SUSE5.3 (libc5)
-		- added --enable-almost-static feature switch. This will
+- 23-Mar-2003:  - released 0.2.8
+                - made compile with uClibc (see doc/FLI4L_HOWTO.txt)
+- 22-Mar-2003:  - made compile on SUSE5.3 (libc5)
+                - added --enable-almost-static feature switch. This will
                   build siproxd statically linked against libosip & pthreads
                   (for Fli4l use)
-- 16-Mar-2003:	- ERROR on unknown keywords in config file
-		- introduced INFO logging
+- 16-Mar-2003:  - ERROR on unknown keywords in config file
+                - introduced INFO logging
 
 0.2.7
 =====
-- 15-Mar-2003:	- released 0.2.7
--  9-Mar-2003:	- replaced get_ip_by_ifname by simpler code 
-		  (still to be *BSD tested)
-		- removed old host-name based style for in/outbound interface
+- 15-Mar-2003:  - released 0.2.7
+-  9-Mar-2003:  - replaced get_ip_by_ifname by simpler code 
+                  (still to be *BSD tested)
+                - removed old host-name based style for in/outbound interface
                   configuration. This is only done via interface names
                 - experimental: The host part of UA registration entries
                   can be masqueraded (mask_host, masked_host config items)
@@ -84,113 +92,113 @@
 
 0.2.6
 =====
-- 28-Jan-2003:	- released 0.2.6
-		- New Feature: RTP proxy should be able to handle multiple
-		  media stream in the same session (audio + video)
-- 21-Jan-2003:	- Bugfix: crash in compare_url (MSN Messenger issue)
-- 19-Jan-2003:	- use of libosip-0.9.3 not possible yet -
+- 28-Jan-2003:  - released 0.2.6
+                - New Feature: RTP proxy should be able to handle multiple
+                  media stream in the same session (audio + video)
+- 21-Jan-2003:  - Bugfix: crash in compare_url (MSN Messenger issue)
+- 19-Jan-2003:  - use of libosip-0.9.3 not possible yet -
                   libosip fails in msg_setproxy_authenticate
                   -> Bug in libosip? to be investigated!
-		- give IP address in debug for 'received packet'
+                - give IP address in debug for 'received packet'
                 - 'WARNING:proxy.c:202 request from/to unregistered UA' now
                   includes sender and destination url
-- 17-Jan-2003:	- OpenBSD: do not link against gnugetopt (Luke Renn)
+- 17-Jan-2003:  - OpenBSD: do not link against gnugetopt (Luke Renn)
 
 0.2.5a
 ======
--  6-Dec-2002:	- released 0.2.5a (major bugfixes)
-		- Bugfix: interfaces on odd positions (the 1st , 3rd, 5th)
-		  have been skipped during the search (ip by interface)
-		- Bugfix: MSN messenger 4.6 caused a segfault due to
-		  non supplied username in contact header during
-		  registration. (Credits to Dhiraj Bhuyan for the hint)
-		  Included additional tests in that area.
--  4-Dec-2002:	- fixed a major (but stupid) bug in check_vialoop. Siproxd
-		  wrongly claimed to have detected a loop...
+-  6-Dec-2002:  - released 0.2.5a (major bugfixes)
+                - Bugfix: interfaces on odd positions (the 1st , 3rd, 5th)
+                  have been skipped during the search (ip by interface)
+                - Bugfix: MSN messenger 4.6 caused a segfault due to
+                  non supplied username in contact header during
+                  registration. (Credits to Dhiraj Bhuyan for the hint)
+                  Included additional tests in that area.
+-  4-Dec-2002:  - fixed a major (but stupid) bug in check_vialoop. Siproxd
+                  wrongly claimed to have detected a loop...
 
 0.2.4
 =====
-- 23-Nov-2002:	- released 0.2.4 (feature enhancements)
-		- BSD: resolved some compatibility issues (sscanf ->
-		  resulted in coredump when reading config file)
-		  should now build on *BSD (tested on FreeBSD 4-7)
-		- inbound/outbound interfaces now can be specified
-		  by their interface name - this removes the need
-		  for a 'quasi' static IP and restarting siproxd at
-		  change of IP address.
-- 13-Nov-2002:	- working on portability - goal is building on *BSD
-		  (feedback from Georg Schwarz)
+- 23-Nov-2002:  - released 0.2.4 (feature enhancements)
+                - BSD: resolved some compatibility issues (sscanf ->
+                  resulted in coredump when reading config file)
+                  should now build on *BSD (tested on FreeBSD 4-7)
+                - inbound/outbound interfaces now can be specified
+                  by their interface name - this removes the need
+                  for a 'quasi' static IP and restarting siproxd at
+                  change of IP address.
+- 13-Nov-2002:  - working on portability - goal is building on *BSD
+                  (feedback from Georg Schwarz)
 0.2.3
 =====
 - 10-Nov-2002:  - released 0.2.3 (minor fixes)
--  9-Nov-2002:	- make install also installs a sample password file
-		  (/etc/siproxd_passwd.cfg)
--  8-Nov-2002:	- string manipulations & data structures: better error
-		  handling on some places.
--  2-Nov-2002:	- 'make install' install now a templace config file
-		  (/etc/siproxd.conf.example)
-- 24-Oct-2002:	- small docu updates in README
-- 17-Oct-2002:	- fix in ./configure - abort on missing libraries
+-  9-Nov-2002:  - make install also installs a sample password file
+                  (/etc/siproxd_passwd.cfg)
+-  8-Nov-2002:  - string manipulations & data structures: better error
+                  handling on some places.
+-  2-Nov-2002:  - 'make install' install now a templace config file
+                  (/etc/siproxd.conf.example)
+- 24-Oct-2002:  - small docu updates in README
+- 17-Oct-2002:  - fix in ./configure - abort on missing libraries
 
 0.2.2
 =====
-- 12-Oct-2002:	- Released version 0.2.2
-		- '-d' commandline option supersedes config file setting
-		  of debug_level.
-		- reworked return status from functions - now uses
-		  symbolic values and is more consistent
-		- added individual user passwords for authentication
+- 12-Oct-2002:  - Released version 0.2.2
+                - '-d' commandline option supersedes config file setting
+                  of debug_level.
+                - reworked return status from functions - now uses
+                  symbolic values and is more consistent
+                - added individual user passwords for authentication
 
 0.2.1
 =====
-- 28-Sep-2002:	- Released version 0.2.1
-- 27-Sep-2002:	- first implementation of proxy authentication (for REGISTER)
-- 24-Sep-2002:	- if daemonized, log to syslog
-- 22-Sep-2002:	- added access list support for registration and incoming
-		  SIP packets.
-- 21-Sep-2002:	- added RPM support (Spec File)
+- 28-Sep-2002:  - Released version 0.2.1
+- 27-Sep-2002:  - first implementation of proxy authentication (for REGISTER)
+- 24-Sep-2002:  - if daemonized, log to syslog
+- 22-Sep-2002:  - added access list support for registration and incoming
+                  SIP packets.
+- 21-Sep-2002:  - added RPM support (Spec File)
 
 0.2.0
 =====
-- 17-Sep-2002:	- Released version 0.2.0
-- 15-Sep-2002:	- added functionality to change user ID (drop privs)
-		  after startup (configurable)
-		- added optional chroot jail (configurable)
+- 17-Sep-2002:  - Released version 0.2.0
+- 15-Sep-2002:  - added functionality to change user ID (drop privs)
+                  after startup (configurable)
+                - added optional chroot jail (configurable)
 
 0.1.3
 =====
-- 11-Sep-2002:	- Fixed a error in the autoconf/automake part of the project.
-		  (scripts subdirectory was missing in the tar.gz archive.
-		  This resulted in an error during ./configure - complaining
-		  about non existent install-sh script)
-		- startup is more silent - set initial debug level to 0
-- 10-Sep-2002:	- Some (yea, I know...) -minor- docu updates
--  8-Sep-2002:	- Masquerade Contact Headers of inbound clients
-		  (Contact header will be used by the remote SIP
-		  user agent to directly contact the local user agent -
-		  and bypassing the proxy. This of course will *not* work
-		  if the local user agent is located in a private IP range.)
-		- Performance optimizations in RTP proxy
-		- Bugfix: now masqueraded clients work with any
-		  SIP port (other than 5060). Before, incoming
-		  requests/responses where always sent to port 5060.
+- 11-Sep-2002:  - Fixed a error in the autoconf/automake part of the project.
+                  (scripts subdirectory was missing in the tar.gz archive.
+                  This resulted in an error during ./configure - complaining
+                  about non existent install-sh script)
+                - startup is more silent - set initial debug level to 0
+- 10-Sep-2002:  - Some (yea, I know...) -minor- docu updates
+-  8-Sep-2002:  - Masquerade Contact Headers of inbound clients
+                  (Contact header will be used by the remote SIP
+                  user agent to directly contact the local user agent -
+                  and bypassing the proxy. This of course will *not* work
+                  if the local user agent is located in a private IP range.)
+                - Performance optimizations in RTP proxy
+                - Bugfix: now masqueraded clients work with any
+                  SIP port (other than 5060). Before, incoming
+                  requests/responses where always sent to port 5060.
 
 0.1.2
 =====
--  7-Sep-2002:	- Released version 0.1.2
-		- fixed registration concept (SIP Contact header is not
-		  a *must* to be present in every frame)
-		- Experimental RTP proxying feature (using pthreads)
-- 26-Aug-2002:	- Optimized DNS caching
+-  7-Sep-2002:  - Released version 0.1.2
+                - fixed registration concept (SIP Contact header is not
+                  a *must* to be present in every frame)
+                - Experimental RTP proxying feature (using pthreads)
+- 26-Aug-2002:  - Optimized DNS caching
 
 0.1.1
 =====
 - 25-Aug-2002:  - Released version 0.1.1
-		- can daemonize (detach and run in background)
-		- do some DNS caching
-- 24-Aug-2002:	- Imlemented support for a config file,
-		- obsoletes siproxd_conf.h
+                - can daemonize (detach and run in background)
+                - do some DNS caching
+- 24-Aug-2002:  - Imlemented support for a config file,
+                - obsoletes siproxd_conf.h
 
 0.1.0
 =====
-- 19-Aug-2002:	- Released version 0.1.0
+- 19-Aug-2002:  - Released version 0.1.0

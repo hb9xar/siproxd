@@ -3,7 +3,6 @@ TODOs, in random order:
 
 - siproxd daemonized: looks like clashes between threads
 - Daemonizing: daemon() f*** up a following pthread_create
-- is select() really tread safe? libc bug?
 - lost 200 ACK immediately before RTP starts...
 
 - TERM handler
@@ -26,11 +25,31 @@ TODOs, in random order:
 
 - get_ip_by_host: reduce DNS timeouts (seems to be a more complex problem...)
 
-- (support for "full duplex" RTP proxying) 
-
 - via loop detection: send 482 error code
 
 - support Record-Route header
 
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
+
+- support for "full duplex" RTP proxying
+
+- symmetric RTP proxying
+  This seems to be a more complex issue. It looks like some 
+  SIP phone only do work properly with symmetric RTP data flow:
+  Phone A UDP-Port X <-> Phone B UDP-Port Y
+  
+  The following then seems to produce just "silence" (no RX of audio):
+  Phone A UDP-Port X  -> Phone B UDP-Port Y
+  Phone A UDP-Port X <-  Phone B UDP-Port Z
+  Unfortunately this is the scenario resulting from siproxd's
+  the RTP proxy...
+  
+  This we might overcome by introducing a full-duplex RTP proxy that
+  takes care of this.
+  An other idea might be to not proxy at all, but inject/open an
+  UDP masquerading tunnel in the firewall (there exist a C call interface
+  for doing such things). This would be easier I think - but is then Linux
+  specific and depends of the kernel (ipchains / iptables, ...)
+
+- maybe STUN support

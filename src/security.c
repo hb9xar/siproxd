@@ -62,19 +62,19 @@ int security_check_raw(char *sip_buffer, int size){
  */
 int security_check_sip(osip_message_t *sip){
 
-   /* check for existing SIP URI */
-   if (sip->req_uri == NULL) {
+   /* check for existing SIP URI in request */
+   if (MSG_IS_REQUEST(sip) && (sip->req_uri == NULL)) {
       ERROR("security check failed: NULL SIP URI");
       return STS_FAILURE;
    }
 
-   /* check for existing TO */
+   /* check for existing To: header */
    if (sip->to == NULL) {
       ERROR("security check failed: NULL To Header");
       return STS_FAILURE;
    }
 
-   /* check for existing TO URL */
+   /* check for existing To: URL */
    if (sip->to->url == NULL) {
       ERROR("security check failed: NULL To->url Header");
       return STS_FAILURE;

@@ -50,11 +50,12 @@ pthread_mutex_t rtp_proxytable_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * table to remember all active rtp proxy streams
  */
-#define CALLID_SIZE	32
+#define CALLIDNUM_SIZE	256
+#define CALLIDHOST_SIZE	32
 struct {
    int sock;
-   char callid_number[CALLID_SIZE];
-   char callid_host[CALLID_SIZE];
+   char callid_number[CALLIDNUM_SIZE];
+   char callid_host[CALLIDHOST_SIZE];
    int media_stream_no;
    struct in_addr outbound_ipaddr;
    int outboundport;
@@ -121,7 +122,7 @@ void *rtpproxy_main(void *arg) {
    fd_set fdset;
    int fd_max;
    time_t t, last_t=0;
-   int i, count;
+   int i, count, sts;
    int num_fd;
    static int rtp_socket=0;
    osip_call_id_t callid;
@@ -137,9 +138,29 @@ void *rtpproxy_main(void *arg) {
       tv.tv_usec = 0;
 
       num_fd=select(fd_max+1, &fdset, NULL, NULL, &tv);
-      if ((num_fd<0) && (errno==EINTR)) continue;
+      if ((num_fd<0) && (errno==EINTR)) {
+         /*
+          * wakeup due to a change in the proxy table:
+          * lock mutex copy master FD set and unlock
+          */
+         pthread_mutex_lock(&rtp_proxytable_mutex);
+         memcpy(&fdset, &master_fdset, sizeof(fdset));
+         fd_max=master_fd_max;
+         pthread_mutex_unlock(&rtp_proxytable_mutex);
+         continue;
+      }
+
 #ifdef MOREDEBUG /*&&&&*/
-if (num_fd<0) {WARN("select() returned error [%s]",strerror(errno));}
+if (num_fd<0) {
+   int i;
+   WARN("select() returned error [%s]",strerror(errno));
+   for (i=0;i<RTPPROXY_SIZE;i++) {
+      DEBUGC(DBCLASS_RTP,"maxfd=%i",master_fd_max);
+      if (rtp_proxytable[i].sock != 0) {
+         DEBUGC(DBCLASS_RTP,"[%i] -> socket=%i",i, rtp_proxytable[i].sock);
+      }
+   } /* for i */
+}
 #endif
       time(&t);
 
@@ -159,15 +180,19 @@ if (num_fd<0) {WARN("select() returned error [%s]",strerror(errno));}
 
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
+
 #ifdef MOREDEBUG /*&&&&*/
-if (read<0) {WARN("read() returned error [%s]",strerror(errno));}
+if (count<0) {WARN("read() returned error [%s]",strerror(errno));}
 #endif
 
 	    /* write to dest via socket rtp_inbound*/
-            sipsock_send_udp(&rtp_socket,
+            sts=sipsock_send_udp(&rtp_socket,
 	                     rtp_proxytable[i].inbound_client_ipaddr,
 			     rtp_proxytable[i].inbound_client_port,
 			     rtp_buff, count, 0); /* don't dump it */
+#ifdef MOREDEBUG /*&&&&*/
+if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
+#endif
             /* update timestamp of last usage */
             rtp_proxytable[i].timestamp=t;
 
@@ -242,6 +267,26 @@ int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
       return STS_FAILURE;
    }
 
+
+   /*
+    * life insurance: check size of received call_id strings
+    * I don't know what the maximum allowed size within SIP is,
+    * so if this test fails maybe it's just necessary to increase
+    * the constants CALLIDNUM_SIZE and/or CALLIDHOST_SIZE.
+    */
+   if (strlen(callid->number) > CALLIDNUM_SIZE) {
+      ERROR("rtp_start_fwd: received callid number "
+            "has too many characters (%i, max=%i)",
+            strlen(callid->number),CALLIDNUM_SIZE);
+      return STS_FAILURE;
+   }
+   if (strlen(callid->host) > CALLIDHOST_SIZE) {
+      ERROR("rtp_start_fwd: received callid host "
+            "has too many characters (%i, max=%i)",
+            strlen(callid->host),CALLIDHOST_SIZE);
+      return STS_FAILURE;
+   }
+
 #ifdef MOREDEBUG /*&&&&*/
 INFO("starting RTP proxy stream for: %s@%s #=%i",
      callid->number, callid->host, media_stream_no);
@@ -299,25 +344,7 @@ INFO("starting RTP proxy stream for: %s@%s #=%i",
          /* outbound port already in use */
          if ((memcmp(&rtp_proxytable[j].outbound_ipaddr,
 	             &outbound_ipaddr, sizeof(struct in_addr))== 0) &&
-	     (rtp_proxytable[j].outboundport == i) ) {
-
-#if 0 // redundant code - program flow should never reach this one
-            /* if the rtp proxy stream is already active (this must then
-               be a repetition of an SIP UDP INVITE packet) just pass back 
-               the used port number an do nothing more */
-            if((strcmp(rtp_proxytable[j].callid_number, callid->number)==0) &&
-	       (strcmp(rtp_proxytable[j].callid_host, callid->host)==0) ) {
-               /* return the already known port number */
-               DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i)",
-	              rtp_proxytable[j].outboundport);
-	       *outboundport=rtp_proxytable[j].outboundport;
-	       sts = STS_SUCCESS;
-	       goto unlock_and_exit;
-	    }
-#endif
-
-	    break;
-	 }
+	     (rtp_proxytable[j].outboundport == i) ) break;
       }
 
       /* port is available, try to allocate */
@@ -381,12 +408,12 @@ INFO("starting RTP proxy stream for: %s@%s #=%i",
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();
 
-/* wakeup/signal rtp_proxythread from select() hibernation */
+   /* wakeup/signal rtp_proxythread from select() hibernation */
    if (!pthread_equal(rtpproxy_tid, pthread_self()))
       pthread_kill(rtpproxy_tid, SIGALRM);
 
 unlock_and_exit:
-/* unlock mutex */
+   /* unlock mutex */
    pthread_mutex_unlock(&rtp_proxytable_mutex);
    #undef return
 
@@ -437,6 +464,14 @@ INFO("stopping RTP proxy stream for: %s@%s",
        * !! this minimizes the risk of deadlocks.
        */
    }
+   /* 
+   * wakeup/signal rtp_proxythread from select() hibernation.
+   * This must be done here before we close the socket, otherwise
+   * we may get an select() error later from the proxy thread that
+   * is still hibernating in select() now.
+   */
+   if (!pthread_equal(rtpproxy_tid, pthread_self()))
+      pthread_kill(rtpproxy_tid, SIGALRM);
 
    /*
     * find the proper entry in rtp_proxytable
@@ -484,9 +519,6 @@ INFO("stopping RTP proxy stream for: %s@%s",
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();
    
-   /* wakeup/signal rtp_proxythread from select() hibernation */
-   if (!pthread_equal(rtpproxy_tid, pthread_self()))
-      pthread_kill(rtpproxy_tid, SIGALRM);
 
 unlock_and_exit:
    /*
@@ -514,7 +546,7 @@ int rtp_recreate_fdset(void) {
    int i;
 
    FD_ZERO(&master_fdset);
-   master_fd_max=0;
+   master_fd_max=-1;
    for (i=0;i<RTPPROXY_SIZE;i++) {
       if (rtp_proxytable[i].sock != 0) {
          FD_SET(rtp_proxytable[i].sock, &master_fdset);

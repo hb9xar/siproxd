@@ -145,7 +145,7 @@ struct siproxd_config {
 #define URLMAP_SIZE	32	/* number of URL mapping table entries	*/
 #define RTPPROXY_SIZE	64	/* number of rtp proxy entries		*/
 
-#define BUFFER_SIZE	1024	/* input buffer for read from socket	*/
+#define BUFFER_SIZE	8196	/* input buffer for read from socket	*/
 #define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/
 #define URL_STRING_SIZE	128	/* max size of an URL/URI string	*/
 #define STATUSCODE_SIZE 5	/* size of string representation of status */

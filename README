@@ -22,7 +22,7 @@ IP addresses and port numbers.
 
 REQUIREMENTS
 ============
-- libosip-0.8.8		(http://www.fsf.org/software/osip/)
+- libosip2-2.0.2	(http://www.fsf.org/software/osip/)
 - pthreads		(should be part of any Linux distribution)
 
 Up to now, siporxd only has been tested under:
@@ -213,6 +213,8 @@ Thomas Ries  (tries@gmx.net)
    GnuPG Public Key:
    pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
    Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
+
+VoIP:  17476691342@proxy01.sipphone.com
 
 
 

@@ -49,7 +49,8 @@ Reported interoperability (tested with softphones):
  - MSN messenger 4.6 (remote and local UA)
 
 Known bugs:
-
+ - does not yet work with Grandstream BudgeTone phones,
+   but I'm working on this.
 
 -----
 md5sum for siproxd-0.3.4.tar.gz: 	
