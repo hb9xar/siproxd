@@ -1,7 +1,7 @@
-Release Notes for siproxd-0.4.1
+Release Notes for siproxd-0.4.2
 ===============================
 
- - May be used as an pure Outbound proxy (registration of local UAs
+ - May be used as pure Outbound proxy (registration of local UAs
    to a 3rd party registrar)
  - Fli4l OPT_SIP (still experimental) available, check
    http://home.arcor.de/jsffm/fli4l/
@@ -17,17 +17,16 @@ Release Notes for siproxd-0.4.1
  - RTP proxy can handle multiple RTP streams (eg. audio + video)
    within a single SIP session.
  - Multiple local users/hosts can be masqueraded simultaneously
- - Supports running in a chroot jail (configurable)
- - Supports changing user-ID after startup (if started as root)
+ - Supports running in a chroot jail and changing user-ID after startup
  - All configuration done via one simple ascii configuration file
  - Proxy Authentication for registration of local clients (User Agents)
    with individual passwords for each user
  - Logging to syslog in daemon mode
  - Access control (IP based) for incoming traffic
- - RPM support
+ - RPM package available
  - works with "dial-up" conenctions (dynamic IP addresses)
  - The host part of UA registration entries can be masqueraded
-   (mask_host, masked_host config items) Siemens SIP phones seem to
+   (mask_host, masked_host config items). Some Siemens SIP phones seem to
    need this 'feature'.
 
 Requirements:
@@ -62,16 +61,9 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.4.1.tar.gz: 	af7d0e56eefabfbd24c5338460cd6f95
+md5sum for siproxd-0.4.2.tar.gz: 	
 
-GnuPG signature for siproxd-0.4.1.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/iSoPCfzBioe83JQRAhEcAKCmMxXgiPEce7g6vVYr//OWx7mZRACeM4h3
-Vh1INpiRnFUFA3BATgbG4fg=
-=fuMJ
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.4.2.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -21,7 +21,7 @@
 
 CFLAGS =@CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
-bin_PROGRAMS = siproxd
+sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c log.c readconf.c rtpproxy.c \
                   rtpproxy_relay.c rtpproxy_masq.c accessctl.c \

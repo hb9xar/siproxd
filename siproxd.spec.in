@@ -45,7 +45,8 @@ make
 make prefix=$RPM_BUILD_ROOT%{prefix} \
      sysconfdir=$RPM_BUILD_ROOT%{sysconfdir} \
      install
-mv %{sysconfdir}/siproxd.conf.example %{sysconfdir}/siproxd.conf
+mv $RPM_BUILD_ROOT%{sysconfdir}/siproxd.conf.example \
+   $RPM_BUILD_ROOT%{sysconfdir}/siproxd.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -53,7 +54,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %doc COPYING README AUTHORS INSTALL NEWS ChangeLog doc/FAQ doc/FLI4L_HOWTO.txt
-%{_bindir}/siproxd
+%{_sbindir}/siproxd
 %config %{sysconfdir}/siproxd.conf
 %config %{sysconfdir}/siproxd_passwd.cfg
 
@@ -62,12 +63,15 @@ echo "Edit the config file %{sysconfigdir}/siproxd.conf!"
 
 
 %changelog
-* Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
+* Fri Oct 31 2003 Thomas Ries <tries@gmx.net>
+- siproxd is now installed to sbin directory
+
+* Fri Oct 24 2003 Thomas Ries <tries@gmx.net>
 - added config files and some more doc files
 - rename sample config file and remind uder to edit it.
 - minor cleanup
 
-* Sat Oct 24 2003 Thomas Ries <tries@gmx.net>
+* Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
 - always use /etc as sysconfdir
 
 * Sat Sep 21 2002 Thomas Ries <tries@gmx.net>

@@ -1,6 +1,7 @@
 0.4.2
 =====
   31-Oct-2003:	- released 0.4.2
+		- Makefile: install siproxd to sbin (was bin)
   24-Oct-2003:	- SPEC file: included config files & more docu
   19-Oct-2003:	- included compiling support for DMALLOC debugging
 		- fixed 2 memory leaks in proxy.c
