@@ -28,7 +28,6 @@
 #include <arpa/inet.h>
 
 #include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +55,7 @@ static int listen_socket=0;
 int sipsock_listen (void) {
    struct in_addr ipaddr;
 
-   memset(&ipaddr, 0, sizeof(struct in_addr));
+   memset(&ipaddr, 0, sizeof(ipaddr));
    listen_socket=sockbind(ipaddr, configuration.sip_listen_port, 1);
    if (listen_socket == 0) return STS_FAILURE; /* failure*/
 
@@ -179,6 +178,8 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
    struct sockaddr_in my_addr;
    int sts;
    int sock;
+
+   memset(&my_addr, 0, sizeof(my_addr));
 
    my_addr.sin_family = AF_INET;
    memcpy(&my_addr.sin_addr.s_addr, &ipaddr, sizeof(struct in_addr));

@@ -348,8 +348,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
           port, sock, freeidx);
 
    /* found an unused port? No -> RTP port pool fully allocated */
-   if (port == 0) {
-      ERROR("rtp_relay_start_fwd: no RTP port available. Check rtp_port_* config!");
+   if ((port == 0) || (sock == 0)) {
+      ERROR("rtp_relay_start_fwd: no RTP port available or bind() failed");
       sts = STS_FAILURE;
       goto unlock_and_exit;
    }

@@ -151,8 +151,6 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    #endif   
    }
 #elif defined(HAVE_GETHOSTBYNAME)
-   #warning "did not find reentrant version of gethostbyname_r()"
-   #warning "depending of your OS this may or may not work"
    hostentry=gethostbyname(hostname);
    if (hostentry == NULL) error = h_errno;
 #else
@@ -234,7 +232,7 @@ void secure_enviroment (void) {
        */
       if (configuration.chrootjail) {
          /* !!!
-          * Before chrooting I must at leat once trigger the resolver
+          * Before chrooting I must at least once trigger the resolver
           * as it loads some dynamic libraries. Once chrootet
           * these libraries will *not* be found and gethostbyname()
           * calls will simply fail (return NULL pointer and h_errno=0).

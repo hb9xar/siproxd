@@ -1,0 +1,8 @@
+Portability issues:
+
+
+FreeBSD:
+- #include <sys/types.h>
+  before
+  #include <netinet/in.h>
+
