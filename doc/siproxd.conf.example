@@ -71,7 +71,10 @@ user = nobody
 # global switch to control the RTP proxy behaviour
 #       0 - RTP proxy disabled
 #       1 - RTP proxy (UDP relay of siproxd)
-#       2 - RTP masquerading (Siproxd will open masquerading tunnels
+#
+#       2 - RTP masquerading IPCHAINS
+#       3 - RTP masquerading Netfilter/IPTABLES
+#                            (Siproxd will open masquerading tunnels
 #                             in the firewall. Requires ipchains.
 #                             NOTE: siproxd must be started by root!)
 #    
