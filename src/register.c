@@ -83,7 +83,7 @@ void register_init(void) {
                if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
                if (strlen(buff) > 0) {\
                   size = strlen(buff);\
-                  X    =(char*)malloc(size);\
+                  X    =(char*)malloc(size+1);\
                   sts=sscanf(buff,"%s",X);\
                } else {\
                   X = NULL;\
