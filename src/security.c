@@ -83,37 +83,29 @@ int security_check_sip(osip_message_t *sip){
       }
    }
 
+
    /* check for existing To: header */
-   if (sip->to == NULL) {
+   if ((sip->to==NULL)||(sip->to->url==NULL)||(sip->to->url->host==NULL)) {
       ERROR("security check failed: NULL To Header");
-      return STS_FAILURE;
-   }
-   /* check for existing To: URL */
-   if (sip->to->url == NULL) {
-      ERROR("security check failed: NULL To->url Header");
-      return STS_FAILURE;
-   }
-    /* check for existing TO URL host*/
-   if (sip->to->url->host == NULL) {
-      ERROR("security check failed: NULL To->url->host Header");
       return STS_FAILURE;
    }
 
   /* check for existing FROM */
-   if (sip->from == NULL) {
+   if ((sip->from==NULL)||(sip->from->url==NULL)||(sip->from->url->host==NULL)) {
       ERROR("security check failed: NULL From Header");
       return STS_FAILURE;
    }
-   /* check for existing FROM URL */
-   if (sip->from->url == NULL) {
-      ERROR("security check failed: NULL From->url Header");
+
+  /* check for existing CSEQ header */
+   if ((sip->cseq==NULL)||(sip->cseq->method==NULL)||(sip->cseq->number==NULL)) {
+      ERROR("security check failed: NULL CSeq Header");
       return STS_FAILURE;
    }
-   /* check for existing FROM URL host*/
-   if (sip->from->url->host == NULL) {
-      ERROR("security check failed: NULL From->url->host Header");
-      return STS_FAILURE;
-   }
+
+
+/*
+   check the RFC and implement tests for ALL mandatory headers here
+*/
 
 
    /* TODO: still way to go here ... */

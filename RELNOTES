@@ -1,9 +1,9 @@
-Release Notes for siproxd-0.5.4
+Release Notes for siproxd-0.5.5
 ===============================
 
-Major changes since 0.5.3:
- - minor documentation and FAQ updates
- - some bugfixes in Proxy Authorization handling
+Major changes since 0.5.4:
+ - 
+ - 
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -71,16 +71,9 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.4.tar.gz: 	7bbde9fb65a3285b125b4d208a0cdf62
+md5sum for siproxd-0.5.5.tar.gz: 	
 
-GnuPG signature for siproxd-0.5.4.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQBASaprCfzBioe83JQRAswDAJ4rEERvkU0s3HHEnbuA1o44XykMhgCfVpG9
-9JqbE3KKTC4/W72C9NUxUn8=
-=LvlG
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.5.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -73,10 +73,12 @@ osip_message_t *msg_make_template_reply (osip_message_t * request, int code) {
 
    if (request->to==NULL) {
       ERROR("msg_make_template_reply: empty To in request header");
+      return NULL;
    }
 
    if (request->from==NULL) {
       ERROR("msg_make_template_reply: empty From in request header");
+      return NULL;
    }
 
    osip_to_clone (request->to, &response->to);
@@ -97,6 +99,7 @@ osip_message_t *msg_make_template_reply (osip_message_t * request, int code) {
    }
 
    osip_call_id_clone(request->call_id,&response->call_id);
+   
    osip_cseq_clone(request->cseq,&response->cseq);
 
    return response;

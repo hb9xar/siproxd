@@ -348,7 +348,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    }
 
    if (client_id == NULL) {
-      ERROR("rtp_relay_start_fwd: contact header is NULL!");
+      ERROR("rtp_relay_start_fwd: did not get a client ID!");
       return STS_FAILURE;
    }
 

@@ -963,29 +963,42 @@ if (configuration.debuglevel)
 
             if (msg_port > 0) {
                osip_uri_t *cont_url = NULL;
-               char *user=NULL;
+               char *client_id=NULL;
+               /* try to get some additional UA specific unique ID.
+                * Try:
+                * 1) User part of Contact header
+                * 2) Host part of Contact header (will be different
+                *    between internal UA and external UA)
+                */
                if (!osip_list_eol(mymsg->contacts, 0))
                   cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
-               if (cont_url) user=cont_url->username;
-
-               rtp_start_fwd(osip_message_get_call_id(mymsg),
-                             user,
-                             rtp_direction,
-                             media_stream_no,
-                             map_addr, &map_port,
-                             msg_addr, msg_port);
-               /* and rewrite the port */
-               sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
-               if (sdp_med && sdp_med->m_port) {
-                  osip_free(sdp_med->m_port);
-                  sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
-                  sprintf(sdp_med->m_port, "%i", map_port);
-                  DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                         "m= rewrote port to [%i]",map_port);
-               } else {
-                  ERROR("rewriting port in m= failed sdp_med=%p, "
-                        "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+               if (cont_url) {
+                  client_id=cont_url->username;
+                  if (client_id == NULL) client_id=cont_url->host;
                }
+               
+
+               sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
+                                   client_id,
+                                   rtp_direction,
+                                   media_stream_no,
+                                   map_addr, &map_port,
+                                   msg_addr, msg_port);
+
+               if (sts == STS_SUCCESS) {
+                  /* and rewrite the port */
+                  sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
+                  if (sdp_med && sdp_med->m_port) {
+                     osip_free(sdp_med->m_port);
+                     sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
+                     sprintf(sdp_med->m_port, "%i", map_port);
+                     DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                            "m= rewrote port to [%i]",map_port);
+                  } else {
+                     ERROR("rewriting port in m= failed sdp_med=%p, "
+                           "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+                  }
+               } /* sts == success */
             } /* if msg_port > 0 */
          } else {
             /* no port defined - skip entry */

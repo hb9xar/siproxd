@@ -1,3 +1,12 @@
+0.5.5
+=====
+  21-Mar-2004:  - added ./autogen.sh
+  19-Mar-2004:  - proxy_rewrite_invitation_body: check success of
+                  starting RTP relay before rewriting SDP body
+                - proxy_rewrite_invitation_body: don't fail on
+                  Contact header with no user part.
+  18-Mar-2004:  - security_check_sip: CSeq header must be present.
+
 0.5.4
 =====
    6-Mar-2004:  - Released 0.5.4
