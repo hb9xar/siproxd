@@ -273,7 +273,7 @@ int proxy_request (osip_message_t *request) {
        * (rewrite request URI to point to the real host)
        */
       /* 'i' still holds the valid index into the URLMAP table */
-      if (check_rewrite_rq_uri(request)==STS_TRUE) {
+      if (check_rewrite_rq_uri(request) == STS_TRUE) {
          proxy_rewrite_request_uri(request, i);
       }
 
@@ -297,7 +297,9 @@ int proxy_request (osip_message_t *request) {
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
          /* First, rewrite the body */
-         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
+         if (configuration.rtp_proxy_enable == 1) {
+            sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
+         }
 
          /*
           * Note: Incoming requests have no need to rewrite Contact
@@ -401,7 +403,7 @@ int proxy_request (osip_message_t *request) {
       if (configuration.outbound_proxy_port) {
          port=configuration.outbound_proxy_port;
       } else {
-         port = 5060;
+         port = SIP_PORT;
       }
    } else {
       /* get the destination from the SIP URI */
@@ -510,8 +512,10 @@ int proxy_response (osip_message_t *response) {
           (compare_url(response->to->url, urlmap[i].reg_url)==STS_SUCCESS)){
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
-	   response->from->url->username? response->from->url->username:"*NULL*",
-	   response->from->url->host? response->from->url->host : "*NULL*");
+	        response->from->url->username ?
+                   response->from->url->username : "*NULL*",
+	        response->from->url->host ? 
+                   response->from->url->host : "*NULL*");
 	 break;
       }
    }
@@ -529,7 +533,9 @@ int proxy_response (osip_message_t *response) {
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
          /* This is an incoming response, therefore we need an incoming stream */
-         sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
+         if (configuration.rtp_proxy_enable == 1) {
+            sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
+         }
 
       }
 
@@ -585,7 +591,7 @@ int proxy_response (osip_message_t *response) {
       if (configuration.outbound_proxy_port) {
          port=configuration.outbound_proxy_port;
       } else {
-         port = 5060;
+         port = SIP_PORT;
       }
    } else {
       /* get target address and port from VIA header */
@@ -666,6 +672,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    osip_free(bodybuff);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_message_parse body");
+      sdp_message_free(sdp);
       return STS_FAILURE;
    }
 
@@ -690,6 +697,7 @@ if (configuration.debuglevel)
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: cannot resolve "
              "m= (media) host [%s]", sdp_message_c_addr_get(sdp,-1,0));
+      sdp_message_free(sdp);
       return STS_FAILURE;
    }
 
@@ -697,12 +705,14 @@ if (configuration.debuglevel)
    if (sts == STS_FAILURE) {
       ERROR("can't find outbound interface %s - configuration error?",
             configuration.outbound_if);
+      sdp_message_free(sdp);
       return STS_FAILURE;
    }
    sts = get_ip_by_ifname(configuration.inbound_if, &inside_addr);
    if (sts == STS_FAILURE) {
       ERROR("can't find inbound interface %s - configuration error?",
              configuration.inbound_if);
+      sdp_message_free(sdp);
        return STS_FAILURE;
     }
 
@@ -742,39 +752,40 @@ if (configuration.debuglevel)
     * loop through all m= descritions,
     * start RTP proxy and rewrite them
     */
-   for (media_stream_no=0;;media_stream_no++) {
-      /* check if n'th media stream is present */
-      if (sdp_message_m_port_get(sdp, media_stream_no) == NULL) break;
+   if (configuration.rtp_proxy_enable == 1) {
+      for (media_stream_no=0;;media_stream_no++) {
+         /* check if n'th media stream is present */
+         if (sdp_message_m_port_get(sdp, media_stream_no) == NULL) break;
 
-      /* start an RTP proxying stream */
-      if (sdp_message_m_port_get(sdp, media_stream_no)) {
-         msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
+         /* start an RTP proxying stream */
+         if (sdp_message_m_port_get(sdp, media_stream_no)) {
+            msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
 
-         if (msg_port > 0) {
-            rtp_start_fwd(osip_message_get_call_id(mymsg), direction,
-                          media_stream_no,
-                          map_addr, &map_port,
-                          msg_addr, msg_port);
-            /* and rewrite the port */
-            sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
-            if (sdp_med && sdp_med->m_port) {
-               osip_free(sdp_med->m_port);
-               sdp_med->m_port=osip_malloc(8);
-               sprintf(sdp_med->m_port, "%i", map_port);
-               DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                      "m= rewrote port to [%i]",map_port);
-
-            } else {
-               ERROR("rewriting port in m= failed sdp_med=%p, "
-                     "m_number_of_port=%p", sdp_med, sdp_med->m_port);
-            }
-         } // port > 0
-      } else {
-         /* no port defined - skip entry */
-         WARN("no port defined in m=(media) stream_no=%i", media_stream_no);
-         continue;
-      }
-   }
+            if (msg_port > 0) {
+               rtp_start_fwd(osip_message_get_call_id(mymsg), direction,
+                             media_stream_no,
+                             map_addr, &map_port,
+                             msg_addr, msg_port);
+               /* and rewrite the port */
+               sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
+               if (sdp_med && sdp_med->m_port) {
+                  osip_free(sdp_med->m_port);
+                  sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
+                  sprintf(sdp_med->m_port, "%i", map_port);
+                  DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                         "m= rewrote port to [%i]",map_port);
+               } else {
+                  ERROR("rewriting port in m= failed sdp_med=%p, "
+                        "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+               }
+            } /* if msg_port > 0 */
+         } else {
+            /* no port defined - skip entry */
+            WARN("no port defined in m=(media) stream_no=%i", media_stream_no);
+            continue;
+         }
+      } /* for media_stream_no */
+   } /* if rtp_proxy_enable */
 
    /* remove old body */
    sts = osip_list_remove(mymsg->bodies, 0);
