@@ -361,7 +361,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 
    /* get interface flags */
    if(ioctl(sockfd, SIOCGIFFLAGS, &ifr) != 0) {
-      ERROR("Error in ioctl SIOCGIFFLAGS: %s\n",strerror(errno));
+      ERROR("Error in ioctl SIOCGIFFLAGS: %s [%s]\n",
+            strerror(errno), ifname);
       close(sockfd);
       return STS_FAILURE;
    } 

@@ -13,26 +13,6 @@ A: The goal is that every softphone (that is SIP compliant) should be
    - MSN Messenger
    - Grandstream BudgeTone series
 ---------------------------------------------------------------------------
-Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
-   Shouldn't it also proxy outgoing RTP data?
-
-A: Since version 0.5.1, siproxd DOES do full duplex RTP proxying.
-   This eliminates some problems with UAs that *insist* on symmetric
-   RTP traffic.
----------------------------------------------------------------------------
-Q: How do I setup IP masquerading for the outgoing RTP traffic?
-
-A: if you are using 'ipchains' it is a firewall rule like the following:
-
-   # ipchains -A forward -i ppp0 -j MASQ -s 10.0.0.0/24 -d 0.0.0.0/0
-
-   This will set up IP masquerading for all local hostx (10.x.x.x) to
-   the Internet (connected on ppp0). Read the ipchains documentation
-   for details.
-   More recent Linux Kernels (2.4.x) may use 'iptables' instead of
-   'ipchains'. Check the corresponding documentation for details
-   how to configure IP masquerading there.
----------------------------------------------------------------------------
 Q: Is it possible from a remote computer to call the inbound computer?
 
 A: Yes, see also next question.
@@ -145,15 +125,18 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    
 ---------------------------------------------------------------------------
 Q: Does siproxd need to be installed on the same host as the
-   firewall (ipchains/iptables) is running?
+   firewall / NAT is running?
 
 A: Yes. Siproxd needs to know the public IP address, as this address is
-   included in the SIP signalling to establish a session. However,
-   siproxd does *not* interact with ipchains/iptables. The requirement
-   is to allow port 5060 for incomming UDP datagrams (SIP) as well as the
-   UDP port range for RTP data as specified in the config file (default
-   7070 - 7079). Outgoing UDP packets must be masqueraded by the firewall.
-   See 'Q: How do I setup IP masquerading for the outgoing RTP traffic'.
+   included in the SIP signalling to establish a session. Also, siproxd
+   needs control on the allocation of UDP ports for sending/receiving
+   RTP data (some User Agents get into trouble/silence if the sending and
+   receiving UDP port is not the same)
+   
+   However, siproxd does *not* interact with ipchains/iptables. The
+   requirement for the firewall rules is to allow port 5060 for incomming
+   UDP datagrams (SIP) as well as the UDP port range for RTP data as
+   specified in the config file (default 7070 - 7079).
    
 ---------------------------------------------------------------------------
 Q: How do I configure siproxd to use ICPHAINS based UDP masquerading
@@ -162,6 +145,34 @@ Q: How do I configure siproxd to use ICPHAINS based UDP masquerading
 A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
    Use the RTP relay instead.
    
+---------------------------------------------------------------------------
+Q: What types of operation does siproxd support?
+
+A: Siproxd can be used in two ways:
+
+   1) Siproxd as outbound proxy:
+      - Configure your local client to register with some 3rd party service
+        like Sipphone, FWD, Sipgate or any other.
+      - Configure your local client to use siproxd as OUTBOUND PROXY
+
+      Note: In this case, the local client does NOT register with siproxd
+      but only with the external SIP restration service. The only condition
+      is that siproxd needs to stay in the path of communication, therefore
+      the local client must be configured as to use an OUTBOUND PROXY.
+
+   2) Siproxd as registrar:
+      If you don't want to use any 3rd party service, you can have your
+      local clients directly with siproxd. Only in this case you should
+      set-up accounts and passwords in siproxd.
+      - Configure you local client to register with siproxd. As AOR (address
+        of record) choose a user part as you want and a host part that
+        resolves to the public addess of the host running siproxd.
+      - DO use siproxd as outbound proxy
+
+      Note that siproxd has very limited capabilities when used as
+      registrar. So my recommendation is to use method 1) and go with
+      a real registrar.
+
 ---------------------------------------------------------------------------
 Q: How do I use siproxd as a pure outbound proxy, so I can register with my
    SIP phone at a third party registrar?
@@ -247,3 +258,5 @@ A:
    Media Min Port: 7070			<< depend of siproxd config
    Media Max Port: 7080			   (RTP ports)
 
+---------------------------------------------------------------------------
+ 
