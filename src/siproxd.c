@@ -320,8 +320,14 @@ int main (int argc, char *argv[])
        * (check for loop and return 482 if a loop is detected)
        */
       if (check_vialoop(my_msg) == STS_TRUE) {
-         DEBUGC(DBCLASS_SIP,"via loop detected, ignoring request");
-         sip_gen_response(my_msg, 482 /*Loop detected*/);
+         /* make sure we don't end up in endless loop when detecting
+          * an loop in an "loop detected" message - brrr */
+         if (MSG_IS_RESPONSE(my_msg) && MSG_TEST_CODE(my_msg, 482)) {
+            DEBUGC(DBCLASS_SIP,"loop in loop-response detected, ignoring");
+         } else {
+            DEBUGC(DBCLASS_SIP,"via loop detected, ignoring request");
+            sip_gen_response(my_msg, 482 /*Loop detected*/);
+         }
          goto end_loop; /* skip and free resources */
       }
 

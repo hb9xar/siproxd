@@ -183,6 +183,11 @@ struct siproxd_config {
    #define GETHOSTBYNAME_BUFLEN 1024
 #endif
 
+/* constants for security testing */
+#define SEC_MINLEN	16	/* minimum received length */
+#define SEC_MAXLINELEN	256	/* maximum acceptable length of one line
+				   in the SIP telegram (security check) */
+
 /* symbols for access control */
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/
 #define ACCESSCTL_REG	2	/* --"--              - registr. allowed */
@@ -198,3 +203,5 @@ struct siproxd_config {
 #define DIR_INCOMING	1
 #define DIR_OUTGOING	2
 
+/* various */
+#define satoi atoi  /* used in libosips MSG_TEST_CODE macro ... */

@@ -39,19 +39,38 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
 
 /*
  * do security and integrity checks on the received packet
- * (raw buffer)
+ * (raw buffer, \0 terminated)
  *
  * RETURNS
  *	STS_SUCCESS if ok 
  * 	STS_FAILURE if the packed did not pass the checks
  */
-int security_check_raw(char *sip_buffer, int size){
+int security_check_raw(char *sip_buffer, int size) {
+   char *p1=NULL, *p2=NULL;
 
+   DEBUGC(DBCLASS_BABBLE,"security_check_raw: size=%i", size);
    /*
     * empiric: size must be >= 16 bytes
     *   2 byte <CR><LF> packets have been seen in the wild
     */
-   if (size<16) return STS_FAILURE;
+   if (size<SEC_MINLEN) return STS_FAILURE;
+
+   /*
+    * make sure no line (up to the next CRLF) is longer than allowed
+    * empiric: a line should not be longer than 256 characters
+    * (libosip may die with "virtual memory exhausted" otherwise)
+    * Ref: protos test suite c07-sip-r2.jar, test case 203
+    */
+   for (p1=sip_buffer; (p1+SEC_MAXLINELEN) < (sip_buffer+size); p1=p2+1) {
+      p2=strchr(p1, 10);
+      if ((p2 == 0) ||                  /* no CRLF found */
+          (p2-p1) > SEC_MAXLINELEN) {   /* longer than allowed */
+         DEBUGC(DBCLASS_SIP,"security_check_raw: line too long or no "
+                            "CRLF found");
+         return STS_FAILURE;
+      }
+   }
+      
 
    /* TODO: still way to go here ... */
    return STS_SUCCESS;
@@ -222,11 +241,12 @@ RFC 3261            SIP: Session Initiation Protocol           June 2002
 
   /*
    * check for existing Contact: header
-   * according to RFC3261 not mandatory, but siproxd relies on it...
+   * according to RFC3261 not mandatory, but siproxd relies on it
+   * on REGISTER...
    */
-   if ((sip->contacts==NULL)||
+   if (MSG_IS_REGISTER(sip) && ((sip->contacts==NULL)||
        (sip->contacts->node==NULL)||(sip->contacts->node->element==NULL)||
-       ((osip_contact_t*)(sip->contacts->node->element))->url==NULL) {
+       ((osip_contact_t*)(sip->contacts->node->element))->url==NULL)) {
       ERROR("security check failed: NULL Contact Header");
       return STS_FAILURE;
    }
