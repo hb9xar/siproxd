@@ -169,8 +169,23 @@ INFO("stopping RTP proxy stream for: %s@%s",
 #endif
          /* stop the RTP proxying stream */
          rtp_stop_fwd(osip_message_get_call_id(request));
-      }
 
+      /* check for incomming request */
+      } else if (MSG_IS_INVITE(request)) {
+         osip_uri_t *contact;
+         contact=((osip_contact_t*)(request->contacts->node->element))->url;
+         if (contact) {
+            INFO("Incomming Call from: %s:%s",
+                 contact->username ? contact->username:"*NULL*",
+                 contact->host ? contact->host : "*NULL*");
+         } else {
+            INFO("Incomming Call (w/o contact header) from: %s:%s",
+	         request->from->url->username ? 
+                    request->from->url->username:"*NULL*",
+	         request->from->url->host ? 
+                    request->from->url->host : "*NULL*");
+         }
+      }
       break;
    
   /*

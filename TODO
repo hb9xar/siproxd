@@ -2,7 +2,6 @@ TODOs, in random order:
 =======================
 
 - siproxd daemonized: looks like clashes between threads
-- Daemonizing: daemon() f*** up a following pthread_create
 - lost 200 ACK immediately before RTP starts...
 
 - TERM handler
@@ -15,8 +14,6 @@ TODOs, in random order:
 - multiple inbound interfaces - do I need to be aware of inbound at all?
 
 - Documentation (yeah, yeah...)
-
-- support for proxy chaining - "next-hop"
 
 - general security issues
 - security tests for received SIP messages (function securitycheck)
@@ -32,4 +29,4 @@ TODOs, in random order:
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 
-- maybe STUN support
+- siproxd may use an outbound proxy of its own (chaining feature)

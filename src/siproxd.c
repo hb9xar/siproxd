@@ -289,7 +289,7 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
          if (access & ACCESSCTL_SIP) {
             sts = proxy_request(my_msg);
 	 } else {
-            WARN("non-authorized request received from %s",
+            INFO("non-authorized request received from %s",
 	            inet_ntoa(from.sin_addr));
 	 }
 
@@ -301,7 +301,7 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
          if (access & ACCESSCTL_SIP) {
             sts = proxy_response(my_msg);
 	 } else {
-            WARN("non-authorized response received from %s",
+            INFO("non-authorized response received from %s",
 	            inet_ntoa(from.sin_addr));
 	 }
 	 
