@@ -59,7 +59,7 @@ void register_init(void) {
  *    STS_FAILURE : registration failed
  *    STS_NEED_AUTH : authentication needed
  */
-int register_client(osip_message_t *my_msg) {
+int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    int i, j, n, sts;
    int expires;
    time_t time_now;
@@ -201,8 +201,28 @@ int register_client(osip_message_t *my_msg) {
          strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
       }
 
+      /*
+       * for transparent proxying: force device to be masqueraded
+       * as with the outbound IP
+       */
+      if (force_lcl_masq) {
+         struct in_addr addr;
+         char *addrstr;
+         sts = get_ip_by_ifname(configuration.outbound_if,&addr);
+         addrstr = inet_ntoa(addr);
+         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                (url1_contact->host) ? url1_contact->host : "*NULL*",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                addrstr);
+         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                 strlen(addrstr)+1);
+         strcpy(urlmap[i].masq_url->host, addrstr);
+      }
+
+      /* remember the VIA for later use */
       osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
-                 &urlmap[i].via);	/* via field */
+                      &urlmap[i].via);
    } /* if new entry */
 
    /* give some safety margin for the next update */

@@ -104,6 +104,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
    int sts, i;
    int freeidx;
    time_t t;
+   osip_call_id_t cid;
    
    if (callid == NULL) {
       ERROR("rtp_relay_start_fwd: callid is NULL!");
@@ -117,13 +118,13 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
     * so if this test fails maybe it's just necessary to increase
     * the constants CALLIDNUM_SIZE and/or CALLIDHOST_SIZE.
     */
-   if (strlen(callid->number) > CALLIDNUM_SIZE) {
+   if (callid->number && strlen(callid->number) > CALLIDNUM_SIZE) {
       ERROR("rtp_relay_start_fwd: received callid number "
             "has too many characters (%i, max=%i)",
             strlen(callid->number),CALLIDNUM_SIZE);
       return STS_FAILURE;
    }
-   if (strlen(callid->host) > CALLIDHOST_SIZE) {
+   if (callid->host && strlen(callid->host) > CALLIDHOST_SIZE) {
       ERROR("rtp_relay_start_fwd: received callid host "
             "has too many characters (%i, max=%i)",
             strlen(callid->host),CALLIDHOST_SIZE);
@@ -139,8 +140,8 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
     */
    time(&t);
    for (i=0; i<RTPPROXY_SIZE; i++) {
-      if ( (rtp_proxytable[i].sock != 0) &&
-	   ((rtp_proxytable[i].timestamp+configuration.rtp_timeout)<t)) {
+      if ((rtp_proxytable[i].sock != 0) &&
+	 ((rtp_proxytable[i].timestamp+configuration.rtp_timeout)<t)) {
          /* this one has expired, clean it up */
          DEBUGC(DBCLASS_RTP,"cleaning proxy slot #%i %s@%s", i,
                 rtp_proxytable[i].callid_number,
@@ -162,9 +163,11 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
     * INVITE request...
     */
    for (i=0; i<RTPPROXY_SIZE; i++) {
-      if((strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
-	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) &&
-         (rtp_proxytable[i].media_stream_no == media_stream_no) ) {
+      cid.number = rtp_proxytable[i].callid_number;
+      cid.host   = rtp_proxytable[i].callid_host;
+      if (rtp_proxytable[i].sock &&
+         (compare_callid(callid, &cid) == STS_SUCCESS) &&
+         (rtp_proxytable[i].media_stream_no == media_stream_no)) {
          /* return the already known port number */
          DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
                 "id=%s, #=%i)", rtp_proxytable[i].outboundport,
@@ -210,8 +213,19 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
       /* write entry into rtp_proxytable slot (freeidx) */
       DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: using proxy slot %i",freeidx);
       rtp_proxytable[freeidx].sock=1;
-      strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
-      strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+
+      if (callid->number) {
+         strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
+      } else {
+         rtp_proxytable[freeidx].callid_number[0]='\0';
+      }
+
+      if (callid->host) {
+         strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+      } else {
+         rtp_proxytable[freeidx].callid_host[0]='\0';
+      }
+
       rtp_proxytable[freeidx].media_stream_no = media_stream_no;
       memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
              &outbound_ipaddr, sizeof(struct in_addr));
@@ -223,7 +237,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: masq address & port:%s:%i",
-          inet_ntoa(outbound_ipaddr),outbound_lcl_port);
+          inet_ntoa(outbound_ipaddr),*outbound_lcl_port);
    return (*outbound_lcl_port)?STS_SUCCESS:STS_FAILURE;
 }
 
@@ -231,6 +245,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
 int rtp_masq_stop_fwd(osip_call_id_t *callid) {
    int i;
    int got_match=0;
+   osip_call_id_t cid;
    
    /* let the UDP tunnel time-out */
 
@@ -240,10 +255,10 @@ int rtp_masq_stop_fwd(osip_call_id_t *callid) {
    }
 
    for (i=0; i<RTPPROXY_SIZE; i++) {
-      if ((callid->number==NULL) || (callid->host==NULL)) break;
-      if( rtp_proxytable[i].sock &&
-         (strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
-	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
+      cid.number = rtp_proxytable[i].callid_number;
+      cid.host   = rtp_proxytable[i].callid_host;
+      if (rtp_proxytable[i].sock &&
+         (compare_callid(callid, &cid) == STS_SUCCESS)) {
          DEBUGC(DBCLASS_RTP,"rtp_masq_stop_fwd: cleaning proxy slot %i",i);
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
@@ -305,7 +320,7 @@ static int _create_listening_masq(struct ip_masq_ctl *masq,
 
    if (setsockopt(masq_ctl_sock, IPPROTO_IP, 
                   IP_FW_MASQ_CTL, (char *)masq, sizeof(*masq)))    {
-      ERROR("create_listening_masq: setsockopt() failed: %s",
+      DEBUGC(DBCLASS_RTP, "create_listening_masq: setsockopt() failed: %s",
             strerror(errno));
        sts = STS_FAILURE;
        goto exit;

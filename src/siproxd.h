@@ -30,15 +30,15 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
 void register_init(void);
-int  register_client(osip_message_t *request);					/*X*/
+int  register_client(osip_message_t *request, int force_lcl_masq);	/*X*/
 void register_agemap(void);
-int  register_response(osip_message_t *request, int flag);			/*X*/
+int  register_response(osip_message_t *request, int flag);		/*X*/
 
 /* proxy.c */
-int proxy_request (osip_message_t *request);					/*X*/
-int proxy_response (osip_message_t *response);					/*X*/
-int proxy_rewrite_invitation_body(osip_message_t *mymsg);			/*X*/
-int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);			/*X*/
+int proxy_request (osip_message_t *request);				/*X*/
+int proxy_response (osip_message_t *response);				/*X*/
+int proxy_rewrite_invitation_body(osip_message_t *mymsg);		/*X*/
+int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 
 /* utils.c */
 int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
@@ -47,23 +47,24 @@ int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
 
 /* sip_utils.c */
 osip_message_t * msg_make_template_reply (osip_message_t * request, int code);
-int  check_vialoop (osip_message_t *my_msg);					/*X*/
-int  is_via_local (osip_via_t *via);						/*X*/
-int  compare_url(osip_uri_t *url1, osip_uri_t *url2);				/*X*/
-int  is_sipuri_local (osip_message_t *sip);					/*X*/
-int  check_rewrite_rq_uri (osip_message_t *sip);					/*X*/
-int  sip_gen_response(osip_message_t *request, int code);			/*X*/
+int  check_vialoop (osip_message_t *my_msg);				/*X*/
+int  is_via_local (osip_via_t *via);					/*X*/
+int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
+int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
+int  is_sipuri_local (osip_message_t *sip);				/*X*/
+int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
+int  sip_gen_response(osip_message_t *request, int code);		/*X*/
 #define IF_OUTBOUND 0
 #define IF_INBOUND  1
-int  sip_add_myvia (osip_message_t *request, int interface);			/*X*/
-int  sip_del_myvia (osip_message_t *response);					/*X*/
+int  sip_add_myvia (osip_message_t *request, int interface);		/*X*/
+int  sip_del_myvia (osip_message_t *response);				/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,		/*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,	/*X*/
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
 int  rtp_stop_fwd (osip_call_id_t *callid);     			/*X*/
@@ -73,12 +74,12 @@ void rtpproxy_kill( void );						/*X*/
 int accesslist_check(struct sockaddr_in from);
 
 /* security.c */
-int security_check_raw(char *sip_buffer, int size);				/*X*/
-int security_check_sip(osip_message_t *sip);					/*X*/
+int security_check_raw(char *sip_buffer, int size);			/*X*/
+int security_check_sip(osip_message_t *sip);				/*X*/
 
 /* auth.c */
-int authenticate_proxy(osip_message_t *request);					/*X*/
-int auth_include_authrq(osip_message_t *response);				/*X*/
+int authenticate_proxy(osip_message_t *request);			/*X*/
+int auth_include_authrq(osip_message_t *response);			/*X*/
 
 
 

@@ -82,8 +82,10 @@ int proxy_request (osip_message_t *request) {
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
 
-      /* incoming request ('to' == 'masq') */
-      if (compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
+      /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
+      if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+          (!MSG_IS_REGISTER(request) &&
+           (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
          type=REQTYP_INCOMING;
          DEBUGC(DBCLASS_PROXY,"incoming request from %s@%s from outbound",
 	   request->from->url->username? request->from->url->username:"*NULL*",
@@ -336,7 +338,7 @@ int proxy_response (osip_message_t *response) {
     */
 
 
-   /* Ahhrghh...... an response seems to have NO contact information... 
+   /* Ahhrghh...... a response seems to have NO contact information... 
     * so let's take FROM instead...
     * the TO and FROM headers are EQUAL to the request - that means 
     * they are swapped in their meaning for a response...
@@ -346,9 +348,9 @@ int proxy_response (osip_message_t *response) {
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
 
-
-      /* incoming response ('from' == 'masq') */
-      if (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
+      /* incoming response ('from' == 'masq') || ('from' == 'reg') */
+      if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
+          (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
          type=RESTYP_INCOMING;
          DEBUGC(DBCLASS_PROXY,"incoming response for %s@%s from outbound",
 	   response->from->url->username? response->from->url->username:"*NULL*",
@@ -356,8 +358,9 @@ int proxy_response (osip_message_t *response) {
 	 break;
       }
 
-      /* outgoing response ('to' == 'reg') */
-      if (compare_url(response->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
+      /* outgoing response ('to' == 'reg') || ('to' == 'masq' ) */
+      if ((compare_url(response->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+          (compare_url(response->to->url, urlmap[i].reg_url)==STS_SUCCESS)){
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
 	   response->from->url->username? response->from->url->username:"*NULL*",

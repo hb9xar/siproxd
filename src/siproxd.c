@@ -238,13 +238,30 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
               my_msg->sip_method : "NULL") ;
 
       /*
-      * if RQ REGISTER, just register
-      * and send an answer
+      * if an RQ REGISTER, check if it is directed to myself,
+      * or am I just the outbound proxy but no registrar.
+      * - If I'm the registrar, register & generate answer
+      * - If I'm just the outbound proxy, register, rewrite & forward
       */
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_REG) {
-            sts = register_client(my_msg);
-            sts = register_response(my_msg, sts);
+            osip_uri_t *url;
+            struct in_addr addr1, addr2;
+
+            url = osip_message_get_uri(my_msg);
+            sts = get_ip_by_host(url->host, &addr1);
+            sts = get_ip_by_ifname(configuration.inbound_if,&addr2);
+
+            if (memcmp(&addr1, &addr2, sizeof(addr1)) == 0) {
+               /* I'm the registrar, send response myself */
+               sts = register_client(my_msg, 0);
+               sts = register_response(my_msg, sts);
+            } else {
+               /* I'm just the outbound proxy */
+               DEBUGC(DBCLASS_SIP,"proxying REGISTER request to:%s",url->host);
+               sts = register_client(my_msg, 1);
+               sts = proxy_request(my_msg);
+            }
 	 } else {
             WARN("non-authorized registration attempt from %s",
 	         inet_ntoa(from.sin_addr));

@@ -234,6 +234,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
    int sock, port;
    int freeidx;
    int sts=STS_SUCCESS;
+   osip_call_id_t cid;
 
    if (callid == NULL) {
       ERROR("rtp_relay_start_fwd: callid is NULL!");
@@ -247,13 +248,13 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
     * so if this test fails maybe it's just necessary to increase
     * the constants CALLIDNUM_SIZE and/or CALLIDHOST_SIZE.
     */
-   if (strlen(callid->number) > CALLIDNUM_SIZE) {
+   if (callid->number && strlen(callid->number) > CALLIDNUM_SIZE) {
       ERROR("rtp_relay_start_fwd: received callid number "
             "has too many characters (%i, max=%i)",
             strlen(callid->number),CALLIDNUM_SIZE);
       return STS_FAILURE;
    }
-   if (strlen(callid->host) > CALLIDHOST_SIZE) {
+   if (callid->host && strlen(callid->host) > CALLIDHOST_SIZE) {
       ERROR("rtp_relay_start_fwd: received callid host "
             "has too many characters (%i, max=%i)",
             strlen(callid->host),CALLIDHOST_SIZE);
@@ -281,16 +282,18 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
     * media_stream_no). This can be due to UDP repetitions of the
     * INVITE request...
     */
-   for (j=0; j<RTPPROXY_SIZE; j++) {
-      if((strcmp(rtp_proxytable[j].callid_number, callid->number)==0) &&
-	 (strcmp(rtp_proxytable[j].callid_host, callid->host)==0) &&
-         (rtp_proxytable[j].media_stream_no == media_stream_no) ) {
+   for (i=0; i<RTPPROXY_SIZE; i++) {
+      cid.number = rtp_proxytable[i].callid_number;
+      cid.host   = rtp_proxytable[i].callid_host;
+      if (rtp_proxytable[i].sock &&
+         (compare_callid(callid, &cid) == STS_SUCCESS) &&
+         (rtp_proxytable[i].media_stream_no == media_stream_no) ) {
          /* return the already known port number */
          DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
-                "id=%s, #=%i)", rtp_proxytable[j].outboundport,
-                rtp_proxytable[j].callid_number,
-                rtp_proxytable[j].media_stream_no);
-	 *outboundport=rtp_proxytable[j].outboundport;
+                "id=%s, #=%i)", rtp_proxytable[i].outboundport,
+                rtp_proxytable[i].callid_number,
+                rtp_proxytable[i].media_stream_no);
+	 *outboundport=rtp_proxytable[i].outboundport;
 	 sts = STS_SUCCESS;
 	 goto unlock_and_exit;
       }
@@ -352,8 +355,19 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
 
    /* write entry into rtp_proxytable slot (freeidx) */
    rtp_proxytable[freeidx].sock=sock;
-   strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
-   strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+
+   if (callid->number) {
+      strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
+   } else {
+      rtp_proxytable[freeidx].callid_number[0]='\0';
+   }
+
+   if (callid->host) {
+      strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+   } else {
+      rtp_proxytable[freeidx].callid_host[0]='\0';
+   }
+
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
    memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
           &outbound_ipaddr, sizeof(struct in_addr));
@@ -392,6 +406,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
+   osip_call_id_t cid;
  
    if (callid == NULL) {
       ERROR("rtp_relay_stop_fwd: callid is NULL!");
@@ -433,10 +448,10 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
     * media strema active for the same callid (audio + video stream)
     */
    for (i=0; i<RTPPROXY_SIZE; i++) {
-      if ((callid->number==NULL) || (callid->host==NULL)) break;
-      if( rtp_proxytable[i].sock &&
-         (strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
-	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
+      cid.number = rtp_proxytable[i].callid_number;
+      cid.host   = rtp_proxytable[i].callid_host;
+      if (rtp_proxytable[i].sock &&
+         (compare_callid(callid, &cid) == STS_SUCCESS)) {
          sts = close(rtp_proxytable[i].sock);
 	 DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",

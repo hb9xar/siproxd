@@ -7,7 +7,7 @@
 #
 
 ######################################################################
-# The interafce names of INBOUND and OUTBOUND interface.
+# The interface names of INBOUND and OUTBOUND interface.
 #
 if_inbound  = eth0
 if_outbound = ppp0

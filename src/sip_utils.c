@@ -254,7 +254,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 /* let's be nice to Billy boy and don't complain evey time ;-)
 //      WARN("compare_url: NULL username pointer: MSN messenger is known to "
 //           "trigger this one!"); */
-      DEBUGC(DBCLASS_DNS, "comparing broken urls (no user): "
+      DEBUGC(DBCLASS_PROXY, "comparing broken urls (no user): "
             "%s[%s] -> %s[%s]",
             url1->host, inet_ntoa(addr1), url2->host, inet_ntoa(addr2));
       if (memcmp(&addr1, &addr2, sizeof(addr1))==0) {
@@ -267,7 +267,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 
    /* we have a proper URL */
    /* comparison of hosts should be based on IP addresses, no? */
-   DEBUGC(DBCLASS_DNS, "comparing urls: %s@%s[%s] -> %s@%s[%s]",
+   DEBUGC(DBCLASS_PROXY, "comparing urls: %s@%s[%s] -> %s@%s[%s]",
          url1->username, url1->host, inet_ntoa(addr1),
          url2->username, url2->host, inet_ntoa(addr2));
    if ((strcmp(url1->username, url2->username)==0) &&
@@ -278,6 +278,64 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    }
 
    return sts;
+}
+
+
+/*
+ * compares two Call IDs
+ * (by now, only hostname and username are compared)
+ *
+ * RETURNS
+ *	STS_SUCCESS if equal
+ *	STS_FAILURE if non equal or error
+ */
+int compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2) {
+
+   if ((cid1==0) || (cid2==0)) {
+      ERROR("compare_callid: NULL ptr: cid1=0x%p, cid2=0x%p",cid1, cid2);
+      return STS_FAILURE;
+   }
+
+   /*
+    * Check number part: if present must be equal, 
+    * if not present, must be not present in both cids
+    */
+   if (cid1->number && cid2->number) {
+      /* have both numbers */
+      if (strcmp(cid1->number, cid2->number) != 0) goto mismatch;
+   } else {
+      /* at least one number missing, make sure that both are empty */
+      if ( (cid1->number && (cid1->number[0]!='\0')) ||
+           (cid2->number && (cid2->number[0]!='\0'))) {
+         goto mismatch;
+      }
+   }
+
+   /*
+    * Check host part: if present must be equal, 
+    * if not present, must be not present in both cids
+    */
+   if (cid1->host && cid2->host) {
+      /* have both hosts */
+      if (strcmp(cid1->host, cid2->host) != 0) goto mismatch;
+   } else {
+      /* at least one host missing, make sure that both are empty */
+      if ( (cid1->host && (cid1->host[0]!='\0')) ||
+           (cid2->host && (cid2->host[0]!='\0'))) {
+         goto mismatch;
+      }
+   }
+
+   DEBUGC(DBCLASS_BABBLE, "comparing callid - matched: "
+          "%s@%s <-> %s@%s",
+          cid1->number, cid1->host, cid2->number, cid2->host);
+   return STS_FAILURE;
+
+mismatch:
+   DEBUGC(DBCLASS_BABBLE, "comparing callid - mismatch: "
+          "%s@%s <-> %s@%s",
+          cid1->number, cid1->host, cid2->number, cid2->host);
+   return STS_FAILURE;
 }
 
 

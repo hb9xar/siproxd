@@ -1,5 +1,10 @@
 0.3.7
 =====
+  04-Oct-2003:  - Siproxd now also works as outbound proxy 'only',
+                  means that local UAs may register themselfes to a
+                  3rd party registrar and use siproxd only as oubound
+                  proxy for masquerading purpose.
+                - fixed some errors with callid handling (NULL pointers)
   24-Sep-2003:  - corrected the calling arguments of rtp_masq dummy
                   routines (non IPCHAINS capable kernels)
   22-Sep-2003:  - \0 termination of read() SIP telegram from line
