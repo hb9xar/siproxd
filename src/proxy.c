@@ -380,10 +380,10 @@ int proxy_response (sip_t *response) {
    default:
       DEBUGC(DBCLASS_PROXY,"proxy_response: refused to proxy");
       WARN("response from/to unregistered UA (%s@%s)",
-	        request->from->url->username,
-		request->from->url->host);
+	        response->from->url->username,
+		response->from->url->host);
 /* some clients seem to run amok when passing back a negative response */
-//      proxy_gen_response(request, 403 /*forbidden*/);
+//      proxy_gen_response(response, 403 /*forbidden*/);
       return STS_FAILURE;
    }
 
