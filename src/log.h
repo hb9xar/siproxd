@@ -37,6 +37,7 @@
 void log_set_pattern(int pattern);
 int  log_get_pattern(void);
 void log_set_tosyslog(int tosyslog);
+void log_set_silence(int level);
 
 #undef DEBUG
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)

@@ -102,7 +102,7 @@ struct urlmap_s {
 
 
 /*
- * configuration option table
+ * Array of strings - used withing configuration store
  */
 #define CFG_STRARR_SIZE		128
 typedef struct {
@@ -110,12 +110,16 @@ typedef struct {
    char *string[CFG_STRARR_SIZE];
 } stringa_t;
 
+/*
+ * configuration option table
+ */
 struct siproxd_config {
    int debuglevel;
    char *inbound_if;
    char *outbound_if;
    int sip_listen_port;
    int daemonize;
+   int silence_log;
    int rtp_port_low;
    int rtp_port_high;
    int rtp_timeout;
@@ -177,3 +181,5 @@ struct siproxd_config {
    Port (!!!) are kept from the SIP address given by the user.
    This issue is fixed in linphone-0.9.1pre1
 */
+
+//#define MOREDEBUG

@@ -72,8 +72,8 @@ struct {
 pthread_t rtpproxy_tid=0;
 
 /* master fd_set */
-fd_set master_fdset;
-int    master_fd_max;
+static fd_set master_fdset;
+static int    master_fd_max;
 
 /* forward declarations */
 void *rtpproxy_main(void *i);
@@ -110,8 +110,8 @@ int rtpproxy_init( void ) {
    DEBUGC(DBCLASS_RTP,"created, sts=%i", sts);
 
 #if 0 /* don't detach */
-   sts=pthread_detach(rtpproxy_tid);
-   DEBUGC(DBCLASS_RTP,"detached, sts=%i", sts);
+//   sts=pthread_detach(rtpproxy_tid);
+//   DEBUGC(DBCLASS_RTP,"detached, sts=%i", sts);
 #endif
 
    return STS_SUCCESS;
@@ -173,8 +173,8 @@ void *rtpproxy_main(void *arg) {
       } /* for i */
 
 
-      /* age and clean rtp_proxytable */
-      if (t > (last_t+configuration.rtp_timeout) ) {
+      /* age and clean rtp_proxytable (check every 10 seconds)*/
+      if (t > (last_t+10) ) {
          last_t = t;
 	 for (i=0;i<RTPPROXY_SIZE; i++) {
             if ( (rtp_proxytable[i].sock != 0) &&
@@ -182,6 +182,11 @@ void *rtpproxy_main(void *arg) {
                /* time one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
+#ifdef MODEDEBUG /*&&&&*/
+INFO("RTP stream sock=%i %s@%s (idx=%i) "
+       "has expired", rtp_proxytable[i].sock,
+       callid.number, callid.host, i);
+#endif
                DEBUGC(DBCLASS_RTP,"RTP stream sock=%i %s@%s (idx=%i) "
                       "has expired", rtp_proxytable[i].sock,
                       callid.number, callid.host, i);
@@ -234,6 +239,10 @@ int rtp_start_fwd (call_id_t *callid, int media_stream_no,
       return STS_FAILURE;
    }
 
+#ifdef MODEDEBUG /*&&&&*/
+INFO("starting RTP proxy stream for: %s@%s #=%i",
+     callid->number, callid->host, media_stream_no);
+#endif
    DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s #=%i",
           callid->number, callid->host, media_stream_no);
 
@@ -393,7 +402,7 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
-
+ 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
    if (callid == NULL) {
@@ -401,6 +410,10 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
       return STS_FAILURE;
    }
 
+#ifdef MODEDEBUG /*&&&&*/
+INFO("stopping RTP proxy stream for: %s@%s",
+     callid->number, callid->host);
+#endif
    DEBUGC(DBCLASS_RTP,"stopping RTP proxy stream for: %s@%s",
           callid->number, callid->host);
 
@@ -428,14 +441,18 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
     * media strema active for the same callid (audio + video stream)
     */
    for (i=0; i<RTPPROXY_SIZE; i++) {
-      if((strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
+      if ((callid->number==NULL) && (callid->host==NULL)) break;
+      if( rtp_proxytable[i].sock &&
+         (strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
 	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
 
          /* match: close socket and clean slot in rtp_proxytable */
          sts = close(rtp_proxytable[i].sock);
          if (sts < 0) {
-            ERROR("Error in close(%i): %s\n", rtp_proxytable[i].sock,
-                  strerror(errno));
+            ERROR("Error in close(%i): %s nolock=%i %s:%s\n",
+                  rtp_proxytable[i].sock,
+                  strerror(errno), nolock,
+                  callid->number, callid->host);
          }
 
 	 DEBUGC(DBCLASS_RTP,"closing socket %i for RTP stream "

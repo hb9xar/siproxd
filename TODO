@@ -1,6 +1,11 @@
 TODOs, in random order:
 =======================
 
+- siproxd daemonized: looks like clashes between threads
+- Daemonizing: daemon() f*** up a following pthread_create
+- is select() really tread safe? libc bug?
+- lost 200 ACK immediately before RTP starts...
+
 - TERM handler
 
 - /var/run PID file

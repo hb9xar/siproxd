@@ -34,8 +34,17 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 			  BUILDSTR " $";
 
 
-int log_to_syslog=0;
-int debug_pattern=0;
+static int log_to_syslog=0;
+static int debug_pattern=0;
+/*
+ * What shall I log to syslog?
+ *   0 - DEBUGs, INFOs, WARNINGs and ERRORs (this is the default)
+ *   1 - INFOs, WARNINGs and ERRORs
+ *   2 - WARNINGs and ERRORs
+ *   3 - only ERRORs
+ *   4 - absolutely nothing (be careful - you will have no way to
+ */
+static int silence_level=0;
 
 
 void log_set_pattern(int pattern) {
@@ -49,6 +58,11 @@ int  log_get_pattern(void) {
 void log_set_tosyslog(int tosyslog) {
    log_to_syslog=tosyslog;
 }
+
+void log_set_silence(int level) {
+   silence_level=level;
+}
+
 
 /* for all the LOGGING routines:
    They should figure out if we are running as a daemon, then write
@@ -75,7 +89,7 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec, file, line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-   } else {
+   } else if (silence_level < 1) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_DEBUG, "%s:%i %s", file, line, string);
@@ -104,13 +118,11 @@ void log_error(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec, file, line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-}
-// always log INFO, WARN, ERROR to syslog
-//   } else {
+   } else if (silence_level < 4) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
-//   }
+   }
 
    va_end(ap);
    fflush(stderr);
@@ -135,13 +147,11 @@ void log_warn(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-}
-// always log INFO, WARN, ERROR to syslog
-//   } else {
+   } else if (silence_level < 3) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
-//   }
+   }
    
    va_end(ap);
    fflush(stderr);
@@ -166,13 +176,11 @@ void log_info(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-}
-// always log INFO, WARN, ERROR to syslog
-//   } else {
+   } else if (silence_level < 2) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
-//   }
+   }
    
    va_end(ap);
    fflush(stderr);
@@ -190,11 +198,7 @@ void log_dump_buffer(int class, char *file, int line,
    if (log_to_syslog) return;
 
    fprintf(stderr,"---BUFFER DUMP follows---\n");
-/*
-   for (i=0;i<length;i++) {
-      fprintf(stderr,"%c",buffer[i]);
-   }
-*/
+
    for (i=0; i<length; i+=16) {
       strcpy(tmplin1,"");
       strcpy(tmplin2,"");

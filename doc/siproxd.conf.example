@@ -48,7 +48,17 @@ sip_listen_port = 5060
 ######################################################################
 # Shall we daemonize?
 #
-daemonize = 0
+daemonize = 1
+
+######################################################################
+# What shall I log to syslog?
+#   0 - DEBUGs, INFOs, WARNINGs and ERRORs (this is the default)
+#   1 - INFOs, WARNINGs and ERRORs
+#   2 - WARNINGs and ERRORs
+#   3 - only ERRORs
+#   4 - absolutely nothing (be careful - you will have no way to
+#                           see what siproxd is doing - or NOT doing)
+silence_log = 0
 
 ######################################################################
 # Secure Enviroment settings:

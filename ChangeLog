@@ -1,5 +1,8 @@
 0.3.2
 =====
+ 4-Apr-2003:	- introduced config option 'silence_log' - this allows
+ 		  to control how much logging is done to syslog - 
+                  logging can even completely be switched off...
  1-Apr-2003:	- should now be able to deal with an outbound interface
                   that is "temporary" DOWN (dial up internet access)
                   if outbounf IF is down, send back a response to
@@ -10,8 +13,12 @@
                 - rtpproxy: prepared for proper thread termination on exit
                 - introduced short term caching for get_ip_by_ifname
                 - fixed in check for socket() return status
+                - fixed bug in RTP Proxy (timeout of inactive streams)
+                  that produced a bunch of "ERROR:Error in close(0): Bad file
+                  descriptor" errors each time a RTP stream timed out
+                - fixed daemonizing (libc5) - now it properly detaches
 30-May-2003:	- always log ERROR, WARNING and INFO to syslog (also
-                  of not running as daemon)
+                  if not running as daemon)
                 - minor corrections on ERROR printouts
 
 0.3.1

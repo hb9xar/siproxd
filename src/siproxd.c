@@ -130,9 +130,6 @@ int main (int argc, char *argv[])
  * Init stuff
  */
 
-   /* cancel RTP thread at exit */
-   atexit(rtpproxy_kill);
-
    /* read the config file */
    if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
 
@@ -148,6 +145,36 @@ int main (int argc, char *argv[])
    /* change user and group IDs */
    secure_enviroment();
 
+   /* daemonize if requested to */
+   if (configuration.daemonize) {
+      DEBUGC(DBCLASS_CONFIG,"daemonizing");
+/* daemon() seems to be broken! starting the threads afterwards
+  with pthread_create will get stuck... */
+#if HAVE_DAEMONxxSICK
+      if (daemon(1,0) == -1) {
+         ERROR("unable to daemonize: %s", strerror(errno)); 
+      };
+# else
+      if (fork()!=0) exit(0);
+      setsid();
+      if (fork()!=0) exit(0);
+#endif
+      log_set_tosyslog(1);
+   }
+#ifdef MODEDEBUG /*&&&&*/
+INFO("daemonizing done (pid=%i)", getpid());
+#endif
+
+   /* initialize the RTP proxy thread */
+#ifdef MODEDEBUG /*&&&&*/
+INFO("b4 rtpproxy_init");
+#endif
+   atexit(rtpproxy_kill);  /* cancel RTP thread at exit */
+   rtpproxy_init();
+#ifdef MODEDEBUG /*&&&&*/
+INFO("rtpproxy_init done");
+#endif
+
    /* init the oSIP parser */
    parser_init();
 
@@ -159,30 +186,18 @@ int main (int argc, char *argv[])
    if (sts == STS_FAILURE) {
       /* failure to allocate SIP socket... */
       ERROR("unable to bind to SIP listening socket - aborting"); 
-      return 0;
+      exit(1);
    }
-
-   /* initialize the RTP proxy thread */
-   rtpproxy_init();
-
-   /* daemonize if requested to */
-   if (configuration.daemonize) {
-      DEBUGC(DBCLASS_CONFIG,"daemonizing");
-#if HAVE_DAEMON
-      if (daemon(1,0) == -1) {
-         ERROR("unable to daemonize: %s", strerror(errno)); 
-      };
-# else
-
-      if (fork()!=0) exit(0);
-      /* close STDIN, STDOUT, STDERR */
-      close(0);close(1);close(2);
+#ifdef MODEDEBUG /*&&&&*/
+INFO("sipsock_listen done");
 #endif
-      log_set_tosyslog(1);
-   }
-
 
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" ("LIBOSIPVER") started");
+/*
+ * silence the log - if so required...
+ */
+   log_set_silence(configuration.silence_log);
+
 /*
  * Main loop
  */
@@ -199,6 +214,12 @@ int main (int argc, char *argv[])
 
       i=sipsock_read(&buff, sizeof(buff), &from);
 
+#ifdef MODEDEBUG /*&&&&*/
+{char tmp[32];
+strncpy(tmp, buff, 30);
+tmp[30]='\0';
+INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
+#endif
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(from);
       if (access == 0) continue; /* there are no resources to free */

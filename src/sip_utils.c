@@ -256,9 +256,9 @@ int compare_url(url_t *url1, url_t *url2) {
    /* Broken(?) MSN messenger - does not supply a user name part.
       So we simply compare the host part then */
    if ((url1->username == NULL) || (url2->username == NULL)) {
-// let's be nice to Billy boy and don't complain evey time ;-)
+/* let's be nice to Billy boy and don't complain evey time ;-)
 //      WARN("compare_url: NULL username pointer: MSN messenger is known to "
-//           "trigger this one!");
+//           "trigger this one!"); */
       DEBUGC(DBCLASS_DNS, "comparing broken urls (no user): "
             "%s[%s] -> %s[%s]",
             url1->host, inet_ntoa(addr1), url2->host, inet_ntoa(addr2));
