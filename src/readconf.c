@@ -144,6 +144,7 @@ static int parse_config (FILE *configfile) {
       void *dest;
    } configoptions[] = {
       { "debug_level",         TYP_INT4,   &configuration.debuglevel },
+      { "debug_port",          TYP_INT4,   &configuration.debugport },
       { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
       { "daemonize",           TYP_INT4,   &configuration.daemonize },
       { "silence_log",         TYP_INT4,   &configuration.silence_log },

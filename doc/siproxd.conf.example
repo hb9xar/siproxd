@@ -52,13 +52,13 @@ daemonize = 1
 
 ######################################################################
 # What shall I log to syslog?
-#   0 - DEBUGs, INFOs, WARNINGs and ERRORs (this is the default)
-#   1 - INFOs, WARNINGs and ERRORs
+#   0 - DEBUGs, INFOs, WARNINGs and ERRORs
+#   1 - INFOs, WARNINGs and ERRORs (this is the default)
 #   2 - WARNINGs and ERRORs
 #   3 - only ERRORs
 #   4 - absolutely nothing (be careful - you will have no way to
 #                           see what siproxd is doing - or NOT doing)
-silence_log = 0
+silence_log = 1
 
 ######################################################################
 # Shall I log call establishment to syslog?
@@ -153,6 +153,17 @@ default_expires = 600
 #  DBCLASS_AUTH    0x00000800      // Authentication
 #
 debug_level =      0x00000000
+
+######################################################################
+# TCP debug port
+#
+# You may connect to this port from a remote machine and
+# receive the debug output. This allows bettwer creation of
+# odebug output on embedded systems that do not have enough
+# memory for large disk files.
+# Port number 0 means this feature is disabled.
+#
+debug_port = 0
 
 ######################################################################
 # Mask feature (experimental)

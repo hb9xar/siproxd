@@ -88,7 +88,7 @@ int main (int argc, char *argv[])
    char *pidfilename=NULL;
    struct sigaction act;
 
-   log_set_stdout(1);
+   log_set_stderr(1);
 
 /*
  * setup signal handlers
@@ -191,6 +191,7 @@ int main (int argc, char *argv[])
 
    /* set debug level as desired */
    log_set_pattern(configuration.debuglevel);
+   log_set_listen_port(configuration.debugport);
 
    /* change user and group IDs */
    secure_enviroment();
@@ -202,7 +203,7 @@ int main (int argc, char *argv[])
       setsid();
       if (fork()!=0) exit(0);
 
-      log_set_stdout(0);
+      log_set_stderr(0);
       INFO("daemonized, pid=%i", getpid());
    }
 
@@ -255,10 +256,13 @@ int main (int argc, char *argv[])
  */
    while (!exit_program) {
 
-      DEBUGC(DBCLASS_BABBLE,"going into sip_wait\n");
+      DEBUGC(DBCLASS_BABBLE,"going into sipsock_wait\n");
       while (sipsock_wait()<=0) {
          /* got no input, here by timeout. do aging */
          register_agemap();
+
+         /* TCP log: check for a connection */
+         log_tcp_connect();
 
          /* dump memory stats if requested to do so */
          if (dmalloc_dump) {
@@ -276,7 +280,7 @@ int main (int argc, char *argv[])
       }
 
       /* got input, process */
-      DEBUGC(DBCLASS_BABBLE,"back from sip_wait");
+      DEBUGC(DBCLASS_BABBLE,"back from sipsock_wait");
 
       i=sipsock_read(&buff, sizeof(buff)-1, &ticket.from, &ticket.protocol);
       buff[i]='\0';

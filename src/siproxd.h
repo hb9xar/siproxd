@@ -57,6 +57,7 @@ typedef struct {
  */
 struct siproxd_config {
    int debuglevel;
+   int debugport;
    char *inbound_if;
    char *outbound_if;
    int sip_listen_port;

@@ -76,20 +76,39 @@ that you are using. You should also include your siproxd.conf.
  
 
 The easiest way to generate a debug log is:
-1) make sure siproxd is not started as daemon.
-   -> 'daemonize = 0' in the config file.
-2) start siproxd:
-   $ ./siproxd -d -1 2>debug.log
-3) reproduce the error
-4) include the file debug.log in your error report.
+  1) make sure siproxd is not started as daemon.
+     -> 'daemonize = 0' in the config file.
+  2) start siproxd:
+     $ ./siproxd -d -1 2>debug.log
+  3) reproduce the error
+  4) include the file debug.log in your error report.
+
+Since Version 0.5.10 there also exists the possibility to obtain
+the debug log remote via TCP (useful if running siproxd on an embedded
+system). To enable this feature, edit the configuration file and
+set 'debug_port' to a free TCP port number (e.g. 5050). Then (after
+starting siproxd) you can connect from any remote client to this
+TCP port (e.g. using netcat) and all the debug output will be sent
+via network:
+  1) edit configuration file:
+     -> 'daemonize = 1' have siproxd started as daemon
+     -> 'silence_log' should be set to 1
+     -> 'debug_pattern = -1'
+     -> 'debug_port = 5050' (or any other TCP port you like)
+  2) have siproxd started the usual way
+  3) connect from a remote machine and write into a file:
+     $ netcat <IP_of_siproxd> <port> > debug.log
+  4) reproduce the error
+  5) include the file debug.log in your error report.
+
 
 If siproxd crashes, a stack backtrace usually is helpful to me:
-1) start siproxd in the debugger (daemonize set to 0):
-   $ gdb ./src/siproxd
-   (gdb) set args -c /path/to/siproxd.conf
-   (gdb) run
-2) reproduce the crash
-3) use gdb to print the stack backtrace:
+  1) start siproxd in the debugger (daemonize set to 0):
+     $ gdb ./src/siproxd
+     (gdb) set args -c /path/to/siproxd.conf
+     (gdb) run
+  2) reproduce the crash
+  3) use gdb to print the stack backtrace:
    (gdb) info thread
    ...
    (gdb) bt
@@ -101,7 +120,7 @@ If siproxd crashes, a stack backtrace usually is helpful to me:
        rtld_fini=0x4000a350 <_dl_fini>, stack_end=0xbffffc4c)
        at ../sysdeps/generic/libc-start.c:78
    (gdb) 
-4) copy-paste all the output and include it in your error report.
+  4) copy-paste all the output and include it in your error report.
 
 
 

@@ -68,7 +68,7 @@ int sipsock_listen (void) {
 }
 
 /*
- * Wait for incoming SIP message. After a 5 sec timeout
+ * Wait for incoming SIP message. After a 2 sec timeout
  * this function returns with sts=0
  *
  * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
@@ -78,7 +78,7 @@ int sipsock_wait(void) {
    fd_set fdset;
    struct timeval timeout;
 
-   timeout.tv_sec=5;
+   timeout.tv_sec=2;
    timeout.tv_usec=0;
 
    FD_ZERO(&fdset);

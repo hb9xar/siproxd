@@ -3,6 +3,9 @@
 /* use custom firewall control module */
 #undef CUSTOM_FWMODULE
 
+/* Define to 1 if you have the `accept' function. */
+#undef HAVE_ACCEPT
+
 /* Define to 1 if you have the `bind' function. */
 #undef HAVE_BIND
 
@@ -11,6 +14,9 @@
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
+
+/* Define to 1 if you have the `dprintf' function. */
+#undef HAVE_DPRINTF
 
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
@@ -71,6 +77,9 @@
 
 /* Define to 1 if you have the `osipparser2' library (-losipparser2). */
 #undef HAVE_LIBOSIPPARSER2
+
+/* Define to 1 if you have the `listen' function. */
+#undef HAVE_LISTEN
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -170,6 +179,9 @@
 
 /* Define to 1 if you have the <varargs.h> header file. */
 #undef HAVE_VARARGS_H
+
+/* Define to 1 if you have the `vdprintf' function. */
+#undef HAVE_VDPRINTF
 
 /* Define to 1 if you have the `vfprintf' function. */
 #undef HAVE_VFPRINTF
