@@ -1,0 +1,14 @@
+TODOs, in anarchistic order:
+============================
+
+- support for configuration file!
+
+
+- 2.2.x kernels:
+  make use of the portfw.so (ipmasqadm package) to create forwarding
+  tunnels for incomming data streams
+  How to determine when finished? Is it possible to keep it stateless?
+
+- Is there a possibility to open up an masquerading tunnel by
+  a userspace program on the firewall?
+

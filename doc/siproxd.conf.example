@@ -1,0 +1,44 @@
+#
+# /etc/siproxd.conf - siproxd configuration file
+#
+# !! This is a sample file, adapt it to your needs before using it
+#
+
+######################################################################
+#  DBCLASS_BABBLE  0x00000001	   // babble (like entering/leaving fnc)
+#  DBCLASS_NET     0x00000002	   // network
+#  DBCLASS_SIP     0x00000004	   // SIP manipulations
+#  DBCLASS_REG     0x00000008	   // Client registration
+#  DBCLASS_NOSPEC  0x00000010	   // non specified class
+#  DBCLASS_PROXY   0x00000020	   // proxy
+#  DBCLASS_DNS     0x00000040	   // DNS stuff
+#  DBCLASS_NETTRAF 0x00000080	   // network traffic
+#  DBCLASS_CONFIG  0x00000100	   // configuration
+debug_level = 0x0ffffffe
+
+######################################################################
+# The IP addresses of the INBOUND and OUTBOUND interface can
+# be specified as hostnames or in dotted decimal form:
+#
+# host_inbound=foo.bar.org
+#
+#   or as dotted decimal IP:
+#
+# host_inbound=10.0.0.1
+
+host_inbound  = 192.168.1.8
+host_outbound = ries.homeip.net
+
+
+######################################################################
+# Port to listen for incomming SIP messages.
+#    5060 is usually the correct choise - don't change is unless you
+#    know what you're doing
+
+sip_port = 5060
+
+
+######################################################################
+# Shall we daemonize?
+daemonize = 0
+

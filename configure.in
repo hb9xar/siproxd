@@ -1,0 +1,45 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/siproxd.c)
+
+dnl ******************************************************************
+dnl
+SPD_MAJOR_VERSION=0
+SPD_MINOR_VERSION=1
+SPD_MICRO_VERSION=1
+SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
+
+dnl *********************************************************************
+dnl Initialize automake stuff
+AC_CONFIG_AUX_DIR(scripts)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(siproxd, $SPD_VERSION)
+
+dnl Checks for programs.
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+dnl Checks for libraries.
+AC_CHECK_LIB(osip, parser_init)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(sys/time.h unistd.h)
+AC_CHECK_HEADERS(stdarg.h varargs.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(select socket strerror strstr)
+
+AC_OUTPUT(Makefile \
+src/Makefile \
+doc/Makefile \
+)

@@ -1,0 +1,98 @@
+Be warned, this (and all the other) documentantation is far from
+complete. This is just *very* preliminary pre-alpha release. Don't
+expect anything!
+
+
+Overview:
+=========
+Siprox is an proxy/masquerading daemon for the SIP protocol.
+It handles registrations of SIP clients on a private IP network
+and performs rewriting of the SIP message bodies to make SIP
+connections possible via an masquerading firewall.
+It allows SIP clients (like kphone, linphone) to work behind
+an IP masquerading firewall or router.
+
+SIP (Session Initiation Protocol, RFC2543) is used by Softphones
+(Voice over IP) to initiate communication. By itself, SIP does not
+work via masquerading firewalls as the transfered data contains
+IP addresses and port numbers.
+
+
+
+Requirements:
+=============
+- libosip-0.8.8		(http://www.fsf.org/software/osip/)
+
+Up to now, this packages only has been tested under an i386 Redhat Linux 6.0.
+However, it should build and run under newer versions.
+
+
+
+How to get started:
+===================
+
+- ./configure
+
+- make
+
+- make install
+
+- copy sipproxd.conf.example to /etc/siproxd.conf
+
+- edit /etc/siproxd.conf according to your situation
+  At least 'host_inbound' and 'host_outbound' have to be adapted!
+  host_inbound is your IP address of your private network,
+  host_outbound is your publich IP address or hostname (if you
+  have dynamic IP addresses, then you might want to use a hostname
+  here and use a dynamic DNS service like dyndns.org)
+
+  !! ACTUALLY, THIS IS NOT YET TRUE. The configuration of INBOUND
+     and OUTBOUND host ist still a compile time issue...
+     Edit the file siproxd_conf.h accordingly. Support for the
+     config file will be very next.
+
+
+What siproxd does:
+=================
+Siproxd's main purpose (up to now) is to rewrite SIP messages.
+
+
+
+What siproxd does NOT do:
+=========================
+Siproxd does *not* (yet) create masquerading tunnels or port-forwarding
+for the data stream through the firewall.
+
+These forwarding rules have to be set-up manually.
+
+Example, using ipchains (mfw):
+# ipchains -A input --proto udp --dport 7078 -m 100 -j ACCEPT
+# ipmasqadm mfw -A -m 100 -r <remoteaddress> 7078
+
+Example, using ipchains (portfw):
+# portfw -a -P udp -L <localaddress> 7078 -R <remoteaddress> 7078
+
+
+
+Limitations:
+============
+- currently, only UDP is supported
+- very likely it does not follow the SIP spec in all details ;-)
+
+
+
+Important Notice:
+=================
+gethostbyname() leaks memory in RedHat 6.0 with glibc 2.1.1.
+
+The gethostbyname() function leaks memory in RedHat 6.0 with glibc 2.1.1.
+The quick fix is to delete nisplus service from hosts entry in
+/etc/nsswitch.conf. In my tests, memory use remained stable
+after I made the above change.
+(->http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
+
+
+Contacts:
+=========
+
+Thomas Ries  <tries@gmx.net>
