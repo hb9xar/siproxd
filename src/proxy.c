@@ -959,7 +959,7 @@ if (configuration.debuglevel)
     * remember the original address in addr_sess
     */
    memset(&addr_sess, 0, sizeof(addr_sess));
-   if (sdp->c_connection || sdp->c_connection->c_addr) {
+   if (sdp->c_connection && sdp->c_connection->c_addr) {
 DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
       sts = get_ip_by_host(sdp->c_connection->c_addr, &addr_sess);
       if (sts == STS_FAILURE) {
