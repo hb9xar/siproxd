@@ -1,7 +1,8 @@
 Release Notes for siproxd-0.5.8
 ===============================
 
-Major changes since 0.5.8:
+Major changes since 0.5.7:
+   Several bugfixes and preliminary support for Record-Route headers.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -78,9 +79,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.8.tar.gz: 	
+md5sum for siproxd-0.5.8.tar.gz: 	b987151719fced722b6df7d16c06f58d
 
 GnuPG signature for siproxd-0.5.8.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBBUcuoCfzBioe83JQRAkywAJ4t/fijGYFbEnEN9n/Qe+/mRtTD2QCgkNCP
+yu88yMfHeUWUbdd7AusGZK8=
+=/Rgd
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

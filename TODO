@@ -28,3 +28,5 @@ TODOs, in random order:
 
 RFC3261 non-compliance:
 - Record-Route header handling
+
+- OpenBSD: Warning for redefinition of MACROS

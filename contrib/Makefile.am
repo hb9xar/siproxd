@@ -19,6 +19,5 @@
 #
 
 
-SUBDIRS = src doc scripts contrib
+EXTRA_DIST = 	siproxd.init
 
-EXTRA_DIST = TODO RELNOTES siproxd.spec

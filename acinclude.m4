@@ -295,3 +295,113 @@ AC_MSG_RESULT($acx_which_gethostname_r)
 
 ])dnl ACX_WHICH_GETHOSTBYNAME_R
 
+dnl @synopsis ACX_WHICH_OSIP
+dnl
+dnl Provides a test to determine the correct 
+dnl way to call various osip_* functions
+dnl
+dnl defines HAVE_FUNC_OSIP_MESSAGE_TO_STR_3 if it needs 3 arguments
+dnl defines HAVE_FUNC_OSIP_BODY_TO_STR_3 if it needs 3 arguments
+dnl (libosip2 >= 2.0.9)
+dnl
+dnl @version $Id$
+dnl @author Thomas Ries <tries@gmx.net>
+dnl
+AC_DEFUN([ACX_WHICH_OSIP], [
+
+dnl
+dnl osip_message_to_str
+dnl
+AC_CHECK_FUNC(osip_message_to_str, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_to_str)
+  AC_TRY_COMPILE([
+	#include <osipparser2/osip_parser.h>], [
+        osip_message_t *sip;
+        char **dest;
+        int length;
+        (void) osip_message_to_str(sip, dest, &length);
+  ],acx_which_osip_message_to_str=three,
+  acx_which_osip_message_to_str=two)
+], acx_which_osip_message_to_str=no)
+
+if test $acx_which_osip_message_to_str = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_TO_STR_3,,
+            [osip_message_to_str takes 3 arguments])
+fi
+
+AC_MSG_RESULT($acx_which_osip_message_to_str)
+
+
+dnl
+dnl osip_body_to_str
+dnl
+AC_CHECK_FUNC(osip_body_to_str, [
+  AC_MSG_CHECKING(how many arguments takes osip_body_to_str)
+  AC_TRY_COMPILE([
+	#include <osipparser2/osip_parser.h>], [
+        osip_message_t *sip;
+        char **dest;
+        int length;
+        (void) osip_body_to_str(sip, dest, &length);
+  ],acx_which_osip_body_to_str=three,
+  acx_which_osip_body_to_str=two)
+], acx_which_osip_body_to_str=no)
+
+
+if test $acx_which_osip_body_to_str = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_BODY_TO_STR_3,,
+            [osip_body_to_str takes 3 arguments])
+fi
+
+AC_MSG_RESULT($acx_which_osip_body_to_str)
+
+
+dnl
+dnl osip_message_set_body
+dnl
+AC_CHECK_FUNC(osip_message_set_body, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_set_body)
+  AC_TRY_COMPILE([
+	#include <osipparser2/osip_parser.h>], [
+        osip_message_t *sip;
+        char **buf;
+        int length;
+        (void) osip_message_set_body(sip, buf, length);
+  ],acx_which_osip_message_set_body=three,
+  acx_which_osip_message_set_body=two)
+], acx_which_osip_message_set_body=no)
+
+
+if test $acx_which_osip_message_set_body = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3,,
+            [osip_message_set_body takes 3 arguments])
+fi
+
+AC_MSG_RESULT($acx_which_osip_message_set_body)
+
+
+dnl
+dnl osip_message_parse
+dnl
+AC_CHECK_FUNC(osip_message_parse, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_parse)
+  AC_TRY_COMPILE([
+	#include <osipparser2/osip_parser.h>], [
+        osip_message_t *sip;
+        char **buf;
+        int length;
+        (void) osip_message_parse(sip, buf, length);
+  ],acx_which_osip_message_parse=three,
+  acx_which_osip_message_parse=two)
+], acx_which_osip_message_parse=no)
+
+
+if test $acx_which_osip_message_parse = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_PARSE_3,,
+            [osip_message_parse takes 3 arguments])
+fi
+
+AC_MSG_RESULT($acx_which_osip_message_parse)
+
+])dnl ACX_WHICH_OSIP
+

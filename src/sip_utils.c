@@ -563,7 +563,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
       }
    }   
 
-   sts = osip_message_to_str(response, &buffer);
+   sts = comp_osip_message_to_str(response, &buffer);
    if (sts != 0) {
       ERROR("sip_gen_response: msg_2char failed");
       return STS_FAILURE;

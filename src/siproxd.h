@@ -153,13 +153,13 @@ int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
 int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
 int  is_sipuri_local (sip_ticket_t *ticket);				/*X*/
 int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
-int  sip_gen_response(sip_ticket_t *ticket, int code);		/*X*/
+int  sip_gen_response(sip_ticket_t *ticket, int code);			/*X*/
 #define IF_OUTBOUND 0
 #define IF_INBOUND  1
 int  sip_add_myvia (sip_ticket_t *ticket, int interface);		/*X*/
 int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/
-int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);	/*X*/
-int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);	/*X*/
+int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);		/*X*/
+int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
@@ -182,7 +182,7 @@ int  security_check_sip(sip_ticket_t *ticket);				/*X*/
 
 /* auth.c */
 int  authenticate_proxy(sip_ticket_t *ticket);				/*X*/
-int  auth_include_authrq(sip_ticket_t *ticket);			/*X*/
+int  auth_include_authrq(sip_ticket_t *ticket);				/*X*/
 void CvtHex(char *hash, char *hashstring);
 
 /* fwapi.c */
@@ -192,6 +192,13 @@ int fwapi_start_rtp(int rtp_direction,
 int fwapi_stop_rtp(int rtp_direction,
                    struct in_addr local_ipaddr, int local_port,
                    struct in_addr remote_ipaddr, int remote_port);
+
+/* osip_comp.c */
+int comp_osip_message_to_str  (osip_message_t *sip, char **dest);
+int comp_osip_body_to_str     (const osip_body_t *body, char **dest);
+int comp_osip_message_set_body(osip_message_t *sip, const char *buf);
+int comp_osip_message_parse   (osip_message_t *sip, const char *message);
+
 
 /*
  * some constant definitions

@@ -30,6 +30,7 @@ dnl				(there seems to be a bug somewhere)
 dnl	18-Aug-2004	tries	fli4l-uclibc -> fli4l-21-uclibc, fli4l-22-uclibc
 dnl				2.1.x has no pthread support, link -static
 dnl				2.2.x has (maybe) pthread support
+dnl	09-Oct-2004	tries	libosip2 compatibility >= 2.0.9
 dnl
 dnl
 dnl
@@ -44,7 +45,7 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=5
-SPD_MICRO_VERSION=8
+SPD_MICRO_VERSION=9
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -348,6 +349,12 @@ AC_CHECK_TYPE(socklen_t,
 dnl
 dnl Checks for library functions.
 dnl
+
+dnl
+dnl libosip specifics: version dependencies
+ACX_WHICH_OSIP()
+
+
 AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strerror)
@@ -402,4 +409,5 @@ Makefile \
 src/Makefile \
 doc/Makefile \
 scripts/Makefile \
+contrib/Makefile \
 )

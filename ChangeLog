@@ -1,8 +1,19 @@
+0.5.9
+=====
+  09-Oct-2004:  - comp_osip.c: libosip2-2.0.9 compatibility (There SEEM
+                  to happen some API changes forward and backward:
+                  osip_message_to_str, osip_body_to_str,
+                  osip_message_set_body, osip_message_parse)
+                - included startup script (by Guido Trentalancia)
+                - siproxd.spec: create PID and registrations directories
+                  and install startup script
+
 0.5.8
 =====
+  22-Sep-2004:  - Released 0.5.8
   05-Sep-2004:  - Cross-provider calls (e.g. sipphone <-> FWD, with dial
                   prefixes) did not work properly
-  04-Sep-2004:  - more on Route Headers
+  04-Sep-2004:  - more on Route headers
   27-Aug-2004:  - preliminary (and reduced) support for Route Headers
   26-Aug-2004:  - more DEBUG output
   22-Aug-2004:  - fix: secure_enviroment - set proper EGID (by Daniel Mueller)

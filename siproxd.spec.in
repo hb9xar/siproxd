@@ -4,6 +4,9 @@
 %define serial		1
 %define prefix		%{_prefix}
 %define sysconfdir	/etc
+%define piddir		/var/run/siproxd/
+%define regdir		/var/lib/siproxd/
+%define siproxduser	nobody
 
 Name:		%{name}
 Summary:	A SIP masquerading proxy with RTP support
@@ -48,21 +51,42 @@ make prefix=$RPM_BUILD_ROOT%{prefix} \
 mv $RPM_BUILD_ROOT%{sysconfdir}/siproxd.conf.example \
    $RPM_BUILD_ROOT%{sysconfdir}/siproxd.conf
 
+install -d $RPM_BUILD_ROOT%{_initrddir}/
+install contrib/siproxd.init $RPM_BUILD_ROOT%{_initrddir}/siproxd
+
+install -d $RPM_BUILD_ROOT%{piddir}
+install -d $RPM_BUILD_ROOT%{regdir}
+
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-, root, root)
 %doc COPYING README AUTHORS INSTALL NEWS ChangeLog doc/FAQ doc/FLI4L_HOWTO.txt
-%{_sbindir}/siproxd
+%attr(0755,root,root) %{_sbindir}/siproxd
 %config %{sysconfdir}/siproxd.conf
 %config %{sysconfdir}/siproxd_passwd.cfg
+%attr(0755,root,root) %{_initrddir}/siproxd
+
+%attr(0700,%{siproxduser},root) %{piddir}
+%attr(0700,%{siproxduser},root) %{regdir}
+
 
 %post
 echo "Edit the config file %{sysconfigdir}/siproxd.conf!"
+/sbin/chkconfig --add %{name}
 
+%preun
+if [ $1 = 0 ]; then
+   /sbin/chkconfig --del %{name}
+fi
 
 %changelog
+* Fri Oct 09 2004 Thomas Ries <tries@gmx.net>
+- startup script in /etc/rc.d/init.d/siproxd
+- create directories for PID and registration files
+
 * Fri Oct 31 2003 Thomas Ries <tries@gmx.net>
 - siproxd is now installed to sbin directory
 
