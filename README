@@ -39,9 +39,7 @@ HOW TO GET STARTED
 
 - ./configure
 
-  For Flifl: use ./configure --enable-almost-static
-  This will build siproxd statically linked against libosib, pthreads and
-  dynamically against libc.
+  For Flifl: see doc/FLI4L_HOWTO.txt
 
 - make
 
