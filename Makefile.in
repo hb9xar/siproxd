@@ -87,7 +87,7 @@ VERSION = @VERSION@
 
 SUBDIRS = src doc
 
-EXTRA_DIST = TODO
+EXTRA_DIST = TODO RELNOTES
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/scripts/mkinstalldirs
 CONFIG_HEADER = config.h

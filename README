@@ -1,5 +1,7 @@
+
+
 Be warned, this (and all the other) documentantation is far from
-complete. This is just *very* preliminary pre-alpha release. Don't
+complete. This is just a *very* preliminary pre-alpha release. Don't
 expect anything!
 
 
@@ -12,7 +14,7 @@ connections possible via an masquerading firewall.
 It allows SIP clients (like kphone, linphone) to work behind
 an IP masquerading firewall or router.
 
-SIP (Session Initiation Protocol, RFC2543) is used by Softphones
+SIP (Session Initiation Protocol, RFC3261) is used by Softphones
 (Voice over IP) to initiate communication. By itself, SIP does not
 work via masquerading firewalls as the transfered data contains
 IP addresses and port numbers.
@@ -45,11 +47,6 @@ How to get started:
   host_outbound is your publich IP address or hostname (if you
   have dynamic IP addresses, then you might want to use a hostname
   here and use a dynamic DNS service like dyndns.org)
-
-  !! ACTUALLY, THIS IS NOT YET TRUE. The configuration of INBOUND
-     and OUTBOUND host ist still a compile time issue...
-     Edit the file siproxd_conf.h accordingly. Support for the
-     config file will be very next.
 
 
 What siproxd does:
@@ -95,4 +92,7 @@ after I made the above change.
 Contacts:
 =========
 
-Thomas Ries  <tries@gmx.net>
+Thomas Ries  (tries@gmx.net)
+   GnuPG Public Key:
+   pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
+   Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94

@@ -120,15 +120,13 @@ int main (int argc, char *argv[])
    /* listen for incomming messages */
    sipsock_listen();
 
-/*&&&& daemonize !! */
+   /* daemonize if requested to */
    if (configuration.daemonize) {
       DEBUGC(DBCLASS_CONFIG,"daemonizing");
       if (fork()!=0) exit(0);
       /* close STDIN, STDOUT, STDERR */
       close(0);close(1);close(2);
    }
-
-
 
 
 /*

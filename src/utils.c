@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include <signal.h>
 #include <string.h>
 #include <netinet/in.h>
@@ -41,6 +42,9 @@ extern struct siproxd_config configuration;
 
 extern int h_errno;
 
+/*
+ * create a reply template from an given SIP request
+ */
 sip_t *msg_make_template_reply (sip_t * request, int code) {
    sip_t *response;
    char *tmp;
@@ -48,8 +52,8 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
 
    msg_init (&response);
    msg_setversion (response, sgetcopy ("SIP/2.0"));
-   tmp = malloc(5);
-   snprintf (tmp, 5, "%i", code);
+   tmp = malloc(STATUSCODE_SIZE);
+   snprintf (tmp, STATUSCODE_SIZE, "%i", code);
    msg_setstatuscode (response, tmp);
    msg_setreasonphrase (response, msg_getreason (code));
 
@@ -76,6 +80,11 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
 }
 
 
+/*
+ * check for a via loop.
+ * It checks for the presense of a via entry that holds one of
+ * my IP addresses and is *not* the topmost via.
+ */
 int check_vialoop (sip_t *my_msg) {
    int sts;
    int pos;
@@ -95,6 +104,10 @@ int check_vialoop (sip_t *my_msg) {
 }
 
 
+/*
+ * check if a given via_t is local. I.e. its address is owned
+ * by my inbound or outbound interface
+ */
 int is_via_local (via_t *via) {
    int sts;
    struct in_addr addr_via, addr_myself;
@@ -109,10 +122,6 @@ int is_via_local (via_t *via) {
       get_ip_by_host(via->host, &addr_via);
    }   
 
-/* make this more optimized!!
-do the lookup at the beginning and then compare against all
-the via entries !
-*/
    sts=0;
    for (i=0; ; i++) {
       ptr=my_hostnames[i];
@@ -131,11 +140,52 @@ the via entries !
    return sts; 
 }
 
-int get_ip_by_host(char *hostname, struct in_addr *addr) {
-   struct hostent *hostentry;
-/* &&&& bahh, figure out a way to make this stuff non-blocking*/
-/* an asynchronous name-resolving might be neat */
 
+/*
+ * resolve a hostname and return in_addr
+ * handles its own little DNS cache.
+ */
+int get_ip_by_host(char *hostname, struct in_addr *addr) {
+   int i, j;
+   time_t t;
+   struct hostent *hostentry;
+   static struct {
+      time_t timestamp;
+      struct in_addr addr;
+      char hostname[HOSTNAME_SIZE];
+   } dns_cache[DNS_CACHE_SIZE];
+   static int cache_initialized=0;
+
+   /* first time: initialize DNS cache */
+   if (cache_initialized == 0) {
+      DEBUGC(DBCLASS_DNS, "initializing DNS cache (%i entries)", DNS_CACHE_SIZE);
+      memset(dns_cache, 0, sizeof(dns_cache));
+      cache_initialized=1;
+   }
+
+   time(&t);
+   /* clean expired entries */
+   for (i=0; i<DNS_CACHE_SIZE; i++) {
+      if ( (dns_cache[i].timestamp+DNS_MAX_AGE) < t ) {
+         DEBUGC(DBCLASS_DNS, "cleaning DNS cache, entry %i)", i);
+         memset (&dns_cache[i], 0, sizeof(dns_cache[0]));
+      }
+   }
+
+   /*
+    * search requested entry in cache
+    */
+   for (i=0; i<DNS_CACHE_SIZE; i++) {
+      if (dns_cache[i].hostname[0]=='\0') continue; /* empty */
+      if (strcmp(hostname, dns_cache[i].hostname) == 0) { /* match */
+         memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
+         DEBUGC(DBCLASS_DNS, "from cache: %s -> %s",
+	        hostname, inet_ntoa(*addr));
+         return 0;
+      }
+   }
+   
+   /* did not find it in cache, so I have to resolve it */
    hostentry=gethostbyname(hostname);
 
    if (hostentry==NULL) {
@@ -144,9 +194,50 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    }
 
    memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
-   DEBUGC(DBCLASS_BABBLE, "resolved: %s -> %s", hostname, inet_ntoa(*addr));
+   DEBUGC(DBCLASS_DNS, "resolved: %s -> %s", hostname, inet_ntoa(*addr));
+
+   /*
+    * remember the result in the cache
+    */
+   /* find an empty slot */
+   j=0;
+   for (i=0; i<DNS_CACHE_SIZE; i++) {
+      if (dns_cache[i].hostname[0]=='\0') break;
+      if (dns_cache[i].timestamp < t) {
+         /* remember oldest entry */
+         t=dns_cache[i].timestamp;
+	 j=i;
+      }
+   }
+   /* if no empty slot found, take oldest one */
+   if (i >= DNS_CACHE_SIZE) i=j;
+
+   /* store in cache */
+   DEBUGC(DBCLASS_DNS, "store into DNS cache, entry %i)", i);
+   memset(&dns_cache[i], 0, sizeof(dns_cache[0]));
+   strncpy(dns_cache[i].hostname, hostname, HOSTNAME_SIZE);
+   time(&dns_cache[i].timestamp);
+   memcpy(&dns_cache[i].addr, addr, sizeof(struct in_addr));
 
    return 0;
 }
 
+/*
+ * compares two URLs
+ * returns 0 if equal, >0 if non equal, <0 if error
+ * (by now, only hostname and username are compared)
+ */
+int compare_url(url_t *url1, url_t *url2) {
+   int sts;
+   /* comparison of hosts should be based on IP addresses, no? */
+   DEBUGC(DBCLASS_BABBLE, "comparng urls: %s@%s -> %s@%s",
+         url1->username, url1->host, url2->username, url2->host);
+   if ((strcmp(url1->username, url2->username)==0) &&
+       (strcmp(url1->host, url2->host)==0)) {
+      sts = 0;
+   } else {
+      sts = -1;
+   }
 
+   return sts;
+}
