@@ -219,7 +219,7 @@ static void *rtpproxy_main(void *arg) {
                 * and hope that next time we pass by it will be ok again.
                 */
                if (errno == EAGAIN) {
-                  /*&&&& I may want to remove this WARNing */
+                  /* I may want to remove this WARNing */
                   WARN("read() [fd=%i, %s:%i] would block, but select() "
                        "claimed to be readable!",
                        rtp_proxytable[i].rtp_rx_sock,
