@@ -49,10 +49,6 @@ int rtpproxy_init( void ) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
       sts = rtp_relay_init ();
-   } else if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
-      sts = rtp_masq_init ();
-   } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
-      sts = rtp_masq_init ();
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);
@@ -80,14 +76,6 @@ int rtp_start_fwd (osip_call_id_t *callid, int direction,
       sts = rtp_relay_start_fwd (callid, direction, media_stream_no,
                                   outbound_ipaddr, outboundport,
                                   lcl_client_ipaddr, lcl_clientport);
-   } else if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
-      sts = rtp_masq_start_fwd (callid, direction, media_stream_no,
-                                 outbound_ipaddr, outboundport,
-                                 lcl_client_ipaddr, lcl_clientport);
-   } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
-      sts = rtp_masq_start_fwd (callid, direction, media_stream_no,
-                                   outbound_ipaddr, outboundport,
-                                   lcl_client_ipaddr, lcl_clientport);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);
@@ -111,10 +99,6 @@ int rtp_stop_fwd (osip_call_id_t *callid, int direction) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
       sts = rtp_relay_stop_fwd(callid, direction, 0);
-   } else if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
-      sts = rtp_masq_stop_fwd(callid, direction);
-   } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
-      sts = rtp_masq_stop_fwd(callid, direction);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);

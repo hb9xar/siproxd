@@ -22,7 +22,8 @@
 #define CALLIDHOST_SIZE	32
 
 typedef struct {
-   int sock;
+   int rtp_rx_sock;				/* rx socket (0 -> free slot)*/
+   int rtp_tx_sock;				/* tx socket */
    char callid_number[CALLIDNUM_SIZE];          /* call ID */
    char callid_host[CALLIDHOST_SIZE];           /*  --"--  */
    int direction;                               /* Direction of RTP stream */

@@ -113,7 +113,7 @@ static void *rtpproxy_main(void *arg) {
    int i, sts;
    int num_fd;
    osip_call_id_t callid;
-   static int rtp_socket=0;
+//&&&&   static int rtp_socket=0;
    static char rtp_buff[RTP_BUFFER_SIZE];
    int count;
 
@@ -149,22 +149,54 @@ static void *rtpproxy_main(void *arg) {
 
       /* check for data available and send to destination */
       for (i=0;(i<RTPPROXY_SIZE) && (num_fd>0);i++) {
-         if ( (rtp_proxytable[i].sock != 0) && 
-	       FD_ISSET(rtp_proxytable[i].sock, &fdset) ) {
+         if ( (rtp_proxytable[i].rtp_rx_sock != 0) && 
+	       FD_ISSET(rtp_proxytable[i].rtp_rx_sock, &fdset) ) {
             /* yup, have some data to send */
 
 	    /* read from sock rtp_proxytable[i].sock*/
-            count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
+            count=read(rtp_proxytable[i].rtp_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
             if (count<0) {
                WARN("read() returned error [%s]",strerror(errno));
             }
 
-	    /* write to dest via socket rtp__socket */
-            sts = sipsock_send_udp(&rtp_socket,
-	                  rtp_proxytable[i].inbound_client_ipaddr,
-			  rtp_proxytable[i].inbound_client_port,
-			  rtp_buff, count, 0); /* don't dump it */
+//&&&&	    /* write to dest via socket rtp__socket */
+//&&&&            sts = sipsock_send_udp(&rtp_socket,
+//&&&&	                  rtp_proxytable[i].inbound_client_ipaddr,
+//&&&&			  rtp_proxytable[i].inbound_client_port,
+//&&&&			  rtp_buff, count, 0); /* don't dump it */
+           if (rtp_proxytable[i].rtp_tx_sock == 0)
+           {
+              int j;
+              osip_call_id_t callid;
+              int direction = rtp_proxytable[i].direction;
+              int media_stream_no = rtp_proxytable[i].media_stream_no;
+
+              callid.number = rtp_proxytable[i].callid_number;
+              callid.host = rtp_proxytable[i].callid_host;
+
+              for (j=0;(j<RTPPROXY_SIZE);j++) {
+                 osip_call_id_t cid;
+
+                 cid.number = rtp_proxytable[j].callid_number;
+                 cid.host = rtp_proxytable[j].callid_host;
+
+                 if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
+                      (direction != rtp_proxytable[j].direction) &&
+                      (media_stream_no == rtp_proxytable[j].media_stream_no) &&
+                      (compare_callid(&callid, &cid) == STS_SUCCESS) ) {
+                    rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
+                    break;
+                 }
+              }
+           }
+           if (rtp_proxytable[i].rtp_tx_sock != 0) {
+               /* write to dest via socket rtp_tx_sock */
+               sts = sipsock_send_udp(&rtp_proxytable[i].rtp_tx_sock,
+                                      rtp_proxytable[i].inbound_client_ipaddr,
+                                      rtp_proxytable[i].inbound_client_port,
+                                      rtp_buff, count, 0); /* don't dump it */
+           }
 
             /* update timestamp of last usage */
             rtp_proxytable[i].timestamp=t;
@@ -179,13 +211,15 @@ static void *rtpproxy_main(void *arg) {
       if (t > (last_t+10) ) {
          last_t = t;
 	 for (i=0;i<RTPPROXY_SIZE; i++) {
-            if ( (rtp_proxytable[i].sock != 0) &&
+            if ( (rtp_proxytable[i].rtp_rx_sock != 0) &&
 		 ((rtp_proxytable[i].timestamp+configuration.rtp_timeout)<t)) {
                /* this one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
-               DEBUGC(DBCLASS_RTP,"RTP stream sock=%i %s@%s (idx=%i) "
-                      "has expired", rtp_proxytable[i].sock,
+               DEBUGC(DBCLASS_RTP,"RTP stream rx_sock=%i tx_sock=%i "
+                      "%s@%s (idx=%i) has expired",
+                      rtp_proxytable[i].rtp_rx_sock,
+                      rtp_proxytable[i].rtp_tx_sock,
                       callid.number, callid.host, i);
                /* don't lock the mutex, as we own the lock already here */
                rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, 1);
@@ -276,7 +310,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
-      if (rtp_proxytable[i].sock &&
+      if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == direction) &&
          (rtp_proxytable[i].media_stream_no == media_stream_no) ) {
@@ -307,7 +341,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
     */
    freeidx=-1;
    for (j=0; j<RTPPROXY_SIZE; j++) {
-      if (rtp_proxytable[j].sock==0) {
+      if (rtp_proxytable[j].rtp_rx_sock==0) {
          freeidx=j;
 	 break;
       }
@@ -356,7 +390,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
    }
 
    /* write entry into rtp_proxytable slot (freeidx) */
-   rtp_proxytable[freeidx].sock=sock;
+   rtp_proxytable[freeidx].rtp_rx_sock=sock;
 
    if (callid->number) {
       strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
@@ -456,19 +490,19 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int direction,
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
-      if (rtp_proxytable[i].sock &&
+      if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == direction)) {
-         sts = close(rtp_proxytable[i].sock);
+         sts = close(rtp_proxytable[i].rtp_rx_sock);
 	 DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",
-	        rtp_proxytable[i].sock,
+	        rtp_proxytable[i].rtp_rx_sock,
 	        rtp_proxytable[i].callid_number,
 	        rtp_proxytable[i].callid_host,
 	        callid->number, callid->host, i, sts);
          if (sts < 0) {
             ERROR("Error in close(%i): %s nolock=%i %s:%s\n",
-                  rtp_proxytable[i].sock,
+                  rtp_proxytable[i].rtp_rx_sock,
                   strerror(errno), nolock,
                   callid->number, callid->host);
          }
@@ -521,10 +555,10 @@ static int rtp_recreate_fdset(void) {
    FD_ZERO(&master_fdset);
    master_fd_max=-1;
    for (i=0;i<RTPPROXY_SIZE;i++) {
-      if (rtp_proxytable[i].sock != 0) {
-         FD_SET(rtp_proxytable[i].sock, &master_fdset);
-	 if (rtp_proxytable[i].sock > master_fd_max) {
-	    master_fd_max=rtp_proxytable[i].sock;
+      if (rtp_proxytable[i].rtp_rx_sock != 0) {
+         FD_SET(rtp_proxytable[i].rtp_rx_sock, &master_fdset);
+	 if (rtp_proxytable[i].rtp_rx_sock > master_fd_max) {
+	    master_fd_max=rtp_proxytable[i].rtp_rx_sock;
 	 }
       }
    } /* for i */

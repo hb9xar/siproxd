@@ -4,8 +4,13 @@
 		- better branch parameter calculation (via header),
                   now honors RFC3261 for stateless proxies (section 16.11)
                 - SIP request: remove a Route-header pointing to myself.
-                  This was an issue with Linphone 0.12.1. Thanks to
-                  Robert Högberg for a patch.
+                  This was an issue with Linphone 0.12.1.
+                  (patch by Robert Högberg).
+                - removed IPCHAINS & IPTABLES (netfilter) proxy support
+                - RTPPROXY correction: match RTP ports crosswise -
+                  use one single port (and socket) on each side (inbound/
+                  outbound) to send and receive RTP traffic for every
+                  active stream (patch by Christof Meerwald).
    22-Jan-2004:	- ./configure option: --enable-static to build
 		  a completely statically linked executable
                 - REGISTER honors the expires parameter
