@@ -1,5 +1,8 @@
 0.5.4
 =====
+  21-Feb-2004:  - Proxy Authorization: enclose strings with quotes
+                  and fixed an error that did not let REGISTER
+                  requests pass through to a 3rd party registrar.
   17-Feb-2004:  - Documentation spell corrections (patch from Luke Mewburn)
   16-Feb-2004:  - Hack for Grandstream SIP phones and SUBSCRIBE response
 

@@ -57,7 +57,7 @@ static char *auth_getpwd(char *username);
  *	STS_NEEDAUTH: authentication needed
  */
 int authenticate_proxy(osip_message_t *request) {
-   osip_proxy_authorization_t *proxy_auth;
+   osip_proxy_authorization_t *proxy_auth=NULL;
    
    /* required by config? */
    if (configuration.proxy_auth_realm == NULL) {
@@ -119,8 +119,9 @@ static char *auth_generate_nonce() {
    
    gettimeofday (&tv, NULL);
 
-/* yeah, I know... should be a better algorithm */   
-   sprintf(nonce, "%8.8lx%8.8lx%8.8x%8.8x",
+/* yeah, I know... should be a better algorithm */
+/* enclose it in double quotes, as libosip does *not* do it (2.0.6) */
+   sprintf(nonce, "\"%8.8lx%8.8lx%8.8x%8.8x\"",
            (long)tv.tv_sec, (long)tv.tv_usec, rand(), rand() );
 
    DEBUGC(DBCLASS_AUTH,"created nonce=\"%s\"",nonce);
@@ -176,7 +177,7 @@ static int auth_check(osip_proxy_authorization_t *proxy_auth) {
 
    if (proxy_auth->response)
       Response=osip_strdup_without_quote(proxy_auth->response);
-   
+
    /* get password */
    if (configuration.proxy_auth_pwfile) {
       /* check in passwd file */
@@ -185,14 +186,14 @@ static int auth_check(osip_proxy_authorization_t *proxy_auth) {
       /* get password from configuration */
       password=configuration.proxy_auth_passwd;
    }
-   
+
    if (password == NULL) password="";
 
    DEBUGC(DBCLASS_BABBLE," username=\"%s\"",Username  );
    DEBUGC(DBCLASS_BABBLE," realm   =\"%s\"",Realm     );
    DEBUGC(DBCLASS_BABBLE," nonce   =\"%s\"",Nonce     );
    DEBUGC(DBCLASS_BABBLE," cnonce  =\"%s\"",CNonce    );
-   DEBUGC(DBCLASS_BABBLE," nonce_cn=\"%s\"",NonceCount);
+   DEBUGC(DBCLASS_BABBLE," nonce_nc=\"%s\"",NonceCount);
    DEBUGC(DBCLASS_BABBLE," qpop    =\"%s\"",Qpop      );
    DEBUGC(DBCLASS_BABBLE," uri     =\"%s\"",Uri	    );
    DEBUGC(DBCLASS_BABBLE," response=\"%s\"",Response  );

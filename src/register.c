@@ -176,21 +176,27 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    osip_uri_param_t *expires_param=NULL;
    
    /*
-    * RFC 3261, Section 16.3 step 6
-    * Proxy Behavior - Request Validation - Proxy-Authorization
+    * Authorization - do only if I'm not just acting as outbound proxy
+    * but am ment to be the registrar
     */
-   sts = authenticate_proxy(my_msg);
-   if (sts == STS_FAILURE) {
-      /* failed */
-      WARN("proxy authentication failed for %s@%s",
-           (my_msg->to->url->username)? my_msg->to->url->username : "*NULL*",
-           my_msg->to->url->host);
-      return STS_FAILURE;
-   } else if (sts == STS_NEED_AUTH) {
-      /* needed */
-      DEBUGC(DBCLASS_REG,"proxy authentication needed for %s@%s",
-             my_msg->to->url->username,my_msg->to->url->host);
-      return STS_NEED_AUTH;
+   if (force_lcl_masq == 0) {
+      /*
+       * RFC 3261, Section 16.3 step 6
+       * Proxy Behavior - Request Validation - Proxy-Authorization
+       */
+      sts = authenticate_proxy(my_msg);
+      if (sts == STS_FAILURE) {
+         /* failed */
+         WARN("proxy authentication failed for %s@%s",
+              (my_msg->to->url->username)? my_msg->to->url->username : "*NULL*",
+              my_msg->to->url->host);
+         return STS_FAILURE;
+      } else if (sts == STS_NEED_AUTH) {
+         /* needed */
+         DEBUGC(DBCLASS_REG,"proxy authentication needed for %s@%s",
+                my_msg->to->url->username,my_msg->to->url->host);
+         return STS_NEED_AUTH;
+      }
    }
 
 /*
