@@ -50,6 +50,9 @@ extern int sip_socket;				/* sending SIP datagrams */
 /*
  * PROXY_REQUEST
  *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_request (sip_t *request) {
    int i;
@@ -68,9 +71,9 @@ int proxy_request (sip_t *request) {
 
 /* check for VIA loop, if yes, discard the request */
    sts=check_vialoop(request);
-   if (sts !=0) {
+   if (sts == STS_TRUE) {
       DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring request");
-      return 1;
+      return STS_FAILURE;
    }
 
    type = 0;
@@ -78,7 +81,7 @@ int proxy_request (sip_t *request) {
       if (urlmap[i].active == 0) continue;
 
       /* incomming request ('to' == 'masq') */
-      if (compare_url(request->to->url, urlmap[i].masq_url)==0) {
+      if (compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=REQTYP_INCOMMING;
          DEBUGC(DBCLASS_PROXY,"incomming request from %s@%s from outbound",
 	        request->from->url->username,
@@ -87,7 +90,7 @@ int proxy_request (sip_t *request) {
       }
 
       /* outgoing request ('from' == 'masq') */
-      if (compare_url(request->from->url, urlmap[i].masq_url)==0) {
+      if (compare_url(request->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=REQTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	        request->from->url->username,
@@ -134,6 +137,9 @@ int proxy_request (sip_t *request) {
 
       /* add my Via header line (inbound interface)*/
       sts = proxy_add_myvia(request, 1);
+      if (sts == STS_FAILURE) {
+         WARN("adding my inbound via failed!");
+      }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -157,7 +163,8 @@ int proxy_request (sip_t *request) {
       if (contact != NULL) {
          for (i=0;i<URLMAP_SIZE;i++){
 	    if (urlmap[i].active == 0) continue;
-            if (compare_url(contact->url, urlmap[i].true_url)==0) break;
+            if (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)
+	       break;
          }
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
@@ -177,6 +184,9 @@ int proxy_request (sip_t *request) {
 
       /* add my Via header line (outbound interface)*/
       sts = proxy_add_myvia(request, 0);
+      if (sts == STS_FAILURE) {
+         WARN("adding my outbound via failed!");
+      }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -193,7 +203,7 @@ int proxy_request (sip_t *request) {
 		request->from->url->host);
 /* some clients seem to run amok when passing back a negative response */
 //      proxy_gen_response(request, 403 /*forbidden*/);
-      return 1;
+      return STS_FAILURE;
    }
 
 
@@ -231,7 +241,7 @@ int proxy_request (sip_t *request) {
    sts = msg_2char(request, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: msg_2char failed");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* send to destination */
@@ -243,13 +253,16 @@ int proxy_request (sip_t *request) {
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
-   return 0;
+   return STS_SUCCESS;
 }
 
 
 /*
  * PROXY_RESPONSE
  *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_response (sip_t *response) {
    int i;
@@ -269,16 +282,16 @@ int proxy_response (sip_t *response) {
 
    /* check for VIA loop, if yes, discard the request */
    sts=check_vialoop(response);
-   if (sts !=0) {
+   if (sts == STS_TRUE) {
       DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring response");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* ALWAYS: remove my Via header line */
    sts = proxy_del_myvia(response);
-   if (sts !=0) {
+   if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY,"not addressed to my VIA, ignoring response");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* figure out if this is an request comming from the outside
@@ -298,7 +311,7 @@ int proxy_response (sip_t *response) {
 
 
       /* incomming response ('from' == 'masq') */
-      if (compare_url(response->from->url, urlmap[i].masq_url)==0) {
+      if (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=RESTYP_INCOMMING;
          DEBUGC(DBCLASS_PROXY,"incomming response for %s@%s from outbound",
 	        response->from->url->username,
@@ -307,7 +320,7 @@ int proxy_response (sip_t *response) {
       }
 
       /* outgoing response ('to' == 'masq') */
-      if (compare_url(response->to->url, urlmap[i].masq_url)==0) {
+      if (compare_url(response->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
 	        response->from->url->username,
@@ -342,7 +355,8 @@ int proxy_response (sip_t *response) {
       if (contact != NULL) {
          for (i=0;i<URLMAP_SIZE;i++){
 	    if (urlmap[i].active == 0) continue;
-            if (compare_url(contact->url, urlmap[i].true_url)==0) break;
+            if (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)
+	       break;
          }
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
@@ -366,7 +380,7 @@ int proxy_response (sip_t *response) {
       DEBUGC(DBCLASS_PROXY,"response: refuse to proxy - UA not registered?");
 /* some clients seem to run amok when passing back a negative response */
 //      proxy_gen_response(request, 403 /*forbidden*/);
-      return 1;
+      return STS_FAILURE;
    }
 
    /* get target address from VIA header */
@@ -377,7 +391,7 @@ int proxy_response (sip_t *response) {
    sts = msg_2char(response, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: msg_2char failed");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* send to destination */
@@ -389,7 +403,7 @@ int proxy_response (sip_t *response) {
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
-   return 0;
+   return STS_SUCCESS;
 }
 
 
@@ -399,6 +413,10 @@ int proxy_response (sip_t *response) {
  * send an proxy generated response back to the client.
  * Only errors are reported from the proxy itself.
  *  code =  SIP result code to deliver
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_gen_response(sip_t *request, int code) {
    sip_t *response;
@@ -410,7 +428,7 @@ int proxy_gen_response(sip_t *request, int code) {
    /* create the response template */
    if ((response=msg_make_template_reply(request, code))==NULL) {
       ERROR("proxy_response: error in msg_make_template_reply");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* we must check if first via has x.x.x.x address. If not, we must resolve it */
@@ -418,7 +436,7 @@ int proxy_gen_response(sip_t *request, int code) {
    if (via == NULL)
    {
       ERROR("proxy_response: Cannot send response - no via field");
-      return 1;
+      return STS_FAILURE;
    }
 
 
@@ -434,7 +452,7 @@ DEBUGC(DBCLASS_PROXY,"response=%p",response);
    sts = msg_2char(response, &buffer);
    if (sts != 0) {
       ERROR("proxy_response: msg_2char failed");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* send to destination */
@@ -445,15 +463,18 @@ DEBUGC(DBCLASS_PROXY,"response=%p",response);
    msg_free(response);
    free(response);
    free (buffer);
-   return 0;
+   return STS_SUCCESS;
 }
 
 
 /*
  * PROXY_ADD_MYVIA
  *
- *
  * interface == 0 -> outbound interface, else inbound interface
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_add_myvia (sip_t *request, int interface) {
    struct in_addr addr;
@@ -472,18 +493,21 @@ int proxy_add_myvia (sip_t *request, int interface) {
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
    sts = via_init(&via);
-   if (sts!=0) return -1; /* allocation failed */
+   if (sts!=0) return STS_FAILURE; /* allocation failed */
    sts = via_parse(via, tmp);
-   if (sts!=0) return -1;
+   if (sts!=0) return STS_FAILURE;
    list_add(request->vias,via,0);
 
-   return 0;
+   return STS_SUCCESS;
 }
 
 
 /*
  * PROXY_DEL_MYVIA
  *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_del_myvia (sip_t *response) {
    via_t *via;
@@ -492,15 +516,15 @@ int proxy_del_myvia (sip_t *response) {
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
    via = list_get (response->vias, 0);
    
-   if ( !is_via_local(via) ) {
+   if ( is_via_local(via) == STS_FALSE ) {
       ERROR("I'm trying to delete a VIA but it's not mine! host=%s",via->host);
-      return -1;
+      return STS_FAILURE;
    }
 
    sts = list_remove(response->vias, 0);
    via_free (via);
    free(via);
-   return 0;
+   return STS_SUCCESS;
 }
 
 
@@ -509,6 +533,9 @@ int proxy_del_myvia (sip_t *response) {
  *
  * rewrites the outgoing INVITATION packet
  * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int proxy_rewrite_invitation_body(sip_t *mymsg){
    body_t *body;
@@ -523,7 +550,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sts = msg_getbody(mymsg, 0, &body);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: no body found in message");
-      return 1;
+      return STS_FAILURE;
    }
 
    sts = body_2char(body, &oldbody);
@@ -532,7 +559,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sts = sdp_parse (sdp, oldbody);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_parse body");
-      return 1;
+      return STS_FAILURE;
    }
 
 { /* just dump the buffer */
@@ -583,13 +610,13 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    if (data_c == NULL) data_c = strstr (oldbody, "\rc=");
    if (data_c == NULL) {
       ERROR("did not find a c= line in the body");
-      return 1;
+      return STS_FAILURE;
    }
    data_c += 3;
    /* can only rewrite IPV4 addresses by now */
    if (strncmp(data_c,"IN IP4 ",7)!=0) {
       ERROR("c= does not contain an IN IP4 address");
-      return 1;
+      return STS_FAILURE;
    }
    data_c += 7; /* PTR to start of IP address */
    /* find the end of the IP address -> end of line */
@@ -597,7 +624,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    if (data2_c == NULL) data2_c = strstr (oldbody, "\r");
    if (data2_c == NULL) {
       ERROR("did not find a CR/LF after c= line");
-      return 1;
+      return STS_FAILURE;
    }
 
    /*
@@ -607,20 +634,20 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    if (data_m == NULL) data_m = strstr (oldbody, "\rm=");
    if (data_m == NULL) {
       ERROR("did not find a m= line in the body");
-      return 1;
+      return STS_FAILURE;
    }
    data_m += 3;
    /* check for audio media */
    if (strncmp(data_m,"audio ",6)!=0) {
       ERROR("m= does not contain audio");
-      return 1;
+      return STS_FAILURE;
    }
    data_m += 6; /* PTR to start of port number */
    /* find the end of the IP address -> end of line */
    data2_m = strstr (data_m, " RTP/");
    if (data2_m == NULL) {
       ERROR("did not find RTP/ on m= line");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* 
@@ -702,5 +729,5 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    free(tmp2);
 }
    free(oldbody);
-   return 0;
+   return STS_SUCCESS;
 }

@@ -72,6 +72,9 @@ void sighdl_alm(int sig) {/* do nothing, just wake up from select() */};
 
 /*
  * initialize and create rtp_proxy thread
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
  */
 int rtpproxy_init( void ) {
    int sts;
@@ -101,7 +104,7 @@ int rtpproxy_init( void ) {
    DEBUGC(DBCLASS_RTP,"detached, sts=%i", sts);
 #endif
 
-   return 0;
+   return STS_SUCCESS;
 }
 
 /*
@@ -197,12 +200,16 @@ DEBUGC(DBCLASS_RTP,"got data on sock=%i",rtp_proxytable[i].sock);
 
 
 
-/*
+/******
  * helper routines to control the RTP proxy thread
- */
+ ******/
 
 /*
  * start an rtp stream on the proxy
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int rtp_start_fwd (call_id_t *callid,
 		   struct in_addr outbound_ipaddr, int *outboundport,
@@ -210,13 +217,13 @@ int rtp_start_fwd (call_id_t *callid,
    int i, j;
    int sock, port;
    int freeidx;
-   int sts=0;
+   int sts=STS_SUCCESS;
 
-   if (configuration.rtp_proxy_enable == 0) return 0;
+   if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
    if (callid == NULL) {
       ERROR("rtp_start_fwd: callid is NULL!");
-      return 1;
+      return STS_FAILURE;
    }
 
    DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s",
@@ -247,7 +254,7 @@ int rtp_start_fwd (call_id_t *callid,
          DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i)",
 	        rtp_proxytable[j].outboundport);
 	 *outboundport=rtp_proxytable[j].outboundport;
-	 sts = 0;
+	 sts = STS_SUCCESS;
 	 goto unlock_and_exit;
       }
    }
@@ -279,7 +286,7 @@ int rtp_start_fwd (call_id_t *callid,
                DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i)",
 	              rtp_proxytable[j].outboundport);
 	       *outboundport=rtp_proxytable[j].outboundport;
-	       sts = 0;
+	       sts = STS_SUCCESS;
 	       goto unlock_and_exit;
 	    }
 
@@ -312,21 +319,21 @@ int rtp_start_fwd (call_id_t *callid,
    /* found an unused port? No -> RTP port pool fully allocated */
    if (port == 0) {
       ERROR("rtp_start_fwd: no RTP port available. Check rtp_port_* config!");
-      sts = 1;
+      sts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
    /* could bind to desired port? */
    if (sock == 0) {
       ERROR("rtp_start_fwd: unable to allocate outbound port!");
-      sts = 1;
+      sts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
    /* rtp_proxytable port pool full? */
    if (freeidx == -1) {
       ERROR("rtp_start_fwd: rtp_proxytable is full!");
-      sts = 1;
+      sts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
@@ -362,16 +369,20 @@ unlock_and_exit:
 
 /*
  * stop a rtp stream on the proxy
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int rtp_stop_fwd (call_id_t *callid) {
    int i;
-   int sts=0;
+   int sts=STS_SUCCESS;
 
-   if (configuration.rtp_proxy_enable == 0) return 0;
+   if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
    if (callid == NULL) {
       ERROR("rtp_stop_fwd: callid is NULL!");
-      return 1;
+      return STS_FAILURE;
    }
 
    DEBUGC(DBCLASS_RTP,"stopping RTP proxy stream for: %s@%s",
@@ -402,7 +413,7 @@ int rtp_stop_fwd (call_id_t *callid) {
    if (i>= RTPPROXY_SIZE) {
       DEBUGC(DBCLASS_RTP,"rtp_stop_fwd: can't find active stream for %s@%s",
              callid->number, callid->host);
-      sts = 1;
+      sts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
@@ -432,6 +443,9 @@ unlock_and_exit:
 /*
  * some sockets have been newly created or removed -
  * recreate the FD set for next select operation
+ *
+ * RETURNS
+ *	STS_SUCCESS on success (always)
  */
 int rtp_recreate_fdset(void) {
    int i;
@@ -446,6 +460,6 @@ int rtp_recreate_fdset(void) {
 	 }
       }
    } /* for i */
-   return 0;
+   return STS_SUCCESS;
 }
 

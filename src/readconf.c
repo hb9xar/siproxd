@@ -42,12 +42,16 @@ static int parse_config (FILE *configfile);
 
 
 /* try to open (witchever found first):
-	<name>
-	$HOME/.<name>rc
-	/etc/<name>.conf
-	/usr/etc/<name>.conf
-	/usr/local/etc/<name>.conf
-*/
+ *	<name>
+ *	$HOME/.<name>rc
+ *	/etc/<name>.conf
+ *	/usr/etc/<name>.conf
+ *	/usr/local/etc/<name>.conf
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
 int read_config(char *name, int search) {
    int sts;
    FILE *configfile=NULL;
@@ -89,7 +93,7 @@ int read_config(char *name, int search) {
    /* config file not found or unable to open for read */
    if (configfile==NULL) {
       ERROR ("could not open config file: %s", strerror(errno));
-      return 1;
+      return STS_FAILURE;
    }
 
    sts = parse_config(configfile);
@@ -98,7 +102,13 @@ int read_config(char *name, int search) {
 }
 
 
-
+/*
+ * parse configuration file
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
 static int parse_config (FILE *configfile) {
    char buff[128];
    char *ptr;
@@ -128,11 +138,15 @@ static int parse_config (FILE *configfile) {
       { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
       { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
       { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
+      { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
       {0, 0, 0}
    };
 
 
    while (fgets(buff,sizeof(buff),configfile) != NULL) {
+      /* life insurance */
+      buff[sizeof(buff)-1]='\0';
+
       /* strip newline if present */
       if (buff[strlen(buff)-1]=='\n') buff[strlen(buff)-1]='\0';
 
@@ -191,5 +205,5 @@ static int parse_config (FILE *configfile) {
       }
    }
 
-   return 0;
+   return STS_SUCCESS;
 }

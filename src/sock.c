@@ -49,20 +49,27 @@ static int listen_socket=0;
 /*
  * binds to SIP UDP socket for listening to incomming packets
  *
- * returns 0 on success
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int sipsock_listen (void) {
    struct in_addr ipaddr;
 
    memset(&ipaddr, 0, sizeof(struct in_addr));
    listen_socket=sockbind(ipaddr, configuration.sip_listen_port);
-   if (listen_socket==0) return 1; /* failure*/
+   if (listen_socket==0) return STS_FAILURE; /* failure*/
 
    DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
-   return 0;
+   return STS_SUCCESS;
 }
 
-
+/*
+ * Wait for incomming SIP message. After a 5 sec timeout
+ * this function returns with sts=0
+ *
+ * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
+ */
 int sipsock_wait(void) {
    int sts;
    fd_set fdset;
@@ -78,6 +85,12 @@ int sipsock_wait(void) {
    return sts;
 }
 
+/*
+ * read a message from SIP listen socket (UDP datagram)
+ *
+ * RETURNS number of bytes read
+ *         from is modified to return the sockaddr_in of the sender
+ */
 int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    int count;
    socklen_t fromlen;
@@ -94,6 +107,10 @@ int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
 
 /*
  * sends an UDP datagram to the specified destination
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int sipsock_send_udp(int *sock, struct in_addr addr, int port,
                      char *buffer, int size, int allowdump) {
@@ -105,7 +122,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
       *sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
       if (*sock == 0) {
          ERROR("socket() call failed:%s",strerror(errno));
-	 return 1;
+	 return STS_FAILURE;
       }
       DEBUGC(DBCLASS_NET,"allocated send socket %i",*sock);
    }
@@ -126,12 +143,12 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
          ERROR("sendto() call failed:%s",strerror(errno));
-         return 1;
+         return STS_FAILURE;
       }
      DEBUGC(DBCLASS_BABBLE,"sendto() call failed:%s",strerror(errno));
    }
 
-   return 0;
+   return STS_SUCCESS;
 }
 
 
@@ -140,7 +157,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
  * generic routine to allocate and bind a socket to a specified
  * local address and port (UDP)
  *
- * returns socket number on success, zero on failure
+ * RETURNS socket number on success, zero on failure
  */
 int sockbind(struct in_addr ipaddr, int localport) {
    struct sockaddr_in my_addr;

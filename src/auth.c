@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,42 +47,49 @@ extern struct siproxd_config configuration;
 /* local protorypes */
 static char *auth_generate_nonce(void);
 static int auth_check(proxy_authorization_t *proxy_auth);
+static char *auth_getpwd(char *username);
 
 /*
  * perform proxy authentication
  *
- *    sts = 0 : authentication ok / not needed
- *    sts = 1 : authentication failed
- *    sts = 2 : authentication needed
+ * RETURNS
+ *	STS_SUCCESS : authentication ok / not needed
+ *	STS_FAILURE : authentication failed
+ *	STS_NEEDAUTH: authentication needed
  */
 int authenticate_proxy(sip_t *request) {
    proxy_authorization_t *proxy_auth;
    
-   /* required by config ? (if not, return 0)*/
+   /* required by config? */
    if (configuration.proxy_auth_realm==NULL) {
-      return 0;
+      return STS_SUCCESS;
    }
    
-   /* supplied by UA? (if not, return 1)*/
+   /* supplied by UA? */
    msg_getproxy_authorization(request, 0, &proxy_auth);
    if (proxy_auth == NULL) {
       DEBUGC(DBCLASS_AUTH,"proxy-auth required, not supplied by UA");
-      return 2;
+      return STS_NEED_AUTH;
    }
 
 
    /* verify supplied authentication */
    if (auth_check(proxy_auth) == 0) {
       DEBUGC(DBCLASS_AUTH,"proxy-auth succeeded");
-      return 0;
+      return STS_SUCCESS;
    }
 
    /* authentication failed */
    DEBUGC(DBCLASS_AUTH,"proxy-auth failed");
-   return 1;
+   return STS_FAILURE;
 }
 
-
+/*
+ * includes proxy authentication header in SIP message
+ *
+ * RETURNS
+ *	STS_SUCCESS
+ */
 int auth_include_authrq(sip_t *response) {
    int sts;
    char str[256];
@@ -103,12 +111,16 @@ int auth_include_authrq(sip_t *response) {
 
    sts = msg_setproxy_authenticate(response, str);
 
-   DEBUGC(DBCLASS_AUTH," msg_setproxy_authenticate sts=%i",sts);
+   DEBUGC(DBCLASS_AUTH,"msg_setproxy_authenticate sts=%i",sts);
 
-   return 0;
+   return STS_SUCCESS;
 }
 
-
+/*
+ * generates a nonce string
+ *
+ * RETURNS nonce string
+ */
 static char *auth_generate_nonce() {
    static char nonce[40];
    struct timeval tv;
@@ -119,7 +131,7 @@ static char *auth_generate_nonce() {
    sprintf(nonce, "%8.8lx%8.8lx%8.8x%8.8x",
            tv.tv_sec, tv.tv_usec, rand(), rand() );
 
-   DEBUGC(DBCLASS_AUTH," created nonce=\"%s\"",nonce);
+   DEBUGC(DBCLASS_AUTH,"created nonce=\"%s\"",nonce);
    return nonce;
 }
 
@@ -127,8 +139,9 @@ static char *auth_generate_nonce() {
 /*
  * verify the supplied authentication information from UA
  *
- * returns 0 if succeeded
- * returns 1 if failed
+ * RETURNS
+ *	STS_SUCCESS if succeeded
+ *	STS_FAILURE if failed
  */
 static int auth_check(proxy_authorization_t *proxy_auth) {
    char *password=NULL;
@@ -172,11 +185,17 @@ static int auth_check(proxy_authorization_t *proxy_auth) {
    if (proxy_auth->response)
       Response=sgetcopy_unquoted_string(proxy_auth->response);
    
-   /* get password from configuration */
-   if (configuration.proxy_auth_passwd)
+   /* get password */
+   if (configuration.proxy_auth_pwfile) {
+      /* check in passwd file */
+      password=auth_getpwd(Username);
+   } else if (configuration.proxy_auth_passwd) {
+      /* get password from configuration */
       password=configuration.proxy_auth_passwd;
-   else
-      password="";
+   }
+   
+   if (password == NULL) password="";
+
 
    DEBUGC(DBCLASS_BABBLE," username=\"%s\"",Username  );
    DEBUGC(DBCLASS_BABBLE," realm   =\"%s\"",Realm     );
@@ -192,14 +211,14 @@ static int auth_check(proxy_authorization_t *proxy_auth) {
    DigestCalcResponse(HA1, Nonce, NonceCount, CNonce, Qpop,
 		      "REGISTER", Uri, HA2, Lcl_Response);
 
-   DEBUGC(DBCLASS_BABBLE," calculated Response=\"%s\"", Lcl_Response);
+   DEBUGC(DBCLASS_BABBLE,"calculated Response=\"%s\"", Lcl_Response);
 
    if (strcmp(Lcl_Response, Response)==0) {
-      DEBUGC(DBCLASS_AUTH," Authentication succeeded");
-      sts = 0;
+      DEBUGC(DBCLASS_AUTH,"Authentication succeeded");
+      sts = STS_SUCCESS;
    } else {
-      DEBUGC(DBCLASS_AUTH," Authentication failed");
-      sts = 1;
+      DEBUGC(DBCLASS_AUTH,"Authentication failed");
+      sts = STS_FAILURE;
    }
 
    /* free allocated memory from above */
@@ -215,6 +234,90 @@ static int auth_check(proxy_authorization_t *proxy_auth) {
    return sts;
 }
 
+
+/*
+ * lookup in the password file and return
+ * the user specific password for 'username'
+ *
+ * RETURNS
+ *	password for user or NULL if not found
+ */
+static char *auth_getpwd(char *username) {
+   typedef struct {
+      char username[USERNAME_SIZE];
+      char password[PASSWORD_SIZE];
+   } auth_cache_t;
+
+   FILE *pwdfile;
+   char buff[128];
+   int i;
+   static auth_cache_t *auth_cache=NULL;
+   void *tmpptr;
+   static int auth_cache_size=0;
+   static int auth_cache_count=0;
+
+   if (auth_cache==NULL) {
+      DEBUGC(DBCLASS_AUTH,"initialize password cache");
+      pwdfile=fopen(configuration.proxy_auth_pwfile,"r");
+      /* config file not found or unable to open for read */
+      if (pwdfile==NULL) {
+         ERROR ("could not open password file: %s", strerror(errno));
+         return NULL;
+      }
+      
+      while (fgets(buff,sizeof(buff),pwdfile) != NULL) {
+         /* life insurance */
+         buff[sizeof(buff)-1]='\0';
+
+	 /* strip newline if present */
+	 if (buff[strlen(buff)-1]=='\n') buff[strlen(buff)-1]='\0';
+
+	 /* strip emty lines */
+	 if (strlen(buff) == 0) continue;
+
+	 /* strip comments and line with only whitespaces */
+	 for (i=0;i<strlen(buff);i++) {
+            if ((buff[i] == ' ') && (buff[i] == '\t')) continue;
+            if (buff[i] =='#') i=strlen(buff);
+            break;
+	 }
+	 if (i == strlen(buff)) continue;
+
+         /* allocate space whenever needed */
+	 if (auth_cache_count >= auth_cache_size) {
+	    auth_cache_size+=10;
+	    tmpptr=realloc(auth_cache, auth_cache_size*sizeof(auth_cache_t));
+            if (tmpptr != NULL) {
+               auth_cache= (auth_cache_t *)tmpptr;
+	    } else {
+               ERROR("realloc failed! this is not good");
+	       auth_cache_size-=10;
+	       return NULL;
+	    }
+         } /* cnt > size */
+
+         i=sscanf(buff,"%s %s",auth_cache[auth_cache_count].username,
+	                       auth_cache[auth_cache_count].password);
+         /* if I got username & passwd, make it valid and increment counter */
+         if (i == 2) auth_cache_count++;
+      }
+
+      fclose(pwdfile);
+
+   } /* initialize cache */
+
+   /* search cache for user */
+   DEBUGC(DBCLASS_AUTH,"searching password entry for user %s",username);
+   for (i=0; i< auth_cache_count;i++) {
+      if (strcmp(username, auth_cache[i].username)==0) {
+         DEBUGC(DBCLASS_AUTH,"found password entry for user %s",username);
+         return auth_cache[i].password;
+      }
+   }
+
+   DEBUGC(DBCLASS_AUTH,"no password entry found for user %s",username);
+   return NULL;
+}
 
 
 /*-------------------------------------------------------------------------

@@ -52,9 +52,11 @@ void register_init(void) {
 
 /*
  * handles register requests and updates the URL mapping table
- *    sts = 0 : successfully registered
- *    sts = 1 : registration failed
- *    sts = 2 : authentication needed
+ *
+ * RETURNS:
+ *    STS_SUCCESS : successfully registered
+ *    STS_FAILURE : registration failed
+ *    STS_NEED_AUTH : authentication needed
  */
 int register_client(sip_t *my_msg) {
    int i, j, sts;
@@ -64,20 +66,18 @@ int register_client(sip_t *my_msg) {
    url_t *url2_to, *url2_contact;
    header_t *expires_hdr;
    
-/*
-   do proxy authentication
-*/
+   /* check for proxy authentication */
    sts = authenticate_proxy(my_msg);
-   if (sts == 1) {
+   if (sts == STS_FAILURE) {
    /* failed */
       WARN("proxy authentication failed for %s@%s",
            my_msg->to->url->username,my_msg->to->url->host);
-      return (1);
-   } else if (sts == 2) {
+      return STS_FAILURE;
+   } else if (sts == STS_NEED_AUTH) {
       /* needed */
       DEBUGC(DBCLASS_REG,"proxy authentication needed for %s@%s",
              my_msg->to->url->username,my_msg->to->url->host);
-      return (2);
+      return STS_NEED_AUTH;
    }
 
 /*
@@ -126,7 +126,7 @@ int register_client(sip_t *my_msg) {
       url2_to=urlmap[i].masq_url;
       url2_contact=urlmap[i].true_url;
 
-      if ( (compare_url(url1_to, url2_to)==0) &&
+      if ( (compare_url(url1_to, url2_to)==STS_SUCCESS) &&
            (strcmp(url1_contact->username, url2_contact->username)==0) &&
            (strcmp(url1_contact->host,     url2_contact->host    )==0) ) {
          DEBUGC(DBCLASS_REG, "found entry for %s@%s at slot=%i, exp=%li",
@@ -139,7 +139,7 @@ int register_client(sip_t *my_msg) {
    if ( (j < 0) && (i >= URLMAP_SIZE) ) {
       /* oops, no free entries left... */
       ERROR("URLMAP is full - registration failed");
-      return 1;
+      return STS_FAILURE;
    }
 
    if (i >= URLMAP_SIZE) {
@@ -164,7 +164,7 @@ int register_client(sip_t *my_msg) {
    /* update registration timeout */
    urlmap[i].expires=time_now+expires;
 
-   return 0;
+   return STS_SUCCESS;
 }
 
 
@@ -198,9 +198,13 @@ void register_agemap(void) {
 
 /*
  * send answer to a registration request.
- *  flag = 0  -> positive answer (200)
- *  flag = 1  -> negative answer (503)
- *  flag = 2  -> proxy authentication needed (407)
+ *  flag = STS_SUCCESS    -> positive answer (200)
+ *  flag = STS_FAILURE    -> negative answer (503)
+ *  flag = STS_NEED_AUTH  -> proxy authentication needed (407)
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
  */
 int register_response(sip_t *request, int flag) {
    sip_t *response;
@@ -214,13 +218,13 @@ int register_response(sip_t *request, int flag) {
 
    /* ok -> 200, fail -> 503 */
    switch (flag) {
-   case 0:
+   case STS_SUCCESS:
       code = 200;	/* OK */
       break;
-   case 1:
+   case STS_FAILURE:
       code = 503;	/* failed */
       break;
-   case 2:
+   case STS_NEED_AUTH:
       code = 407;	/* proxy authentication needed */
       break;
    default:
@@ -231,7 +235,7 @@ int register_response(sip_t *request, int flag) {
    /* create the response template */
    if ((response=msg_make_template_reply(request, code))==NULL) {
       ERROR("register_response: error in msg_make_template_reply");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* insert the expiration header */
@@ -250,7 +254,7 @@ int register_response(sip_t *request, int flag) {
    msg_getvia (response, 0, &via);
    if (via == NULL) {
       ERROR("register_response: Cannot send response - no via field");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* name resolution needed? */
@@ -262,7 +266,7 @@ int register_response(sip_t *request, int flag) {
    sts = msg_2char(response, &buffer);
    if (sts != 0) {
       ERROR("register_response: msg_2char failed");
-      return 1;
+      return STS_FAILURE;
    }
 
    /* send answer back */
@@ -278,6 +282,6 @@ int register_response(sip_t *request, int flag) {
    msg_free(response);
    free(response);
    free(buffer);
-   return 0;
+   return STS_SUCCESS;
 }
 

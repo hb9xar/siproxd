@@ -1,3 +1,37 @@
+Release Notes for siproxd-0.2.2
+===============================
+ - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
+ - Includes an RTP data stream proxy for *incomming* audio data
+   (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Port range to be used for incomming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user-ID after startup (if started as root)
+ - All configuration done via one simple ascii configuration file
+ - Proxy Authentication for registration of local clients (User Agents)
+ - Logging to syslog in Daemon mode
+ - Access control (IP based) for incomming traffic
+ - RPM support (spec file)
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 
+
+Currently tested on Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2),
+should run on others Linux distributions as well.
+
+Interoperability (tested with softphones):
+ - Linphone (http://www.linphone.org)
+ - Kphone (http://www.wirlab.net/kphone/)
+
+-----
+md5sum for siproxd-0.2.2.tar.gz: 
+
+GnuPG signature for siproxd-0.2.2.tar.gz archive:
+
+
+
 Release Notes for siproxd-0.2.1
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
@@ -26,9 +60,16 @@ Interoperability (tested with softphones):
  - Kphone (http://www.wirlab.net/kphone/)
 
 -----
-md5sum for siproxd-0.2.1.tar.gz: 
+md5sum for siproxd-0.2.1.tar.gz: 3d0a46587494dd8c308c85f16d6f5555
 
 GnuPG signature for siproxd-0.2.1.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj2U6d4ACgkQPOYHDi42pIq5ygCg3oavz9FHFTXNZT/R4YNECzEX
+IX4AnAtYcNxJJhLXEKcj2ziKKvkectL9
+=A3tF
+-----END PGP SIGNATURE-----
 
 
 

@@ -47,7 +47,7 @@ int process_aclist (char *aclist, struct sockaddr_in from);
  *
  * returns a bitmask with ACCESSCTL_SIP, ACCESSCTL_REG
  */
-int check_accesslist (struct sockaddr_in from) {
+int accesslist_check (struct sockaddr_in from) {
    int access = 0;
 
    DEBUGC(DBCLASS_ACCESS,"deny  list (SIP):%s",configuration.hosts_deny_sip);
@@ -60,7 +60,7 @@ int check_accesslist (struct sockaddr_in from) {
    if ( (configuration.hosts_deny_sip !=NULL) &&
         (strcmp(configuration.hosts_deny_sip,"")!=0) ) {
       /* non-empty list -> check agains it */
-      if (process_aclist(configuration.hosts_deny_sip, from)) {
+      if (process_aclist(configuration.hosts_deny_sip, from)== STS_SUCCESS) {
          /* yup - this one is blacklisted */
          DEBUGC(DBCLASS_ACCESS,"caught by deny list");
          return 0;
@@ -73,7 +73,7 @@ int check_accesslist (struct sockaddr_in from) {
    if ( (configuration.hosts_allow_sip !=NULL) &&
         (strcmp(configuration.hosts_allow_sip,"")!=0) ) {
       /* non-empty list -> check agains it */
-      if (process_aclist(configuration.hosts_allow_sip, from)) {
+      if (process_aclist(configuration.hosts_allow_sip, from)==STS_SUCCESS) {
          /* SIP access granted */
          DEBUGC(DBCLASS_ACCESS,"granted SIP access");
          access |= ACCESSCTL_SIP;
@@ -88,7 +88,7 @@ int check_accesslist (struct sockaddr_in from) {
    if ( (configuration.hosts_allow_reg !=NULL) &&
         (strcmp(configuration.hosts_allow_reg,"")!=0) ) {
       /* non-empty list -> check agains it */
-      if (process_aclist(configuration.hosts_allow_reg, from)) {
+      if (process_aclist(configuration.hosts_allow_reg, from)==STS_SUCCESS) {
          /* SIP registration access granted */
          DEBUGC(DBCLASS_ACCESS,"granted REG/SIP access");
          access |= ACCESSCTL_REG | ACCESSCTL_SIP;
@@ -97,7 +97,7 @@ int check_accesslist (struct sockaddr_in from) {
       access |= ACCESSCTL_REG;
    }
 
-   return (access);
+   return access;
 }
 
 
@@ -105,7 +105,9 @@ int check_accesslist (struct sockaddr_in from) {
  * checks for a match of the 'from' address with the supplies
  * access list.
  *
- * return 1 for MATCH, 0 otherwise
+ * RETURNS
+ *	STS_SUCCESS for a match
+ *	STS_FAILURE for no match
  */
 int process_aclist (char *aclist, struct sockaddr_in from) {
    int i;
@@ -127,7 +129,7 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       p2=strchr(p1,'/');
       if (!p2) {
          ERROR("CONFIG: hosts_deny_sip - no mask separator found");
-	 return 0;
+	 return STS_FAILURE;
       }
       memset(address,0,sizeof(address));
       memcpy(address,p1,p2-p1);
@@ -159,8 +161,8 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
 			    ntohl(from.sin_addr.s_addr) & bitmask);
 
       if ( (ntohl(inaddr.s_addr) & bitmask) == 
-           (ntohl(from.sin_addr.s_addr) & bitmask) ) return 1;
+           (ntohl(from.sin_addr.s_addr) & bitmask) ) return STS_SUCCESS;
    }
 
-   return 0;
+   return STS_FAILURE;
 }

@@ -1,10 +1,6 @@
 TODOs, in random order:
 =======================
 
-- client authentication for registration - multiple user feature
-
-- redo return status (make then at least DEFINED constants)
-
 - Documentation (yeah, yeah...)
 
 - general security issues
@@ -18,5 +14,5 @@ TODOs, in random order:
 - portability to other platforms / operating systems
   first goal: other Unixes
 
-
+- security tests for received SIP messages (function securitycheck)
 

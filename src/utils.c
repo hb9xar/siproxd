@@ -48,6 +48,8 @@ extern int h_errno;
 
 /*
  * create a reply template from an given SIP request
+ *
+ * RETURNS a pointer to sip_t
  */
 sip_t *msg_make_template_reply (sip_t * request, int code) {
    sip_t *response;
@@ -88,6 +90,10 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
  * check for a via loop.
  * It checks for the presense of a via entry that holds one of
  * my IP addresses and is *not* the topmost via.
+ *
+ * RETURNS
+ *	STS_TRUE if loop detected
+ *	STS_FALSE if no loop
  */
 int check_vialoop (sip_t *my_msg) {
    int sts;
@@ -104,13 +110,17 @@ int check_vialoop (sip_t *my_msg) {
       if (sts == 1) found_own_via=1;
       pos++;
    }
-   return found_own_via;
+   return (found_own_via)? STS_TRUE : STS_FALSE;
 }
 
 
 /*
  * check if a given via_t is local. I.e. its address is owned
  * by my inbound or outbound interface
+ *
+ * RETURNS
+ *	STS_TRUE if the given VIA is one of my interfaces
+ *	STS_FALSE otherwise
  */
 int is_via_local (via_t *via) {
    int sts;
@@ -146,13 +156,17 @@ int is_via_local (via_t *via) {
       }
    }
 
-   return sts; 
+   return (sts)? STS_TRUE : STS_FALSE;
 }
 
 
 /*
  * resolve a hostname and return in_addr
  * handles its own little DNS cache.
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on failure
  */
 int get_ip_by_host(char *hostname, struct in_addr *addr) {
    int i, j;
@@ -165,7 +179,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    } dns_cache[DNS_CACHE_SIZE];
    static int cache_initialized=0;
 
-   if (hostname == NULL) return 1;
+   if (hostname == NULL) return STS_FAILURE;
 
    /* first time: initialize DNS cache */
    if (cache_initialized == 0) {
@@ -193,7 +207,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
          DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
 	        hostname, inet_ntoa(*addr));
-         return 0;
+         return STS_SUCCESS;
       }
    }
    
@@ -202,7 +216,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 
    if (hostentry==NULL) {
       ERROR("gethostbyname(%s) failed: %s",hostname,hstrerror(h_errno));
-      return 1;
+      return STS_FAILURE;
    }
 
    memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
@@ -232,27 +246,30 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    time(&dns_cache[i].timestamp);
    memcpy(&dns_cache[i].addr, addr, sizeof(struct in_addr));
 
-   return 0;
+   return STS_SUCCESS;
 }
 
 /*
  * compares two URLs
- * returns 0 if equal, <0 if non equal, >0 if error
  * (by now, only hostname and username are compared)
+ *
+ * RETURNS
+ *	STS_SUCCESS if equal
+ *	STS_FAILURE if non equal or error
  */
 int compare_url(url_t *url1, url_t *url2) {
    int sts;
 
-   if ((url1 == NULL) || (url2 == NULL)) return 1;
+   if ((url1 == NULL) || (url2 == NULL)) return STS_FAILURE;
 
    /* comparison of hosts should be based on IP addresses, no? */
    DEBUGC(DBCLASS_BABBLE, "comparng urls: %s@%s -> %s@%s",
          url1->username, url1->host, url2->username, url2->host);
    if ((strcmp(url1->username, url2->username)==0) &&
        (strcmp(url1->host, url2->host)==0)) {
-      sts = 0;
+      sts = STS_SUCCESS;
    } else {
-      sts = -1;
+      sts = STS_FAILURE;
    }
 
    return sts;
@@ -261,7 +278,8 @@ int compare_url(url_t *url1, url_t *url2) {
 
 /*
  * Secure enviroment:
- * If running as root,change UID/GID to user as requested in config
+ * If running as root, put myself into a chroot jail and
+ * change UID/GID to user as requested in config file
  */
 void secure_enviroment (void) {
    int sts;

@@ -51,7 +51,7 @@ PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002 Thomas Ries\n" \
 "\nUsage: siproxd [options]\n\n" \
 "options:\n" \
 "       --help              (-h) help\n" \
-"       --debug <pattern>   (-d) set initial debug-pattern\n" \
+"       --debug <pattern>   (-d) set debug-pattern\n" \
 "       --config <cfgfile>  (-c) use the specified config file\n"\
 "";
 
@@ -71,6 +71,7 @@ int main (int argc, char *argv[])
    
    char configfile[64]="siproxd";	/* basename of configfile */
    int  config_search=1;		/* search the config file */
+   int  cmdline_debuglevel=0;
 
 /*
  * prepare default configuration
@@ -110,8 +111,8 @@ int main (int argc, char *argv[])
 
       case 'd':	/* set debug level */
          DEBUGC(DBCLASS_CONFIG,"option: set debug level: %s",optarg);
-	 configuration.debuglevel=atoi(optarg);
-	 log_set_pattern(configuration.debuglevel);
+	 cmdline_debuglevel=atoi(optarg);
+         log_set_pattern(cmdline_debuglevel);
 	 break;
 
       default:
@@ -120,13 +121,20 @@ int main (int argc, char *argv[])
       }
    }
 }
-          
+
 /*
  * Init stuff
  */
-   if (read_config(configfile, config_search) != 0) exit(1);
-   /* if a debug_level statement was in the config file, make sure
-      the debug pattern is set after reading the config */
+   /* read the config file */
+   if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
+
+   /* if a debug level > 0 has been given on the commandline use its
+      value and not what is in the config file */
+   if (cmdline_debuglevel != 0) {
+      configuration.debuglevel=cmdline_debuglevel;
+   }
+
+   /* set debug level as desired */
    log_set_pattern(configuration.debuglevel);
 
    /* change user and group IDs */
@@ -140,7 +148,7 @@ int main (int argc, char *argv[])
 
    /* listen for incomming messages */
    sts=sipsock_listen();
-   if (sts != 0) {
+   if (sts == STS_FAILURE) {
       /* failure to allocate SIP socket... */
       ERROR("unable to bind to SIP listening socket - aborting"); 
       return 0;
@@ -182,13 +190,13 @@ int main (int argc, char *argv[])
 
       i=sipsock_read(&buff, sizeof(buff), &from);
 
-      /* evaluate the access lists */
-      access=check_accesslist(from);
+      /* evaluate the access lists (IP based filter)*/
+      access=accesslist_check(from);
       if (access == 0) continue; /* there are no resources to free */
 
       /* integrity checks */
-      sts=securitycheck(buff, i);
-      if (sts == 0) continue; /* there are no resources to free */
+      sts=security_check(buff, i);
+      if (sts != 0) continue; /* there are no resources to free */
 
       /* parse the received message */
       sts=msg_init(&my_msg);
@@ -214,7 +222,7 @@ int main (int argc, char *argv[])
             sts = register_response(my_msg, sts);
 	 } else {
             WARN("non-authorized registration attempt from %s",
-	            inet_ntoa(from.sin_addr));
+	         inet_ntoa(from.sin_addr));
 	 }
 
       /* MSG is a request, add current via entry,

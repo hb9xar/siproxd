@@ -93,6 +93,12 @@ rtp_timeout = 60
 # registration is supported -> same for all local clients)
 #
 #proxy_auth_passwd = password
+#
+# or use individual per user passwords stored ia file
+#
+#proxy_auth_pwfile = doc/siproxd_passwd.cfg
+#
+# 'proxy_auth_pwfile' has precedence over 'proxy_auth_passwd'
 
 ######################################################################
 # Debug level... (setting to -1 will enable everything)

@@ -36,11 +36,12 @@
 /*
  * do security and integrity checks on the received packet
  *
- * returns >0 if ok 
- * 0 if the packed did not pass the checks
+ * RETURNS
+ *	STS_SUCCESS if ok 
+ * 	STS_FAILURE if the packed did not pass the checks
  */
-int securitycheck(char *sip_buffer, int size){
+int security_check(char *sip_buffer, int size){
 
 /* TODO: still way to go here ... */
-   return 1;
+   return STS_SUCCESS;
 }
