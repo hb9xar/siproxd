@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -32,8 +33,6 @@
 
 static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 			  BUILDSTR " $";
-
-extern int errno;
 
 /* configuration storage */
 extern struct siproxd_config configuration;
@@ -121,6 +120,8 @@ static int parse_config (FILE *configfile) {
       { "rtp_port_high",    TYP_INT4,   &configuration.rtp_port_high },
       { "rtp_timeout",      TYP_INT4,   &configuration.rtp_timeout },
       { "rtp_proxy_enable", TYP_INT4,   &configuration.rtp_proxy_enable },
+      { "user",             TYP_STRING, &configuration.user },
+      { "chrootjail",       TYP_STRING, &configuration.chrootjail },
       {0, 0, 0}
    };
 

@@ -21,12 +21,16 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <time.h>
 #include <signal.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+
+#include <sys/types.h>
+#include <pwd.h>
 
 #include <osip/smsg.h>
 #include <osip/port.h>
@@ -252,4 +256,61 @@ int compare_url(url_t *url1, url_t *url2) {
    }
 
    return sts;
+}
+
+
+/*
+ * Secure enviroment:
+ * If running as root,change UID/GID to user as requested in config
+ */
+void secure_enviroment (void) {
+   int sts;
+   struct passwd *passwd=NULL;
+
+   DEBUGC(DBCLASS_CONFIG,"running w/uid=%i, euid=%i, gid=%i, egid=%i",
+          getuid(), geteuid(), getgid(), getegid());
+
+   if ((getuid()==0)|| (geteuid()==0)) {
+      /*
+       * preparation - after chrooting there will be NOTHING more around
+       */
+      if (configuration.user) passwd=getpwnam(configuration.user);
+
+
+      /*
+       * change root directory into chroot jail
+       */
+      if (configuration.chrootjail) {
+         DEBUGC(DBCLASS_CONFIG,"chrooting to %s",
+                configuration.chrootjail);
+         sts = chroot(configuration.chrootjail);
+	 if (sts != 0) DEBUGC(DBCLASS_CONFIG,"chroot(%s) failed: %s",
+	                      configuration.chrootjail, strerror(errno));
+         chdir("/");
+      }
+
+
+      /*
+       * change user ID and group ID 
+       */
+      if (passwd) {
+         DEBUGC(DBCLASS_CONFIG,"changing uid/gid to %s",
+                configuration.user);
+         sts = setgid(passwd->pw_gid);
+         DEBUGC(DBCLASS_CONFIG,"changed gid to %i - %s",
+	        passwd->pw_gid, (sts==0)?"Ok":"Failed");
+
+         sts = setegid(passwd->pw_uid);
+         DEBUGC(DBCLASS_CONFIG,"changed egid to %i - %s",
+	        passwd->pw_gid, (sts==0)?"Ok":"Failed");
+
+         sts = setuid(passwd->pw_uid);
+         DEBUGC(DBCLASS_CONFIG,"changed uid to %i - %s",
+	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
+
+         sts = seteuid(passwd->pw_uid);
+         DEBUGC(DBCLASS_CONFIG,"changed euid to %i - %s",
+	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
+      }
+   }
 }

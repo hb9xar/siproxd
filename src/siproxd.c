@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -43,6 +44,18 @@ struct siproxd_config configuration;
 /* socket used for sending SIP datagrams */
 int sip_socket=0;
 
+/* -h help option text */
+static const char str_helpmsg[] =
+PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002 Thomas Ries\n" \
+"\nUsage: siproxd [options]\n\n" \
+"options:\n" \
+"       --help              (-h) help\n" \
+"       --debug <pattern>   (-d) set initial debug-pattern\n" \
+"       --config <cfgfile>  (-c) use the specified config file\n"\
+"";
+
+
+
 int main (int argc, char *argv[]) 
 {
    int sts;
@@ -62,6 +75,7 @@ int main (int argc, char *argv[])
    configuration.sip_listen_port=SIP_PORT;
    configuration.inboundhost=NULL;
    configuration.outboundhost=NULL;
+   configuration.user=NULL;
 
    log_set_pattern(configuration.debuglevel);      
 
@@ -82,7 +96,7 @@ int main (int argc, char *argv[])
       switch (ch1) {
       case 'h':	/* help */
          DEBUGC(DBCLASS_CONFIG,"option: help");
-
+         fprintf(stderr,str_helpmsg);
          exit(0);
 	 break;
 
@@ -114,6 +128,9 @@ int main (int argc, char *argv[])
       the debug pattern is set after reading the config */
    log_set_pattern(configuration.debuglevel);
 
+   /* change user and group IDs */
+   secure_enviroment();
+
    /* init the oSIP parser */
    parser_init();
 
@@ -134,9 +151,16 @@ int main (int argc, char *argv[])
    /* daemonize if requested to */
    if (configuration.daemonize) {
       DEBUGC(DBCLASS_CONFIG,"daemonizing");
+#if HAVE_DAEMON
+      if (daemon(1,0) == -1) {
+         ERROR("unable to daemonize: %s", strerror(errno)); 
+      };
+# else
+
       if (fork()!=0) exit(0);
       /* close STDIN, STDOUT, STDERR */
       close(0);close(1);close(2);
+#endif
    }
 
 

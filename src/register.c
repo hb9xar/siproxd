@@ -38,7 +38,6 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-extern int errno;
 struct urlmap_s urlmap[URLMAP_SIZE];		/* URL mapping table     */
 extern int sip_socket;				/* sending SIP datagrams */
 

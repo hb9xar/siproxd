@@ -1,12 +1,52 @@
-Release Notes for siproxd-0.1.4
+Release Notes for siproxd-0.2.1
 ===============================
- - 
- 
+TO BE ADAPTED!!
+ - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
+ - Includes an RTP data stream proxy for incomming audio data
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user ID after startup (if started as root)
+ - All configuration done via config file
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 
+
+ - currently tested on Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2)
+   however, should run on any other 
  
 -----
-md5sum for siproxd-0.1.4.tar.gz: 
+md5sum for siproxd-0.2.1.tar.gz: 
 
-GnuPG signature for siproxd-0.1.4.tar.gz archive:
+GnuPG signature for siproxd-0.2.1.tar.gz archive:
+
+
+
+Release Notes for siproxd-0.2.0
+===============================
+ - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
+ - Includes an RTP data stream proxy for incomming audio data
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user ID after startup (if started as root)
+ - All configuration done via config file
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 
+
+ - currently tested on Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2)
+   however, should run on any other 
+ 
+-----
+md5sum for siproxd-0.2.0.tar.gz: fe22245be675015a296e9b19327c4941
+
+GnuPG signature for siproxd-0.2.0.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj2HXe0ACgkQPOYHDi42pIo/FACg2AiHoo6BMy93PDmW/3uFl19+
+0NoAoIpD7jROQlLtUYrB8n8elBODR1dA
+=8fno
+-----END PGP SIGNATURE-----
 
 
 

@@ -32,6 +32,13 @@ sip_listen_port = 5060
 daemonize = 0
 
 ######################################################################
+# Secure Enviroment settings:
+#   user:	uid/gid to switch to after startup
+#   chrootjail:	path to chroot to (chroot jail)
+user = nobody
+#chrootjail = /var/lib/siproxd/
+
+######################################################################
 # global switch to enable (1) or disable (0) the RTP proxy feature
 #    
 rtp_proxy_enable = 1
@@ -62,5 +69,5 @@ rtp_timeout = 60
 #  DBCLASS_CONFIG  0x00000100	   // configuration
 #  DBCLASS_RTP     0x00000200      // RTP proxy
 #
-debug_level =      0x00000218
+debug_level =      0x00000318
 

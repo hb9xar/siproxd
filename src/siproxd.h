@@ -48,6 +48,7 @@ int check_vialoop (sip_t *my_msg);
 int is_via_local (via_t *via);
 int get_ip_by_host(char *hostname, struct in_addr *addr);
 int compare_url(url_t *url1, url_t *url2);
+void secure_enviroment (void);
 
 /* config.c */
 int read_config(char *name, int search);
@@ -85,6 +86,8 @@ struct siproxd_config {
    int rtp_port_high;
    int rtp_timeout;
    int rtp_proxy_enable;
+   char *user;
+   char *chrootjail;
 };
 
 

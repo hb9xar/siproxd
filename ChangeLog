@@ -1,6 +1,9 @@
-0.1.4
+0.2.0
 =====
-- 
+- 17-Sep-2002:	- Released version 0.2.0
+- 15-Sep-2002:	- added functionality to change user ID (drop privs)
+		  after startup (configurable)
+		- added optional chroot jail (configurable)
 
 0.1.3
 =====
@@ -22,7 +25,7 @@
 
 0.1.2
 =====
--  7-Sep-2002:	- Releases version 0.1.2
+-  7-Sep-2002:	- Released version 0.1.2
 		- fixed registration concept (SIP Contact header is not
 		  a *must* to be present in every frame)
 		- Experimental RTP proxying feature (using pthreads)
