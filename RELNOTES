@@ -60,9 +60,16 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.3.6.tar.gz: 	
+md5sum for siproxd-0.3.6.tar.gz: 	2f17fcb5d13844ee75359dbe12d34e55
 
 GnuPG signature for siproxd-0.3.6.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.1 (GNU/Linux)
+
+iD8DBQA/b109CfzBioe83JQRAuXAAJwMLqgvdVwUCph0941ybGysJwnquwCeMnlK
+yH2kTVVq6cIRqG+TtgbY7M4=
+=h9bM
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

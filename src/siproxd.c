@@ -191,13 +191,14 @@ INFO("daemonizing done (pid=%i)", getpid());
       /* got input, process */
       DEBUGC(DBCLASS_BABBLE,"back from sip_wait");
 
-      i=sipsock_read(&buff, sizeof(buff), &from);
+      i=sipsock_read(&buff, sizeof(buff)-1, &from);
+      buff[i]='\0';
 
 #ifdef MOREDEBUG /*&&&&*/
 {char tmp[32];
 strncpy(tmp, buff, 30);
 tmp[30]='\0';
-INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
+INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
 #endif
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(from);
@@ -225,7 +226,11 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
 
       /* integrity checks - parsed buffer*/
       sts=security_check_sip(my_msg);
-      if (sts != STS_SUCCESS) continue; /* there are no resources to free */
+      if (sts != STS_SUCCESS) {
+         ERROR("security_check_sip() failed... this is not good");
+         DUMP_BUFFER(-1, buff, i);
+         goto end_loop; /* skip and free resources */
+      }
 
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",

@@ -1,3 +1,7 @@
+0.3.7
+=====
+  22-Sep-2003:  - \0 termination of read SIP telegram from line
+
 0.3.6
 =====
   22-Sep-2003:  - released 0.3.6
