@@ -1,3 +1,9 @@
+0.2.5
+=====
+-  2-Dec-2002:	- fixed a bug in check_vialoop. It wrongly claimed
+		  to have detected a loop when using the old-style
+                  IP address based inboud/outboud definitions.
+
 0.2.4
 =====
 - 23-Nov-2002:	- released 0.2.4 (feature enhancements)
@@ -10,7 +16,6 @@
 		  change of IP address.
 - 13-Nov-2002:	- working on portability - goal is building on *BSD
 		  (feedback from Georg Schwarz)
-
 0.2.3
 =====
 - 10-Nov-2002:  - released 0.2.3 (minor fixes)

@@ -40,11 +40,15 @@ HOW TO GET STARTED
 - make install
 
 - edit /usr/etc/siproxd.conf according to your situation
-  At least 'host_inbound' and 'host_outbound' *must* be adapted!
-  'host_inbound' is the firewalls IP address of your private network,
-  'host_outbound' is the  publich IP address or hostname of the
-  firewall. (If you have dynamic IP addresses, then you might want
-  to use a hostname here and use a dynamic DNS service like [1])
+  At least configure  'if_inbound' and 'if_outbound'. The must represent
+  the interface names (eg. on Linux: ppp0, eth1) for the inbound
+  and outbound interface.
+  ** The use of 'host_inbound' and 'host_outbound' is deprecheated!
+     'host_inbound' is the firewalls IP address of your private network,
+     'host_outbound' is the  publich IP address or hostname of the
+     firewall. (If you have dynamic IP addresses, then you might want
+     to use a hostname here and use a dynamic DNS service like [1])
+
 
 - edit /usr/etc/siproxd_passwd.cfg if you enable client authentication
   in siproxd.conf

@@ -134,7 +134,7 @@ int check_vialoop (sip_t *my_msg) {
  *	STS_FALSE otherwise
  */
 int is_via_local (via_t *via) {
-   int sts;
+   int sts, found;
    struct in_addr addr_via, addr_myself;
    char *my_hostnames[]=
         { configuration.inboundhost, configuration.outboundhost, (char*)-1 };
@@ -150,7 +150,7 @@ int is_via_local (via_t *via) {
       get_ip_by_host(via->host, &addr_via);
    }   
 
-   sts=0;
+   found=0;
    for (i=0; ; i++) {
       /*
        * try to search by interface name first
@@ -184,12 +184,14 @@ int is_via_local (via_t *via) {
 
       if ( (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
            (port == configuration.sip_listen_port) ) {
-         sts=1;
+         DEBUG("address match [%s] <-> [%s]", inet_ntoa(addr_myself),
+               inet_ntoa(addr_via));
+         found=1;
 	 break;
       }
    }
 
-   return (sts)? STS_TRUE : STS_FALSE;
+   return (found)? STS_TRUE : STS_FALSE;
 }
 
 
@@ -402,7 +404,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    int len, af;
    
    if (ifname == NULL) {
-      ERROR("get_ip_by_ifname: got NULL ifname passed");
+      WARN("get_ip_by_ifname: got NULL ifname passed - please check config"
+           "file ('if_inbound' and 'if_outbound')");
       return STS_FAILURE;
    }
 
