@@ -96,34 +96,23 @@ int authenticate_proxy(sip_t *request) {
  *
  * RETURNS
  *	STS_SUCCESS
+ *	STS_FAILURE
  */
 int auth_include_authrq(sip_t *response) {
-   int sts;
-   char str[256];
+   proxy_authenticate_t *p_auth;
 
-/*
-  Example of an Proxy-Authenticate header: 
-      Proxy-Authenticate: Digest realm="atlanta.com",
-       domain="sip:ss1.carrier.com", qop="auth",
-       nonce="f84f1cec41e6cbe5aea9c8e88d359",
-       opaque="", stale=FALSE, algorithm=MD5
-*/
+   if (proxy_authenticate_init(&p_auth) != 0) {
+      ERROR("proxy_authenticate_init failed");
+      return STS_FAILURE;
+   }
 
-   /* 40static + 32nonce + \0 -> max 183 */
-   sprintf(str, "Digest realm=\"%.180s\", "
-                "nonce=\"%s\", "
-	        "algorithm=MD5",
-		configuration.proxy_auth_realm,
-		auth_generate_nonce());
+   proxy_authenticate_setauth_type(p_auth, sgetcopy("Digest"));
+   proxy_authenticate_setnonce(p_auth, sgetcopy(auth_generate_nonce()));
+   proxy_authenticate_setrealm(p_auth, sgetcopy(configuration.proxy_auth_realm));
 
-   DEBUGC(DBCLASS_AUTH,"msg_setproxy_authenticate [%s]",str);
-   sts = msg_setproxy_authenticate(response, str);
-/*
-   this does not work with libosip 0.9.3 - msg_setproxy_authenticate
-   fails with sts=-1 there. Bug ?
-*/
+   list_add (response->proxy_authenticates, p_auth, -1);
 
-   DEBUGC(DBCLASS_AUTH,"msg_setproxy_authenticate sts=%i",sts);
+   DEBUGC(DBCLASS_AUTH,"added authentication header");
 
    return STS_SUCCESS;
 }
@@ -207,7 +196,6 @@ static int auth_check(proxy_authorization_t *proxy_auth) {
    }
    
    if (password == NULL) password="";
-
 
    DEBUGC(DBCLASS_BABBLE," username=\"%s\"",Username  );
    DEBUGC(DBCLASS_BABBLE," realm   =\"%s\"",Realm     );
@@ -377,20 +365,20 @@ void DigestCalcHA1(
   HASH HA1;
   
   MD5Init(&Md5Ctx);
-  MD5Update(&Md5Ctx, pszUserName, strlen(pszUserName));
+  if (pszUserName) MD5Update(&Md5Ctx, pszUserName, strlen(pszUserName));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszRealm, strlen(pszRealm));
+  if (pszRealm)    MD5Update(&Md5Ctx, pszRealm, strlen(pszRealm));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszPassword, strlen(pszPassword));
+  if (pszPassword) MD5Update(&Md5Ctx, pszPassword, strlen(pszPassword));
   MD5Final(HA1, &Md5Ctx);
 
   if ((pszAlg!=NULL)&&strcasecmp(pszAlg, "md5-sess") == 0) {
     MD5Init(&Md5Ctx);
     MD5Update(&Md5Ctx, HA1, HASHLEN);
     MD5Update(&Md5Ctx, ":", 1);
-    MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
+    if (pszNonce)  MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
     MD5Update(&Md5Ctx, ":", 1);
-    MD5Update(&Md5Ctx, pszCNonce, strlen(pszCNonce));
+    if (pszCNonce) MD5Update(&Md5Ctx, pszCNonce, strlen(pszCNonce));
     MD5Final(HA1, &Md5Ctx);
   };
   CvtHex(HA1, SessionKey);
@@ -416,9 +404,9 @@ void DigestCalcResponse(
   
   /* calculate H(A2) */
   MD5Init(&Md5Ctx);
-  MD5Update(&Md5Ctx, pszMethod, strlen(pszMethod));
+  if (pszMethod)   MD5Update(&Md5Ctx, pszMethod, strlen(pszMethod));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszDigestUri, strlen(pszDigestUri));
+  if (pszDigestUri)MD5Update(&Md5Ctx, pszDigestUri, strlen(pszDigestUri));
   
   if (pszQop!=NULL) {
       goto auth_withqop;
@@ -432,7 +420,7 @@ void DigestCalcResponse(
   MD5Init(&Md5Ctx);
   MD5Update(&Md5Ctx, HA1, HASHHEXLEN);
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
+  if (pszNonce)    MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
   MD5Update(&Md5Ctx, ":", 1);
 
   goto end;
@@ -448,13 +436,13 @@ void DigestCalcResponse(
   MD5Init(&Md5Ctx);
   MD5Update(&Md5Ctx, HA1, HASHHEXLEN);
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
+  if (pszNonce)    MD5Update(&Md5Ctx, pszNonce, strlen(pszNonce));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszNonceCount, strlen(pszNonceCount));
+  if (pszNonceCount)MD5Update(&Md5Ctx, pszNonceCount, strlen(pszNonceCount));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszCNonce, strlen(pszCNonce));
+  if (pszCNonce)   MD5Update(&Md5Ctx, pszCNonce, strlen(pszCNonce));
   MD5Update(&Md5Ctx, ":", 1);
-  MD5Update(&Md5Ctx, pszQop, strlen(pszQop));
+  if (pszQop)      MD5Update(&Md5Ctx, pszQop, strlen(pszQop));
   MD5Update(&Md5Ctx, ":", 1);
 
  end:

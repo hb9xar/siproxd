@@ -1,5 +1,9 @@
-0.2.9
+0.3.0
 =====
+- 29-May-2003:	- released 0.3.0
+		- supports libosip2 (automatically detect osip1/osip2)
+		- redone authentication - now should work with libosip2
+                  libosip0.8.8 has a bug (fails in parse_msg)
 - 28-May-2003:	- changes in rewriting SIP messages - not everything
 		  is blindly rewritten now (e.g. SUBSCRIBE is NOT)
                 - fixed resource leak (sockets) in get_ip_by_ifname

@@ -1,5 +1,5 @@
 %define name		siproxd
-%define ver		0.2.9
+%define ver		0.3.0
 %define release		1
 %define serial		1
 %define prefix		%{_prefix}
@@ -17,8 +17,8 @@ URL: 		http://siproxd.sourceforge.net/
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-root
 Docdir: 	%{_docdir}
 
-Requires:	libosip >= 0.8.0
-BuildRequires:	libosip >= 0.8.0
+Requires:	libosip2 >= 1.99.0
+BuildRequires:	libosip2 >= 1.99.0
 
 Vendor:		Thomas Ries
 
