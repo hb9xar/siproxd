@@ -2,6 +2,9 @@ TODOs, in anarchistic order:
 ============================
 
 
+- re-think the registration mechanism (mapping and decision criteria
+  for in- and outgoing stuff...
+  
 - 2.2.x kernels:
   make use of the portfw.so (ipmasqadm package) to create forwarding
   tunnels for incomming data streams
@@ -14,5 +17,4 @@ TODOs, in anarchistic order:
 
 - get_ip_by_host: reduce DNS timeouts
 
-- forwarding(proxying) of incomming RTP media streams
-  ? own thread/process (is pending)
+
