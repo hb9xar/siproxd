@@ -27,7 +27,9 @@ dnl	09-May-2004	tries	fli4l-uclibc links statically agains pthreads
 dnl	29-May-2004	tries	use AC_CHECK_TYPE to check for socklen_t
 dnl	09-May-2004	tries	fli4l-libc5 does NOT use gethostbyname_r()
 dnl				(there seems to be a bug somewhere)
-dnl
+dnl	18-Aug-2004	tries	fli4l-uclibc -> fli4l-21-uclibc, fli4l-22-uclibc
+dnl				2.1.x has no pthread support, link -static
+dnl				2.2.x has (maybe) pthread support
 dnl
 dnl
 dnl
@@ -167,54 +169,50 @@ esac
 
 dnl
 dnl Feature:
+dnl  Fli4l libc5 support  (only available on Linux, yet)
 dnl  Fli4l uClibc support (only available on Linux, yet)
 dnl
-build_fli4l_uclibc="no"
-AC_MSG_CHECKING(whether build for FLI4L uClibc)
-case "$target" in
-  *-*-linux*)
-   AC_ARG_ENABLE(fli4l-uclibc,
-      [  --enable-fli4l-uclibc       FLI4L: build for uClibc],
-      build_fli4l_uclibc=$enableval,)
-   AC_MSG_RESULT($build_fli4l_uclibc)
-   ;;
-
-  *)
-    AC_MSG_RESULT(fli4l-uclibc not available on this platform)
-    ;;
-esac
-
-dnl
-dnl Feature:
-dnl    Fli4l libc5 support (only available on Linux, yet)
-dnl
 build_fli4l_libc5="no"
-AC_MSG_CHECKING(building for FLI4L libc5)
+build_fli4l_21_uclibc="no"
+build_fli4l_22_uclibc="no"
 case "$target" in
   *-*-linux*)
+   AC_MSG_CHECKING(whether build for FLI4L 2.0.x libc5 )
    AC_ARG_ENABLE(fli4l-libc5,
-      [  --enable-fli4l-libc5        FLI4L: build for libc5],
+      [  --enable-fli4l-libc5        build FLI4L 2.0.x (libc5)],
       build_fli4l_libc5=$enableval,)
    AC_MSG_RESULT($build_fli4l_libc5)
+
+   AC_MSG_CHECKING(whether build for FLI4L 2.1.x uClibc)
+   AC_ARG_ENABLE(fli4l-21-uclibc,
+      [  --enable-fli4l-21-uclibc    build FLI4L 2.1.x (uClibc, no pthreads support)],
+      build_fli4l_21_uclibc=$enableval,)
+   AC_MSG_RESULT($build_fli4l_21_uclibc)
+
+   AC_MSG_CHECKING(whether build for FLI4L 2.2.x uClibc)
+   AC_ARG_ENABLE(fli4l-22-uclibc,
+      [  --enable-fli4l-22-uclibc    build FLI4L 2.2.x (uClibc, with pthreads support)],
+      build_fli4l_22_uclibc=$enableval,)
+   AC_MSG_RESULT($build_fli4l_22_uclibc)
    ;;
 
   *)
-    AC_MSG_RESULT(fli4l-libc5 not available on this platform)
+    AC_MSG_RESULT(building FLI4L not available on this platform)
     ;;
 esac
 
-if test "x$build_fli4l_uclibc" = "xyes"; then
-   dnl FLI4l uClibc: make libosip and libpthread static
+build_static_libosip="no"
+build_static_pthread="no"
+if test "x$build_fli4l_libc5" = "xyes"; then
+   dnl FLI4l 2.0.x libc5: make libosip and libpthread static
    build_static_libosip="yes"
    build_static_pthread="yes"
-elif test "x$build_fli4l_libc5" = "xyes"; then
-   dnl FLI4l libc5: make libosip and libpthread static
+elif test "x$build_fli4l_21_uclibc" = "xyes"; then
+   dnl FLI4l 2.1.x uClibc: build all static
+   LDFLAGS="$LDFLAGS -static";
+elif test "x$build_fli4l_22_uclibc" = "xyes"; then
+   dnl FLI4l 2.2.x uClibc: make libosip and libpthread static
    build_static_libosip="yes"
-   build_static_pthread="yes"
-else
-   dnl build all dynamically linked
-   build_static_libosip="no"
-   build_static_pthread="no"
 fi
 
 
@@ -356,9 +354,10 @@ AC_CHECK_FUNCS(strerror)
 
 AC_CHECK_FUNCS(gethostbyname)
 
-
+dnl !! with FLI4L 2.0.x strange behavior with gethostbyname_r()
+dnl !! has been seen, dont use it.
 if test "x$build_fli4l_libc5" = "xno"; then
-   AC_CHECK_FUNCS(gethostbyname_r)
+dnl   AC_CHECK_FUNCS(gethostbyname_r)
    ACX_WHICH_GETHOSTBYNAME_R()
 fi
 
