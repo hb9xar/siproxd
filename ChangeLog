@@ -1,6 +1,8 @@
 0.3.7
 =====
-  22-Sep-2003:  - \0 termination of read SIP telegram from line
+  24-Sep-2003:  - corrected the calling arguments of rtp_masq dummy
+                  routines (non IPCHAINS capable kernels)
+  22-Sep-2003:  - \0 termination of read() SIP telegram from line
 
 0.3.6
 =====

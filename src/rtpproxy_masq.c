@@ -337,14 +337,14 @@ exit:
  * don't have ipchains or iptables - dummy routines and complain
  */
 
-int rtp_masq_start_fwd(int proxy_idx,
+int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
                        struct in_addr outbound_ipaddr, int *outbound_lcl_port,
-                       struct in_addr lcl_client_ipaddr, int lcl_clientport){
+                       struct in_addr lcl_client_ipaddr, int lcl_clientport) {
    outbound_lcl_port=0;
    ERROR("Masquerading support is not enabled (compile time config option)");
    return STS_FAILURE;
 }
-int rtp_masq_stop_fwd(int proxy_idx) {
+int rtp_masq_stop_fwd(osip_call_id_t *callid) {
    return STS_FAILURE;
 }
 #endif
