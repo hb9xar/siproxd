@@ -50,6 +50,7 @@
 #include <string.h>		/* strcat  */
 
 
+#include <sys/types.h>
 #include <netinet/in.h>
 #include "fwapi.h"
 #include "log.h"

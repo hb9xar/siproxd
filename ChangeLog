@@ -4,6 +4,7 @@
                   (linke INVITES from sipgate.de - SIP URI points to
                   the real wanted target but To: header only points to
                   the initially wanted target before the redirection)
+                - compiling on BSD (fwapi.c, custom_fw_module.c)
   11-Apr-2004:  - on termination, stop all active RTP streams
   24-Apr-2004:  - simplified SIP RX & TX routines
 

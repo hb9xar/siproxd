@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <osipparser2/osip_parser.h>
 #include "siproxd.h"
