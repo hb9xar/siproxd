@@ -71,7 +71,6 @@ char *utils_inet_ntoa(struct in_addr in);
  */
 int custom_fw_control(fw_ctl_t fwdata) {
    static char tmp[256];
-   size_t pos;
 
    tmp[0]='\0';
    switch (fwdata.action) {
@@ -98,13 +97,11 @@ int custom_fw_control(fw_ctl_t fwdata) {
        break;
    }
 
-   pos = strlen(tmp);
-   sprintf(&tmp[pos],"[lcl %s:%i] ",
+   sprintf(&tmp[strlen(tmp)],"[lcl %s:%i] ",
            utils_inet_ntoa(fwdata.local_ipaddr),
            fwdata.local_port);
 
-   pos = strlen(tmp);
-   sprintf(&tmp[pos],"[rem %s:%i] ",
+   sprintf(&tmp[strlen(tmp)],"[rem %s:%i] ",
            utils_inet_ntoa(fwdata.remote_ipaddr),
            fwdata.remote_port);
 
