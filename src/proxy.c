@@ -568,6 +568,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    char newbody[BODY_MESSAGE_MAX_SIZE];
    char clen[8]; /* content length: probably never more than 7 digits !*/
    int outb_rtp_port, inb_clnt_port;
+   int media_stream_no;
 
    sts = msg_getbody(mymsg, 0, &body);
    if (sts != 0) {
@@ -595,6 +596,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
 
    /*
     * RTP proxy: get ready and start forwarding
+    * start forwarding for each media stream ('m=' item in SIP message)
     */
    sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
    sts = get_ip_by_ifname(configuration.outbound_if, &outb_addr);
@@ -602,11 +604,16 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
       sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
    }
 
-   inb_clnt_port = atoi(sdp_m_port_get(sdp,0));
-   /* start an RTP proxying stream */
-   rtp_start_fwd(msg_getcall_id(mymsg),
-                       outb_addr, &outb_rtp_port,
-		       lcl_clnt_addr, inb_clnt_port);
+   for (media_stream_no=0;;media_stream_no++) {
+      /* check if n'th media stream is present */
+      if (sdp_m_port_get(sdp, media_stream_no) == NULL) break;
+
+      /* start an RTP proxying stream */
+      inb_clnt_port = atoi(sdp_m_port_get(sdp, media_stream_no));
+      rtp_start_fwd(msg_getcall_id(mymsg), media_stream_no,
+                    outb_addr, &outb_rtp_port,
+	            lcl_clnt_addr, inb_clnt_port);
+   }
 
 
 /*

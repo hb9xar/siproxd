@@ -50,6 +50,7 @@ struct {
    int sock;
    char callid_number[CALLID_SIZE];
    char callid_host[CALLID_SIZE];
+   int media_stream_no;
    struct in_addr outbound_ipaddr;
    int outboundport;
    struct in_addr inbound_client_ipaddr;
@@ -212,7 +213,7 @@ DEBUGC(DBCLASS_RTP,"got data on sock=%i",rtp_proxytable[i].sock);
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_start_fwd (call_id_t *callid,
+int rtp_start_fwd (call_id_t *callid, int media_stream_no,
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport) {
    int i, j;
@@ -227,8 +228,8 @@ int rtp_start_fwd (call_id_t *callid,
       return STS_FAILURE;
    }
 
-   DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s",
-          callid->number, callid->host);
+   DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s #=%i",
+          callid->number, callid->host, media_stream_no);
 
    /* lock mutex */
    #define return is_forbidden_in_this_code_section
@@ -245,15 +246,19 @@ int rtp_start_fwd (call_id_t *callid,
 
    /*
     * figure out, if this is an request to start an RTP proxy stream
-    * that is already existing (identified by SIP Call-ID)
-    * This can be due to UDP repetitions of the INVITE request...
+    * that is already existing (identified by SIP Call-ID and
+    * media_stream_no). This can be due to UDP repetitions of the
+    * INVITE request...
     */
    for (j=0; j<RTPPROXY_SIZE; j++) {
       if((strcmp(rtp_proxytable[j].callid_number, callid->number)==0) &&
-	 (strcmp(rtp_proxytable[j].callid_host, callid->host)==0) ) {
+	 (strcmp(rtp_proxytable[j].callid_host, callid->host)==0) &&
+         (rtp_proxytable[j].media_stream_no == media_stream_no) ) {
          /* return the already known port number */
-         DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i)",
-	        rtp_proxytable[j].outboundport);
+         DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
+                "id=%s, #=%i)", rtp_proxytable[j].outboundport,
+                rtp_proxytable[j].callid_number,
+                rtp_proxytable[j].media_stream_no);
 	 *outboundport=rtp_proxytable[j].outboundport;
 	 sts = STS_SUCCESS;
 	 goto unlock_and_exit;
@@ -278,6 +283,7 @@ int rtp_start_fwd (call_id_t *callid,
 	             &outbound_ipaddr, sizeof(struct in_addr))== 0) &&
 	     (rtp_proxytable[j].outboundport == i) ) {
 
+#if 0 // redundant code - program flow should never reach this one
             /* if the rtp proxy stream is already active (this must then
                be a repetition of an SIP UDP INVITE packet) just pass back 
                the used port number an do nothing more */
@@ -290,6 +296,7 @@ int rtp_start_fwd (call_id_t *callid,
 	       sts = STS_SUCCESS;
 	       goto unlock_and_exit;
 	    }
+#endif
 
 	    break;
 	 }
@@ -342,6 +349,7 @@ int rtp_start_fwd (call_id_t *callid,
    rtp_proxytable[freeidx].sock=sock;
    strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
    strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+   rtp_proxytable[freeidx].media_stream_no = media_stream_no;
    memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
           &outbound_ipaddr, sizeof(struct in_addr));
    rtp_proxytable[freeidx].outboundport=port;
@@ -378,6 +386,7 @@ unlock_and_exit:
 int rtp_stop_fwd (call_id_t *callid, int nolock) {
    int i;
    int sts=STS_SUCCESS;
+   int got_match=0;
 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
@@ -407,29 +416,31 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
        */
    }
 
-   /* find the proper entry in rtp_proxytable */
+   /*
+    * find the proper entry in rtp_proxytable
+    * we need to loop the whole table, as there might be multiple
+    * media strema active for the same callid (audio + video stream)
+    */
    for (i=0; i<RTPPROXY_SIZE; i++) {
       if((strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
 	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
-         break;
+
+         /* match: close socket and clean slot in rtp_proxytable */
+         close(rtp_proxytable[i].sock);
+         memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
+         got_match=1;
       }
  
    }
 
    /* did not find an active stream... */
-   if (i>= RTPPROXY_SIZE) {
+   if (!got_match) {
       DEBUGC(DBCLASS_RTP,"rtp_stop_fwd: can't find active stream for %s@%s",
              callid->number, callid->host);
       sts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
-
-   /* close socket */
-   close(rtp_proxytable[i].sock);
-
-   /* clean slot in rtp_proxytable */
-   memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
 
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();

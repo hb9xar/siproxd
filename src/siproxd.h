@@ -56,7 +56,7 @@ int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int rtpproxy_init( void );						/*X*/
-int rtp_start_fwd (call_id_t *callid,					/*X*/
+int rtp_start_fwd (call_id_t *callid, int media_stream_no,		/*X*/
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
 int rtp_stop_fwd (call_id_t *callid, int nolock);			/*X*/
