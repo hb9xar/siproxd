@@ -27,9 +27,6 @@
 /* Define if you have the chroot function.  */
 #undef HAVE_CHROOT
 
-/* Define if you have the daemon function.  */
-#undef HAVE_DAEMON
-
 /* Define if you have the fcntl function.  */
 #undef HAVE_FCNTL
 
@@ -83,6 +80,9 @@
 
 /* Define if you have the setgid function.  */
 #undef HAVE_SETGID
+
+/* Define if you have the setsid function.  */
+#undef HAVE_SETSID
 
 /* Define if you have the setuid function.  */
 #undef HAVE_SETUID
