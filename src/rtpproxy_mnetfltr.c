@@ -45,7 +45,7 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 
 #if defined(HAVE_LINUX_NETFILTER_H)
 
-static char *ipchains_exe="/usr/local/bin/gsc /sbin/iptables";
+static char *ipchains_exe="/sbin/iptables";
 static char *add_rule =
     "%s -t nat -A PREROUTING -p udp --destination-port %i -j DNAT "
     "--to-destination %s:%i";

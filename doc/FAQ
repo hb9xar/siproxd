@@ -187,6 +187,17 @@ A: Also Simple. Just configure your SIP phone to use siproxd as outbound
    transparently handle (and if needed rewrite) the SIP traffic.
    
 ---------------------------------------------------------------------------
+Q: I have a Gradstream Budgetone-100 SIP phone. The SIP communication
+   seems to work properly (I can register, make and receive calls) but
+   I do not hear any audio. However, transmitting audio works.
+
+A: It has been observed that these SIP phone seems to be delicate there.
+   You should use the IPCHAINS based RTP proxy and your SIP phone must
+   be configured to use random ports. Connect with the web browser to
+   the phone and make sure the 'Use random port' option is enabled.
+
+---------------------------------------------------------------------------
+
 
 yet unstructured:
 Hi there

@@ -26,7 +26,7 @@ if_outbound = ppp0
 #    hosts_deny_sip:  defines nets where we deny SIP traffic from
 #
 #    - The deny list takes precedence over the allow lists.
-#    - The allow_reg list imples also allowance for sip.
+#    - The allow_reg list implies also allowance for sip.
 #
 #    Example for usage:
 #      local private net -> allow_reg list
@@ -107,7 +107,7 @@ rtp_timeout = 120
 #
 #proxy_auth_passwd = password
 #
-# or use individual per user passwords stored ia file
+# or use individual per user passwords stored in a file
 #
 #proxy_auth_pwfile = doc/siproxd_passwd.cfg
 #

@@ -1,6 +1,31 @@
-Release Notes for siproxd-0.4.2
+Release Notes for siproxd-0.5.0
 ===============================
 
+As quite some changes have been made now, I decided to make another
+release - even if some new feature are not yet completely ready,
+like IPTABLES (netfilter) support in the RTP proxy.
+However, it includes some important bugfixes and some other goodies.
+
+Major changes since 0.4.2:
+ - Feature: Proxy chaining - siproxd itself may now use an additional
+   outbound proxy. This allows for example to chain serveal siproxd
+   (cross multiple firewalls).
+
+ - Feature: Includes *preliminary* support for IPTABLES (netfilter)
+   based systems. Current restrictions: The executable 'iptables'
+   must reside in /sbin/iptables. Chroot jail not working.
+   Must be run as root, don't let siproxd change the UID.
+   This item is stil under work, it may or may not work for you.
+
+ - Feature: Some changes to have siproxd compile under Solaris.
+   Runtime is not tested yet.
+
+ - Fix: Bugfixes and cleanup for building of FreeBSD
+
+ - Fix: Chroot jail did not work properly and resultet in ERRORs
+   during hostname lookups (gethostbyname)
+
+General Overview:
  - May be used as pure Outbound proxy (registration of local UAs
    to a 3rd party registrar)
  - Fli4l OPT_SIP (still experimental) available, check
@@ -61,16 +86,9 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.4.2.tar.gz: 	7d56df3eff47a31864b5e095d0356bf8
+md5sum for siproxd-0.5.0.tar.gz: 	
 
-GnuPG signature for siproxd-0.4.2.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/osl2CfzBioe83JQRAvr1AKCspShf4x8WINgSNE+fv4fbxXW2wACgosAh
-Ts/iejZ6FwNTbhKg4pdA5zE=
-=iMHa
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.0.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -1,5 +1,8 @@
 0.5.0
 =====
+  26-Nov-2003:	- released 0.5.0
+		- included preliminary support for IPTABLES (netfiler)
+		  based systems.
   24-Nov-2003:	- some fixes in sockbind() (FreeBSD) by Jeremy Shaw
   23-Nov-2003:	- got the gethostbyname() failure problem solved.
 		  (the resolver needs a shared lib that was tried
