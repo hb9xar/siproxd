@@ -135,7 +135,7 @@ case "$target" in
     # It's easier to do this here, rather than AC_CHECK_LIBS for all of the
     # things that are/might be in libsocket or libnsl...
     AC_MSG_RESULT(Solaris 2.x)
-    AC_DEFINE(_SOLARIS,,[building on Solaris platform])
+    AC_DEFINE(_SOLARIS2,,[building on Solaris2 platform])
     LIBS="$LIBS -lsocket -lnsl"
     ;;
   *)

@@ -32,8 +32,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 
-//+#if defined(__sun__) && defined(__svr4__)	/* Solaris 2.x */
-#ifdef _SOLARIS
+#ifdef _SOLARIS2
 # include <sys/sockio.h>
 #endif
 
