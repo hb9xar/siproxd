@@ -66,7 +66,7 @@ int  rtpproxy_init( void );						/*X*/
 int  rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,		/*X*/
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (osip_call_id_t *callid, int nolock);			/*X*/
+int  rtp_stop_fwd (osip_call_id_t *callid);     			/*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */

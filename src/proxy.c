@@ -166,7 +166,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
      osip_message_get_call_id(request)->host);
 #endif
          /* stop the RTP proxying stream */
-         rtp_stop_fwd(osip_message_get_call_id(request), 0);
+         rtp_stop_fwd(osip_message_get_call_id(request));
       }
 
       break;
@@ -241,7 +241,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         rtp_stop_fwd(osip_message_get_call_id(request), 0);
+         rtp_stop_fwd(osip_message_get_call_id(request));
       }
 
       break;

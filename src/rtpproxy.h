@@ -36,15 +36,18 @@ typedef struct {
 /*
  * RTP relay
  */
-void rtp_relay (int num_fd, fd_set *fdset, time_t t);
-int  rtp_relay_start_fwd(int *sock, int *port, struct in_addr outbound_ipaddr);
-int  rtp_relay_stop_fwd(int sock);
+int  rtp_relay_init(void);
+int  rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
+		          struct in_addr outbound_ipaddr, int *outboundport,
+                          struct in_addr lcl_client_ipaddr, int lcl_clientport);
+int  rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock);
 
 
 /*
  * RTP masquerading
  */
-int rtp_masq_start_fwd(int proxy_idx, 
-                       struct in_addr outbound_ipaddr, int *outbound_lcl_port,
-                       struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int rtp_masq_stop_fwd(int proxy_idx);
+int  rtp_masq_init(void);
+int  rtp_masq_start_fwd (osip_call_id_t *callid, int media_stream_no,
+		          struct in_addr outbound_ipaddr, int *outboundport,
+                          struct in_addr lcl_client_ipaddr, int lcl_clientport);
+int  rtp_masq_stop_fwd (osip_call_id_t *callid);

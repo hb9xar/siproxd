@@ -144,17 +144,10 @@ int main (int argc, char *argv[])
    /* daemonize if requested to */
    if (configuration.daemonize) {
       DEBUGC(DBCLASS_CONFIG,"daemonizing");
-/* daemon() seems to be broken! starting the threads afterwards
-  with pthread_create will get stuck... */
-#if HAVE_DAEMONxxSICK
-      if (daemon(1,0) == -1) {
-         ERROR("unable to daemonize: %s", strerror(errno)); 
-      };
-# else
       if (fork()!=0) exit(0);
       setsid();
       if (fork()!=0) exit(0);
-#endif
+
       log_set_tosyslog(1);
    }
 #ifdef MOREDEBUG /*&&&&*/
@@ -162,14 +155,7 @@ INFO("daemonizing done (pid=%i)", getpid());
 #endif
 
    /* initialize the RTP proxy thread */
-#ifdef MOREDEBUG /*&&&&*/
-INFO("b4 rtpproxy_init");
-#endif
-   atexit(rtpproxy_kill);  /* cancel RTP thread at exit */
    rtpproxy_init();
-#ifdef MOREDEBUG /*&&&&*/
-INFO("rtpproxy_init done");
-#endif
 
    /* init the oSIP parser */
    parser_init();
@@ -184,9 +170,6 @@ INFO("rtpproxy_init done");
       ERROR("unable to bind to SIP listening socket - aborting"); 
       exit(1);
    }
-#ifdef MOREDEBUG /*&&&&*/
-INFO("sipsock_listen done");
-#endif
 
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 /*
@@ -236,6 +219,7 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
       sts=osip_message_parse(my_msg, buff);
       if (sts != 0) {
          ERROR("osip_message_parse() failed... this is not good");
+         DUMP_BUFFER(-1, buff, i);
          goto end_loop; /* skip and free resources */
       }
 

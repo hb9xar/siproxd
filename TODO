@@ -32,11 +32,4 @@ TODOs, in random order:
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 
-- support for "full duplex" RTP proxying
-
-- optional: instead of using the RTP proxy, open up UDP masquerading
-  tunnels in the firewall and let the kernel do the work.
-  Anyway, there seems to be an issue with some hardphones (BudgeTone-100)
-  that do not work with the RTP proxy (no audio reception)
-
 - maybe STUN support

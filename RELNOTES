@@ -1,4 +1,4 @@
-Release Notes for siproxd-0.3.5
+Release Notes for siproxd-0.3.6
 ===============================
 
  - Fli4l OPT_SIP (still experimental) available, check
@@ -8,6 +8,7 @@ Release Notes for siproxd-0.3.5
    masquerading firewall
  - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Includes Linux/IPCHAINS support for UDP masquerading tunnels as RTP proxy
  - Port range to be used for incoming RTP traffic is configurable
    (-> easy to set up apropriate firewall rules for incoming traffic)
  - RTP proxy can handle multiple RTP streams (eg. audio + video)
@@ -20,7 +21,7 @@ Release Notes for siproxd-0.3.5
    with individual passwords for each user
  - Logging to syslog in daemon mode
  - Access control (IP based) for incoming traffic
- - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
+ - RPM support
  - works with "dial-up" conenctions (dynamic IP addresses)
  - The host part of UA registration entries can be masqueraded
    (mask_host, masked_host config items) Siemens SIP phones seem to
@@ -43,6 +44,7 @@ Reported to build on:
 - OpenBSD 2.9
 
 Reported interoperability (tested with softphones):
+ - Grandstream BudgeTone-100 series (they only work with IPCHAINS RTP proxy)
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
@@ -58,24 +60,14 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.3.5.tar.gz: 	8db82f78bf71a04570a85bf897f5d5e5
-md5sum for siproxd-0.3.5-1rh60.i386.rpm:5bfe3403b00d2c19af5ca38ea7111337
-md5sum for siproxd-0.3.5-1rh72.i386.rpm:3e45667fe56608fdf5f641ffc2a7a602
-md5sum for siproxd-0.3.5-1.src.rpm:	cde88a553cc8fc20ede2bca0d694d5c9
+md5sum for siproxd-0.3.6.tar.gz: 	
 
-GnuPG signature for siproxd-0.3.5.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/UNGOCfzBioe83JQRAgloAKCaMZGhuqpWMio1vVYmzGm4BcpWSACfZlrb
-y2OJ7ZqlqO8P8yLlCMOHdbo=
-=sPU3
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.3.6.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
 -      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
 -      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
-VoIP:  sip:17476691342@proxy01.sipphone.com
+VoIP:  sip:17476691342@proxy01.sipphone.com | sip:thomas@ries.homeip.net
 
 

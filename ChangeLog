@@ -1,7 +1,13 @@
 0.3.6
 =====
-  07-Sep-2003:  - IPCHAINS based UPD tunneling (kernel masquerading)
-                  for RTP traffic (still experimental - but seems to work)
+  22-Sep-2003:  - released 0.3.6
+                - Code cleanup for RTP proxy
+  07-Sep-2003:  - IPCHAINS based UDP tunneling (kernel masquerading)
+                  for RTP traffic (still experimental - but seems to work).
+                  To activate it, just set 'rtp_proxy_enable' equal 2
+                  in the config. NOTE: siproxd must then be started by
+                  root (but dropping privileges works).
+  05-Sep-2003:  - configure.in: test for pthreads before libosip (RH9.0)
 
 0.3.5
 =====

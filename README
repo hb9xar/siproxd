@@ -22,16 +22,7 @@ IP addresses and port numbers.
 
 REQUIREMENTS
 ============
-- libosip2-2.0.2	(http://www.fsf.org/software/osip/)
-- pthreads		(should be part of any Linux distribution)
-
-Up to now, siporxd only has been tested under:
-- Redhat Linux 6.0
-- Redhat Linux 7.2
-- SUSE 5.3 (libc5)
-
-However, it should build and run under newer versions (feedback is welcome).
-
+see RELNOTES
 
 
 HOW TO GET STARTED
@@ -210,12 +201,10 @@ and visit the website at http://siproxd.sourceforge.net/
 There is a siproxd mailinglist available on sourceforge.
 
 Thomas Ries  (tries@gmx.net)
-   GnuPG Public Key:
-   pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
-   Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
-
-VoIP:  17476691342@proxy01.sipphone.com
-
+GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
+-      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
+-      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
+VoIP:  sip:17476691342@proxy01.sipphone.com | sip:thomas@ries.homeip.net
 
 
 CREDITS

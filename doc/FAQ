@@ -160,6 +160,17 @@ A: Yes. Siproxd needs to know the public IP address, as this address is
    See 'Q: How do I setup IP masquerading for the outgoing RTP traffic'.
    
 ---------------------------------------------------------------------------
+Q: How do I configure siproxd to use ICPHAINS based UDP masquerading
+   tunnels for proxying the incomming RTP traffic?
+
+A: Simple. In the config file set the configuration option
+   rtp_proxy_enable = 2. Siproxd *must* then be started by root, I
+   highly recommend to let siproxd drop privileges after startup
+   (user, chrootjail config options).
+   Note: The UDP port range for incomming RTP data still uses the same
+   range as configured in the config file.
+   
+---------------------------------------------------------------------------
 
 yet unstructured:
 Hi there
