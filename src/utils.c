@@ -172,15 +172,16 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
           (error == NO_ADDRESS) ||
           (error == NO_DATA)) {
 #ifdef HAVE_HSTRERROR
-         DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: %s",
-                hostname, hstrerror(error));
+         DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: h_errno=%i [%s]",
+                hostname, h_errno, hstrerror(error));
 #else
          DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: h_errno=%i",
                 hostname, error);
 #endif
       } else {
 #ifdef HAVE_HSTRERROR
-         ERROR("gethostbyname(%s) failed: %s",hostname, hstrerror(h_errno));
+         ERROR("gethostbyname(%s) failed: h_errno=%i [%s]",
+               hostname, h_errno, hstrerror(h_errno));
 #else
          ERROR("gethostbyname(%s) failed: h_errno=%i",hostname, h_errno);
 #endif
