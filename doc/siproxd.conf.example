@@ -22,6 +22,7 @@ if_outbound = ppp0
 #    this means never deny.
 #
 #    hosts_allow_reg: defines nets from which we accept registrations
+#                     Registrations are *ONLY* allowed from INBOUND!
 #    hosts_allow_sip: defines nets from which we accept SIP traffic
 #    hosts_deny_sip:  defines nets from which we deny SIP traffic
 #
