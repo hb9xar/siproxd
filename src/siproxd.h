@@ -183,4 +183,4 @@ struct siproxd_config {
    This issue is fixed in linphone-0.9.1pre1
 */
 
-#define MOREDEBUG
+//#define MOREDEBUG

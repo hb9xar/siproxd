@@ -1,6 +1,8 @@
-Release Notes for siproxd-0.3.6b
+Release Notes for siproxd-0.4.0
 ================================
 
+ - May be used as an pure Outbound proxy (registration of local UAs
+   to a 3rd party registrar)
  - Fli4l OPT_SIP (still experimental) available, check
    http://home.arcor.de/jsffm/fli4l/
  - supports Linux and FreeBSD (other BSD derivates not yet tested)
@@ -9,6 +11,7 @@ Release Notes for siproxd-0.3.6b
  - Includes an RTP data stream proxy for *incoming* audio data
    (outgoing RTP data should be handled by IP masquerading by the firewall)
  - Includes Linux/IPCHAINS support for UDP masquerading tunnels as RTP proxy
+   (Kernels 2,2,x so far - 2.4.x with IPTABLES is not yet supported)
  - Port range to be used for incoming RTP traffic is configurable
    (-> easy to set up apropriate firewall rules for incoming traffic)
  - RTP proxy can handle multiple RTP streams (eg. audio + video)
@@ -44,14 +47,13 @@ Reported to build on:
 - OpenBSD 2.9
 
 Reported interoperability (tested with softphones):
- - Grandstream BudgeTone-100 series (they only work with IPCHAINS RTP proxy)
+ - Grandstream BudgeTone-100 series (only works with IPCHAINS RTP proxy)
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
 
 Known bugs:
- - does not yet work with Grandstream BudgeTone phones,
-   but I'm working on this.
+   There will be...
 
    If you port siproxd to a new platform or do other kinds of changes
    or bugfixes that might be of general interest, please drop me a
@@ -60,16 +62,9 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.3.6b.tar.gz: 	5ded692aa606aac714f9c9278b4adee7
+md5sum for siproxd-0.4.0.tar.gz: 	
 
-GnuPG signature for siproxd-0.3.6a.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/cztqCfzBioe83JQRAs8OAJ9DZn4qJceNYkkhuF3EqMiV+w+kKQCcDFPL
-h7SwZyAdz+7Qzri/xFcdrjE=
-=SEXX
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.4.0.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -11,9 +11,10 @@ A: The goal is that every softphone (that is SIP compliant) should be
    - linphone (0.9.0)
    - kphone (1.0.2)
    - MSN Messenger
+   - Grandstream BudgeTone series (only with IPCHAINS based RTP proxy)
 ---------------------------------------------------------------------------
 Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
-   Shouldn't italso proxy outgoing RTP data?
+   Shouldn't it also proxy outgoing RTP data?
 
 A: This is the correct behaviour. Incoming RTP traffic
    is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
@@ -147,6 +148,13 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    
    Outgoing traffic must be handled (masqueraded) by the firewall itself
    (using ipchains or iptables rules).
+
+   Since version 0.3.6, siproxd also includes an IPCHAINs based RTP proxy/
+   forwarding. The principle is similar to above, but instead of receiving
+   and forwarding the UDP packets itself, siproxd just opens up an UDP 
+   masquerading tunnel for the incomming traffic and then the kernel will
+   do the rest of the work.
+
 ---------------------------------------------------------------------------
 Q: Does siproxd need to be installed on the same host as the
    firewall (ipchains/iptables) is running?
@@ -169,6 +177,14 @@ A: Simple. In the config file set the configuration option
    (user, chrootjail config options).
    Note: The UDP port range for incomming RTP data still uses the same
    range as configured in the config file.
+   
+---------------------------------------------------------------------------
+Q: How do I use siproxd as a pure outbound proxy, so I can register with my
+   SIP phone at a thired party registrar?
+
+A: Also Simple. Just configure your SIP phone to use siproxd as outbound
+   proxy and your 3rd party registrar as registrar. Siproxd will then
+   transparently handle (and if needed rewrite) the SIP traffic.
    
 ---------------------------------------------------------------------------
 
