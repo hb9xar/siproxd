@@ -1,5 +1,7 @@
 0.2.6
 =====
+-  28-Jan-2003:	- New Feature: RTP proxy should be able to handle multiple
+		  media stream in the same session (audio + video)
 -  21-Jan-2003:	- Bugfix: crash in compare_url (MSN Messenger issue)
 -  19-Jan-2003:	- use of libosip-0.9.3 not possible yet -
                   libosip fails in msg_setproxy_authenticate
