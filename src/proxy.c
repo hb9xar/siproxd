@@ -960,7 +960,6 @@ if (configuration.debuglevel)
     */
    memset(&addr_sess, 0, sizeof(addr_sess));
    if (sdp->c_connection && sdp->c_connection->c_addr) {
-DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
       sts = get_ip_by_host(sdp->c_connection->c_addr, &addr_sess);
       if (sts == STS_FAILURE) {
          ERROR("SDP: cannot resolve session 'c=' host [%s]",
@@ -977,7 +976,6 @@ DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
          osip_free(sdp->c_connection->c_addr);
          sdp->c_connection->c_addr=osip_malloc(HOSTNAME_SIZE);
          sprintf(sdp->c_connection->c_addr, "%s", utils_inet_ntoa(map_addr));
-DEBUG("*0 rewritten: session conn=%s",  sdp->c_connection->c_addr);
       } else {
          /* 0.0.0.0 - don't rewrite */
          DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
@@ -986,7 +984,22 @@ DEBUG("*0 rewritten: session conn=%s",  sdp->c_connection->c_addr);
    }
 
 
-    
+   /*
+    * rewrite 'o=' item (originator) on session level if present.
+    */
+   if (sdp->o_addrtype && sdp->o_addr) {
+      if (strcmp(sdp->o_addrtype, "IP4") != 0) {
+         ERROR("got IP6 in SDP originator - not yet suported by siproxd");
+         sdp_message_free(sdp);
+         return STS_FAILURE;
+      }
+
+      osip_free(sdp->o_addr);
+      sdp->o_addr=osip_malloc(HOSTNAME_SIZE);
+      sprintf(sdp->o_addr, "%s", utils_inet_ntoa(map_addr));
+   }
+
+
    /*
     * loop through all media descritions,
     * start RTP proxy and rewrite them
@@ -999,12 +1012,10 @@ DEBUG("*0 rewritten: session conn=%s",  sdp->c_connection->c_addr);
        * check if a 'c=' item is present in this media description,
        * if so -> rewrite it
        */
-DEBUG("*0 msn=%i",  media_stream_no);
       memset(&addr_media, 0, sizeof(addr_media));
       have_c_media=0;
       sdp_conn=sdp_message_connection_get(sdp, media_stream_no, 0);
       if (sdp_conn && sdp_conn->c_addr) {
-DEBUG("*1 msn=%i, host=%s",  media_stream_no, sdp_conn->c_addr);
          /*&&&& should use gethostbyname here as well */
          if (strcmp(sdp_conn->c_addr, "0.0.0.0") != 0) {
             sts = get_ip_by_host(sdp_conn->c_addr, &addr_media);
