@@ -147,6 +147,7 @@ static int parse_config (FILE *configfile) {
       { "masked_host",         TYP_STRINGA,&configuration.masked_host },
       { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host },
       { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
+      { "registration_file",   TYP_STRING ,&configuration.registrationfile },
       {0, 0, 0}
    };
 

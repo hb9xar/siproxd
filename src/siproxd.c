@@ -202,9 +202,6 @@ INFO("daemonizing done (pid=%i)", getpid());
    /* init the oSIP parser */
    parser_init();
 
-   /* initialize the registration facility */
-   register_init();
-
    /* listen for incoming messages */
    sts=sipsock_listen();
    if (sts == STS_FAILURE) {
@@ -212,6 +209,9 @@ INFO("daemonizing done (pid=%i)", getpid());
       ERROR("unable to bind to SIP listening socket - aborting"); 
       exit(1);
    }
+
+   /* initialize the registration facility */
+   register_init();
 
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 /*
@@ -382,6 +382,8 @@ INFO("got packet [%i bytes]from %s [%s]", i,
 
    } /* while TRUE */
    exit_prg:
+
+   register_shut();
    INFO("properly terminating siproxd");
 
    return 0;

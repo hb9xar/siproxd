@@ -68,6 +68,12 @@ user = nobody
 #chrootjail = /var/lib/siproxd/
 
 ######################################################################
+# Registration file:
+#   Where to store the current registrations
+#   empty means we do not save registrations
+registration_file = /var/lib/siproxd/siproxd_registrations
+
+######################################################################
 # global switch to control the RTP proxy behaviour
 #       0 - RTP proxy disabled
 #       1 - RTP proxy (UDP relay of siproxd)
@@ -152,7 +158,7 @@ debug_level =      0x00000000
 #
 # Siproxd itself can be told to send all traffic to another
 # outbound proxy.
-# You can use this feature to 'chain' multiple siproxd proxys
+# You can use this feature to 'chain' multiple siproxd proxies
 # if you have several masquerading firewalls to cross.
 #
 # outbound_proxy_host = my.outboundproxy.org

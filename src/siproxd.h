@@ -34,6 +34,7 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
 void register_init(void);
+void register_shut(void);
 int  register_client(osip_message_t *request, int force_lcl_masq);	/*X*/
 void register_agemap(void);
 int  register_response(osip_message_t *request, int flag);		/*X*/
@@ -98,7 +99,7 @@ struct urlmap_s {
    osip_uri_t *true_url;	// true URL of UA  (inbound URL)
    osip_uri_t *masq_url;	// masqueraded URL (outbound URL)
    osip_uri_t *reg_url;		// registered URL  (masq URL as wished by UA)
-   osip_via_t *via;
+//   osip_via_t *via;
 };
 /*
  * the difference between masq_url and reg_url is, 
@@ -143,6 +144,7 @@ struct siproxd_config {
    stringa_t masked_host;
    char *outbound_proxy_host;
    int  outbound_proxy_port;
+   char *registrationfile;
 };
 
 

@@ -662,9 +662,9 @@ if (configuration.debuglevel)
 
 
 /*
- * PROXY_REWRITE_INVITATION_BODY
+ * PROXY_REWRITE_REQUEST_URI
  *
- * rewrites the outgoing INVITATION packet
+ * rewrites the incoming Request URI
  * 
  * RETURNS
  *	STS_SUCCESS on success

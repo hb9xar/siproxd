@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -45,13 +46,106 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 extern struct siproxd_config configuration;
 
 struct urlmap_s urlmap[URLMAP_SIZE];		/* URL mapping table     */
+
 extern int sip_socket;				/* sending SIP datagrams */
 
+extern int errno;
 /*
  * initialize the URL mapping table
  */
 void register_init(void) {
-   memset (urlmap, 0, sizeof(urlmap));
+   FILE *stream;
+   int sts, size, i;
+   char buff[128];
+
+   memset(urlmap, 0, sizeof(urlmap));
+
+   if (configuration.registrationfile) {
+      stream = fopen(configuration.registrationfile, "r");
+
+      if (!stream) {
+         /*
+          * the file does not exist, or the size was incorrect,
+          * delete it and start from scratch
+          */
+         unlink(configuration.registrationfile);
+         WARN("registration file not found, starting with empty table");
+      } else {
+         /* read the url table from file */
+         for (i=0;i < URLMAP_SIZE; i++) {
+            fgets(buff, sizeof(buff), stream);
+            sts=sscanf(buff, "***:%i:%i", &urlmap[i].active, &urlmap[i].expires);
+            if (urlmap[i].active) {
+               osip_uri_init(&urlmap[i].true_url);
+               osip_uri_init(&urlmap[i].masq_url);
+               osip_uri_init(&urlmap[i].reg_url);
+
+	       #define R(X) {\
+               fgets(buff, sizeof(buff), stream);\
+               buff[sizeof(buff)-1]='\0';\
+               if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
+               if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
+               if (strlen(buff) > 0) {\
+                  size = strnlen(buff, sizeof(buff));\
+                  X    =(char*)malloc(size);\
+                  sts=sscanf(buff,"%s",X);\
+               } else {\
+                  X = NULL;\
+               }\
+               }
+
+               R(urlmap[i].true_url->scheme);
+               R(urlmap[i].true_url->username);
+               R(urlmap[i].true_url->host);
+               R(urlmap[i].true_url->port);
+               R(urlmap[i].masq_url->scheme);
+               R(urlmap[i].masq_url->username);
+               R(urlmap[i].masq_url->host);
+               R(urlmap[i].masq_url->port);
+               R(urlmap[i].reg_url->scheme);
+               R(urlmap[i].reg_url->username);
+               R(urlmap[i].reg_url->host);
+               R(urlmap[i].reg_url->port);
+            }
+         }
+      }
+   }
+   return;
+}
+
+
+/*
+ * shut down the URL mapping table
+ */
+void register_shut(void) {
+   int i;
+   FILE *stream;
+
+   if (configuration.registrationfile) {
+      /* write urlmap back to file */
+      stream = fopen(configuration.registrationfile, "w+");
+
+      for (i=0;i < URLMAP_SIZE; i++) {
+         fprintf(stream, "***:%i:%i\n", urlmap[i].active, urlmap[i].expires);
+         if (urlmap[i].active) {
+            #define W(X) fprintf(stream, "%s\n", (X)? X:"");
+
+            W(urlmap[i].true_url->scheme);
+            W(urlmap[i].true_url->username);
+            W(urlmap[i].true_url->host);
+            W(urlmap[i].true_url->port);
+            W(urlmap[i].masq_url->scheme);
+            W(urlmap[i].masq_url->username);
+            W(urlmap[i].masq_url->host);
+            W(urlmap[i].masq_url->port);
+            W(urlmap[i].reg_url->scheme);
+            W(urlmap[i].reg_url->username);
+            W(urlmap[i].reg_url->host);
+            W(urlmap[i].reg_url->port);
+         }
+      }
+      fclose(stream);
+   }
    return;
 }
 
@@ -226,8 +320,8 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
       }
 
       /* remember the VIA for later use */
-      osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
-                      &urlmap[i].via);
+//      osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
+//                      &urlmap[i].via);
    } /* if new entry */
 
    /* give some safety margin for the next update */
@@ -259,7 +353,7 @@ void register_agemap(void) {
          osip_uri_free(urlmap[i].true_url);
          osip_uri_free(urlmap[i].masq_url);
          osip_uri_free(urlmap[i].reg_url);
-	 osip_via_free(urlmap[i].via);
+//	 osip_via_free(urlmap[i].via);
       }
    }
    return;
