@@ -176,6 +176,7 @@ void log_tcp_connect(void) {
       } else {
          debug_fd=accept(debug_listen_fd, NULL, NULL);
          INFO("Accepted DEBUG TCP connection [fd=%i]", debug_fd);
+         DEBUGC(DBCLASS_ALL,UNAME);
       }
    }
 

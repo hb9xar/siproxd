@@ -19,7 +19,9 @@
 #
 
 
-AM_CFLAGS = -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
+AM_CFLAGS = -Wall -D_GNU_SOURCE \
+            -DBUILDSTR="\"`cat .buildno`\"" \
+            -DUNAME="\"`uname -a`\""
 
 #
 # Siproxd itself

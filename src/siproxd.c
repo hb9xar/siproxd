@@ -178,7 +178,8 @@ int main (int argc, char *argv[])
 /*
  * Init stuff
  */
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" starting up");
+   DEBUGC(DBCLASS_ALL,UNAME);
 
    /* read the config file */
    if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
@@ -251,6 +252,8 @@ int main (int argc, char *argv[])
  */
    log_set_silence(configuration.silence_log);
 
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
+   DEBUGC(DBCLASS_ALL,UNAME);
 /*
  * Main loop
  */
