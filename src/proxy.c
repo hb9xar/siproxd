@@ -713,6 +713,9 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
 	     response->from->url->host ? 
                 response->from->url->host : "*NULL*");
 
+      /* rewrite Contact header to represent the masqued address */
+      sip_rewrite_contact(response, DIR_OUTGOING);
+
       #define satoi atoi  /* used in MSG_TEST_CODE macro ... */
       /* If an 200 OK or 183 Trying answer to an INVITE request,
        * rewrite body */
@@ -722,9 +725,6 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
          /* This is an outgoing response, therefore an outgoing stream */
          sts = proxy_rewrite_invitation_body(response, DIR_OUTGOING);
       }
-
-      /* rewrite Contact header to represent the masqued address */
-      sip_rewrite_contact(response, DIR_OUTGOING);
 
       break;
    

@@ -2,6 +2,7 @@
 =====
    7-Feb-2004:  - Fix for local-UA to local-UA RTP proxying, symmetric
                   RTP was not working.
+                - logging routines now use a MUTEX to be thread safe.
    1-Feb-2004:  - Added handling of Max-Forwards header
                 - a detected via loop results in an 482 Loop detected
   31-Jan-2004:  - Allow 2 of my vias in header to let 2 UA's sitting

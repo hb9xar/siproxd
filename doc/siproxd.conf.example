@@ -99,8 +99,10 @@ rtp_port_high = 7080
 # Timeout for RTP streams
 #    after this number of seconds, an RTP stream is considered dead
 #    and proxying for it will be stopped.
+#    Be aware that this timeout also applies to streams that are
+#    in HOLD.
 #    
-rtp_timeout = 120
+rtp_timeout = 300
 
 ######################################################################
 # Proxy authentication

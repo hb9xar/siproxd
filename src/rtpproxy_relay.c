@@ -50,11 +50,16 @@ extern struct siproxd_config configuration;
  */
 rtp_proxytable_t rtp_proxytable[RTPPROXY_SIZE];
 
-/* use a 'fast' mutex for synchronizing - as these are portable... */
-pthread_mutex_t rtp_proxytable_mutex = PTHREAD_MUTEX_INITIALIZER;
+/*
+ * Mutex for thread synchronization (locking when accessing common 
+ * data structures -> rtp_proxytable[]).
+ *
+ * use a 'fast' mutex for synchronizing - as these are portable... 
+ */
+static pthread_mutex_t rtp_proxytable_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* thread id of RTP proxy */
-pthread_t rtpproxy_tid=0;
+static pthread_t rtpproxy_tid=0;
 
 /* master fd_set */
 static fd_set master_fdset;
@@ -198,12 +203,21 @@ static void *rtpproxy_main(void *arg) {
                      cid.number = rtp_proxytable[j].callid_number;
                      cid.host = rtp_proxytable[j].callid_host;
 
+                     /* match on:
+                      * - same call ID
+                      * - same media stream
+                      * - opposite direction
+                      * - different client ID
+                      */
                      if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
-                          (rtp_direction != rtp_proxytable[j].direction) &&
-                          (media_stream_no == rtp_proxytable[j].media_stream_no) &&
                           (compare_callid(&callid, &cid) == STS_SUCCESS) &&
+                          (media_stream_no == rtp_proxytable[j].media_stream_no) &&
+                          (rtp_direction != rtp_proxytable[j].direction) &&
                           (strcmp(rtp_proxytable[j].client_id, client_id) != 0) ) {
                         rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
+                        DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i) <-> entry %i (fd=%i)",
+                               j, rtp_proxytable[j].rtp_rx_sock,
+                               i, rtp_proxytable[j].rtp_rx_sock);
                         break;
                      }
                   }

@@ -20,8 +20,9 @@
 
 
 #include "config.h"
-#include "log.h"
+//#include "log.h"
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -46,6 +47,12 @@ static int debug_pattern=0;
  */
 static int silence_level=0;
 
+/*
+ * Mutex for threat synchronization when writing log data
+ *
+ * use a 'fast' mutex for synchronizing - as these are portable... 
+ */
+static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void log_set_pattern(int pattern) {
    debug_pattern=pattern;
@@ -81,6 +88,7 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
 
    va_start(ap, format);
 
+   pthread_mutex_lock(&log_mutex);
    if (! log_to_syslog) {
       /* not running as daemon - log to STDERR */
       time(&t);
@@ -89,14 +97,15 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec, file, line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
+      fflush(stderr);
    } else if (silence_level < 1) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_DEBUG, "%s:%i %s", file, line, string);
    }
+   pthread_mutex_unlock(&log_mutex);
 
    va_end(ap);
-   fflush(stderr);
    return;
 
 }
@@ -110,6 +119,7 @@ void log_error(char *file, int line, const char *format, ...) {
 
    va_start(ap, format);
 
+   pthread_mutex_lock(&log_mutex);
    if (! log_to_syslog) {
       /* not running as daemon - log to STDERR */
       time(&t);
@@ -118,14 +128,15 @@ void log_error(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec, file, line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
+      fflush(stderr);
    } else if (silence_level < 4) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
    }
+   pthread_mutex_unlock(&log_mutex);
 
    va_end(ap);
-   fflush(stderr);
    return;
 
 }
@@ -139,6 +150,7 @@ void log_warn(char *file, int line, const char *format, ...) {
 
    va_start(ap, format);
 
+   pthread_mutex_lock(&log_mutex);
    if (! log_to_syslog) {
       /* not running as daemon - log to STDERR */
       time(&t);
@@ -147,14 +159,15 @@ void log_warn(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
+      fflush(stderr);
    } else if (silence_level < 3) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
    }
+   pthread_mutex_unlock(&log_mutex);
    
    va_end(ap);
-   fflush(stderr);
    return;
 
 }
@@ -168,6 +181,7 @@ void log_info(char *file, int line, const char *format, ...) {
 
    va_start(ap, format);
 
+   pthread_mutex_lock(&log_mutex);
    if (! log_to_syslog) {
       /* not running as daemon - log to STDERR */
       time(&t);
@@ -176,14 +190,15 @@ void log_info(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
+      fflush(stderr);
    } else if (silence_level < 2) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
    }
+   pthread_mutex_unlock(&log_mutex);
    
    va_end(ap);
-   fflush(stderr);
    return;
 
 }
@@ -197,6 +212,7 @@ void log_dump_buffer(int class, char *file, int line,
    if ((debug_pattern & class) == 0) return;
    if (log_to_syslog) return;
 
+   pthread_mutex_lock(&log_mutex);
    fprintf(stderr,"---BUFFER DUMP follows---\n");
 
    for (i=0; i<length; i+=16) {
@@ -213,5 +229,7 @@ void log_dump_buffer(int class, char *file, int line,
 
    fprintf(stderr,"\n---end of BUFFER DUMP---\n");
    fflush(stderr);
+   pthread_mutex_unlock(&log_mutex);
+
    return;
 }
