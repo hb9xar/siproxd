@@ -840,7 +840,6 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    sdp_connection_t *sdp_conn;
    sdp_media_t *sdp_med;
    int rtp_direction=0;
-   int have_c_session=0;
    int have_c_media=0;
 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
@@ -848,7 +847,6 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    /*
     * get SDP structure
     */
-   have_c_session=0;
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
       if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
@@ -862,8 +860,6 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
          ERROR("rewrite_invitation_body: no body found in message");
          return STS_FAILURE;
       }
-   } else {
-      have_c_session=1;
    }
 
    sts = osip_body_to_str(body, &bodybuff);
@@ -963,7 +959,7 @@ if (configuration.debuglevel)
     * remember the original address in addr_sess
     */
    memset(&addr_sess, 0, sizeof(addr_sess));
-   if (have_c_session == 1){
+   if (sdp->c_connection || sdp->c_connection->c_addr) {
 DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
       sts = get_ip_by_host(sdp->c_connection->c_addr, &addr_sess);
       if (sts == STS_FAILURE) {
@@ -976,6 +972,7 @@ DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
        * Rewrite
        * an IP address of 0.0.0.0 means *MUTE*, don't rewrite such
        */
+      /*&&&& should use gethostbyname here */
       if (strcmp(sdp->c_connection->c_addr, "0.0.0.0") != 0) {
          osip_free(sdp->c_connection->c_addr);
          sdp->c_connection->c_addr=osip_malloc(HOSTNAME_SIZE);
@@ -1008,6 +1005,7 @@ DEBUG("*0 msn=%i",  media_stream_no);
       sdp_conn=sdp_message_connection_get(sdp, media_stream_no, 0);
       if (sdp_conn && sdp_conn->c_addr) {
 DEBUG("*1 msn=%i, host=%s",  media_stream_no, sdp_conn->c_addr);
+         /*&&&& should use gethostbyname here as well */
          if (strcmp(sdp_conn->c_addr, "0.0.0.0") != 0) {
             sts = get_ip_by_host(sdp_conn->c_addr, &addr_media);
             have_c_media=1;
