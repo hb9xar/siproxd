@@ -14,7 +14,7 @@ if_outbound = ppp0
 
 
 ######################################################################
-# Port to listen for incoming SIP messages.
+# Access control.
 #    Access lists in the form: IP/mask (ex. 10.0.0.1/24)
 #    multiple entries may be separated by commas NO SPACES ARE ALLOWED!!
 #    Empty list means 'does not apply' - no filtering is done then.
@@ -38,7 +38,7 @@ if_outbound = ppp0
 
 
 ######################################################################
-# Access control.
+# Port to listen for incoming SIP messages.
 #    5060 is usually the correct choise - don't change is unless you
 #    know what you're doing
 #
