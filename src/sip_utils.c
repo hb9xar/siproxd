@@ -36,7 +36,6 @@
 #include <pwd.h>
 
 #include <osipparser2/osip_parser.h>
-#include <osipparser2/osip_port.h>
 #include <osipparser2/osip_md5.h>
 
 #include "siproxd.h"
@@ -259,7 +258,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 
    /* compare SCHEME (if present) case INsensitive */
    if (url1->scheme && url2->scheme) {
-      if (strcasecmp(url1->scheme, url2->scheme) != 0) {
+      if (osip_strcasecmp(url1->scheme, url2->scheme) != 0) {
          DEBUGC(DBCLASS_PROXY, "compare_url: scheme mismatch");
          return STS_FAILURE;
       }
@@ -305,7 +304,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       }
    } else {
       /* compare hostname strings case INsensitive */
-      if (strcasecmp(url1->host, url2->host) != 0) {
+      if (osip_strcasecmp(url1->host, url2->host) != 0) {
          DEBUGC(DBCLASS_PROXY, "compare_url: host name mismatch");
          return STS_FAILURE;
       }

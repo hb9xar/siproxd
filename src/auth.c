@@ -30,7 +30,6 @@
 #include <netinet/in.h>
 
 #include <osipparser2/osip_parser.h>
-#include <osipparser2/osip_port.h>
 #include <osipparser2/osip_md5.h>
 
 #include "digcalc.h"
@@ -364,7 +363,7 @@ void DigestCalcHA1(
   if (pszPassword) MD5Update(&Md5Ctx, pszPassword, strlen(pszPassword));
   MD5Final(HA1, &Md5Ctx);
 
-  if ((pszAlg!=NULL)&&strcasecmp(pszAlg, "md5-sess") == 0) {
+  if ((pszAlg!=NULL) && (osip_strcasecmp(pszAlg, "md5-sess") == 0)) {
     MD5Init(&Md5Ctx);
     MD5Update(&Md5Ctx, HA1, HASHLEN);
     MD5Update(&Md5Ctx, ":", 1);

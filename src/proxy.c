@@ -725,11 +725,16 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
        *   '404 unknown destination'
        *   
        */
-      if ((MSG_IS_RESPONSE_FOR(response,"SUBSCRIBE")) &&
+{
+      osip_header_t *ua_hdr=NULL;
+      osip_message_get_user_agent(response, 0, &ua_hdr);
+      if (ua_hdr && ua_hdr->hvalue &&
+          (osip_strncasecmp(ua_hdr->hvalue,"grandstream", 11)==0) &&
+          (MSG_IS_RESPONSE_FOR(response,"SUBSCRIBE")) &&
           (MSG_TEST_CODE(response, 202))) {
          response->status_code=404;
       }
-
+}
       break;
    
   /*
