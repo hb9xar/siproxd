@@ -51,3 +51,19 @@ int  rtp_masq_start_fwd (osip_call_id_t *callid, int media_stream_no,
 		          struct in_addr outbound_ipaddr, int *outboundport,
                           struct in_addr lcl_client_ipaddr, int lcl_clientport);
 int  rtp_masq_stop_fwd (osip_call_id_t *callid);
+
+/*
+ * RTP masquerading (ipchains part)
+ */
+int rtp_mchains_create (struct in_addr lcl_addr, int lcl_port,
+                        struct in_addr msq_addr, int msq_port);
+int rtp_mchains_delete (struct in_addr lcl_addr, int lcl_port,
+                        struct in_addr msq_addr, int msq_port);
+
+/*
+ * RTP masquerading (netfilter part)
+ */
+int rtp_mnetfltr_create (struct in_addr lcl_addr, int lcl_port,
+                         struct in_addr msq_addr, int msq_port);
+int rtp_mnetfltr_delete (struct in_addr lcl_addr, int lcl_port,
+                         struct in_addr msq_addr, int msq_port);

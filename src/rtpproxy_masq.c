@@ -22,23 +22,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#if defined(HAVE_LINUX_IP_MASQ_H)
-/* masq specific stuff */
-#include <asm/types.h>          /* For __uXX types */
-#include <net/if.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/udp.h>
-#include <netinet/tcp.h>
-#include <linux/ip_fw.h>        /* For IP_FW_MASQ_CTL */
-#include <linux/ip_masq.h>      /* For specific masq defs */
-#include <asm/param.h>
-#endif
 
 #include <osipparser2/osip_parser.h>
 
@@ -56,24 +44,13 @@ extern struct siproxd_config configuration;
 /* table to remember all active rtp proxy streams */
 extern rtp_proxytable_t rtp_proxytable[];
 
-#if defined(HAVE_LINUX_IP_MASQ_H)
-/* socket for controlling the MASQ tunnels */
-static int masq_ctl_sock=0;
+#if defined(HAVE_LINUX_IP_MASQ_H) || defined(HAVE_LINUX_NETFILTER_H)
 
 /*
  * table to remember all active rtp proxy streams
  */
 rtp_proxytable_t rtp_proxytable[RTPPROXY_SIZE];
 
-/* table to remember all masquerading tunnels (1:1 with rtp_proxytable) */
-struct ip_masq_ctl masq_table[RTPPROXY_SIZE];
-
-/*
- * local prototypes
- */
-static int _create_listening_masq(struct ip_masq_ctl *masq,
-                           struct in_addr lcl_addr, int lcl_port,
-                           struct in_addr msq_addr, int msq_port);
 
 /************************************************************
   THIS HERE WILL ONLY WORK IF SIPROXD IS STARTED SUID ROOT !!
@@ -93,15 +70,26 @@ int rtp_masq_init( void ) {
    /* clean proxy table */
    memset (rtp_proxytable, 0, sizeof(rtp_proxytable));
 
+   if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
+#if !defined(HAVE_LINUX_IP_MASQ_H)
+      ERROR("IPCHAINS support not built in");
+      return STS_FAILURE;
+#endif
+   } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
+#if !defined(HAVE_LINUX_NETFILTER_H)
+      ERROR("NETFILTER/IPTABLES support not built in");
+      return STS_FAILURE;
+#endif
+   }
    return STS_SUCCESS;
 }
-
 
 
 int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
                        struct in_addr outbound_ipaddr, int *outbound_lcl_port,
                        struct in_addr lcl_client_ipaddr, int lcl_clientport) {
-   int sts, i, j;
+   int sts=STS_FAILURE;
+   int i, j;
    int freeidx;
    time_t t;
    osip_call_id_t cid;
@@ -138,12 +126,31 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
     * during INVITE/ACK. Later on, managing (aging & cleaning) the
     * masquerading tunnels is done by the kernel (IPMASQ).
     */
+    /*&&&&
+      RACE CONDITIONS! A slot may be timed out, even if the actual
+      masquerading tunnel is still active. A following new
+      INVITE then tries to use the believed free port -> Buh
+      - Can we poll (/proc/something) to figure out if the tunnel
+        is still active before deleting? This would require knowledge
+	of the text layout in /proc/xxx.
+      - are there some other possibilities (netfilter/libiptc)?
+      - introduce some kind of connection STATE to the proxy table.
+        Timeout based discarding only is active for non-established.
+	An INVITE would set the STATE to CONNECTING, the following
+	ACK to CONNECTED. A CONNECTED entry can only be deleted by
+	a BYE or CANCEL.
+      - NETFILTER: during startup (RTP initialization) siproxd should
+        clean left over entries that are within the RTP proxy port range
+     */
    time(&t);
    for (i=0; i<RTPPROXY_SIZE; i++) {
       if ((rtp_proxytable[i].sock != 0) &&
 	 ((rtp_proxytable[i].timestamp+configuration.rtp_timeout)<t)) {
-         /* this one has expired, clean it up */
-         DEBUGC(DBCLASS_RTP,"cleaning proxy slot #%i %s@%s", i,
+         /* this one has expired, delete it */
+         cid.number = rtp_proxytable[i].callid_number;
+         cid.host   = rtp_proxytable[i].callid_host;
+         rtp_masq_stop_fwd(&cid);
+         DEBUGC(DBCLASS_RTP,"deleting expired proxy slot #%i %s@%s", i,
                 rtp_proxytable[i].callid_number,
                 rtp_proxytable[i].callid_host);
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
@@ -170,11 +177,12 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
          if((compare_callid(callid, &cid) == STS_SUCCESS) &&
             (rtp_proxytable[i].media_stream_no == media_stream_no)) {
             /* return the already known port number */
+            *outbound_lcl_port=rtp_proxytable[i].outboundport;
             DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
                    "id=%s, #=%i)", rtp_proxytable[i].outboundport,
                    rtp_proxytable[i].callid_number,
                    rtp_proxytable[i].media_stream_no);
-            return STS_SUCCESS;
+	    return STS_SUCCESS;
          } /* compare */
       } else {
          /* remember the first free slot */
@@ -210,9 +218,15 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
       DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: using port %i",i);
 
       *outbound_lcl_port=i;
-      sts = _create_listening_masq(&masq_table[freeidx],
-                             lcl_client_ipaddr, lcl_clientport,
-                             outbound_ipaddr, *outbound_lcl_port);
+
+      /* add masquerading entry */
+      if (configuration.rtp_proxy_enable == 2) { // ipchains
+         sts = rtp_mchains_create(lcl_client_ipaddr, lcl_clientport,
+                                  outbound_ipaddr, *outbound_lcl_port);
+      } else if (configuration.rtp_proxy_enable == 3) { // netfilter/iptables
+         sts = rtp_mnetfltr_create(lcl_client_ipaddr, lcl_clientport,
+                                   outbound_ipaddr, *outbound_lcl_port);
+      }
       /* if success break, else try further on */
       if (sts == STS_SUCCESS) break;
       *outbound_lcl_port=0;
@@ -246,12 +260,13 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: masq address & port:%s:%i",
-          inet_ntoa(outbound_ipaddr),*outbound_lcl_port);
+          utils_inet_ntoa(outbound_ipaddr),*outbound_lcl_port);
    return (*outbound_lcl_port)?STS_SUCCESS:STS_FAILURE;
 }
 
 
 int rtp_masq_stop_fwd(osip_call_id_t *callid) {
+   int sts=STS_FAILURE;
    int i;
    int got_match=0;
    osip_call_id_t cid;
@@ -266,8 +281,29 @@ int rtp_masq_stop_fwd(osip_call_id_t *callid) {
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
+
       if (rtp_proxytable[i].sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS)) {
+
+         /* remove masquerading entry */
+         if (configuration.rtp_proxy_enable == 2) { // ipchains
+            DEBUGC(DBCLASS_RTP,"rtp_masq_stop_fwd: stop RTP proxy slot %i "
+	           "(IPCHAINS)",i);
+            sts = rtp_mchains_delete(
+	             rtp_proxytable[i].inbound_client_ipaddr,
+		     rtp_proxytable[i].inbound_client_port,
+		     rtp_proxytable[i].outbound_ipaddr,
+		     rtp_proxytable[i].outboundport);
+         } else if (configuration.rtp_proxy_enable == 3) { // netfilter/iptables
+            DEBUGC(DBCLASS_RTP,"rtp_masq_stop_fwd: stop RTP proxy slot %i "
+	           "(NETFILTER)",i);
+            sts = rtp_mnetfltr_delete(
+	             rtp_proxytable[i].inbound_client_ipaddr,
+		     rtp_proxytable[i].inbound_client_port,
+		     rtp_proxytable[i].outbound_ipaddr,
+		     rtp_proxytable[i].outboundport);
+         }
+
          DEBUGC(DBCLASS_RTP,"rtp_masq_stop_fwd: cleaning proxy slot %i",i);
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
@@ -285,76 +321,6 @@ int rtp_masq_stop_fwd(osip_call_id_t *callid) {
    return STS_SUCCESS;
 }
 
-
-/*
- * helper routines
- */
-static int _create_listening_masq(struct ip_masq_ctl *masq,
-                           struct in_addr lcl_addr, int lcl_port,
-                           struct in_addr msq_addr, int msq_port) {
-   int uid,euid;
-   int sts=STS_SUCCESS;
-
-   /* elevate privileges */
-   uid=getuid();
-   euid=geteuid();
-   if (uid != euid) seteuid(0);
-
-   if (geteuid()!=0) {
-      ERROR("create_listening_masq: must be running under UID root!");
-      return STS_FAILURE;
-   }
-
-   if (masq_ctl_sock==0) {
-      masq_ctl_sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-      if (masq_ctl_sock<0) {
-         ERROR("create_listening_masq: allocating control socket() failed: %s",
-               strerror(errno));
-         sts = STS_FAILURE;
-         goto exit;
-      }
-   }
-
-   memset (masq, 0, sizeof (*masq));
-
-   masq->m_target       = IP_MASQ_TARGET_USER;
-   masq->m_cmd          = IP_MASQ_CMD_INSERT;
-   masq->u.user.protocol= IPPROTO_UDP;
-
-   memcpy(&masq->u.user.saddr, &lcl_addr, sizeof(lcl_addr));
-   masq->u.user.sport   = htons(lcl_port);
-
-   memcpy(&masq->u.user.maddr, &msq_addr, sizeof(msq_addr));
-   masq->u.user.mport   = htons(msq_port);
-
-   if (setsockopt(masq_ctl_sock, IPPROTO_IP, 
-                  IP_FW_MASQ_CTL, (char *)masq, sizeof(*masq)))    {
-      DEBUGC(DBCLASS_RTP, "create_listening_masq: setsockopt() failed: %s",
-            strerror(errno));
-       sts = STS_FAILURE;
-       goto exit;
-   }
-
-#if 0
-  /*
-   * set short timeout for expiration
-   */
-   masq->m_cmd          = IP_MASQ_CMD_SET;
-   masq->u.user.timeout = 10*HZ;
-   if (setsockopt(masq_ctl_sock, IPPROTO_IP, 
-                  IP_FW_MASQ_CTL, (char *)masq, sizeof(*masq)))    {
-      ERROR("create_listening_masq: setsockopt() failed: %s",
-            strerror(errno));
-       sts = STS_FAILURE;
-       goto exit;
-   }
-#endif
-
-exit:
-   /* drop privileges */
-   if (uid != euid)  seteuid(euid);
-   return sts;
-}
 
 #else
 /*

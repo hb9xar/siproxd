@@ -29,7 +29,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef	HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 
 #include <osipparser2/osip_parser.h>
 
@@ -117,6 +119,7 @@ int main (int argc, char *argv[])
  * parse command line
  */
 {
+#ifdef	HAVE_GETOPT_LONG
    int option_index = 0;
    static struct option long_options[] = {
       {"help", no_argument, NULL, 'h'},
@@ -127,6 +130,9 @@ int main (int argc, char *argv[])
 
     while ((ch1 = getopt_long(argc, argv, "hc:d:n",
                   long_options, &option_index)) != -1) {
+#else	/* ! HAVE_GETOPT_LONG */
+    while ((ch1 = getopt(argc, argv, "hc:d:n:")) != -1) {
+#endif
       switch (ch1) {
       case 'h':	/* help */
          DEBUGC(DBCLASS_CONFIG,"option: help");
@@ -248,7 +254,8 @@ INFO("daemonizing done (pid=%i)", getpid());
 {char tmp[32];
 strncpy(tmp, buff, 30);
 tmp[30]='\0';
-INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
+INFO("got packet [%i bytes]from %s [%s]", i,
+     utils_inet_ntoa(from.sin_addr), tmp);}
 #endif
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(from);
@@ -316,7 +323,7 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
             }
 	 } else {
             WARN("non-authorized registration attempt from %s",
-	         inet_ntoa(from.sin_addr));
+	         utils_inet_ntoa(from.sin_addr));
 	 }
 
       /*
@@ -342,7 +349,7 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
             sts = proxy_request(my_msg);
 	 } else {
             INFO("non-authorized request received from %s",
-	            inet_ntoa(from.sin_addr));
+	         utils_inet_ntoa(from.sin_addr));
 	 }
 
       /*
@@ -354,7 +361,7 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
             sts = proxy_response(my_msg);
 	 } else {
             INFO("non-authorized response received from %s",
-	            inet_ntoa(from.sin_addr));
+	         utils_inet_ntoa(from.sin_addr));
 	 }
 	 
       /*

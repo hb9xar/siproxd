@@ -29,6 +29,26 @@ TODOs, in random order:
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 
-- siproxd may use an outbound proxy of its own (chaining feature)
-
 - support IPTABLES for RTP proxying
+
+- rtpproxy_masq:
+  RACE CONDITIONS! A slot may be timed out, even if the actual
+  masquerading tunnel is still active. A following new
+  INVITE then tries to use the believed free port -> Buh
+  - Can we poll (/proc/something) to figure out if the tunnel
+    is still active before deleting? This would require knowledge
+    of the text layout in /proc/xxx.
+  - are there some other possibilities (netfilter/libiptc)?
+  - introduce some kind of connection STATE to the proxy table.
+    Timeout based discarding only is active for non-established.
+    An INVITE would set the STATE to CONNECTING, the following
+    ACK to CONNECTED. A CONNECTED entry can only be deleted by
+    a BYE or CANCEL.
+  - NETFILTER: during startup (RTP initialization) siproxd should
+    clean left over entries that are within the RTP proxy port range
+- NETFILTER masquerading: 
+  it looks like it is not possible to create an entry in the
+  ip_conntrack table from an userspace application. How do we proceed?
+  We just might insert/delete DNAT entries in the PREROUTE NAT table.
+  This the means that we must implement a connection state into the
+  proxy table.

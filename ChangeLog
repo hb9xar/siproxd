@@ -1,5 +1,9 @@
 0.5.0
 =====
+  19-Nov-2003:	- Integrated a patch from Chris Ross:
+		  * have siproxd compile on Solaris and BSD/OS (more to come)
+		  * ./configure option --with-libosip-prefix
+		  * properly handle getopt_long()/getopt()
   18-Nov-2003:	- readconfig.c: include sysconfdir to the list of locations
 		  where siproxd will search for its config file
   14-Nov-2003:	- rtpproxy.c: sys/types.h needed for *BSD
@@ -10,7 +14,6 @@
 		- Linux 2.4.x: siproxd with RTP relay could hang
                   on termination (Thread termination). Fixed.
                   
-
 0.4.2
 =====
   31-Oct-2003:	- released 0.4.2

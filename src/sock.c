@@ -107,7 +107,7 @@ if (count<0) {WARN("recvfrom() returned error [%s]",strerror(errno));}
 #endif
 
    DEBUGC(DBCLASS_NET,"received UDP packet from %s, count=%i",
-          inet_ntoa(from->sin_addr), count);
+          utils_inet_ntoa(from->sin_addr), count);
    DUMP_BUFFER(DBCLASS_NETTRAF, buf, count);
 
    return count;
@@ -147,7 +147,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
 
    if (allowdump) {
       DEBUGC(DBCLASS_NET,"send UDP packet to %s: %i",
-             inet_ntoa(addr),port);
+             utils_inet_ntoa(addr),port);
       DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
    }
 
@@ -156,7 +156,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
-         ERROR("sendto() [%s] call failed: %s",inet_ntoa(addr),
+         ERROR("sendto() [%s] call failed: %s", utils_inet_ntoa(addr),
                strerror(errno));
          return STS_FAILURE;
       }

@@ -25,6 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+
+#ifdef _SOLARIS
+#include <sys/socket.h>
+#endif
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -209,7 +214,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
          struct in_addr addr;
          char *addrstr;
          sts = get_ip_by_ifname(configuration.outbound_if,&addr);
-         addrstr = inet_ntoa(addr);
+         addrstr = utils_inet_ntoa(addr);
          DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
                 (url1_contact->host) ? url1_contact->host : "*NULL*",

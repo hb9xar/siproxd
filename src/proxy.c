@@ -584,7 +584,7 @@ if (configuration.debuglevel)
    if (sdp_conn && sdp_conn->c_addr) {
       osip_free(sdp_conn->c_addr);
       sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
-      sprintf(sdp_conn->c_addr, "%s", inet_ntoa(outb_addr));
+      sprintf(sdp_conn->c_addr, "%s", utils_inet_ntoa(outb_addr));
    } else {
       ERROR("got NULL c= address record - can't rewrite");
    }

@@ -32,6 +32,11 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 
+//+#if defined(__sun__) && defined(__svr4__)	/* Solaris 2.x */
+#ifdef _SOLARIS
+# include <sys/sockio.h>
+#endif
+
 #include <sys/types.h>
 #include <pwd.h>
 
@@ -103,7 +108,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
       if (strcmp(hostname, dns_cache[i].hostname) == 0) { /* match */
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
          DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
-	        hostname, inet_ntoa(*addr));
+	        hostname, utils_inet_ntoa(*addr));
          return STS_SUCCESS;
       }
    }
@@ -133,7 +138,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 
    memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
    DEBUGC(DBCLASS_DNS, "DNS lookup - resolved: %s -> %s",
-          hostname, inet_ntoa(*addr));
+          hostname, utils_inet_ntoa(*addr));
 
    /*
     * find an empty slot in the cache
@@ -276,7 +281,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
          if (retaddr) memcpy(retaddr, &ifaddr_cache[i].ifaddr,
                              sizeof(struct in_addr));
          DEBUGC(DBCLASS_DNS, "ifaddr lookup - from cache: %s -> %s %s",
-	        ifname, inet_ntoa(ifaddr_cache[i].ifaddr),
+	        ifname, utils_inet_ntoa(ifaddr_cache[i].ifaddr),
                 (ifaddr_cache[i].isup)? "UP":"DOWN");
          return (ifaddr_cache[i].isup)? STS_SUCCESS: STS_FAILURE;
       } /* if */
@@ -312,7 +317,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    else isup=0;
 
    DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: if %s has IP:%s (flags=%x) %s",
-          ifname, inet_ntoa(sin->sin_addr), ifflags,
+          ifname, utils_inet_ntoa(sin->sin_addr), ifflags,
           (isup)? "UP":"DOWN");
 
    /*
@@ -347,3 +352,41 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 }
 
 
+/*
+ * utils_inet_ntoa:
+ * implements an inet_ntoa()
+ *
+ * Returns pointer to a static character string.
+ */
+char *utils_inet_ntoa(struct in_addr in) {
+#if defined(HAVE_INET_NTOP)
+   static char string[INET_ADDRSTRLEN];
+   if ((inet_ntop(AF_INET, &in, string, INET_ADDRSTRLEN)) == NULL) {
+      ERROR("inet_ntop() failed: %s\n",strerror(errno));
+      string[0]='\0';
+   }
+   return string;
+#elif definef(HAVE_INET_NTOA)
+   return inet_ntoa(in);
+#else
+#error "need inet_ntop() or inet_ntoa()"
+#endif
+}
+
+
+/*
+ * utils_inet_aton:
+ * implements an inet_aton()
+ *
+ * converts the string in *cp and stores it into inp
+ * Returns != 0 on success
+ */
+int  utils_inet_aton(const char *cp, struct in_addr *inp) {
+#if defined(HAVE_INET_PTON)
+   return inet_pton (AF_INET, cp, inp);
+#elif definef(HAVE_INET_ATON)
+   return inet_aton(cp, inp);
+#else
+#error "need inet_pton() or inet_aton()"
+#endif
+}

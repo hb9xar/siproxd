@@ -25,7 +25,8 @@ sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c log.c readconf.c rtpproxy.c \
                   rtpproxy_relay.c rtpproxy_masq.c accessctl.c \
-		  security.c auth.c
+		  security.c auth.c \
+		  rtpproxy_mchains.c rtpproxy_mnetfltr.c
 
 noinst_HEADERS = log.h rewrite_rules.h siproxd.h digcalc.h rtpproxy.h
 

@@ -168,7 +168,7 @@ int is_via_local (osip_via_t *via) {
    }
 
    DEBUGC(DBCLASS_BABBLE,"via name %s",via->host);
-   if (inet_aton(via->host,&addr_via) == 0) {
+   if (utils_inet_aton(via->host,&addr_via) == 0) {
       /* need name resolution */
       sts=get_ip_by_host(via->host, &addr_via);
       if (sts == STS_FAILURE) {
@@ -197,8 +197,7 @@ int is_via_local (osip_via_t *via) {
 
       if ( (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
            (port == configuration.sip_listen_port) ) {
-         DEBUG("address match [%s] <-> [%s]", inet_ntoa(addr_myself),
-               inet_ntoa(addr_via));
+         DEBUG("got address match [%s]", utils_inet_ntoa(addr_via));
          found=1;
 	 break;
       }
@@ -255,8 +254,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 //      WARN("compare_url: NULL username pointer: MSN messenger is known to "
 //           "trigger this one!"); */
       DEBUGC(DBCLASS_PROXY, "comparing broken urls (no user): "
-            "%s[%s] -> %s[%s]",
-            url1->host, inet_ntoa(addr1), url2->host, inet_ntoa(addr2));
+            "%s <-> %s", url1->host, url2->host);
       if (memcmp(&addr1, &addr2, sizeof(addr1))==0) {
          sts = STS_SUCCESS;
       } else {
@@ -267,9 +265,8 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 
    /* we have a proper URL */
    /* comparison of hosts should be based on IP addresses, no? */
-   DEBUGC(DBCLASS_PROXY, "comparing urls: %s@%s[%s] -> %s@%s[%s]",
-         url1->username, url1->host, inet_ntoa(addr1),
-         url2->username, url2->host, inet_ntoa(addr2));
+   DEBUGC(DBCLASS_PROXY, "comparing urls: %s@%s -> %s@%s",
+         url1->username, url1->host, url2->username, url2->host);
    if ((strcmp(url1->username, url2->username)==0) &&
        (memcmp(&addr1, &addr2, sizeof(addr1))==0)) {
       sts = STS_SUCCESS;
@@ -370,7 +367,7 @@ int is_sipuri_local (osip_message_t *sip) {
           sip->req_uri->host? sip->req_uri->host : "*NULL*",
           sip->req_uri->port? sip->req_uri->port : "*NULL*");
 
-   if (inet_aton(sip->req_uri->host, &addr_uri) == 0) {
+   if (utils_inet_aton(sip->req_uri->host, &addr_uri) == 0) {
       /* need name resolution */
       get_ip_by_host(sip->req_uri->host, &addr_uri);
    }   
@@ -397,8 +394,7 @@ int is_sipuri_local (osip_message_t *sip) {
 
       if ( (memcmp(&addr_myself, &addr_uri, sizeof(addr_myself))==0) &&
            (port == configuration.sip_listen_port) ) {
-         DEBUG("address match [%s] <-> [%s]", inet_ntoa(addr_myself),
-               inet_ntoa(addr_uri));
+         DEBUG("address match [%s]", utils_inet_ntoa(addr_uri));
          found=1;
 	 break;
       }
@@ -508,7 +504,7 @@ int sip_gen_response(osip_message_t *request, int code) {
 
 
    /* name resolution */
-   if (inet_aton(via->host, &addr) == 0)
+   if (utils_inet_aton(via->host, &addr) == 0)
    {
       /* need name resolution */
       DEBUGC(DBCLASS_DNS,"resolving name:%s",via->host);
@@ -575,7 +571,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
       }
    }
 
-   sprintf(tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
+   sprintf(tmp, "SIP/2.0/UDP %s:%i", utils_inet_ntoa(addr),
            configuration.sip_listen_port);
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
