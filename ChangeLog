@@ -1,5 +1,9 @@
 0.5.7
 =====
+  13-Jun-2004:  - fix: get_ip_by_host() and buffers for reentrant functions
+  12-Jun-2004:  - use SIGUSR2 for dmalloc debugging (SIGUSR1 is occupied
+                  with old libc5 & threads)
+                - reworked calling parameters for passing SIP data
   11-Jun-2004:  - silenced some MSN Messenger provoked WARNings
   29-May-2004:  - "determine next hop" also takes Route header into account
                   (outgoing packets only, incoming can not have a proxy

@@ -107,16 +107,18 @@ int sipsock_wait(void) {
  *         from is modified to return the sockaddr_in of the sender
  */
 int sipsock_read(void *buf, size_t bufsize,
-                 struct sockaddr_in *from) {
+                 struct sockaddr_in *from, int *protocol) {
    int count;
    socklen_t fromlen;
 
    fromlen=sizeof(struct sockaddr_in);
+   *protocol = PROTO_UDP; /* up to now, unly UDP */
    count=recvfrom(sip_udp_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
 
    if (count<0) {
       WARN("recvfrom() returned error [%s]",strerror(errno));
+      *protocol = PROTO_UNKN;
    }
 
    DEBUGC(DBCLASS_NET,"received UDP packet from %s, count=%i",
@@ -134,7 +136,7 @@ int sipsock_read(void *buf, size_t bufsize,
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sipsock_send(struct in_addr addr, int port,
+int sipsock_send(struct in_addr addr, int port, int protocol,
                  char *buffer, int size) {
    struct sockaddr_in dst_addr;
    int sts;
@@ -147,6 +149,11 @@ int sipsock_send(struct in_addr addr, int port,
 
    if (buffer == NULL) {
       ERROR("sipsock_send got NULL buffer");
+      return STS_FAILURE;
+   }
+
+   if (protocol != PROTO_UDP) {
+      ERROR("sipsock_send: only UDP supported by now");
       return STS_FAILURE;
    }
 

@@ -74,7 +74,7 @@ extern struct lcl_if_s local_addresses;
  *    10. Forward the new request
  *    11. Set timer C
  */
-int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
+int proxy_request (sip_ticket_t *ticket) {
    int i;
    int sts;
    int type;
@@ -82,12 +82,21 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    osip_uri_t *url;
    int port;
    char *buffer;
+   osip_message_t *request;
+   struct sockaddr_in *from;
 
 #define REQTYP_INCOMING		1
 #define REQTYP_OUTGOING		2
 
    DEBUGC(DBCLASS_PROXY,"proxy_request");
 
+   if (ticket==NULL) {
+      ERROR("proxy_request: called with NULL ticket");
+      return STS_FAILURE;
+   }
+
+   request=ticket->sipmsg;
+   from=&ticket->from;
 
    /*
     * RFC 3261, Section 16.4
@@ -336,7 +345,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
 /* careful - an internal UA might send an request to another internal UA.
    This would be caught here, so don't do this. This situation should be
    caught in the default part of the CASE statement below */
-      if (is_sipuri_local(request) == STS_TRUE) {
+      if (is_sipuri_local(ticket) == STS_TRUE) {
          WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
 	    request->sip_method? request->sip_method:"*NULL*",
 	    request->from->url->username? request->from->url->username:"*NULL*",
@@ -344,14 +353,14 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
 	    url->username? url->username : "*NULL*",
 	    url->host? url->host : "*NULL*");
 
-         sip_gen_response(request, 403 /*forbidden*/);
+         sip_gen_response(ticket, 403 /*forbidden*/);
 
          return STS_FAILURE;
       }
 #endif
 
       /* rewrite Contact header to represent the masqued address */
-      sip_rewrite_contact(request, DIR_OUTGOING);
+      sip_rewrite_contact(ticket, DIR_OUTGOING);
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
@@ -388,7 +397,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
  * How about "408 Request Timeout" ?
  *
  */
-      sip_gen_response(request, 408 /* Request Timeout */);
+      sip_gen_response(ticket, 408 /* Request Timeout */);
 
       return STS_FAILURE;
    }
@@ -613,12 +622,12 @@ We should use the first Route header to send the packet to
     */
    /* add my Via header line (outbound interface)*/
    if (type == REQTYP_INCOMING) {
-      sts = sip_add_myvia(request, IF_INBOUND);
+      sts = sip_add_myvia(ticket, IF_INBOUND);
       if (sts == STS_FAILURE) {
          ERROR("adding my inbound via failed!");
       }
    } else {
-      sts = sip_add_myvia(request, IF_OUTBOUND);
+      sts = sip_add_myvia(ticket, IF_OUTBOUND);
       if (sts == STS_FAILURE) {
          ERROR("adding my outbound via failed!");
          return STS_FAILURE;
@@ -640,7 +649,8 @@ We should use the first Route header to send the packet to
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, buffer, strlen(buffer)); 
+   sipsock_send(sendto_addr, port, ticket->protocol,
+                buffer, strlen(buffer)); 
    osip_free (buffer);
 
   /*
@@ -660,7 +670,7 @@ We should use the first Route header to send the packet to
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
+int proxy_response (sip_ticket_t *ticket) {
    int i;
    int sts;
    int type;
@@ -668,18 +678,28 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
    osip_via_t *via;
    int port;
    char *buffer;
+   osip_message_t *response;
+   struct sockaddr_in *from;
 
 #define RESTYP_INCOMING		1
 #define RESTYP_OUTGOING		2
 
    DEBUGC(DBCLASS_PROXY,"proxy_response");
 
+   if (ticket==NULL) {
+      ERROR("proxy_response: called with NULL ticket");
+      return STS_FAILURE;
+   }
+
+   response=ticket->sipmsg;
+   from=&ticket->from;
+
    /*
     * RFC 3261, Section 16.11
     * Proxy Behavior - Remove my Via header field value
     */
    /* remove my Via header line */
-   sts = sip_del_myvia(response);
+   sts = sip_del_myvia(ticket);
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY,"not addressed to my VIA, ignoring response");
       return STS_FAILURE;
@@ -794,7 +814,7 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
           * Rewrite Contact header back to represent the true address.
           * Other responses do return the Contact header of the sender.
           */
-         sip_rewrite_contact(response, DIR_INCOMING);
+         sip_rewrite_contact(ticket, DIR_INCOMING);
       }
 
       /* 
@@ -840,7 +860,7 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
                 response->from->url->host : "*NULL*");
 
       /* rewrite Contact header to represent the masqued address */
-      sip_rewrite_contact(response, DIR_OUTGOING);
+      sip_rewrite_contact(ticket, DIR_OUTGOING);
 
       /* If an 200 OK or 183 Trying answer to an INVITE request,
        * rewrite body */
@@ -905,7 +925,8 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, buffer, strlen(buffer)); 
+   sipsock_send(sendto_addr, port, ticket->protocol,
+                buffer, strlen(buffer)); 
    osip_free (buffer);
    return STS_SUCCESS;
 }

@@ -59,7 +59,8 @@ extern struct urlmap_s urlmap[];		/* URL mapping table     */
  *
  * RETURNS a pointer to osip_message_t
  */
-osip_message_t *msg_make_template_reply (osip_message_t * request, int code) {
+osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
+   osip_message_t *request=ticket->sipmsg;
    osip_message_t *response;
    int pos;
 
@@ -114,7 +115,7 @@ osip_message_t *msg_make_template_reply (osip_message_t * request, int code) {
  *	STS_TRUE if loop detected
  *	STS_FALSE if no loop
  */
-int check_vialoop (osip_message_t *my_msg) {
+int check_vialoop (sip_ticket_t *ticket) {
 /*
 !!! actually this is a problematic one.
 1) for requests, I must search the whole VIA list
@@ -134,6 +135,7 @@ int check_vialoop (osip_message_t *my_msg) {
    to-be-unique ID)
 
 */
+   osip_message_t *my_msg=ticket->sipmsg;
    int sts;
    int pos;
    int found_own_via;
@@ -383,7 +385,8 @@ mismatch:
  *	STS_TRUE if the request is addressed local
  *	STS_FALSE otherwise
  */
-int is_sipuri_local (osip_message_t *sip) {
+int is_sipuri_local (sip_ticket_t *ticket) {
+   osip_message_t *sip=ticket->sipmsg;
    int sts, found;
    struct in_addr addr_uri, addr_myself;
    char *my_interfaces[]=
@@ -520,7 +523,7 @@ int check_rewrite_rq_uri (osip_message_t *sip) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_gen_response(osip_message_t *request, int code) {
+int sip_gen_response(sip_ticket_t *ticket, int code) {
    osip_message_t *response;
    int sts;
    osip_via_t *via;
@@ -529,8 +532,8 @@ int sip_gen_response(osip_message_t *request, int code) {
    struct in_addr addr;
 
    /* create the response template */
-   if ((response=msg_make_template_reply(request, code))==NULL) {
-      ERROR("proxy_response: error in msg_make_template_reply");
+   if ((response=msg_make_template_reply(ticket, code))==NULL) {
+      ERROR("sip_gen_response: error in msg_make_template_reply");
       return STS_FAILURE;
    }
 
@@ -538,7 +541,7 @@ int sip_gen_response(osip_message_t *request, int code) {
    osip_message_get_via (response, 0, &via);
    if (via == NULL)
    {
-      ERROR("proxy_response: Cannot send response - no via field");
+      ERROR("sip_gen_response: Cannot send response - no via field");
       return STS_FAILURE;
    }
 
@@ -558,7 +561,7 @@ int sip_gen_response(osip_message_t *request, int code) {
 
    sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
-      ERROR("proxy_response: msg_2char failed");
+      ERROR("sip_gen_response: msg_2char failed");
       return STS_FAILURE;
    }
 
@@ -570,7 +573,7 @@ int sip_gen_response(osip_message_t *request, int code) {
    }
 
    /* send to destination */
-   sipsock_send(addr, port, buffer, strlen(buffer));
+   sipsock_send(addr, port, ticket->protocol, buffer, strlen(buffer));
 
    /* free the resources */
    osip_message_free(response);
@@ -588,7 +591,7 @@ int sip_gen_response(osip_message_t *request, int code) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_add_myvia (osip_message_t *request, int interface) {
+int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    struct in_addr addr;
    char tmp[URL_STRING_SIZE];
    osip_via_t *via;
@@ -611,7 +614,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
       }
    }
 
-   sts = sip_calculate_branch_id(request, branch_id);
+   sts = sip_calculate_branch_id(ticket, branch_id);
 
    sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s;", utils_inet_ntoa(addr),
            configuration.sip_listen_port, branch_id);
@@ -623,7 +626,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
    sts = osip_via_parse(via, tmp);
    if (sts!=0) return STS_FAILURE;
 
-   osip_list_add(request->vias,via,0);
+   osip_list_add(ticket->sipmsg->vias,via,0);
 
    return STS_SUCCESS;
 }
@@ -636,12 +639,12 @@ int sip_add_myvia (osip_message_t *request, int interface) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_del_myvia (osip_message_t *response) {
+int sip_del_myvia (sip_ticket_t *ticket) {
    osip_via_t *via;
    int sts;
 
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
-   via = osip_list_get (response->vias, 0);
+   via = osip_list_get (ticket->sipmsg->vias, 0);
    
    if ( via == NULL ) {
       ERROR("Got empty VIA list - is your UA configured properly?");
@@ -653,7 +656,7 @@ int sip_del_myvia (osip_message_t *response) {
       return STS_FAILURE;
    }
 
-   sts = osip_list_remove(response->vias, 0);
+   sts = osip_list_remove(ticket->sipmsg->vias, 0);
    osip_via_free (via);
    return STS_SUCCESS;
 }
@@ -668,7 +671,8 @@ int sip_del_myvia (osip_message_t *response) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_rewrite_contact (osip_message_t *sip_msg, int direction) {
+int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
+   osip_message_t *sip_msg=ticket->sipmsg;
    osip_contact_t *contact;
    int i;
 
@@ -733,7 +737,7 @@ int sip_rewrite_contact (osip_message_t *sip_msg, int direction) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
+int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
 /* RFC3261 section 16.11 recommends the following procedure:
  *   The stateless proxy MAY use any technique it likes to guarantee
  *   uniqueness of its branch IDs across transactions.  However, the
@@ -754,6 +758,7 @@ int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
  * - 1st part (unique calculated ID
  * - 2nd part (value for loop detection) <<- not yet used by siproxd
  */
+   osip_message_t *sip_msg=ticket->sipmsg;
    static char *magic_cookie="z9hG4bK";
    osip_via_t *via;
    osip_uri_param_t *param=NULL;

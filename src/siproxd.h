@@ -25,86 +25,6 @@
 #endif
 
 
-/*				function returns STS_* status values     vvv */
-
-/* sock.c */
-int sipsock_listen (void);						/*X*/
-int sipsock_wait();
-int sipsock_read(void *buf, size_t bufsize,
-                 struct sockaddr_in *from);
-int sipsock_send(struct in_addr addr, int port,				/*X*/
-                 char *buffer, int size);
-int sockbind(struct in_addr ipaddr, int localport, int errflg);
-
-/* register.c */
-void register_init(void);
-void register_shut(void);
-int  register_client(osip_message_t *request, int force_lcl_masq);	/*X*/
-void register_agemap(void);
-int  register_response(osip_message_t *request, int flag);		/*X*/
-
-/* proxy.c */
-int proxy_request (osip_message_t *request, struct sockaddr_in *from);	/*X*/
-int proxy_response (osip_message_t *response, struct sockaddr_in *from);/*X*/
-int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
-int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
-
-/* utils.c */
-int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
-void secure_enviroment (void);
-int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
-char *utils_inet_ntoa(struct in_addr in);
-int  utils_inet_aton(const char *cp, struct in_addr *inp);
-
-/* sip_utils.c */
-osip_message_t * msg_make_template_reply (osip_message_t * request, int code);
-int  check_vialoop (osip_message_t *my_msg);				/*X*/
-int  is_via_local (osip_via_t *via);					/*X*/
-int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
-int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
-int  is_sipuri_local (osip_message_t *sip);				/*X*/
-int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
-int  sip_gen_response(osip_message_t *request, int code);		/*X*/
-#define IF_OUTBOUND 0
-#define IF_INBOUND  1
-int  sip_add_myvia (osip_message_t *request, int interface);		/*X*/
-int  sip_del_myvia (osip_message_t *response);				/*X*/
-int  sip_rewrite_contact (osip_message_t *sip_msg, int direction);	/*X*/
-int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id);	/*X*/
-
-/* readconf.c */
-int read_config(char *name, int search);				/*X*/
-
-/* rtpproxy.c */
-int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
-                    int direction, int media_stream_no,
-		    struct in_addr outbound_ipaddr, int *outboundport,
-                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
-void rtpproxy_kill( void );						/*X*/
-
-/* accessctl.c */
-int  accesslist_check(struct sockaddr_in from);
-
-/* security.c */
-int  security_check_raw(char *sip_buffer, int size);			/*X*/
-int  security_check_sip(osip_message_t *sip);				/*X*/
-
-/* auth.c */
-int  authenticate_proxy(osip_message_t *request);			/*X*/
-int  auth_include_authrq(osip_message_t *response);			/*X*/
-void CvtHex(char *hash, char *hashstring);
-
-/* fwapi.h */
-int fwapi_start_rtp(int rtp_direction,
-                    struct in_addr local_ipaddr, int local_port,
-                    struct in_addr remote_ipaddr, int remote_port);
-int fwapi_stop_rtp(int rtp_direction,
-                   struct in_addr local_ipaddr, int local_port,
-                   struct in_addr remote_ipaddr, int remote_port);
-
-
 /*
  * table to hold the client registrations
  */
@@ -163,6 +83,102 @@ struct siproxd_config {
    char *pid_file;
 };
 
+/*
+ * SIP ticket
+ */
+typedef struct {
+   osip_message_t *sipmsg;	/* SIP */
+   struct sockaddr_in from;	/* received from */
+#define PROTO_UNKN -1
+#define PROTO_UDP  1
+#define PROTO_TCP  2
+   int protocol;		/* received by protocol */
+} sip_ticket_t;
+
+
+
+/*
+ * Function prototypes
+ */
+
+/*				function returns STS_* status values     vvv */
+
+/* sock.c */
+int sipsock_listen (void);						/*X*/
+int sipsock_wait();
+int sipsock_read(void *buf, size_t bufsize,
+                 struct sockaddr_in *from, int *protocol);
+int sipsock_send(struct in_addr addr, int port,	int protocol,			/*X*/
+                 char *buffer, int size);
+int sockbind(struct in_addr ipaddr, int localport, int errflg);
+
+/* register.c */
+void register_init(void);
+void register_shut(void);
+int  register_client(sip_ticket_t *ticket, int force_lcl_masq);		/*X*/
+void register_agemap(void);
+int  register_response(sip_ticket_t *ticket, int flag);			/*X*/
+
+/* proxy.c */
+int proxy_request (sip_ticket_t *ticket);				/*X*/
+int proxy_response (sip_ticket_t *ticket);				/*X*/
+int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
+int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);	/*X*/
+
+/* utils.c */
+int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
+void secure_enviroment (void);
+int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
+char *utils_inet_ntoa(struct in_addr in);
+int  utils_inet_aton(const char *cp, struct in_addr *inp);
+
+/* sip_utils.c */
+osip_message_t * msg_make_template_reply (sip_ticket_t *ticket, int code);
+int  check_vialoop (sip_ticket_t *ticket);				/*X*/
+int  is_via_local (osip_via_t *via);					/*X*/
+int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
+int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
+int  is_sipuri_local (sip_ticket_t *ticket);				/*X*/
+int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
+int  sip_gen_response(sip_ticket_t *ticket, int code);		/*X*/
+#define IF_OUTBOUND 0
+#define IF_INBOUND  1
+int  sip_add_myvia (sip_ticket_t *ticket, int interface);		/*X*/
+int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/
+int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);	/*X*/
+int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);	/*X*/
+
+/* readconf.c */
+int read_config(char *name, int search);				/*X*/
+
+/* rtpproxy.c */
+int  rtpproxy_init( void );						/*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
+                    int direction, int media_stream_no,
+		    struct in_addr outbound_ipaddr, int *outboundport,
+                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
+int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
+void rtpproxy_kill( void );						/*X*/
+
+/* accessctl.c */
+int  accesslist_check(struct sockaddr_in from);
+
+/* security.c */
+int  security_check_raw(char *sip_buffer, int size);			/*X*/
+int  security_check_sip(sip_ticket_t *ticket);				/*X*/
+
+/* auth.c */
+int  authenticate_proxy(sip_ticket_t *ticket);				/*X*/
+int  auth_include_authrq(sip_ticket_t *ticket);			/*X*/
+void CvtHex(char *hash, char *hashstring);
+
+/* fwapi.c */
+int fwapi_start_rtp(int rtp_direction,
+                    struct in_addr local_ipaddr, int local_port,
+                    struct in_addr remote_ipaddr, int remote_port);
+int fwapi_stop_rtp(int rtp_direction,
+                   struct in_addr local_ipaddr, int local_port,
+                   struct in_addr remote_ipaddr, int remote_port);
 
 /*
  * some constant definitions

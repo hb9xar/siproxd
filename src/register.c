@@ -163,7 +163,7 @@ void register_shut(void) {
  *    STS_FAILURE : registration failed
  *    STS_NEED_AUTH : authentication needed
  */
-int register_client(osip_message_t *my_msg, int force_lcl_masq) {
+int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    int i, j, n, sts;
    int expires;
    time_t time_now;
@@ -181,17 +181,19 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
        * RFC 3261, Section 16.3 step 6
        * Proxy Behavior - Request Validation - Proxy-Authorization
        */
-      sts = authenticate_proxy(my_msg);
+      sts = authenticate_proxy(ticket);
       if (sts == STS_FAILURE) {
          /* failed */
          WARN("proxy authentication failed for %s@%s",
-              (my_msg->to->url->username)? my_msg->to->url->username : "*NULL*",
-              my_msg->to->url->host);
+              (ticket->sipmsg->to->url->username)? 
+              ticket->sipmsg->to->url->username : "*NULL*",
+              ticket->sipmsg->to->url->host);
          return STS_FAILURE;
       } else if (sts == STS_NEED_AUTH) {
          /* needed */
          DEBUGC(DBCLASS_REG,"proxy authentication needed for %s@%s",
-                my_msg->to->url->username,my_msg->to->url->host);
+                ticket->sipmsg->to->url->username,
+                ticket->sipmsg->to->url->host);
          return STS_NEED_AUTH;
       }
    }
@@ -215,14 +217,14 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    DEBUGC(DBCLASS_BABBLE,"sip_register:");
 
    /* evaluate Expires Header field */
-   osip_message_get_expires(my_msg, 0, &expires_hdr);
+   osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
 
   /*
    * look for an Contact expires parameter - in case of REGISTER
    * these two are equal. The Contact expires has higher priority!
    */
    osip_contact_param_get_byname(
-           (osip_contact_t*) my_msg->contacts->node->element,
+           (osip_contact_t*) ticket->sipmsg->contacts->node->element,
            EXPIRES, &expires_param);
 
    if (expires_param && expires_param->gvalue) {
@@ -235,10 +237,10 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
       /* it seems, the expires field is not present everywhere... */
       DEBUGC(DBCLASS_REG,"no 'expires' header found - set time to 600 sec");
       expires=600;
-      osip_message_set_expires(my_msg, "600");
+      osip_message_set_expires(ticket->sipmsg, "600");
    }
 
-   url1_to=my_msg->to->url;
+   url1_to=ticket->sipmsg->to->url;
 
 
 
@@ -257,7 +259,8 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
        * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
        * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
        */
-      url1_contact=((osip_contact_t*)(my_msg->contacts->node->element))->url;
+      url1_contact=((osip_contact_t*)
+                   (ticket->sipmsg->contacts->node->element))->url;
       if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
          /* Don't have reqiured Contact fields */
          ERROR("tried registration with empty Contact header");
@@ -310,10 +313,11 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
          /* write entry */
          urlmap[i].active=1;
          /* Contact: field */
-         osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
-        	    &urlmap[i].true_url);
+         osip_uri_clone( ((osip_contact_t*)
+                         (ticket->sipmsg->contacts->node->element))->url, 
+        	         &urlmap[i].true_url);
          /* To: field */
-         osip_uri_clone( my_msg->to->url, 
+         osip_uri_clone( ticket->sipmsg->to->url, 
         	    &urlmap[i].reg_url);
 
          DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
@@ -326,7 +330,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
          /*
           * try to figure out if we ought to do some masquerading
           */
-         osip_uri_clone( my_msg->to->url, 
+         osip_uri_clone( ticket->sipmsg->to->url, 
         	         &urlmap[i].masq_url);
 
          n=configuration.mask_host.used;
@@ -338,9 +342,9 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
          DEBUG("%i entries in MASK config table", n);
          for (j=0; j<n; j++) {
             DEBUG("compare [%s] <-> [%s]",configuration.mask_host.string[j],
-                  my_msg->to->url->host);
+                  ticket->sipmsg->to->url->host);
             if (strcmp(configuration.mask_host.string[j],
-                my_msg->to->url->host)==0)
+                ticket->sipmsg->to->url->host)==0)
                break;
          }
          if (j<n) { 
@@ -382,11 +386,12 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
        */
          /* Contact: field */
          osip_uri_free(urlmap[i].true_url);
-         osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
-        	    &urlmap[i].true_url);
+         osip_uri_clone( ((osip_contact_t*)
+                         (ticket->sipmsg->contacts->node->element))->url, 
+        	         &urlmap[i].true_url);
          /* To: field */
          osip_uri_free(urlmap[i].reg_url);
-         osip_uri_clone( my_msg->to->url, 
+         osip_uri_clone( ticket->sipmsg->to->url, 
         	    &urlmap[i].reg_url);
       }
       /* give some safety margin for the next update */
@@ -459,7 +464,7 @@ void register_agemap(void) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int register_response(osip_message_t *request, int flag) {
+int register_response(sip_ticket_t *ticket, int flag) {
    osip_message_t *response;
    int code;
    int sts;
@@ -486,13 +491,13 @@ int register_response(osip_message_t *request, int flag) {
    }
 
    /* create the response template */
-   if ((response=msg_make_template_reply(request, code))==NULL) {
+   if ((response=msg_make_template_reply(ticket, code))==NULL) {
       ERROR("register_response: error in msg_make_template_reply");
       return STS_FAILURE;
    }
 
    /* insert the expiration header */
-   osip_message_get_expires(request, 0, &expires_hdr);
+   osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
    if (expires_hdr) {
       osip_message_set_expires(response, expires_hdr->hvalue);
    }
@@ -500,7 +505,7 @@ int register_response(osip_message_t *request, int flag) {
    /* if we send back an proxy authentication needed, 
       include the Proxy-Authenticate field */
    if (code == 407) {
-      auth_include_authrq(response);
+      auth_include_authrq(ticket);
    }
 
    /* get the IP address from existing VIA header */
@@ -534,7 +539,7 @@ int register_response(osip_message_t *request, int flag) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send(addr, port, buffer, strlen(buffer));
+   sipsock_send(addr, port, ticket->protocol, buffer, strlen(buffer));
 
    /* free the resources */
    osip_message_free(response);

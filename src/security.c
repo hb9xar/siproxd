@@ -110,8 +110,8 @@ int security_check_raw(char *sip_buffer, int size) {
  *	STS_SUCCESS if ok 
  * 	STS_FAILURE if the packed did not pass the checks
  */
-int security_check_sip(osip_message_t *sip){
-
+int security_check_sip(sip_ticket_t *ticket){
+   osip_message_t *sip=ticket->sipmsg;
    if (MSG_IS_REQUEST(sip)) {
       /* check for existing SIP URI in request */
       if ((sip->req_uri == NULL) || (sip->req_uri->scheme == NULL)) {
