@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
+/* use custom firewall control module */
+#undef CUSTOM_FWMODULE
+
 /* Define to 1 if you have the `bind' function. */
 #undef HAVE_BIND
 

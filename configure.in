@@ -22,6 +22,7 @@ dnl	19-Nov-2003	tries	changes to support Solaris & BSD/OS
 dnl	22-Nov-2003	tries	test for gethostbyname_r() & # of args
 dnl	22-Jan-2004	tries	add --enable-static option
 dnl	06-Mar-2004	tries	del daemon(), add setsid()
+dnl	09-Apr-2004	tries	add --with-custom-fwmodule
 dnl
 dnl
 dnl
@@ -288,6 +289,17 @@ else
       echo "*** ERROR: a static libosip library is required!";exit 1;
    fi
 fi
+
+
+dnl
+dnl add
+dnl    --with-custom-fwmodule
+   AC_MSG_CHECKING(building with a custom FW module)
+   AC_ARG_WITH(custom-fwmodule,
+      [  --with-custom-fwmodule=MODULE.o   use custom firewall control module],
+      LDFLAGS="$LDFLAGS $withval ";
+      AC_DEFINE(CUSTOM_FWMODULE, 1,[use custom firewall control module])
+      AC_MSG_RESULT($withval), AC_MSG_RESULT(no))
 
 
 dnl
