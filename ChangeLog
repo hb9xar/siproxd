@@ -1,5 +1,7 @@
 0.5.2
 =====
+   28-Jan-2004:	- don't die on INVITE requests that include no Contact
+                  header - which is legal. (patch by Robert Högberg)
    27-Jan-2004:	- added doc/KNOWN_BUGS
 		- better branch parameter calculation (via header),
                   now honors RFC3261 for stateless proxies (section 16.11)

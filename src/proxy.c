@@ -171,10 +171,12 @@ int proxy_request (osip_message_t *request) {
     * logging of passing calls
     */
    if (configuration.log_calls) {
-      osip_uri_t *cont_url;
-      cont_url=((osip_contact_t*)(request->contacts->node->element))->url;
+      osip_uri_t *cont_url = NULL;
+      if (!osip_list_eol(request->contacts, 0))
+      cont_url = ((osip_contact_t*)(request->contacts->node->element))->url;
+      
       /* INVITE */
-      if(MSG_IS_INVITE(request)) {
+      if (MSG_IS_INVITE(request)) {
          if (cont_url) {
             INFO("%s Call from: %s:%s",
                  (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
