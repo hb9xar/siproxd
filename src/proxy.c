@@ -60,7 +60,6 @@ int proxy_request (osip_message_t *request) {
    int sts;
    int type;
    struct in_addr sendto_addr;
-   osip_contact_t *contact;
    osip_uri_t *url;
    int port;
    char *buffer;
@@ -144,11 +143,13 @@ int proxy_request (osip_message_t *request) {
       /* INVITE */
       if(MSG_IS_INVITE(request)) {
          if (cont_url) {
-            INFO("Incomming Call from: %s:%s",
+            INFO("%s Call from: %s:%s",
+                 (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
                  cont_url->username ? cont_url->username:"*NULL*",
                  cont_url->host ? cont_url->host : "*NULL*");
          } else {
-            INFO("Incomming Call (w/o contact header) from: %s:%s",
+            INFO("%s Call (w/o contact header) from: %s:%s",
+                 (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
 	         request->from->url->username ? 
                     request->from->url->username:"*NULL*",
 	         request->from->url->host ? 
@@ -186,7 +187,7 @@ int proxy_request (osip_message_t *request) {
       }
 
       /* rewrite request URI to point to the real host */
-      /* i still holds the valid index into the URLMAP table */
+      /* 'i' still holds the valid index into the URLMAP table */
       if (check_rewrite_rq_uri(request)==STS_TRUE) {
          proxy_rewrite_request_uri(request, i);
       }
@@ -201,13 +202,13 @@ int proxy_request (osip_message_t *request) {
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream(s) */
-         rtp_stop_fwd(osip_message_get_call_id(request), incoming);
-         rtp_stop_fwd(osip_message_get_call_id(request), outgoing);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
 
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
          /* First, rewrite the body */
-         sts = proxy_rewrite_invitation_body(request, incoming);
+         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
 
          /*
           * Note: Incoming requests have no need to rewrite Contact
@@ -248,37 +249,11 @@ int proxy_request (osip_message_t *request) {
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
-         sts = proxy_rewrite_invitation_body(request, outgoing);
+         sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
       }
 
       /* rewrite Contact header to represent the masqued address */
-      osip_message_get_contact(request,0,&contact);
-      if (contact != NULL) {
-         for (i=0;i<URLMAP_SIZE;i++){
-	    if (urlmap[i].active == 0) continue;
-            if (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)
-	       break;
-         }
-         /* found a mapping entry */
-         if (i<URLMAP_SIZE) {
-            char *tmp;
-            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           (contact->url->username)? contact->url->username : "*NULL*",
-                   (contact->url->host)? contact->url->host : "*NULL*",
-		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
-            /* remove old entry */
-            osip_list_remove(request->contacts,0);
-	    osip_contact_to_str(contact, &tmp);
-            osip_contact_free(contact);
-            /* clone the masquerading url */
-	    osip_contact_init(&contact);
-            osip_contact_parse(contact,tmp);
-            osip_free(tmp);
-	    osip_uri_free(contact->url);
-            osip_uri_clone(urlmap[i].masq_url, &contact->url);
-            osip_list_add(request->contacts,contact,-1);
-         }     
-      }
+      sip_rewrite_contact(request, DIR_OUTGOING);
 
       /* add my Via header line (outbound interface)*/
       sts = sip_add_myvia(request, IF_OUTBOUND);
@@ -288,8 +263,8 @@ int proxy_request (osip_message_t *request) {
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         rtp_stop_fwd(osip_message_get_call_id(request), incoming);
-         rtp_stop_fwd(osip_message_get_call_id(request), outgoing);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
       }
 
       break;
@@ -371,7 +346,6 @@ int proxy_response (osip_message_t *response) {
    int type;
    struct in_addr sendto_addr;
    osip_via_t *via;
-   osip_contact_t *contact;
    int port;
    char *buffer;
 
@@ -446,13 +420,19 @@ int proxy_response (osip_message_t *response) {
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
          /* This is an incoming response, therefore we need an incoming stream */
-         sts = proxy_rewrite_invitation_body(response, incoming);
+         sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
 
-         /*
-          * Note: Incoming request has no need to rewrite Contact
-          * header as we are not masquerading something there
-          */
       }
+
+      if (MSG_IS_RESPONSE_FOR(response,"REGISTER")) {
+         /*
+          * REGISTER returns *my* Contact header information.
+          * Rewrite Contact header back to represent the true address.
+          * Other responses do return the Contact header of the sender.
+          */
+         sip_rewrite_contact(response, DIR_INCOMING);
+      }
+
       break;
    
   /*
@@ -466,32 +446,11 @@ int proxy_response (osip_message_t *response) {
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
          /* This is an outgoing response, therefore an outgoing stream */
-         sts = proxy_rewrite_invitation_body(response, outgoing);
+         sts = proxy_rewrite_invitation_body(response, DIR_OUTGOING);
       }
 
       /* rewrite Contact header to represent the masqued address */
-      osip_message_get_contact(response,0,&contact);
-      if (contact != NULL) {
-         for (i=0;i<URLMAP_SIZE;i++){
-	    if (urlmap[i].active == 0) continue;
-            if (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)
-	       break;
-         }
-         /* found a mapping entry */
-         if (i<URLMAP_SIZE) {
-            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           (contact->url->username) ? contact->url->username:"*NULL*",
-                   (contact->url->host) ? contact->url->host : "*NULL*",
-		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
-            /* remove old entry */
-            osip_list_remove(response->contacts,0);
-            osip_contact_free(contact);
-            /* clone the masquerading url */
-	    osip_contact_init(&contact);
-            osip_uri_clone(urlmap[i].masq_url, &contact->url);
-            osip_list_add(response->contacts,contact,-1);
-         }     
-      }
+      sip_rewrite_contact(response, DIR_OUTGOING);
 
       break;
    
@@ -562,7 +521,7 @@ int proxy_response (osip_message_t *response) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_rewrite_invitation_body(osip_message_t *mymsg, rtp_direction dir){
+int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    osip_body_t *body;
    sdp_message_t  *sdp;
    struct in_addr map_addr, msg_addr, outside_addr, inside_addr;
@@ -640,12 +599,12 @@ if (configuration.debuglevel)
 
    /* figure out what address to use for RTP masquerading */
    if (MSG_IS_REQUEST(mymsg)) {
-      if (dir == incoming)
+      if (direction == DIR_INCOMING)
          map_addr = inside_addr;
       else
          map_addr = outside_addr;
    } else /* MSG_IS_REPONSE(mymsg) */ {
-      if (dir == incoming)
+      if (direction == DIR_INCOMING)
          map_addr = inside_addr;
       else
          map_addr = outside_addr;
@@ -683,7 +642,8 @@ if (configuration.debuglevel)
          msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
 
          if (msg_port > 0) {
-            rtp_start_fwd(osip_message_get_call_id(mymsg), dir, media_stream_no,
+            rtp_start_fwd(osip_message_get_call_id(mymsg), direction,
+                          media_stream_no,
                           map_addr, &map_port,
                           msg_addr, msg_port);
             /* and rewrite the port */

@@ -20,6 +20,7 @@ dnl	 1-Nov-2003	tries	check for NETFILTER (IPTABLES)
 dnl	18-Nov-2003	tries	include sysconfdir to search for config
 dnl	19-Nov-2003	tries	changes to support Solaris & BSD/OS
 dnl	22-Nov-2003	tries	test for gethostbyname_r() & # of args
+dnl	22-Jan-2004	tries	add --enable-static option
 dnl
 dnl
 dnl
@@ -35,7 +36,7 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=5
-SPD_MICRO_VERSION=1
+SPD_MICRO_VERSION=2
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -84,6 +85,15 @@ done
 for each in $extra_libs; do
    LIBS="$LIBS -L$each";
 done
+
+dnl
+dnl add
+dnl    --enable-static
+   AC_MSG_CHECKING(build statically linked  executable)
+   AC_ARG_ENABLE(static,
+      [  --enable-static             build statically linked executable],
+      LDFLAGS="$LDFLAGS -static";
+      AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 dnl
 dnl add

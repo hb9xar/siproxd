@@ -1,3 +1,18 @@
+0.5.2
+=====
+   22-Jan-2004:	- ./configure option: --enable-static to build
+		  a completely statically linked executable
+                - REGISTER takes honors the expires parameter
+                  of the contact header
+                - Contact header of REGISTER response must be
+                  rewritten back to the local (true) URL
+   18-Jan-2004:	- security_check_raw:
+		  size check: >= 16 bytes
+                - at exit, check registration file to be writable
+                - no WARNING if SIP user-agent header is not supplied.
+                - Call logging: distinguish between In & Out
+                - include branch parameter for via headers
+
 0.5.1
 =====
   21-Dec-2003:	- possibility to log call establishment

@@ -22,11 +22,6 @@
  #include <dmalloc.h>
 #endif
 
-/* typedef for specifying the direction of an RTP stream [being proxied] */
-typedef enum {
-   incoming,
-   outgoing,
-} rtp_direction;
 
 /*				function returns STS_* status values     vvv */
 
@@ -48,7 +43,7 @@ int  register_response(osip_message_t *request, int flag);		/*X*/
 /* proxy.c */
 int proxy_request (osip_message_t *request);				/*X*/
 int proxy_response (osip_message_t *response);				/*X*/
-int proxy_rewrite_invitation_body(osip_message_t *m, rtp_direction d);  /*X*/
+int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 
 /* utils.c */
@@ -71,17 +66,18 @@ int  sip_gen_response(osip_message_t *request, int code);		/*X*/
 #define IF_INBOUND  1
 int  sip_add_myvia (osip_message_t *request, int interface);		/*X*/
 int  sip_del_myvia (osip_message_t *response);				/*X*/
+int  sip_rewrite_contact (osip_message_t *sip_msg, int direction);	/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, rtp_direction dir,          /*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, int direction,              /*X*/
                     int media_stream_no,
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (osip_call_id_t *callid, rtp_direction dir);          /*X*/
+int  rtp_stop_fwd (osip_call_id_t *callid, int direction);              /*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
@@ -184,17 +180,20 @@ struct siproxd_config {
    #define GETHOSTBYNAME_BUFLEN 1024
 #endif
 
+/* symbols for access control */
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/
 #define ACCESSCTL_REG	2	/* --"--              - registr. allowed */
 
-/* symbolic return status */
-
+/* symbolic return stati */
 #define STS_SUCCESS	0	/* SUCCESS				*/
 #define STS_TRUE	0	/* TRUE					*/
 #define STS_FAILURE	1	/* FAILURE				*/
 #define STS_FALSE	1	/* FALSE				*/
 #define STS_NEED_AUTH	1001	/* need authentication			*/
 
+/* symbolic direction of data */
+#define DIR_INCOMING	1
+#define DIR_OUTGOING	2
 
 /*
  * optional hacks

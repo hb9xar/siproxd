@@ -47,6 +47,12 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
  */
 int security_check_raw(char *sip_buffer, int size){
 
+   /*
+    * empiric: size must be >= 16 bytes
+    *   2 byte <CR><LF> packets have been seen in the wild
+    */
+   if (size<16) return STS_FAILURE;
+
    /* TODO: still way to go here ... */
    return STS_SUCCESS;
 }

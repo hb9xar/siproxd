@@ -51,6 +51,8 @@ extern struct siproxd_config configuration;
 extern int h_errno;
 extern int sip_socket;				/* sending SIP datagrams */
 
+extern struct urlmap_s urlmap[];		/* URL mapping table     */
+
 
 /*
  * create a reply template from an given SIP request
@@ -452,7 +454,8 @@ int check_rewrite_rq_uri (osip_message_t *sip) {
    /* extract UA string */
    osip_message_get_user_agent (sip, 0, &ua_hdr);
    if ((ua_hdr==NULL) || (ua_hdr->hvalue==NULL)) {
-      WARN("check_rewrite_rq_uri: NULL UA in Header, using default");
+      DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: NULL UA in Header, "
+             "using default");
       i=dflidx;
    } else {
       /* loop through the knowledge base */
@@ -491,7 +494,7 @@ int check_rewrite_rq_uri (osip_message_t *sip) {
 
 
 /*
- * PROXY_GEN_RESPONSE
+ * SIP_GEN_RESPONSE
  *
  * send an proxy generated response back to the client.
  * Only errors are reported from the proxy itself.
@@ -562,7 +565,7 @@ int sip_gen_response(osip_message_t *request, int code) {
 
 
 /*
- * PROXY_ADD_MYVIA
+ * SIP_ADD_MYVIA
  *
  * interface == IF_OUTBOUND, IF_INBOUND
  *
@@ -575,6 +578,8 @@ int sip_add_myvia (osip_message_t *request, int interface) {
    char tmp[URL_STRING_SIZE];
    osip_via_t *via;
    int sts;
+   char branch_id[64];
+   struct timeval tv;
 
    if (interface == IF_OUTBOUND) {
       sts = get_ip_by_ifname(configuration.outbound_if, &addr);
@@ -592,8 +597,14 @@ int sip_add_myvia (osip_message_t *request, int interface) {
       }
    }
 
-   sprintf(tmp, "SIP/2.0/UDP %s:%i", utils_inet_ntoa(addr),
-           configuration.sip_listen_port);
+   /* prepare branch ID (the magic cookie z9hG4bK is added) */
+   gettimeofday (&tv, NULL);
+   sprintf(branch_id, "z9hG4bK%8.8lx%8.8lx%8.8x",
+           (long)tv.tv_sec, (long)tv.tv_usec, rand() );
+  
+
+   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s;", utils_inet_ntoa(addr),
+           configuration.sip_listen_port, branch_id);
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
    sts = osip_via_init(&via);
@@ -609,7 +620,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
 
 
 /*
- * PROXY_DEL_MYVIA
+ * SIP_DEL_MYVIA
  *
  * RETURNS
  *	STS_SUCCESS on success
@@ -632,4 +643,64 @@ int sip_del_myvia (osip_message_t *response) {
    return STS_SUCCESS;
 }
 
+
+/*
+ * SIP_REWRITE_CONTACT
+ *
+ * rewrite the Contact header
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+int sip_rewrite_contact (osip_message_t *sip_msg, int direction) {
+   osip_contact_t *contact;
+   int i;
+
+   if (sip_msg == NULL) return STS_FAILURE;
+
+   osip_message_get_contact(sip_msg, 0, &contact);
+   if (contact == NULL) return STS_FAILURE;
+
+   for (i=0;i<URLMAP_SIZE;i++){
+      if (urlmap[i].active == 0) continue;
+      if ((direction == DIR_OUTGOING) &&
+          (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)) break;
+      if ((direction == DIR_INCOMING) &&
+          (compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
+   }
+
+   /* found a mapping entry */
+   if (i<URLMAP_SIZE) {
+      char *tmp;
+      DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+             (contact->url->username)? contact->url->username : "*NULL*",
+             (contact->url->host)? contact->url->host : "*NULL*",
+             urlmap[i].masq_url->username, urlmap[i].masq_url->host);
+
+      /* remove old entry */
+      osip_list_remove(sip_msg->contacts,0);
+      osip_contact_to_str(contact, &tmp);
+      osip_contact_free(contact);
+
+      /* clone the url from urlmap*/
+      osip_contact_init(&contact);
+      osip_contact_parse(contact,tmp);
+      osip_free(tmp);
+      osip_uri_free(contact->url);
+      if (direction == DIR_OUTGOING) {
+         /* outgoing, use masqueraded url */
+         osip_uri_clone(urlmap[i].masq_url, &contact->url);
+      } else {
+         /* incoming, use true url */
+         osip_uri_clone(urlmap[i].true_url, &contact->url);
+      }
+
+      osip_list_add(sip_msg->contacts,contact,-1);
+   } else {
+      return STS_FAILURE;
+   } 
+
+   return STS_SUCCESS;
+}
 

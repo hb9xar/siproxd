@@ -82,8 +82,16 @@ int sipsock_wait(void) {
    FD_SET (listen_socket, &fdset);
    sts=select (listen_socket+1, &fdset, NULL, NULL, &timeout);
 
+   /* WARN on failures */
    if (sts<0) {
-      WARN("select() returned error [%s]",strerror(errno));
+      /* WARN on failure, except if it is an "interrupted system call"
+         as it will result by SIGINT, SIGTERM */
+      if (errno != 4) {
+         WARN("select() returned error [%i:%s]",errno, strerror(errno));
+      } else {
+         DEBUGC(DBCLASS_NET,"select() returned error [%i:%s]",
+                errno, strerror(errno));
+      }
    }
  
    return sts;

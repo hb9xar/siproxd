@@ -120,6 +120,17 @@ void register_shut(void) {
    if (configuration.registrationfile) {
       /* write urlmap back to file */
       stream = fopen(configuration.registrationfile, "w+");
+      if (!stream) {
+         /* try to unlink it and open again */
+         unlink(configuration.registrationfile);
+         stream = fopen(configuration.registrationfile, "w+");
+
+         /* open file for write failed, complain */
+         if (!stream) {
+            ERROR("unable to write registration file");
+            return;
+         }
+      }
 
       for (i=0;i < URLMAP_SIZE; i++) {
          fprintf(stream, "***:%i:%i\n", urlmap[i].active, urlmap[i].expires);
@@ -161,6 +172,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    osip_uri_t *url1_to, *url1_contact;
    osip_uri_t *url2_to, *url2_contact;
    osip_header_t *expires_hdr;
+   osip_uri_param_t *expires_param=NULL;
    
    /* check for proxy authentication */
    sts = authenticate_proxy(my_msg);
@@ -195,10 +207,23 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    /* evaluate Expires Header field */
    osip_message_get_expires(my_msg, 0, &expires_hdr);
 
-   if (expires_hdr && expires_hdr->hvalue) {
+  /*
+   * look for an Contact expires parameter - in case of REGISTER
+   * these two are equal. The Contact expires has higher priority!
+   */
+
+   osip_contact_param_get_byname(
+           (osip_contact_t*) my_msg->contacts->node->element,
+           "expires", &expires_param);
+
+   if (expires_param && expires_param->gvalue) {
+      /* get expires from contact Header */
+      expires=atoi(expires_param->gvalue);
+   } else if (expires_hdr && expires_hdr->hvalue) {
+      /* get expires from expires Header */
       expires=atoi(expires_hdr->hvalue);
    } else {
-      /* it seems the expires field is not present everywhere... */
+      /* it seems, the expires field is not present everywhere... */
       WARN("no 'expires' header found - set time to 600 sec");
       expires=600;
       osip_message_set_expires(my_msg, "600");

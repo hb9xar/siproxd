@@ -85,7 +85,7 @@ int rtp_masq_init( void ) {
 }
 
 
-int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
+int rtp_masq_start_fwd(osip_call_id_t *callid, int direction,
                        int media_stream_no,
                        struct in_addr outbound_ipaddr, int *outbound_lcl_port,
                        struct in_addr lcl_client_ipaddr, int lcl_clientport) {
@@ -161,7 +161,8 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
    DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: starting RTP proxy "
           "stream for: %s@%s (%s) #=%i",
           callid->number, callid->host,
-          ((dir == incoming) ? "incoming" : "outgoing"), media_stream_no);
+          ((direction == DIR_INCOMING) ? "incoming" : "outgoing"),
+          media_stream_no);
 
    /*
     * figure out, if this is an request to start an RTP proxy stream
@@ -175,7 +176,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].sock != 0) {
          if((compare_callid(callid, &cid) == STS_SUCCESS) &&
-            (rtp_proxytable[i].direction == dir) &&
+            (rtp_proxytable[i].direction == direction) &&
             (rtp_proxytable[i].media_stream_no == media_stream_no)) {
             /* return the already known port number */
             *outbound_lcl_port=rtp_proxytable[i].outboundport;
@@ -251,7 +252,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
          rtp_proxytable[freeidx].callid_host[0]='\0';
       }
 
-      rtp_proxytable[freeidx].direction = dir;
+      rtp_proxytable[freeidx].direction = direction;
       rtp_proxytable[freeidx].media_stream_no = media_stream_no;
       memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
              &outbound_ipaddr, sizeof(struct in_addr));
@@ -268,7 +269,7 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
 }
 
 
-int rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
+int rtp_masq_stop_fwd (osip_call_id_t *callid, int direction) {
    int sts=STS_FAILURE;
    int i;
    int got_match=0;
@@ -284,7 +285,7 @@ int rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
    DEBUGC(DBCLASS_RTP,"rtp_masq_stop_fwd: stopping RTP proxy "
           "stream for: %s@%s (%s)",
           callid->number, callid->host,
-          ((dir == incoming) ? "incoming" : "outgoing"));
+          ((direction == DIR_INCOMING) ? "incoming" : "outgoing"));
 
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
@@ -292,7 +293,7 @@ int rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
 
       if (rtp_proxytable[i].sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
-         (rtp_proxytable[i].direction == dir)) {
+         (rtp_proxytable[i].direction == direction)) {
 
          /* remove masquerading entry */
          if (configuration.rtp_proxy_enable == 2) { // ipchains
@@ -325,7 +326,7 @@ int rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
       DEBUGC(DBCLASS_RTP,
              "rtp_masq_stop_fwd: can't find active stream for %s@%s (%s)",
              callid->number, callid->host,
-             ((dir == incoming) ? "incoming" : "outgoing"));
+             ((direction == DIR_INCOMING) ? "incoming" : "outgoing"));
       return STS_FAILURE;
    }
 
@@ -342,14 +343,14 @@ int rtp_masq_init( void ) {
    ERROR("Masquerading support is not enabled (compile time config option)");
    return STS_FAILURE;
 }
-int rtp_masq_start_fwd(osip_call_id_t *callid, rtp_direction dir,
+int rtp_masq_start_fwd(osip_call_id_t *callid, int direction,
                        int media_stream_no,
                        struct in_addr outbound_ipaddr, int *outbound_lcl_port,
                        struct in_addr lcl_client_ipaddr, int lcl_clientport) {
    outbound_lcl_port=0;
    return STS_FAILURE;
 }
-int rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
+int rtp_masq_stop_fwd (osip_call_id_t *callid, int direction) {
    return STS_FAILURE;
 }
 #endif
