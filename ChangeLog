@@ -1,3 +1,7 @@
+0.5.1
+=====
+  29-Nov-2003:	- some documentation & FAQ updates
+
 0.5.0
 =====
   26-Nov-2003:	- released 0.5.0
@@ -93,11 +97,11 @@
 =====
  5-Apr-2003:    - released 0.3.2
  4-Apr-2003:    - introduced config option 'silence_log' - this allows
-                   to control how much logging is done to syslog - 
+                  to control how much logging is done to syslog - 
                   logging can even completely be switched off...
  1-Apr-2003:    - should now be able to deal with an outbound interface
                   that is "temporary" DOWN (dial up internet access)
-                  if outbounf IF is down, send back a response to
+                  if outbound IF is down, send back a response to
                   inbound UAs "408 Request Timeout".
                 - always log to syslog, also when running in foreground
                 - changed some WARNINGS into DEBUG statements

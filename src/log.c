@@ -42,7 +42,7 @@ static int debug_pattern=0;
  *   1 - INFOs, WARNINGs and ERRORs
  *   2 - WARNINGs and ERRORs
  *   3 - only ERRORs
- *   4 - absolutely nothing (be careful - you will have no way to
+ *   4 - absolutely nothing
  */
 static int silence_level=0;
 

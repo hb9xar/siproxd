@@ -197,7 +197,15 @@ A: It has been observed that these SIP phone seems to be delicate there.
    the phone and make sure the 'Use random port' option is enabled.
 
 ---------------------------------------------------------------------------
+Q: I use Linux (kernel 2.4.x) and use ipchains. However, siproxd
+   always complains "ERROR:IPCHAINS support not built in", why?
 
+A: Siproxd IPCHAIN support works only with kernels 2.2.x. The
+   ipchains compatibility module for 2.4.x kernels lacks some features
+   that allow user space programs to control masquerading tunnels.
+   You  must use the RTP relay or IPTABLES based masquerading.
+
+---------------------------------------------------------------------------
 
 yet unstructured:
 Hi there

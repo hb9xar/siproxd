@@ -20,16 +20,22 @@ IP addresses and port numbers.
 
 
 
-REQUIREMENTS
-============
-see RELNOTES
+PREREQUISITES
+=============
+- OS of either:
+  * Linux (preferred kernel 2.2.x or 2.4.x)
+  * FreeBSD
+  * Solaris (porting is beeing worked on but you may try it)
+  
+- libosip2 package (http://www.fsf.org/software/osip/)
+
 
 
 HOW TO GET STARTED
 ==================
+- make sure libosip2 is installed
 
 - ./configure
-
   For Flifl: see doc/FLI4L_HOWTO.txt
 
 - make
