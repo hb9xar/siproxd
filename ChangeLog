@@ -1,5 +1,6 @@
 0.5.7
 =====
+  24-Jun-2004:  - Released 0.5.7
   18-Jun-2004:  - 2 fixes for using a port number != 5060 (by Miguel Angel)
   13-Jun-2004:  - fix: get_ip_by_host() and buffer allocation for reentrant
                   gethostbyname_r() functions
