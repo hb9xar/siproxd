@@ -10,11 +10,12 @@ A: The goal is that every softphone (that is SIP compliant) should be
    able to work via siproxd. Tested and/or reported to work so far:
    - linphone (0.9.0)
    - kphone (1.0.2)
+   - MSN Messenger
 ---------------------------------------------------------------------------
 Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
-   Should it not also proxy outgoing RTP data?
+   Shouldn't italso proxy outgoing RTP data?
 
-A: Curently (0.2.0) that is the correct behaviour. Incoming RTP traffic
+A: This is the correct behaviour. Incoming RTP traffic
    is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
    to be handled by the firewall (IP masquerading).
 ---------------------------------------------------------------------------
@@ -113,6 +114,51 @@ A: The mapping mechanism of SIP addresses works basically like:
    This of course *requires* that the username part of the SIP address is
    unique for each softphone that registers a the proxy (So this is more or
    less the mechanism that you mentioned in your mail).
+---------------------------------------------------------------------------
+Q: How does the RTP Proxy work?
+
+A: The RTP proxy actually is quite simple. It does not use any RTP
+   protocol stack.  All relevant code is located within rtpproxy.c.
+   The RTP proxy is running as a separate thread. It maintains a
+   list of active RTP transfers (rtp_proxytable).
+   Controlling (registering a new RTP data stream / removing a RTP stream)
+   is done via 2 service routines rtp_start_fwd() and rtp_stop_fwd() from
+   withing the SIP related part of siproxd.
+   
+   When a session is established (INVITE, ACK), siproxd will fetch the
+   relevant information (UDP ports) from the SIP messages and
+   does a rtp_start_fwd().
+   This will create an UDP socket and binds it to the outbound interface
+   address (port number dynamically chosen withing the RTP port range).
+   In addition a entry into the rtp_proxytable will be made.
+   
+   The RTP Proxy then *simply* does wait withing a select() to receive
+   a UDP datagrams on the specified ports and then sends them to the
+   local client. The RTP proxy does absolutely not care about WHAT data
+   is proxied, so it is not aware of RTP or any other high level stuff.
+   It is simply a binary forwarding of datagrams.
+   If the session is closed (BYE) the RTP stream will be stopped via
+   rtp_stop_fwd(). In addition, there exists a timeout supervision
+   (configurable) that will stop RTP streams that have been inactive
+   (no data received) for a specified time.
+   
+   The above only applies for reception of data FROM the outbound
+   interface (usually a publich IP).
+   
+   Outgoing traffic must be handled (masqueraded) by the firewall itself
+   (using ipchains or iptables rules).
+---------------------------------------------------------------------------
+Q: Does siproxd need to be installed on the same host as the
+   firewall (ipchains/iptables) is running?
+
+A: Yes. Siproxd needs to know the public IP address, as this address is
+   included in the SIP signalling to establish a session. However,
+   siproxd does *not* interact with ipchains/iptables. The requirement
+   is to allow port 5060 for incomming UDP datagrams (SIP) as well as the
+   UDP port range for RTP data as specified in the config file (default
+   7070 - 7079). Outgoing UDP packets must be masqueraded by the firewall.
+   See 'Q: How do I setup IP masquerading for the outgoing RTP traffic'.
+   
 ---------------------------------------------------------------------------
 
 yet unstructured:

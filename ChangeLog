@@ -1,5 +1,11 @@
+0.3.3
+=====
+ 23-Apr-2003:	- FAQ updates: RTP internals
+  6-Apr-2003:	- build options for FLI4L builds (libc5 & uClibc)
+
 0.3.2
 =====
+ 5-Apr-2003:	- released 0.3.2
  4-Apr-2003:	- introduced config option 'silence_log' - this allows
  		  to control how much logging is done to syslog - 
                   logging can even completely be switched off...
@@ -12,7 +18,7 @@
                 - re-arranged some code
                 - rtpproxy: prepared for proper thread termination on exit
                 - introduced short term caching for get_ip_by_ifname
-                - fixed in check for socket() return status
+                - fixed check for socket() return status
                 - fixed bug in RTP Proxy (timeout of inactive streams)
                   that produced a bunch of "ERROR:Error in close(0): Bad file
                   descriptor" errors each time a RTP stream timed out
