@@ -245,9 +245,9 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       if (strcasecmp(url1->scheme, url2->scheme) != 0) {
          DEBUGC(DBCLASS_PROXY, "compare_url: scheme mismatch");
          return STS_FAILURE;
-      } else {
-         WARN("compare_url: NULL scheme - ignoring");
       }
+   } else {
+      WARN("compare_url: NULL scheme - ignoring");
    }
 
    /* compare username (if present) case sensitive */
@@ -255,9 +255,9 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       if (strcmp(url1->username, url2->username) != 0) {
          DEBUGC(DBCLASS_PROXY, "compare_url: username mismatch");
          return STS_FAILURE;
-      } else {
-         WARN("compare_url: NULL username - ignoring");
       }
+   } else {
+      WARN("compare_url: NULL username - ignoring");
    }
 
 

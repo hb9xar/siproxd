@@ -291,11 +291,13 @@ INFO("got packet [%i bytes] from %s [%s]", i,
 
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
-	     (my_msg->sip_method)?
-              my_msg->sip_method : "NULL") ;
+             (MSG_IS_REQUEST(my_msg) ?
+                ((my_msg->sip_method)? my_msg->sip_method : "NULL") :
+                ((my_msg->reason_phrase) ? my_msg->reason_phrase : "NULL")));
+              
 
       /*
-      * if an RQ REGISTER, check if it is directed to myself,
+      * if an REQ REGISTER, check if it is directed to myself,
       * or am I just the outbound proxy but no registrar.
       * - If I'm the registrar, register & generate answer
       * - If I'm just the outbound proxy, register, rewrite & forward

@@ -4,8 +4,6 @@ TODOs, in random order:
 - siproxd daemonized: looks like clashes between threads
 - lost 200 ACK immediately before RTP starts...
 
-- TERM handler
-
 - /var/run PID file
 
 - check via loop and private IP addresses
