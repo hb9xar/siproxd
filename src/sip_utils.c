@@ -275,7 +275,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
          return STS_FAILURE;
       }
    } else {
-      WARN("compare_url: NULL username - ignoring");
+      DEBUGC(DBCLASS_PROXY, "compare_url: NULL username - ignoring");
    }
 
 

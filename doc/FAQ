@@ -226,7 +226,7 @@ A: First make sure that you have an SIP enabled MSN messenger, which
    is a separate download from the non-SIP-enabled Messenger 5 at 
    http://www.microsoft.com/windows/messenger.
 
-   For the configuration, the local IP address of siproxd as the server
+   For the configuration, enter the local IP address of siproxd as the server
    and 266xxx@fwd.pulver.com as your address. When the authentication
    dialog comes up you must use your FWD_NUMBER (266xxx) and your password.
    Messenger misleads you into typing FWD_NUMBER@fwd.pulver.com which 
