@@ -390,7 +390,7 @@ mismatch:
  */
 int is_sipuri_local (sip_ticket_t *ticket) {
    osip_message_t *sip=ticket->sipmsg;
-   int sts, found;
+   int found;
    struct in_addr addr_uri, addr_myself;
    char *my_interfaces[]=
         { configuration.inbound_if,  configuration.outbound_if,  (char*)-1 };
