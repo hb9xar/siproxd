@@ -294,9 +294,25 @@ int main (int argc, char *argv[])
       /*
        * RFC 3261, Section 16.3 step 3
        * Proxy Behavior - Request Validation - Max-Forwards check
-       * (check Max-Forward header and refuse with 483 if too many hops)
+       * (check Max-Forwards header and refuse with 483 if too many hops)
        */
-      /* NOT IMPLEMENTED */
+      {
+      osip_header_t *max_forwards;
+      int forwards_count = DEFAULT_MAXFWD;
+
+      osip_message_get_max_forwards(my_msg, 0, &max_forwards);
+      if (max_forwards && max_forwards->hvalue) {
+         forwards_count = atoi(max_forwards->hvalue);
+      }
+
+      DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);
+      if (forwards_count <= 0) {
+         DEBUGC(DBCLASS_SIP, "Forward count reached 0 -> 483 response");
+         sip_gen_response(my_msg, 483 /*Too many hops*/);
+         goto end_loop; /* skip and free resources */
+      }
+
+      }
 
       /*
        * RFC 3261, Section 16.3 step 4
@@ -304,8 +320,8 @@ int main (int argc, char *argv[])
        * (check for loop and return 482 if a loop is detected)
        */
       if (check_vialoop(my_msg) == STS_TRUE) {
-         DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring request");
-         /* we should return 482, NOT IMPLEMENTED */
+         DEBUGC(DBCLASS_SIP,"via loop detected, ignoring request");
+         sip_gen_response(my_msg, 482 /*Loop detected*/);
          goto end_loop; /* skip and free resources */
       }
 

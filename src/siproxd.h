@@ -156,7 +156,8 @@ struct siproxd_config {
 /*
  * some constant definitions
  */
-#define SIP_PORT	5060
+#define SIP_PORT	5060	/* default port to listen */
+#define DEFAULT_MAXFWD	70	/* default Max-Forward count */
 
 #define URLMAP_SIZE	32	/* number of URL mapping table entries	*/
 #define RTPPROXY_SIZE	64	/* number of rtp proxy entries		*/

@@ -9,19 +9,19 @@ Request Processing:					implemented
   Section 16.3:  Request Validation
     1. Reasonable Syntax					yes
     2. URI scheme						no
-    3. Max-Forwards						no
-    4. (Optional) Loop Detection				partially
+    3. Max-Forwards						yes
+    4. (Optional) Loop Detection				yes
     5. Proxy-Require						no
     6. Proxy-Authorization					yes
 
-  Section 16.4 Route Information Preprocessing			yes
+  Section 16.4 Route Information Preprocessing			partially
 
   Section 16.5 Determining Request Targets			no
 
   Section 16.6 Request Forwarding
     1.  Make a copy of the received request			yes
     2.  Update the Request-URI					yes
-    3.  Update the Max-Forwards header field			no
+    3.  Update the Max-Forwards header field			yes
     4.  Optionally add a Record-route header field value	no
     5.  Optionally add additional header fields			no
     6.  Postprocess routing information				no
@@ -37,7 +37,7 @@ Response Processing:					implemented
     1. Reasonable Syntax					yes
     2. URI scheme						no
     3. Max-Forwards						no
-    4. (Optional) Loop Detection				partially
+    4. (Optional) Loop Detection				yes
     5. Proxy-Require						no
     6. Proxy-Authorization					yes
 

@@ -215,10 +215,9 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    * look for an Contact expires parameter - in case of REGISTER
    * these two are equal. The Contact expires has higher priority!
    */
-
    osip_contact_param_get_byname(
            (osip_contact_t*) my_msg->contacts->node->element,
-           "expires", &expires_param);
+           EXPIRES, &expires_param);
 
    if (expires_param && expires_param->gvalue) {
       /* get expires from contact Header */

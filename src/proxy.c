@@ -91,47 +91,26 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
 
    DEBUGC(DBCLASS_PROXY,"proxy_request");
 
-   /*
-    * RFC 3261, Section 16.6 step 1
-    * Proxy Behavior - Request Forwarding - Make a copy
-    */
-   /* nothing to do here, copy is ready in 'request'*/
 
    /*
-    * RFC 3261, Section 16.6 step 3
-    * Proxy Behavior - Request Forwarding - Max-Forwards
-    * (if Max-Forward header exists, decrement by one, if it does not
-    * exist, add a new one with value SHOULD be 70)
-    */
-   /* NOT IMPLEMENTED */
-
-   /*
-    * RFC 3261, Section 16.6 step 4
-    * Proxy Behavior - Request Forwarding - Add a Record-route header
-    */
-   /* NOT IMPLEMENTED (optional) */
-
-   /*
-    * RFC 3261, Section 16.6 step 5
-    * Proxy Behavior - Request Forwarding - Add Additional Header Fields
-    */
-   /* NOT IMPLEMENTED (optional) */
-
-   /*
-    * RFC 3261, Section 16.6 step 6
-    * Proxy Behavior - Request Forwarding - Postprocess routing information
-    */
-   /* NOT IMPLEMENTED */
-
-
-   /*
-    * RFC 3261, Section 16.4 
+    * RFC 3261, Section 16.4
     * Proxy Behavior - Route Information Preprocessing
-    * (process Record-Route header)
+    * (process Route header)
     */
+/*
+   The proxy MUST inspect the Request-URI of the request.  If the
+   Request-URI of the request contains a value this proxy previously
+   placed into a Record-Route header field (see Section 16.6 item 4),
+   the proxy MUST replace the Request-URI in the request with the last
+   value from the Route header field, and remove that value from the
+   Route header field.  The proxy MUST then proceed as if it received
+   this modified request.
+
+   NOT IMPLEMENTED*/
    /*
     * Check if I am listed at the topmost Route header (if any Route
-    * header is existing at all). If so, remove it from the list.
+    * header is existing at all). If so, remove it from the list and
+    * rewrite the request URI to point to the now topmost Route.
     */
    if (request->routes && !osip_list_eol(request->routes, 0)) {
       struct in_addr addr1, addr2, addr3;
@@ -151,7 +130,8 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
                configuration.sip_listen_port == SIP_PORT)) {
          osip_list_remove(request->routes, 0);
          osip_route_free(route);
-         /* possibly request->routes will be freed by osip_message_free() */
+         /* request->routes will be freed by osip_message_free() */
+         DEBUGC(DBCLASS_PROXY,"removed Route header pointing to myself");
       }
    }
       
@@ -298,6 +278,11 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    } /* log_calls */
 
 
+   /*
+    * RFC 3261, Section 16.6 step 1
+    * Proxy Behavior - Request Forwarding - Make a copy
+    */
+   /* nothing to do here, copy is ready in 'request'*/
 
    /* get destination address */
    url=osip_message_get_uri(request);
@@ -319,17 +304,6 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       /* 'i' still holds the valid index into the URLMAP table */
       if (check_rewrite_rq_uri(request) == STS_TRUE) {
          proxy_rewrite_request_uri(request, i);
-      }
-
-      /*
-       * RFC 3261, Section 16.6 step 8
-       * Proxy Behavior - Add a Via header field value
-       */
-      /* add my Via header line (inbound interface)*/
-      sts = sip_add_myvia(request, IF_INBOUND);
-      if (sts == STS_FAILURE) {
-         ERROR("adding my inbound via failed!");
-         return STS_FAILURE;
       }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
@@ -356,7 +330,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
   /*
    * from the internal masqueraded host to an external host
    */
-   case  REQTYP_OUTGOING:
+   case REQTYP_OUTGOING:
       DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	request->from->url->username? request->from->url->username:"*NULL*",
         request->from->url->host? request->from->url->host: "*NULL*");
@@ -371,6 +345,9 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       /* if it is addressed to myself, then it must be some request
        * method that I as a proxy do not support. Reject */
 #if 0
+/* careful - an internal UA might send an request to another internal UA.
+   This would be caught here, so don't do this. This situation should be
+   caught in the default part of the CASE statement below */
       if (is_sipuri_local(request) == STS_TRUE) {
          WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
 	    request->sip_method? request->sip_method:"*NULL*",
@@ -392,16 +369,6 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
 
       /* rewrite Contact header to represent the masqued address */
       sip_rewrite_contact(request, DIR_OUTGOING);
-
-      /*
-       * RFC 3261, Section 16.8
-       * Proxy Behavior - Add a Via header field value
-       */
-      /* add my Via header line (outbound interface)*/
-      sts = sip_add_myvia(request, IF_OUTBOUND);
-      if (sts == STS_FAILURE) {
-         ERROR("adding my outbound via failed!");
-      }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -438,10 +405,119 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       return STS_FAILURE;
    }
 
-  /*
-   * RFC 3261, Section 16.6 step 7
-   * Proxy Behavior - Determine Next-Hop Address
-   */
+
+   /*
+    * RFC 3261, Section 16.6 step 3
+    * Proxy Behavior - Request Forwarding - Max-Forwards
+    * (if Max-Forwards header exists, decrement by one, if it does not
+    * exist, add a new one with value SHOULD be 70)
+    */
+   {
+   osip_header_t *max_forwards;
+   int forwards_count = DEFAULT_MAXFWD;
+   char mfwd[8];
+
+   osip_message_get_max_forwards(request, 0, &max_forwards);
+   if (max_forwards == NULL) {
+      sprintf(mfwd, "%i", forwards_count);
+      osip_message_set_max_forwards(request, mfwd);
+   } else {
+      if (max_forwards->hvalue) {
+         forwards_count = atoi(max_forwards->hvalue);
+         forwards_count -=1;
+         osip_free (max_forwards->hvalue);
+      }
+
+      sprintf(mfwd, "%i", forwards_count);
+      max_forwards->hvalue = osip_strdup(mfwd);
+   }
+
+   DEBUGC(DBCLASS_PROXY,"setting Max-Forwards=%s",mfwd);
+   }
+
+   /*
+    * RFC 3261, Section 16.6 step 4
+    * Proxy Behavior - Request Forwarding - Add a Record-route header
+    */
+#if 0
+/* NOT IMPLEMENTED - this requires proper implementation of
+   the Route headers first. */
+   {
+   struct in_addr addr;
+   osip_record_route_t *r_route;
+   osip_uri_t *uri_of_proxy;
+
+   /*
+    * get the IP address of the interface where I'm going to
+    * send out this request
+    */
+   switch (type) {
+   case REQTYP_INCOMING:
+      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         ERROR("can't find inbound interface %s - configuration error?",
+               configuration.outbound_if);
+         return STS_FAILURE;
+      }
+      break;
+   case REQTYP_OUTGOING:
+      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         ERROR("can't find outbound interface %s - configuration error?",
+               configuration.outbound_if);
+         return STS_FAILURE;
+      }
+      break;
+   default:
+      ERROR("Oops, never should end up here (type=%i)", type);
+      return STS_FAILURE;
+   }
+
+   sts = osip_record_route_init(&r_route);
+   if (sts == 0) {
+      sts = osip_uri_init(&uri_of_proxy);
+      if (sts == 0) {
+         char tmp[8];
+
+         /* host name / IP */
+         osip_uri_set_host(uri_of_proxy, osip_strdup(utils_inet_ntoa(addr)));
+
+         /* port number */
+         sprintf(tmp, "%i", configuration.sip_listen_port);
+         osip_uri_set_port(uri_of_proxy, osip_strdup(tmp));
+
+         /* 'lr' parameter */
+         osip_uri_uparam_add(uri_of_proxy, "lr", NULL);
+
+         osip_record_route_set_url(r_route, uri_of_proxy);
+
+         /* insert before all other record-route */
+         osip_list_add (request->record_routes, r_route, 0);
+      } else {
+          osip_record_route_free (r_route);
+          osip_free (r_route);
+      } /* if url_init */
+   } /* if record route init */
+
+   }
+#endif
+
+   /*
+    * RFC 3261, Section 16.6 step 5
+    * Proxy Behavior - Request Forwarding - Add Additional Header Fields
+    */
+   /* NOT IMPLEMENTED (optional) */
+
+
+   /*
+    * RFC 3261, Section 16.6 step 6
+    * Proxy Behavior - Request Forwarding - Postprocess routing information
+    */
+
+   /*
+    * RFC 3261, Section 16.6 step 7
+    * Proxy Behavior - Determine Next-Hop Address
+    */
    if ((type == REQTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
       /* I have an outbound proxy configured */
       sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
@@ -472,6 +548,23 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       }
    }
 
+   /*
+    * RFC 3261, Section 16.6 step 8
+    * Proxy Behavior - Add a Via header field value
+    */
+   /* add my Via header line (outbound interface)*/
+   if (type == REQTYP_INCOMING) {
+      sts = sip_add_myvia(request, IF_INBOUND);
+      if (sts == STS_FAILURE) {
+         ERROR("adding my inbound via failed!");
+      }
+   } else {
+      sts = sip_add_myvia(request, IF_OUTBOUND);
+      if (sts == STS_FAILURE) {
+         ERROR("adding my outbound via failed!");
+         return STS_FAILURE;
+      }
+   }
   /*
    * RFC 3261, Section 16.6 step 9
    * Proxy Behavior - Add a Content-Length header field if necessary
