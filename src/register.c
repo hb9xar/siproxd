@@ -129,7 +129,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
          continue;
       }
 
-      url2_to=urlmap[i].masq_url;
+      url2_to=urlmap[i].reg_url;
       url2_contact=urlmap[i].true_url;
 
       if ( (compare_url(url1_to, url2_to)==STS_SUCCESS) &&
