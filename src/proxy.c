@@ -135,6 +135,44 @@ int proxy_request (osip_message_t *request) {
 }
 #endif
 
+   /*
+    * logging of passing calls
+    */
+   if (configuration.log_calls) {
+      osip_uri_t *cont_url;
+      cont_url=((osip_contact_t*)(request->contacts->node->element))->url;
+      /* INVITE */
+      if(MSG_IS_INVITE(request)) {
+         if (cont_url) {
+            INFO("Incomming Call from: %s:%s",
+                 cont_url->username ? cont_url->username:"*NULL*",
+                 cont_url->host ? cont_url->host : "*NULL*");
+         } else {
+            INFO("Incomming Call (w/o contact header) from: %s:%s",
+	         request->from->url->username ? 
+                    request->from->url->username:"*NULL*",
+	         request->from->url->host ? 
+                    request->from->url->host : "*NULL*");
+         }
+      /* BYE / CANCEL */
+      } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
+         if (cont_url) {
+            INFO("Ending Call from: %s:%s",
+                 cont_url->username ? cont_url->username:"*NULL*",
+                 cont_url->host ? cont_url->host : "*NULL*");
+         } else {
+            INFO("Ending Call (w/o contact header) from: %s:%s",
+	         request->from->url->username ? 
+                    request->from->url->username:"*NULL*",
+	         request->from->url->host ? 
+                    request->from->url->host : "*NULL*");
+         }
+      }
+   } /* log_calls */
+
+
+
+
    switch (type) {
   /*
    * from an external host to the internal masqueraded host
@@ -162,39 +200,20 @@ int proxy_request (osip_message_t *request) {
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-#ifdef MOREDEBUG /*&&&&*/
-INFO("stopping RTP proxy stream for: %s@%s",
-     osip_message_get_call_id(request)->number, 
-     osip_message_get_call_id(request)->host);
-#endif
          /* stop the RTP proxying stream(s) */
          rtp_stop_fwd(osip_message_get_call_id(request), incoming);
          rtp_stop_fwd(osip_message_get_call_id(request), outgoing);
 
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
-         osip_uri_t *contact;
-
          /* First, rewrite the body */
          sts = proxy_rewrite_invitation_body(request, incoming);
 
          /*
-          * Note: Incoming request has no need to rewrite Contact
-          * header as we are not masquerading something there
+          * Note: Incoming requests have no need to rewrite Contact
+          * header - as we are not masquerading something there
           */
 
-         contact=((osip_contact_t*)(request->contacts->node->element))->url;
-         if (contact) {
-            INFO("Incomming Call from: %s:%s",
-                 contact->username ? contact->username:"*NULL*",
-                 contact->host ? contact->host : "*NULL*");
-         } else {
-            INFO("Incomming Call (w/o contact header) from: %s:%s",
-	         request->from->url->username ? 
-                    request->from->url->username:"*NULL*",
-	         request->from->url->host ? 
-                    request->from->url->host : "*NULL*");
-         }
       }
       break;
    
@@ -377,7 +396,8 @@ int proxy_response (osip_message_t *response) {
       return STS_FAILURE;
    }
 
-   /* figure out if this is an request coming from the outside
+   /*
+    * figure out if this is an request coming from the outside
     * world to one of our registered clients
     */
 
@@ -412,6 +432,7 @@ int proxy_response (osip_message_t *response) {
 	 break;
       }
    }
+
 
 /*
  * ok, we got a response that we are allowed to process.
@@ -563,6 +584,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, rtp_direction dir){
          /* 183 Trying *MAY* contain SDP data */
          DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
                 "no body found in message");
+         return STS_SUCCESS;
       } else {
          /* INVITE request and 200 response *MUST* contain SDP data */
          ERROR("rewrite_invitation_body: no body found in message");

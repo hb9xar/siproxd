@@ -81,9 +81,10 @@ int sipsock_wait(void) {
    FD_ZERO(&fdset);
    FD_SET (listen_socket, &fdset);
    sts=select (listen_socket+1, &fdset, NULL, NULL, &timeout);
-#ifdef MOREDEBUG /*&&&&*/
-if (sts<0) {WARN("select() returned error [%s]",strerror(errno));}
-#endif
+
+   if (sts<0) {
+      WARN("select() returned error [%s]",strerror(errno));
+   }
  
    return sts;
 }
@@ -101,9 +102,10 @@ int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    fromlen=sizeof(struct sockaddr_in);
    count=recvfrom(listen_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
-#ifdef MOREDEBUG /*&&&&*/
-if (count<0) {WARN("recvfrom() returned error [%s]",strerror(errno));}
-#endif
+
+   if (count<0) {
+      WARN("recvfrom() returned error [%s]",strerror(errno));
+   }
 
    DEBUGC(DBCLASS_NET,"received UDP packet from %s, count=%i",
           utils_inet_ntoa(from->sin_addr), count);
@@ -159,8 +161,8 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
                port, strerror(errno));
          return STS_FAILURE;
       }
-     DEBUGC(DBCLASS_BABBLE,"sendto() [%s:%i] call failed: %s",
-            utils_inet_ntoa(addr), port, strerror(errno));
+      DEBUGC(DBCLASS_BABBLE,"sendto() [%s:%i] call failed: %s",
+             utils_inet_ntoa(addr), port, strerror(errno));
    }
 
    return STS_SUCCESS;

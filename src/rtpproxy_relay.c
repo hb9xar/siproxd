@@ -140,18 +140,18 @@ static void *rtpproxy_main(void *arg) {
          continue;
       }
 
-#ifdef MOREDEBUG /*&&&&*/
-if (num_fd<0) {
-   int i;
-   WARN("select() returned error [%s]",strerror(errno));
-   for (i=0;i<RTPPROXY_SIZE;i++) {
-      DEBUGC(DBCLASS_RTP,"maxfd=%i",master_fd_max);
-      if (rtp_proxytable[i].sock != 0) {
-         DEBUGC(DBCLASS_RTP,"[%i] -> socket=%i",i, rtp_proxytable[i].sock);
-      }
-   } /* for i */
-}
-#endif
+//#ifdef MOREDEBUG /*&&&&*/
+//if (num_fd<0) {
+//   int i;
+//   WARN("select() returned error [%s]",strerror(errno));
+//   for (i=0;i<RTPPROXY_SIZE;i++) {
+//      DEBUGC(DBCLASS_RTP,"maxfd=%i",master_fd_max);
+//      if (rtp_proxytable[i].sock != 0) {
+//         DEBUGC(DBCLASS_RTP,"[%i] -> socket=%i",i, rtp_proxytable[i].sock);
+//      }
+//   } /* for i */
+//}
+//#endif
       time(&t);
 
       /*
@@ -168,18 +168,16 @@ if (num_fd<0) {
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
 
-#ifdef MOREDEBUG /*&&&&*/
-if (count<0) {WARN("read() returned error [%s]",strerror(errno));}
-#endif
+            if (count<0) {
+               WARN("read() returned error [%s]",strerror(errno));
+            }
 
-	    /* write to dest via socket rtp_inbound*/
+	    /* write to dest via socket rtp__socket */
             sts = sipsock_send_udp(&rtp_socket,
 	                  rtp_proxytable[i].inbound_client_ipaddr,
 			  rtp_proxytable[i].inbound_client_port,
 			  rtp_buff, count, 0); /* don't dump it */
-#ifdef MOREDEBUG /*&&&&*/
-if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
-#endif
+
             /* update timestamp of last usage */
             rtp_proxytable[i].timestamp=t;
 

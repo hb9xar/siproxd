@@ -152,6 +152,7 @@ struct siproxd_config {
    char *outbound_proxy_host;
    int  outbound_proxy_port;
    char *registrationfile;
+   int  log_calls;
 };
 
 
@@ -205,5 +206,3 @@ struct siproxd_config {
    Port (!!!) are kept from the SIP address given by the user.
    This issue is fixed in linphone-0.9.1pre1
 */
-
-//#define MOREDEBUG

@@ -187,10 +187,8 @@ int main (int argc, char *argv[])
       if (fork()!=0) exit(0);
 
       log_set_tosyslog(1);
+      INFO("daemonized, pid=%i", getpid());
    }
-#ifdef MOREDEBUG /*&&&&*/
-INFO("daemonizing done (pid=%i)", getpid());
-#endif
 
    /* initialize the RTP proxy */
    sts=rtpproxy_init();
@@ -250,13 +248,6 @@ INFO("daemonizing done (pid=%i)", getpid());
       i=sipsock_read(&buff, sizeof(buff)-1, &from);
       buff[i]='\0';
 
-#ifdef MOREDEBUG /*&&&&*/
-{char tmp[32];
-strncpy(tmp, buff, 30);
-tmp[30]='\0';
-INFO("got packet [%i bytes] from %s [%s]", i,
-     utils_inet_ntoa(from.sin_addr), tmp);}
-#endif
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(from);
       if (access == 0) continue; /* there are no resources to free */
