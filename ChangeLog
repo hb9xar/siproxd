@@ -1,5 +1,6 @@
 0.5.9
 =====
+  13-Oct-2004:  - utils.c: preparation for chroot() (consider syslog)
   09-Oct-2004:  - comp_osip.c: libosip2-2.0.9 compatibility (There SEEM
                   to happen some API changes forward and backward:
                   osip_message_to_str, osip_body_to_str,

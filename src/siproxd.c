@@ -179,6 +179,7 @@ int main (int argc, char *argv[])
 /*
  * Init stuff
  */
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 
    /* read the config file */
    if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
@@ -245,7 +246,6 @@ int main (int argc, char *argv[])
    /* initialize the registration facility */
    register_init();
 
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 /*
  * silence the log - if so required...
  */
