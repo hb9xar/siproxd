@@ -38,7 +38,7 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
+static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
 			  BUILDSTR " $";
 
 
@@ -50,12 +50,12 @@ int sip_socket=0;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002-2004 Thomas Ries\n" \
-"\nUsage: siproxd [options]\n\n" \
-"options:\n" \
-"       --help              (-h) help\n" \
-"       --debug <pattern>   (-d) set debug-pattern\n" \
-"       --config <cfgfile>  (-c) use the specified config file\n"\
+PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2004 Thomas Ries\n"
+"\nUsage: siproxd [options]\n\n"
+"options:\n"
+"       --help              (-h) help\n"
+"       --debug <pattern>   (-d) set debug-pattern\n"
+"       --config <cfgfile>  (-c) use the specified config file\n"
 "";
 
 
