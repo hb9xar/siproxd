@@ -135,7 +135,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    hostentry = gethostbyname_r(hostname,        /* the FQDN */
 			       &result_buffer,  /* the result buffer */
 			       tmp,
-			       GETHOSTBYNAME_BUFLEN - 1,
+			       GETHOSTBYNAME_BUFLEN,
 			       &error);
 
    /* gethostbyname_r() with 6 arguments (e.g. linux glibc) */
@@ -143,7 +143,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    gethostbyname_r(hostname,        /* the FQDN */
 		   &result_buffer,  /* the result buffer */
 		   tmp,
-		   GETHOSTBYNAME_BUFLEN - 1,
+		   GETHOSTBYNAME_BUFLEN,
 		   &hostentry,
 		   &error);
    #else
@@ -325,6 +325,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
       cache_initialized=1;
    }
 
+   if (retaddr) memset(retaddr, 0, sizeof(struct in_addr));
+
    time(&t);
    /* clean expired entries */
    for (i=0; i<IFADR_CACHE_SIZE; i++) {
@@ -372,7 +374,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 
    /* get address */
    if(ioctl(sockfd, SIOCGIFADDR, &ifr) != 0) {
-      ERROR("Error in ioctl SIOCGIFADDR: %s\n",strerror(errno));
+      ERROR("Error in ioctl SIOCGIFADDR: %s (interface %s)\n",
+      strerror(errno), ifname);
       close(sockfd);
       return STS_FAILURE;
    } 

@@ -127,9 +127,17 @@ int proxy_request (sip_ticket_t *ticket) {
       route = (osip_route_t *) osip_list_get(request->routes, 0);
       
       sts = get_ip_by_host(route->url->host, &addr1);
-      get_ip_by_ifname(configuration.inbound_if, &addr2);
-      get_ip_by_ifname(configuration.outbound_if, &addr3);
-      
+      if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
+         ERROR("can't find inbound interface %s - configuration error?",
+               configuration.inbound_if);
+         return STS_FAILURE;
+      }
+      if (get_ip_by_ifname(configuration.outbound_if, &addr3)!= STS_SUCCESS) {
+         ERROR("can't find outbound interface %s - configuration error?",
+               configuration.outbound_if);
+         return STS_FAILURE;
+      }
+
       /* my own route header? */
       if ((sts == STS_SUCCESS) &&
           ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
@@ -450,16 +458,14 @@ int proxy_request (sip_ticket_t *ticket) {
     */
    switch (type) {
    case REQTYP_INCOMING:
-      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
-      if (sts == STS_FAILURE) {
+      if (get_ip_by_ifname(configuration.inbound_if, &addr) != STS_SUCCESS) {
          ERROR("can't find inbound interface %s - configuration error?",
-               configuration.outbound_if);
+               configuration.inbound_if);
          return STS_FAILURE;
       }
       break;
    case REQTYP_OUTGOING:
-      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
-      if (sts == STS_FAILURE) {
+      if (get_ip_by_ifname(configuration.outbound_if, &addr) != STS_SUCCESS) {
          ERROR("can't find outbound interface %s - configuration error?",
                configuration.outbound_if);
          return STS_FAILURE;
@@ -1004,8 +1010,8 @@ if (configuration.debuglevel)
     */
 
    /* get outbound address */
-   sts = get_ip_by_ifname(configuration.outbound_if, &outside_addr);
-   if (sts == STS_FAILURE) {
+   if (get_ip_by_ifname(configuration.outbound_if, &outside_addr) != 
+       STS_SUCCESS) {
       ERROR("can't find outbound interface %s - configuration error?",
             configuration.outbound_if);
       sdp_message_free(sdp);
@@ -1013,8 +1019,8 @@ if (configuration.debuglevel)
    }
 
    /* get inbound address */
-   sts = get_ip_by_ifname(configuration.inbound_if, &inside_addr);
-   if (sts == STS_FAILURE) {
+   if (get_ip_by_ifname(configuration.inbound_if, &inside_addr) !=
+       STS_SUCCESS) {
       ERROR("can't find inbound interface %s - configuration error?",
              configuration.inbound_if);
       sdp_message_free(sdp);

@@ -379,22 +379,29 @@ int main (int argc, char *argv[])
             struct in_addr addr1, addr2, addr3;
 
             url = osip_message_get_uri(ticket.sipmsg);
-            sts = get_ip_by_host(url->host, &addr1);
 
-            get_ip_by_ifname(configuration.inbound_if,&addr2);
-            get_ip_by_ifname(configuration.outbound_if,&addr3);
+            if ( (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) &&
+                 (get_ip_by_ifname(configuration.inbound_if,&addr2) ==
+                  STS_SUCCESS) &&
+                 (get_ip_by_ifname(configuration.outbound_if,&addr3) ==
+                  STS_SUCCESS)) {
 
-            if ((sts == STS_SUCCESS) &&
-                ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-                 (memcmp(&addr1, &addr3, sizeof(addr1)) == 0))) {
-               /* I'm the registrar, send response myself */
-               sts = register_client(&ticket, 0);
-               sts = register_response(&ticket, sts);
+               if ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+                   (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) {
+                  /* I'm the registrar, send response myself */
+                  sts = register_client(&ticket, 0);
+                  sts = register_response(&ticket, sts);
+               } else {
+                  /* I'm just the outbound proxy */
+                  DEBUGC(DBCLASS_SIP,"proxying REGISTER request to:%s",
+                         url->host);
+                  sts = register_client(&ticket, 1);
+                  sts = proxy_request(&ticket);
+               }
             } else {
-               /* I'm just the outbound proxy */
-               DEBUGC(DBCLASS_SIP,"proxying REGISTER request to:%s",url->host);
-               sts = register_client(&ticket, 1);
-               sts = proxy_request(&ticket);
+               if (MSG_IS_REQUEST(ticket.sipmsg)) {
+                  sip_gen_response(&ticket, 408 /*request timeout*/);
+               }
             }
 	 } else {
             WARN("non-authorized registration attempt from %s",

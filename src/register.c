@@ -366,7 +366,12 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          if (force_lcl_masq) {
             struct in_addr addr;
             char *addrstr;
-            sts = get_ip_by_ifname(configuration.outbound_if,&addr);
+            if (get_ip_by_ifname(configuration.outbound_if, &addr) !=
+                STS_SUCCESS) {
+               ERROR("can't find outbound interface %s - configuration error?",
+                     configuration.outbound_if);
+               return STS_FAILURE;
+            }
             addrstr = utils_inet_ntoa(addr);
             DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
                    (url1_contact->username) ? url1_contact->username : "*NULL*",

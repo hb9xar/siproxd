@@ -208,7 +208,10 @@ int is_via_local (osip_via_t *via) {
 
       if (ptr) {
          DEBUGC(DBCLASS_BABBLE,"resolving IP of interface %s",ptr);
-         sts = get_ip_by_ifname(ptr, &addr_myself);
+         if (get_ip_by_ifname(ptr, &addr_myself) != STS_SUCCESS) {
+            ERROR("can't find interface %s - configuration error?", ptr);
+            continue;
+         }
       }
 
       /* check the extracted VIA against my own host addresses */
@@ -424,7 +427,10 @@ int is_sipuri_local (sip_ticket_t *ticket) {
 
       if (ptr) {
          DEBUGC(DBCLASS_BABBLE,"resolving IP of interface %s",ptr);
-         sts = get_ip_by_ifname(ptr, &addr_myself);
+         if (get_ip_by_ifname(ptr, &addr_myself) != STS_SUCCESS) {
+            ERROR("can't find interface %s - configuration error?", ptr);
+            continue;
+         }
       }
 
       /* check the extracted HOST against my own host addresses */
@@ -599,15 +605,13 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    char branch_id[VIA_BRANCH_SIZE];
 
    if (interface == IF_OUTBOUND) {
-      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
-      if (sts == STS_FAILURE) {
-         ERROR("can't find outbound interface %s - configuration error?",
+      if (get_ip_by_ifname(configuration.outbound_if, &addr) != STS_SUCCESS) {
+         ERROR("can't find interface %s - configuration error?",
                configuration.outbound_if);
          return STS_FAILURE;
       }
    } else {
-      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
-      if (sts == STS_FAILURE) {
+      if (get_ip_by_ifname(configuration.inbound_if, &addr) != STS_SUCCESS) {
          ERROR("can't find inbound interface %s - configuration error?",
                configuration.inbound_if);
          return STS_FAILURE;
