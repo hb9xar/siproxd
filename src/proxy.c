@@ -77,7 +77,7 @@ extern int sip_socket;				/* sending SIP datagrams */
  *    10. Forward the new request
  *    11. Set timer C
  */
-int proxy_request (osip_message_t *request) {
+int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    int i;
    int sts;
    int type;
@@ -160,6 +160,8 @@ int proxy_request (osip_message_t *request) {
     * figure out whether this is an incoming or outgoing request
     * by doing a lookup in the registration table.
     */
+#define _OLD_DIRECTION_EVALUATION 0
+#if _OLD_DIRECTION_EVALUATION
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -184,6 +186,44 @@ int proxy_request (osip_message_t *request) {
 	 break;
       }
    }
+#else
+   type = 0;
+   /*
+    * did I receive the telegram from a REGISTERED host?
+    * -> it must be an OUTGOING request
+    */
+   for (i=0; i<URLMAP_SIZE; i++) {
+      struct in_addr tmp_addr;
+
+      if (urlmap[i].active == 0) continue;
+      if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve host [%s]",
+             urlmap[i].true_url);
+      } else {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: reghost:%s ip:%s",
+                urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
+         if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
+            type=REQTYP_OUTGOING;
+	    break;
+         }
+      }
+   }
+
+   /*
+    * is the telegram directed to an internal registered host?
+    * -> it must be an INCOMING request
+    */
+   if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
+      if (urlmap[i].active == 0) continue;
+      /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
+      if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+          (!MSG_IS_REGISTER(request) &&
+           (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
+         type=REQTYP_INCOMING;
+	 break;
+      }
+   }
+#endif
 
 
 /*
@@ -224,7 +264,7 @@ int proxy_request (osip_message_t *request) {
    if (configuration.log_calls) {
       osip_uri_t *cont_url = NULL;
       if (!osip_list_eol(request->contacts, 0))
-      cont_url = ((osip_contact_t*)(request->contacts->node->element))->url;
+         cont_url = ((osip_contact_t*)(request->contacts->node->element))->url;
       
       /* INVITE */
       if (MSG_IS_INVITE(request)) {
@@ -267,6 +307,10 @@ int proxy_request (osip_message_t *request) {
    * from an external host to the internal masqueraded host
    */
    case REQTYP_INCOMING:
+      DEBUGC(DBCLASS_PROXY,"incoming request from %s@%s from outbound",
+	request->from->url->username? request->from->url->username:"*NULL*",
+        request->from->url->host? request->from->url->host: "*NULL*");
+
       /*
        * RFC 3261, Section 16.6 step 2
        * Proxy Behavior - Request Forwarding - Request-URI
@@ -313,6 +357,10 @@ int proxy_request (osip_message_t *request) {
    * from the internal masqueraded host to an external host
    */
    case  REQTYP_OUTGOING:
+      DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
+	request->from->url->username? request->from->url->username:"*NULL*",
+        request->from->url->host? request->from->url->host: "*NULL*");
+
       /*
        * RFC 3261, Section 16.6 step 2
        * Proxy Behavior - Request Forwarding - Request-URI
@@ -322,6 +370,7 @@ int proxy_request (osip_message_t *request) {
 
       /* if it is addressed to myself, then it must be some request
        * method that I as a proxy do not support. Reject */
+#if 0
       if (is_sipuri_local(request) == STS_TRUE) {
          WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
 	    request->sip_method? request->sip_method:"*NULL*",
@@ -334,6 +383,7 @@ int proxy_request (osip_message_t *request) {
 
          return STS_FAILURE;
       }
+#endif
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
@@ -355,6 +405,7 @@ int proxy_request (osip_message_t *request) {
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
+         /* stop the RTP proxying stream(s) */
          rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING);
          rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
       }
@@ -457,7 +508,7 @@ int proxy_request (osip_message_t *request) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_response (osip_message_t *response) {
+int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
    int i;
    int sts;
    int type;
@@ -493,6 +544,7 @@ int proxy_response (osip_message_t *response) {
     * they are swapped in their meaning for a response...
     */
 
+#if _OLD_DIRECTION_EVALUATION
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -519,6 +571,42 @@ int proxy_response (osip_message_t *response) {
 	 break;
       }
    }
+#else
+   type = 0;
+   /*
+    * did I receive the telegram from a REGISTERED host?
+    * -> it must be an OUTGOING response
+    */
+   for (i=0; i<URLMAP_SIZE; i++) {
+      struct in_addr tmp_addr;
+      if (urlmap[i].active == 0) continue;
+
+      if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve host [%s]",
+             urlmap[i].true_url);
+      } else {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: reghost:%s ip:%s",
+                urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
+         if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
+            type=RESTYP_OUTGOING;
+	    break;
+         }
+      }
+   }
+   /*
+    * is the telegram directed to an internal registered host?
+    * -> it must be an INCOMING response
+    */
+   if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
+      if (urlmap[i].active == 0) continue;
+      /* incoming response ('from' == 'masq') || ('from' == 'reg') */
+      if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
+          (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
+         type=RESTYP_INCOMING;
+	 break;
+      }
+   }
+#endif
 
 
 /*
@@ -529,6 +617,10 @@ int proxy_response (osip_message_t *response) {
    * from an external host to the internal masqueraded host
    */
    case RESTYP_INCOMING:
+      DEBUGC(DBCLASS_PROXY,"incoming response for %s@%s from outbound",
+	response->from->url->username? response->from->url->username:"*NULL*",
+	response->from->url->host? response->from->url->host : "*NULL*");
+
       if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
@@ -554,6 +646,12 @@ int proxy_response (osip_message_t *response) {
    * from the internal masqueraded host to an external host
    */
    case RESTYP_OUTGOING:
+      DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
+	     response->from->url->username ?
+                response->from->url->username : "*NULL*",
+	     response->from->url->host ? 
+                response->from->url->host : "*NULL*");
+
       #define satoi atoi  /* used in MSG_TEST_CODE macro ... */
       /* If an 200 OK or 183 Trying answer to an INVITE request,
        * rewrite body */
@@ -762,7 +860,15 @@ if (configuration.debuglevel)
             msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
 
             if (msg_port > 0) {
-               rtp_start_fwd(osip_message_get_call_id(mymsg), direction,
+               osip_uri_t *cont_url = NULL;
+               char *user=NULL;
+               if (!osip_list_eol(mymsg->contacts, 0))
+                  cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
+               if (cont_url) user=cont_url->username;
+
+               rtp_start_fwd(osip_message_get_call_id(mymsg),
+                             user,
+                             direction,
                              media_stream_no,
                              map_addr, &map_port,
                              msg_addr, msg_port);
@@ -836,6 +942,11 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    char *host;
    char *port;
    osip_uri_t *url;
+
+   if ((idx >= URLMAP_SIZE) || (idx < 0)) {
+      WARN("proxy_rewrite_request_uri: called with invalid index");
+      return STS_FAILURE;
+   }
 
    DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
    url=osip_message_get_uri(mymsg);

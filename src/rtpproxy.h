@@ -26,6 +26,7 @@ typedef struct {
    int rtp_tx_sock;				/* tx socket */
    char callid_number[CALLIDNUM_SIZE];          /* call ID */
    char callid_host[CALLIDHOST_SIZE];           /*  --"--  */
+   char client_id[USERNAME_SIZE];
    int direction;                               /* Direction of RTP stream */
    int media_stream_no;
    struct in_addr local_ipaddr;                 /* local IP */
@@ -39,35 +40,8 @@ typedef struct {
  * RTP relay
  */
 int  rtp_relay_init(void);
-int  rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
-                          int media_stream_no,
+int  rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
+                          int direction, int media_stream_no,
 		          struct in_addr local_ipaddr, int *local_port,
                           struct in_addr remote_ipaddr, int remote_port);
 int  rtp_relay_stop_fwd (osip_call_id_t *callid, int direction, int nolock);
-
-
-/*
- * RTP masquerading
- */
-int  rtp_masq_init(void);
-int  rtp_masq_start_fwd (osip_call_id_t *callid, int direction,
-                          int media_stream_no,
-		          struct in_addr local_ipaddr, int *local_port,
-                          struct in_addr remote_ipaddr, int remote_port);
-int  rtp_masq_stop_fwd (osip_call_id_t *callid, int direction);
-
-/*
- * RTP masquerading (ipchains part)
- */
-int rtp_mchains_create (struct in_addr lcl_addr, int lcl_port,
-                        struct in_addr msq_addr, int msq_port);
-int rtp_mchains_delete (struct in_addr lcl_addr, int lcl_port,
-                        struct in_addr msq_addr, int msq_port);
-
-/*
- * RTP masquerading (netfilter part)
- */
-int rtp_mnetfltr_create (struct in_addr lcl_addr, int lcl_port,
-                         struct in_addr msq_addr, int msq_port);
-int rtp_mnetfltr_delete (struct in_addr lcl_addr, int lcl_port,
-                         struct in_addr msq_addr, int msq_port);

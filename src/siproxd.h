@@ -41,8 +41,8 @@ void register_agemap(void);
 int  register_response(osip_message_t *request, int flag);		/*X*/
 
 /* proxy.c */
-int proxy_request (osip_message_t *request);				/*X*/
-int proxy_response (osip_message_t *response);				/*X*/
+int proxy_request (osip_message_t *request, struct sockaddr_in *from);	/*X*/
+int proxy_response (osip_message_t *response, struct sockaddr_in *from);/*X*/
 int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 
@@ -74,11 +74,11 @@ int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, int direction,              /*X*/
-                    int media_stream_no,
+int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
+                    int direction, int media_stream_no,
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (osip_call_id_t *callid, int direction);              /*X*/
+int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
@@ -104,7 +104,6 @@ struct urlmap_s {
    osip_uri_t *true_url;	// true URL of UA  (inbound URL)
    osip_uri_t *masq_url;	// masqueraded URL (outbound URL)
    osip_uri_t *reg_url;		// registered URL  (masq URL as wished by UA)
-//   osip_via_t *via;
 };
 /*
  * the difference between masq_url and reg_url is, 

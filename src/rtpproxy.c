@@ -64,8 +64,8 @@ int rtpproxy_init( void ) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_start_fwd (osip_call_id_t *callid, int direction,
-                   int media_stream_no,
+int rtp_start_fwd (osip_call_id_t *callid, char *client_id,
+                   int direction, int media_stream_no,
 		   struct in_addr local_ipaddr, int *local_port,
                    struct in_addr remote_ipaddr, int remote_port) {
   int sts=STS_FAILURE;
@@ -73,9 +73,10 @@ int rtp_start_fwd (osip_call_id_t *callid, int direction,
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
-      sts = rtp_relay_start_fwd (callid, direction, media_stream_no,
-                                  local_ipaddr, local_port,
-                                  remote_ipaddr, remote_port);
+      sts = rtp_relay_start_fwd (callid, client_id,
+                                 direction, media_stream_no,
+                                 local_ipaddr, local_port,
+                                 remote_ipaddr, remote_port);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);

@@ -155,6 +155,9 @@ static void *rtpproxy_main(void *arg) {
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].rtp_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
+#if 0
+/* looks like for some reason sometimes the socket
+   is not yet ready (right after start of rtp stream) */
             if (count<0) {
                int j;
                WARN("read() [fd=%i, %s:%i] returned error [%s]",
@@ -162,14 +165,19 @@ static void *rtpproxy_main(void *arg) {
                utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
                rtp_proxytable[i].local_port, strerror(errno));
                for (j=0; j<RTPPROXY_SIZE;j++) {
-                  DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i",
-                  rtp_proxytable[j].rtp_tx_sock,
-                  rtp_proxytable[j].callid_number,
-                  rtp_proxytable[j].callid_host,
-                  rtp_proxytable[j].direction);
+                  DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i "
+                         "lp:%i, rp:%i",
+                         j,
+                         rtp_proxytable[j].rtp_rx_sock,
+                         rtp_proxytable[j].rtp_tx_sock,
+                         rtp_proxytable[j].callid_number,
+                         rtp_proxytable[j].callid_host,
+                         rtp_proxytable[j].direction,
+                         rtp_proxytable[j].local_port,
+                         rtp_proxytable[j].remote_port);
                }
            }
-
+#endif
             /*
              * forwarding an RTP packet only makes sense if we really
              * have got some data in it (count > 0)
@@ -206,6 +214,18 @@ static void *rtpproxy_main(void *arg) {
                                           rtp_proxytable[i].remote_ipaddr,
                                           rtp_proxytable[i].remote_port,
                                           rtp_buff, count, 0); /* don't dump it */
+
+                  if (sts != STS_SUCCESS) {
+                     /* if sendto() fails with bad filedescriptor,
+                      * this means that the opposite stream has been
+                      * canceled or timed out.
+                      * we should then cancel this stream as well.*/
+
+                     WARN("stopping opposite stream");
+                     /* don't lock the mutex, as we own the lock */
+                     rtp_relay_stop_fwd(&callid,
+                                        rtp_proxytable[i].direction, 1);
+                  }
                }
             } /* count > 0 */
 
@@ -259,7 +279,8 @@ static void *rtpproxy_main(void *arg) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
+int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
+                         int direction,
                          int media_stream_no, struct in_addr local_ipaddr,
                          int *local_port, struct in_addr remote_ipaddr,
                          int remote_port) {
@@ -268,12 +289,17 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
    int freeidx;
    int sts=STS_SUCCESS;
    osip_call_id_t cid;
+   
 
    if (callid == NULL) {
       ERROR("rtp_relay_start_fwd: callid is NULL!");
       return STS_FAILURE;
    }
 
+   if (client_id == NULL) {
+      ERROR("rtp_relay_start_fwd: contact header is NULL!");
+      return STS_FAILURE;
+   }
 
    /*
     * life insurance: check size of received call_id strings
@@ -291,6 +317,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
       ERROR("rtp_relay_start_fwd: received callid host "
             "has too many characters (%i, max=%i)",
             strlen(callid->host),CALLIDHOST_SIZE);
+      return STS_FAILURE;
+   }
+   if (client_id && strlen(client_id) > USERNAME_SIZE) {
+      ERROR("rtp_relay_start_fwd: received contact user "
+            "has too many characters (%i, max=%i)",
+            strlen(client_id),USERNAME_SIZE);
       return STS_FAILURE;
    }
 
@@ -314,9 +346,9 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
 
    /*
     * figure out, if this is an request to start an RTP proxy stream
-    * that is already existing (identified by SIP Call-ID, direction and
-    * media_stream_no). This can be due to UDP repetitions of the
-    * INVITE request...
+    * that is already existing (identified by SIP Call-ID, direction,
+    * media_stream_no and some other client unique thing).
+    * This can be due to UDP repetitions of the INVITE request...
     */
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
@@ -324,7 +356,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
       if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == direction) &&
-         (rtp_proxytable[i].media_stream_no == media_stream_no) ) {
+         (rtp_proxytable[i].media_stream_no == media_stream_no) &&
+         (strcmp(rtp_proxytable[i].client_id, client_id) == 0)) {
          /*
           * The RTP port number reported by the UA MAY change
           * for a given media stream
@@ -335,9 +368,11 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
                    rtp_proxytable[i].remote_port, remote_port);
             rtp_proxytable[i].remote_port = remote_port;
          }
-         /* return the already known port number */
-         DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
-                "id=%s, #=%i)", rtp_proxytable[i].local_port,
+         /* return the already known local port number */
+         DEBUGC(DBCLASS_RTP,"RTP stream already active (raddr=%s, "
+                "port=%i, id=%s, #=%i)",
+                utils_inet_ntoa(remote_ipaddr),
+                rtp_proxytable[i].local_port,
                 rtp_proxytable[i].callid_number,
                 rtp_proxytable[i].media_stream_no);
 	 *local_port=rtp_proxytable[i].local_port;
@@ -390,8 +425,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
       }
    } /* for i */
 
-   DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: port=%i, sock=%i freeidx=%i",
-          port, sock, freeidx);
+   DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: addr=%s, port=%i, sock=%i "
+          "freeidx=%i", utils_inet_ntoa(local_ipaddr), port, sock, freeidx);
 
    /* found an unused port? No -> RTP port pool fully allocated */
    if ((port == 0) || (sock == 0)) {
@@ -413,6 +448,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
       strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
    } else {
       rtp_proxytable[freeidx].callid_host[0]='\0';
+   }
+
+   if (client_id) {
+      strcpy(rtp_proxytable[freeidx].client_id, client_id);
+   } else {
+      rtp_proxytable[freeidx].client_id[0]='\0';
    }
 
    rtp_proxytable[freeidx].direction = direction;
@@ -450,8 +491,8 @@ unlock_and_exit:
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_relay_stop_fwd (osip_call_id_t *callid, int direction,
-                        int nolock) {
+int rtp_relay_stop_fwd (osip_call_id_t *callid,
+                        int direction, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;

@@ -104,6 +104,7 @@ void register_init(void) {
                R(urlmap[i].reg_url->port);
             }
          }
+         fclose(stream);
       }
    }
    return;

@@ -124,8 +124,10 @@ int check_vialoop (osip_message_t *my_msg) {
 
 3) What happens if we have 'clashes'  with private addresses??
    From that point of view, siproxd *should* not try to
-   check against it's local IF addresses if thei are private.
+   check against it's local IF addresses if they are private.
    this then of course again can lead to a endless loop...
+   -> Use a fixed unique part of branch parameter to identify that it
+   is MY via
    
    can we use something like a Tag in via headers?? (a veriy likely
    to-be-unique ID)
@@ -142,10 +144,21 @@ int check_vialoop (osip_message_t *my_msg) {
       osip_via_t *via;
       via = (osip_via_t *) osip_list_get (my_msg->vias, pos);
       sts = is_via_local (via);
-      if (sts == STS_TRUE) found_own_via=1;
+      if (sts == STS_TRUE) found_own_via+=1;
       pos++;
    }
-   return (found_own_via)? STS_TRUE : STS_FALSE;
+
+   /*
+    * what happens if a message is coming back to me legally?
+    *  UA1 -->--\       /-->--\
+    *            siproxd       Registrar
+    *  UA2 --<--/       \--<--/
+    *
+    * This may also lead to a VIA loop - so I probably must take the branch
+    * parameter into count (or a unique part of it) OR just allow at least 2
+    * vias of my own.
+    */
+   return (found_own_via>2)? STS_TRUE : STS_FALSE;
 }
 
 

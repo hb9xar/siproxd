@@ -355,7 +355,7 @@ int main (int argc, char *argv[])
                /* I'm just the outbound proxy */
                DEBUGC(DBCLASS_SIP,"proxying REGISTER request to:%s",url->host);
                sts = register_client(my_msg, 1);
-               sts = proxy_request(my_msg);
+               sts = proxy_request(my_msg, &from);
             }
 	 } else {
             WARN("non-authorized registration attempt from %s",
@@ -382,7 +382,7 @@ int main (int argc, char *argv[])
        */
       } else if (MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_SIP) {
-            sts = proxy_request(my_msg);
+            sts = proxy_request(my_msg, &from);
 	 } else {
             INFO("non-authorized request received from %s",
 	         utils_inet_ntoa(from.sin_addr));
@@ -394,7 +394,7 @@ int main (int argc, char *argv[])
        */
       } else if (MSG_IS_RESPONSE(my_msg)) {
          if (access & ACCESSCTL_SIP) {
-            sts = proxy_response(my_msg);
+            sts = proxy_response(my_msg, &from);
 	 } else {
             INFO("non-authorized response received from %s",
 	         utils_inet_ntoa(from.sin_addr));

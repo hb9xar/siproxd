@@ -43,7 +43,7 @@ static struct {
 {"Windows RTC",	 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}},
 {"KPhone",	 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}},
 /* the following line holds the default entries */
-{NULL,		 { 1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  1,  1}}
+{NULL,		 { 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1}}
 };
 
 static struct {
