@@ -5,20 +5,6 @@
 #
 
 ######################################################################
-#  DBCLASS_BABBLE  0x00000001	   // babble (like entering/leaving fnc)
-#  DBCLASS_NET     0x00000002	   // network
-#  DBCLASS_SIP     0x00000004	   // SIP manipulations
-#  DBCLASS_REG     0x00000008	   // Client registration
-#  DBCLASS_NOSPEC  0x00000010	   // non specified class
-#  DBCLASS_PROXY   0x00000020	   // proxy
-#  DBCLASS_DNS     0x00000040	   // DNS stuff
-#  DBCLASS_NETTRAF 0x00000080	   // network traffic
-#  DBCLASS_CONFIG  0x00000100	   // configuration
-#  DBCLASS_RTP     0x00000200      // RTP proxy
-#
-debug_level = 0x000002fe
-
-######################################################################
 # The IP addresses of the INBOUND and OUTBOUND interface can
 # be specified as hostnames or in dotted decimal form:
 #
@@ -59,8 +45,22 @@ rtp_port_high = 7080
 
 ######################################################################
 # Timeout for RTP streams
-#    after this number of seconds, at RTP stream is considered dead
+#    after this number of seconds, an RTP stream is considered dead
 #    and proxying it will be stopped.
 #    
 rtp_timeout = 60
+
+######################################################################
+#  DBCLASS_BABBLE  0x00000001	   // babble (like entering/leaving fnc)
+#  DBCLASS_NET     0x00000002	   // network
+#  DBCLASS_SIP     0x00000004	   // SIP manipulations
+#  DBCLASS_REG     0x00000008	   // Client registration
+#  DBCLASS_NOSPEC  0x00000010	   // non specified class
+#  DBCLASS_PROXY   0x00000020	   // proxy
+#  DBCLASS_DNS     0x00000040	   // DNS stuff
+#  DBCLASS_NETTRAF 0x00000080	   // network traffic
+#  DBCLASS_CONFIG  0x00000100	   // configuration
+#  DBCLASS_RTP     0x00000200      // RTP proxy
+#
+debug_level =      0x00000218
 

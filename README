@@ -4,8 +4,8 @@ Be warned, this (and all the other) documentantation is far from
 complete. This is still considered an alpha release.
 
 
-Overview:
-=========
+OVERVIEW
+========
 Siprox is an proxy/masquerading daemon for the SIP protocol.
 It handles registrations of SIP clients on a private IP network
 and performs rewriting of the SIP message bodies to make SIP
@@ -20,17 +20,18 @@ IP addresses and port numbers.
 
 
 
-Requirements:
-=============
+REQUIREMENTS
+============
 - libosip-0.8.8		(http://www.fsf.org/software/osip/)
+- pthreads		(should be part of any Linux distribution)
 
-Up to now, this packages only has been tested under an i386 Redhat Linux 6.0.
+Up to now, siporxd only has been tested under an i386 Redhat Linux 6.0.
 However, it should build and run under newer versions (feedback is welcome).
 
 
 
-How to get started:
-===================
+HOW TO GET STARTED
+==================
 
 - ./configure
 
@@ -38,82 +39,124 @@ How to get started:
 
 - make install
 
-- copy sipproxd.conf.example to /etc/siproxd.conf
+- copy doc/sipproxd.conf.example to /etc/siproxd.conf
 
 - edit /etc/siproxd.conf according to your situation
-  At least 'host_inbound' and 'host_outbound' have to be adapted!
-  host_inbound is your IP address of your private network,
-  host_outbound is your publich IP address or hostname (if you
-  have dynamic IP addresses, then you might want to use a hostname
-  here and use a dynamic DNS service like dyndns.org)
+  At least 'host_inbound' and 'host_outbound' *must* be adapted!
+  'host_inbound' is the firewalls IP address of your private network,
+  'host_outbound' is the  publich IP address or hostname of the
+  firewall. (If you have dynamic IP addresses, then you might want
+  to use a hostname here and use a dynamic DNS service like [1])
+
+- start siproxd (siproxd does *not* require root privilegdes)
+  $ siproxd
 
 
-
-What siproxd does:
+WHAT SIPROXD DOES
 =================
-Siproxd's main purpose (up to now) is to rewrite SIP messages
-to be able to operate via an masquerading firewall.
-Since release 0.1.2 siproxd can proxy incomming RTP streams.
+Siproxd's purpose is to act as an SIP proxy for softphones located
+in private IP ranges. Therefore it will rewrite SIP messages to allow a
+softphone to communicate to a counterpart that is located in the Internet.
+There usually will be a masquerading firewall in between to 'hide' the
+private IP range (either via NAT - network address translation or 
+masuerading). Check the scenario drawn below.
+
+With release 0.1.2 siproxd is also able to proxy incomming RTP data
+streams. The config parameters 'rtp_port_low' and rtp_port_high' define
+the port range that siproxd will use for incomming RTP data streams.
+'rtp_timeout' defines after what time an unused  (no data received)
+rtp stream is considered dead and removed.
+
+** RTP data stream proxying is still experimental code.
+** As I had not yet the possibility to test this feature extensively,
+** I'm happy about any feedback.
 
 
 
-What siproxd does NOT do:
-=========================
+Scenario
+--------
 
-SINCE RELEASE 0.1.2:
-  Siproxd should be able to proxy incomming RTP data streams (UDP only).
-  This is still very experimental code ;-)
-  The config parameters 'rtp_port_low' and rtp_port_high' define
-  the port range that siproxd will use for incomming RTP data streams.
-  'rtp_timeout' defines after what time an unused  (no data received)
-  rtp stream is considered dead and removed.
-  
-  ** As I had not yet the possibility to test this feature,
-  ** I'd be glad about feedback.
-
-PRIOR TO RELEASE 0.1.2:
-  Siproxd does *not* (yet) create masquerading tunnels or port-forwarding
-  for the data stream through the firewall.
-
-  These forwarding rules have to be set-up manually (currently)
-
-  Example, using ipchains (mfw):
-  # ipchains -A input --proto udp --dport 7078 -m 100 -j ACCEPT
-  # ipmasqadm mfw -A -m 100 -r <remoteaddress> 7078
-
-  Example, using ipchains (portfw):
-  # portfw -a -P udp -L <localaddress> 7078 -R <remoteaddress> 7078
+ private IP address range             :          Internet
+ 10.0.0.x                             :          (publich IP address range)
+                                      :
+                                      :         foo.bar.org
+ +-------------+	       +--------------+
+ !             !.10	    .1 ! masquerading ! publicIP
+ ! IntHost     !---------------! Firewall     !------------>>  
+ !             !               !              !   
+ +-------------+	       +--------------+
+                                      :
 
 
 
-Limitations:
-============
-- currently, only UDP is supported
-- very likely it does not follow the SIP spec in all details ;-)
+ - The Firewall does IP masquerading and is running siproxd
+
+ - IntHost is running an SIP softphone (like linphone, kphone)
+
+ - The SIP address used by the softphone is sip:johndoe@foo.bar.org
+
+ - The softphone is configured to register itself at siproxd
+   running on the firewall host (10.0.0.1) as sip:johndoe@foo.bar.org
+
+ - foo.bar.org is the domain name corresponding to the public IP address
+   of the firewall (eg use some dynamic DNS service [1])
+
+ Firewall rules for incomming traffic (ipchains example):
+ $ ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
+ $ ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
+
+ The first line will allow incomming SIP traffic. The second line will
+ allow incomming RTP traffic on the ports 7070 - 7080 (the default port
+ range used by siproxd for incomming RTP traffic).
 
 
 
-Important Notice:
-=================
-The gethostbyname() function leaks memory in RedHat 6.0 with glibc 2.1.1.
-The quick fix is to delete nisplus service from hosts entry in
-/etc/nsswitch.conf. In my tests, memory use remained stable after I
-made the mentioned change.
+REFERENCES
+==========
+[1] dynamic DNS service http://www.dyndns.org
+
+
+
+LIMITATIONS
+===========
+- currently, the SIP part only supports UDP
+- RTP proxy support is still experimantal (so as the rest of siproxd ;-)
+- very likely it does not follow the SIP spec (RFC3261) in all details
+- check the TODO file for more things that we-cannot-do-but-would-like-to
+
+
+IMPORTANT NOTICE
+================
+The gethostbyname() function leaks memory in glibc 2.1.1 (-> RedHat 6.0).
+The quick fix is to delete the nisplus service from hosts entry in
+/etc/nsswitch.conf.
+In my tests, memory use remained stable after I made the mentioned change.
+
 (source: http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
 
 
-Contacts:
-=========
+CONTACTS
+========
 Please feel free to contact the author to:
-   - provide feedback
-   - report bugs,
+   - provide feedback, report bugs,
    - request for additional features
    - report interoperability with softphones
    - ...
 
 and visit the website at http://siproxd.sourceforge.net/
 
+There also is a siproxd mailinglist available on sourceforge.
+
 Thomas Ries  (tries@gmx.net)
    GnuPG Public Key:
    pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
    Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
+
+
+
+CREDITS
+=======
+
+Thanks to sourceforge.net for providing the distribution platform and
+infrastructure.
+

@@ -41,10 +41,6 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-/*
- * knows hot to rewrite the SIP URLs in a request/response
- */
-
 extern int errno;
 extern struct urlmap_s urlmap[];		/* URL mapping table     */
 extern struct lcl_if_s local_addresses;
@@ -60,7 +56,7 @@ int proxy_request (sip_t *request) {
    int sts;
    int type;
    struct in_addr addr;
-//   contact_t *contact; /* contact header issue */
+   contact_t *contact;
    url_t *url;
    int port;
    char *buffer;
@@ -77,25 +73,6 @@ int proxy_request (sip_t *request) {
       return 1;
    }
 
-#if 0 /* Contact Header Issue */
-   /* figure out if this is an request comming from the outside
-    * world to one of our registered clients ('to' == 'masq' URL)
-    * or if this is a request sent by on e of our registered clients
-    * ('from' == 'true' URL) 
-    */
-   msg_getcontact(request,0,&contact);
-
-   /* seen with linphone-0.9.1pre1 w/ user-agent: oSIP/Linphone-0.8.0
-      no contact header in reequest */
-   if (contact==NULL) {
-      ERROR("Contact header is missing!");
-      /* THIS IS SEVERE - I HAVE NO WAY TO FIGURE OUT WHO THE
-         REAL CLIENT IS BEHIND THIS PACKET...
-         what can I do here?  */
-      return 1;
-   }
-#endif
-   
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -109,16 +86,6 @@ int proxy_request (sip_t *request) {
 	 break;
       }
 
-#if 0 /* Contact Header Issue */
-      /* outgoing request ('contact' == 'true') */
-      if (compare_url(contact->url, urlmap[i].true_url)==0) {
-         type=REQTYP_OUTGOING;
-         DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
-	        request->from->url->username,
-		request->from->url->host);
-	 break;
-      }
-#endif
       /* outgoing request ('from' == 'masq') */
       if (compare_url(request->from->url, urlmap[i].masq_url)==0) {
          type=REQTYP_OUTGOING;
@@ -146,11 +113,23 @@ int proxy_request (sip_t *request) {
       url=msg_geturi(request);
       free(url->host);url->host=NULL;
 {
-      char *copy;
-      copy = (char *)malloc(strlen(urlmap[i].true_url->host)+1);
-      memcpy(copy, urlmap[i].true_url->host, strlen(urlmap[i].true_url->host));
-      copy[strlen(urlmap[i].true_url->host)]='\0';
-      url_sethost(url, copy);
+      char *host;
+      char *port;
+      /* set the true host */
+      if(urlmap[i].true_url->host) {
+	 host = (char *)malloc(strlen(urlmap[i].true_url->host)+1);
+	 memcpy(host, urlmap[i].true_url->host, strlen(urlmap[i].true_url->host));
+	 host[strlen(urlmap[i].true_url->host)]='\0';
+	 url_sethost(url, host);
+      }
+
+      /* set the true port */
+      if(urlmap[i].true_url->port) {
+	 port = (char *)malloc(strlen(urlmap[i].true_url->port)+1);
+	 memcpy(port, urlmap[i].true_url->port, strlen(urlmap[i].true_url->port));
+	 port[strlen(urlmap[i].true_url->port)]='\0';
+	 url_setport(url, port);
+      }
 }
 
       /* add my Via header line (inbound interface)*/
@@ -159,7 +138,7 @@ int proxy_request (sip_t *request) {
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream */
-         sts = rtp_stop_fwd(msg_getcall_id(request));
+         rtp_stop_fwd(msg_getcall_id(request));
       }
 
       break;
@@ -173,13 +152,36 @@ int proxy_request (sip_t *request) {
          sts = proxy_rewrite_invitation_body(request);
       }
 
+      /* rewrite Contact header to represent the masqued address */
+      msg_getcontact(request,0,&contact);
+      if (contact != NULL) {
+         for (i=0;i<URLMAP_SIZE;i++){
+	    if (urlmap[i].active == 0) continue;
+            if (compare_url(contact->url, urlmap[i].true_url)==0) break;
+         }
+         /* found a mapping entry */
+         if (i<URLMAP_SIZE) {
+            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+	           contact->url->username, contact->url->host,
+		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
+            /* remove old entry */
+            list_remove(request->contacts,0);
+            contact_free(contact);
+            free(contact);
+            /* clone the masquerading url */
+	    contact_init(&contact);
+            url_clone(urlmap[i].masq_url, &contact->url);
+            list_add(request->contacts,contact,-1);
+         }     
+      }
+
       /* add my Via header line (outbound interface)*/
       sts = proxy_add_myvia(request, 0);
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream */
-         sts = rtp_stop_fwd(msg_getcall_id(request));
+         rtp_stop_fwd(msg_getcall_id(request));
       }
 
       break;
@@ -252,6 +254,7 @@ int proxy_response (sip_t *response) {
    int type;
    struct in_addr addr;
    via_t *via;
+   contact_t *contact;
    int port;
    char *buffer;
 
@@ -318,16 +321,6 @@ int proxy_response (sip_t *response) {
    * from an external host to the internal masqueraded host
    */
    case RESTYP_INCOMMING:
-#if 0 /* do we really have to?? in the incomming response
-         we have the correct address. But we must rewrite an
-	 outgoing response to an incomming INVITE request ! */
-      /* If an 200 answer to an INVITE request, rewrite body */
-      if ((MSG_IS_RESPONSEFOR(response,"INVITE") &&
-          (MSG_TEST_CODE(response, 200)) ) {
-         sts = proxy_rewrite_invitation_body(response);
-      }
-#endif
-
       break;
    
   /*
@@ -340,6 +333,30 @@ int proxy_response (sip_t *response) {
           (MSG_TEST_CODE(response, 200))) {
          sts = proxy_rewrite_invitation_body(response);
       }
+
+      /* rewrite Contact header to represent the masqued address */
+      msg_getcontact(response,0,&contact);
+      if (contact != NULL) {
+         for (i=0;i<URLMAP_SIZE;i++){
+	    if (urlmap[i].active == 0) continue;
+            if (compare_url(contact->url, urlmap[i].true_url)==0) break;
+         }
+         /* found a mapping entry */
+         if (i<URLMAP_SIZE) {
+            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+	           contact->url->username, contact->url->host,
+		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
+            /* remove old entry */
+            list_remove(response->contacts,0);
+            contact_free(contact);
+            free(contact);
+            /* clone the masquerading url */
+	    contact_init(&contact);
+            url_clone(urlmap[i].masq_url, &contact->url);
+            list_add(response->contacts,contact,-1);
+         }     
+      }
+
       break;
    
    default:
@@ -529,7 +546,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
    inb_clnt_port = atoi(sdp_m_port_get(sdp,0));
    /* start an RTP proxying stream */
-   sts = rtp_start_fwd(msg_getcall_id(mymsg),
+   rtp_start_fwd(msg_getcall_id(mymsg),
                        outb_addr, &outb_rtp_port,
 		       lcl_clnt_addr, inb_clnt_port);
 

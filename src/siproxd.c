@@ -53,11 +53,11 @@ int main (int argc, char *argv[])
    extern char *optarg;
    int ch1;
    
-   char configfile[64]="siproxd";
-   int  config_search=1;
+   char configfile[64]="siproxd";	/* basename of configfile */
+   int  config_search=1;		/* search the config file */
 
    /* prepare default configuration */
-   configuration.debuglevel=-1;
+   configuration.debuglevel=0;
    configuration.daemonize=0;
    configuration.sip_listen_port=SIP_PORT;
    configuration.inboundhost=NULL;
@@ -121,7 +121,12 @@ int main (int argc, char *argv[])
    register_init();
 
    /* listen for incomming messages */
-   sipsock_listen();
+   sts=sipsock_listen();
+   if (sts != 0) {
+      /* failure to allocate SIP socket... */
+      ERROR("unable to bind to SIP listening socket - aborting"); 
+      return 0;
+   }
 
    /* initialize the RTP proxy thread */
    rtpproxy_init();

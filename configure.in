@@ -1,3 +1,13 @@
+dnl
+dnl	History
+dnl	-------
+dnl	before time		a lot happend before start of history
+dnl	8-Sep-2002   tries	included more tests for used functions
+dnl
+dnl
+dnl
+dnl
+
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/siproxd.c)
 
@@ -5,7 +15,7 @@ dnl ******************************************************************
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=1
-SPD_MICRO_VERSION=2
+SPD_MICRO_VERSION=3
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
 dnl *********************************************************************
@@ -26,7 +36,7 @@ AC_CHECK_LIB(pthread, pthread_create)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(sys/time.h unistd.h)
+AC_CHECK_HEADERS(sys/time.h unistd.h errno.h)
 AC_CHECK_HEADERS(stdarg.h varargs.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -38,7 +48,12 @@ AC_STRUCT_TM
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(select socket strerror strstr)
+AC_CHECK_FUNCS(strerror)
+AC_CHECK_FUNCS(gethostbyname)
+AC_CHECK_FUNCS(socket bind select read send sendto)
+AC_CHECK_FUNCS(getopt_long_only)
+AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf fgets sscanf)
+
 
 AC_OUTPUT(Makefile \
 src/Makefile \

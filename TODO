@@ -1,20 +1,19 @@
-TODOs, in anarchistic order:
-============================
-
+TODOs, in random order:
+=======================
 
 - re-think the registration mechanism (mapping and decision criteria
   for in- and outgoing stuff...
   
-- 2.2.x kernels:
-  make use of the portfw.so (ipmasqadm package) to create forwarding
-  tunnels for incomming data streams
-  How to determine when finished? Is it possible to keep it stateless?
-
-- Is there a possibility to open up an masquerading tunnel by
-  a userspace program on the firewall?
-
 - logging via syslog if running in daemon mode
 
 - get_ip_by_host: reduce DNS timeouts
 
+- Documentation
+
+- automagically create a proper config file during install
+
+- client authentication
+
+- portability to other platforms / operating systems
+  first goal: other Unixes
 

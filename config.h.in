@@ -21,17 +21,56 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 #undef TM_IN_SYS_TIME
 
+/* Define if you have the bind function.  */
+#undef HAVE_BIND
+
+/* Define if you have the fgets function.  */
+#undef HAVE_FGETS
+
+/* Define if you have the gethostbyname function.  */
+#undef HAVE_GETHOSTBYNAME
+
+/* Define if you have the getopt_long_only function.  */
+#undef HAVE_GETOPT_LONG_ONLY
+
+/* Define if you have the read function.  */
+#undef HAVE_READ
+
 /* Define if you have the select function.  */
 #undef HAVE_SELECT
+
+/* Define if you have the send function.  */
+#undef HAVE_SEND
+
+/* Define if you have the sendto function.  */
+#undef HAVE_SENDTO
 
 /* Define if you have the socket function.  */
 #undef HAVE_SOCKET
 
+/* Define if you have the sprintf function.  */
+#undef HAVE_SPRINTF
+
+/* Define if you have the sscanf function.  */
+#undef HAVE_SSCANF
+
+/* Define if you have the strchr function.  */
+#undef HAVE_STRCHR
+
 /* Define if you have the strerror function.  */
 #undef HAVE_STRERROR
 
+/* Define if you have the strncpy function.  */
+#undef HAVE_STRNCPY
+
 /* Define if you have the strstr function.  */
 #undef HAVE_STRSTR
+
+/* Define if you have the vfprintf function.  */
+#undef HAVE_VFPRINTF
+
+/* Define if you have the <errno.h> header file.  */
+#undef HAVE_ERRNO_H
 
 /* Define if you have the <stdarg.h> header file.  */
 #undef HAVE_STDARG_H

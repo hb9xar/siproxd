@@ -243,7 +243,7 @@ int register_response(sip_t *request, int flag) {
    /* free the resources */
    msg_free(response);
    free(response);
-   free (buffer);
+   free(buffer);
    return 0;
 }
 

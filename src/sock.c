@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -43,8 +44,6 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-extern int errno;
-
 static int listen_socket=0;
 
 /*
@@ -57,6 +56,7 @@ int sipsock_listen (void) {
 
    memset(&ipaddr, 0, sizeof(struct in_addr));
    listen_socket=sockbind(ipaddr, configuration.sip_listen_port);
+   if (listen_socket==0) return 1; /* failure*/
 
    DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
    return 0;
@@ -121,8 +121,11 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    sts = sendto (*sock, buffer, size, 0, &dst_addr, sizeof(dst_addr));
    
    if (sts == -1) {
-      ERROR("sendto() call failed:%s",strerror(errno));
-      return 1;
+      if (errno != ECONNREFUSED) {
+         ERROR("sendto() call failed:%s",strerror(errno));
+         return 1;
+      }
+     DEBUGC(DBCLASS_BABBLE,"sendto() call failed:%s",strerror(errno));
    }
 
    return 0;

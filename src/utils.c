@@ -187,7 +187,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
       if (dns_cache[i].hostname[0]=='\0') continue; /* empty */
       if (strcmp(hostname, dns_cache[i].hostname) == 0) { /* match */
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
-         DEBUGC(DBCLASS_DNS, "from cache: %s -> %s",
+         DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
 	        hostname, inet_ntoa(*addr));
          return 0;
       }
@@ -202,7 +202,8 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    }
 
    memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
-   DEBUGC(DBCLASS_DNS, "resolved: %s -> %s", hostname, inet_ntoa(*addr));
+   DEBUGC(DBCLASS_DNS, "DNS lookup - resolved: %s -> %s",
+          hostname, inet_ntoa(*addr));
 
    /*
     * remember the result in the cache
@@ -221,7 +222,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    if (i >= DNS_CACHE_SIZE) i=j;
 
    /* store in cache */
-   DEBUGC(DBCLASS_DNS, "store into DNS cache, entry %i)", i);
+   DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", i);
    memset(&dns_cache[i], 0, sizeof(dns_cache[0]));
    strncpy(dns_cache[i].hostname, hostname, HOSTNAME_SIZE);
    time(&dns_cache[i].timestamp);
@@ -232,11 +233,14 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 
 /*
  * compares two URLs
- * returns 0 if equal, >0 if non equal, <0 if error
+ * returns 0 if equal, <0 if non equal, >0 if error
  * (by now, only hostname and username are compared)
  */
 int compare_url(url_t *url1, url_t *url2) {
    int sts;
+
+   if ((url1 == NULL) || (url2 == NULL)) return 1;
+
    /* comparison of hosts should be based on IP addresses, no? */
    DEBUGC(DBCLASS_BABBLE, "comparng urls: %s@%s -> %s@%s",
          url1->username, url1->host, url2->username, url2->host);
