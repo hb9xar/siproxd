@@ -394,29 +394,22 @@ int proxy_request (sip_ticket_t *ticket) {
     * RFC 3261, Section 16.6 step 4
     * Proxy Behavior - Request Forwarding - Add a Record-route header
     */
-#if 0
-/* NOT IMPLEMENTED - this requires proper implementation of
-   the Route headers first. */
-   route_add_recordroute(ticket);
-#endif
+
    /*
-    * for incoming requests that DO include a Record-Route header,
-    * include my own as well. The local UA will probably send its answer
-    * to the topmost Route Header (8.1.2 of RFC3261)
+    * for ALL incoming requests, include my Record-Route header.
+    * The local UA will probably send its answer to the topmost 
+    * Route Header (8.1.2 of RFC3261)
     */
-   if ((request->record_routes) &&
-       (!osip_list_eol(request->record_routes, 0))) {
-      if (type == REQTYP_INCOMING) {
-         DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
-         route_add_recordroute(ticket);
-      } else {
-         /*
-          * outgoing packets must not have a record route header, as
-          * these likely will contain private IP addresses.
-          */
-         DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
-         route_purge_recordroute(ticket);
-      }
+   if (type == REQTYP_INCOMING) {
+      DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+      route_add_recordroute(ticket);
+   } else {
+      /*
+       * outgoing packets must not have my record route header, as
+       * this likely will contain a private IP address (my inbound).
+       */
+      DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
+      route_purge_recordroute(ticket);
    }
 
    /*
@@ -679,7 +672,7 @@ int proxy_response (sip_ticket_t *ticket) {
       }
    }
 /* &&&& Open Issue &&&&
-   it has been seen with corss-provider calls that the FROM may be 'garbled'
+   it has been seen with cross-provider calls that the FROM may be 'garbled'
    (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
    How can we deal with this? Should I take into consideration the 'Via'
    headers? This is the only clue I have, pointing to the *real* UA.
@@ -837,24 +830,21 @@ int proxy_response (sip_ticket_t *ticket) {
    }
 
    /*
-    * for incoming requests that DO include a Record-Route header,
-    * include my own as well. The local UA will probably send its answer
-    * to the topmost Route Header (8.1.2 of RFC3261)
+    * for ALL incoming response include my Record-Route header.
+    * The local UA will probably send its answer to the topmost 
+    * Route Header (8.1.2 of RFC3261)
     */
-   if ((response->record_routes) &&
-       (!osip_list_eol(response->record_routes, 0))) {
-      if (type == RESTYP_INCOMING) {
-         DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
-         route_add_recordroute(ticket);
-      } else {
-         /*
-          * outgoing packets must not have a record route header, as
-          * these likely will contain private IP addresses.
-          */
-         DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
-         route_purge_recordroute(ticket);
-      }
-   }
+    if (type == RESTYP_INCOMING) {
+       DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+       route_add_recordroute(ticket);
+    } else {
+       /*
+        * outgoing packets must not have my record route header, as
+        * this likely will contain a private IP address (my inbound).
+        */
+       DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
+       route_purge_recordroute(ticket);
+    }
 
    /*
     * check if we need to send to an outbound proxy

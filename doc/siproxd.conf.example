@@ -111,6 +111,14 @@ rtp_port_high = 7079
 rtp_timeout = 300
 
 ######################################################################
+# Default Expiration timeout for Registrations
+#    If a REGISTER request does not contain an Expires header
+#    or expires= parameter in the Contact header, this number of
+#    seconds will be used - and reported back to the UA in the answer.
+#    
+default_expires = 600
+
+######################################################################
 # Proxy authentication
 #    If proxy_auth_realm is defined (a string), clients will be forced
 #    to authenticate themselfes at the proxy (for registration only).

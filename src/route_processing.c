@@ -85,6 +85,15 @@ int route_preprocess(sip_ticket_t *ticket){
        * the last Route entry if it belongs to me...
        *
        * Any proper explanation to this is heavily welcome
+       *
+       * &&&&
+       * 23Oct2004/xar
+       * Of course this was a stupid error of siproxd himself
+       * when adding Record-Route headers...
+       * - Request:  add Record-Route header as top element of list
+       * - Response: add Record-Route header as last element of list
+       * So this code should be cleaned up - and only examine the first
+       * entry in the Record-set.
        */
       for (j=0,i=last; j<2; j++, i=0) {
          DEBUGC(DBCLASS_PROXY, "route_preprocess: checking Route "
@@ -201,6 +210,7 @@ We should use the first Route header to send the packet to
 int route_add_recordroute(sip_ticket_t *ticket){
    osip_message_t *mymsg=ticket->sipmsg;
    int sts;
+   int position;
    struct in_addr addr;
    osip_record_route_t *r_route;
    osip_uri_t *uri_of_proxy;
@@ -251,12 +261,21 @@ int route_add_recordroute(sip_ticket_t *ticket){
          osip_uri_set_port(uri_of_proxy, osip_strdup(tmp));
 
          /* 'lr' parameter */
-         osip_uri_uparam_add(uri_of_proxy, osip_strdup("lr"), NULL);
+         osip_uri_uparam_add(uri_of_proxy, osip_strdup("lr"),NULL);
 
          osip_record_route_set_url(r_route, uri_of_proxy);
 
-         /* insert before all other record-route */
-         osip_list_add (mymsg->record_routes, r_route, 0);
+         position=0;
+         /* if it is a response, add in to the end of the list
+          * (reverse order as in request!) */
+         if ((ticket->direction==RESTYP_INCOMING) ||
+             (ticket->direction==RESTYP_OUTGOING)) {
+            position = -1;
+         }
+
+         /* insert into record-route list*/
+         osip_list_add (mymsg->record_routes, r_route, position);
+
       } else {
           osip_record_route_free(r_route);
       } /* if url_init */
@@ -278,14 +297,53 @@ int route_add_recordroute(sip_ticket_t *ticket){
 int route_purge_recordroute(sip_ticket_t *ticket){
    osip_message_t *mymsg=ticket->sipmsg;
    osip_record_route_t *r_route=NULL;
+   int last, i, sts;
+   struct in_addr addr1, addr2, addr3;
 
-   if (mymsg->record_routes && !osip_list_eol(mymsg->record_routes, 0)) {
-      while (!osip_list_eol(mymsg->record_routes, 0)) {
-      r_route = (osip_record_route_t *) osip_list_get(mymsg->record_routes, 0);
-      osip_list_remove(mymsg->record_routes, 0);
-      osip_record_route_free(r_route);
-      /* mymsg->record_routes will be freed by osip_message_free() */
-      }
+   if (mymsg->record_routes) {
+      last=osip_list_size(mymsg->record_routes)-1;
+      /* I *MUST NOT* purge any alien (non-mine) Record-Route headers,
+       * only the ones I've put in myself! */
+      if (last >= 0) {
+         for (i=last; i>=0; i--) {
+            r_route = (osip_record_route_t *)
+                      osip_list_get(mymsg->record_routes, i);
+
+            /* skip empty entries */
+            if (r_route == NULL) continue;
+            if (r_route->url == NULL) continue;
+            if (r_route->url->host == NULL) continue;
+
+            /* resolve IP addresses (of RR header, inbound & outbound IF) */
+            sts = get_ip_by_host(r_route->url->host, &addr1);
+            if (get_ip_by_ifname(configuration.inbound_if, &addr2) 
+                != STS_SUCCESS) {
+               ERROR("can't find inbound interface %s - configuration error?",
+                     configuration.inbound_if);
+               return STS_FAILURE;
+            }
+            if (get_ip_by_ifname(configuration.outbound_if, &addr3)
+                != STS_SUCCESS) {
+               ERROR("can't find outbound interface %s - configuration error?",
+                     configuration.outbound_if);
+               return STS_FAILURE;
+            }
+
+            /* check if my own route header? */
+            if ((sts == STS_SUCCESS) &&
+                ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+                 (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
+                 (r_route->url->port ?
+                     configuration.sip_listen_port == atoi(r_route->url->port):
+                     configuration.sip_listen_port == SIP_PORT)) {
+
+               osip_list_remove(mymsg->record_routes, i);
+               osip_record_route_free(r_route);
+               DEBUGC(DBCLASS_PROXY, "removed Record-Route header pointing "
+                      "to myself");
+            }
+         } // for
+      } // if
    }
    return STS_SUCCESS;
 }

@@ -1,10 +1,12 @@
 0.5.9
 =====
+  24-Oct-2004:  - Default Expires timeout is now configurable.
   23-Oct-2004:  - fix: route_processing.c - when adding my record-route header,
-                  the 'lr' parameter was not dynamically allocated 
+                  the 'lr' parameter was not dynamically allocated memory
                   (possible crash when trying to free is)
                 - up to 1000 characters per line in config file (was 120),
                   some typos corrected (by Tero Pelander)
+                - fix: various correction in Record-Route processing
   13-Oct-2004:  - utils.c: preparation for chroot() (consider syslog)
   09-Oct-2004:  - comp_osip.c: libosip2-2.0.9 compatibility (There SEEM
                   to happen some API changes forward and backward:
