@@ -39,14 +39,14 @@ HOW TO GET STARTED
 
 - make install
 
-- edit /usr/local/etc/siproxd.conf according to your situation
+- edit /usr/etc/siproxd.conf according to your situation
   At least 'host_inbound' and 'host_outbound' *must* be adapted!
   'host_inbound' is the firewalls IP address of your private network,
   'host_outbound' is the  publich IP address or hostname of the
   firewall. (If you have dynamic IP addresses, then you might want
   to use a hostname here and use a dynamic DNS service like [1])
 
-- edit /usr/local/etc/siproxd_passwd.cfg if you enable client authentication
+- edit /usr/etc/siproxd_passwd.cfg if you enable client authentication
   in siproxd.conf
 
 - start siproxd (siproxd does *not* require root privilegdes)

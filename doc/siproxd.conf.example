@@ -14,8 +14,13 @@
 #
 #   or as dotted decimal IP:
 #
-host_inbound  = 10.0.0.1
-host_outbound = my.external-ip.address
+# this is the old style - specifying IP addresses:
+#host_inbound  = 10.0.0.1
+#host_outbound = my.external-ip.address
+#
+# the new way, simply give the interface name:
+if_inbound  = eth0
+if_outbound = ppp0
 
 
 ######################################################################

@@ -137,7 +137,9 @@ int is_via_local (via_t *via) {
    int sts;
    struct in_addr addr_via, addr_myself;
    char *my_hostnames[]=
-        { configuration.inboundhost, configuration.outboundhost, NULL };
+        { configuration.inboundhost, configuration.outboundhost, (char*)-1 };
+   char *my_interfaces[]=
+        { configuration.inbound_if,  configuration.outbound_if,  (char*)-1 };
    int port;
    int i;
    char *ptr;
@@ -150,13 +152,33 @@ int is_via_local (via_t *via) {
 
    sts=0;
    for (i=0; ; i++) {
-      ptr=my_hostnames[i];
-      if (ptr==NULL) break;
+      /*
+       * try to search by interface name first
+       */
+      ptr=my_interfaces[i];
+      if (ptr==(char*)-1) break; /* end of list mark */
 
-      DEBUGC(DBCLASS_BABBLE,"local name %s",ptr);
+      if (ptr) {
+         DEBUGC(DBCLASS_BABBLE,"resolving IP of interface %s",ptr);
+         sts = get_ip_by_ifname(ptr, &addr_myself);
+      } else {
+         /*
+          * seems to be the old style config...
+          */
+         ptr=my_hostnames[i];
+         if (ptr==NULL) {
+            ERROR("Could not find my local IP/interface configuration");
+            break;
+         }
+         DEBUGC(DBCLASS_BABBLE,"resolving IP of local name %s",ptr);
+         WARN("using hostnames for inbound/outbound interfaces is");
+         WARN("deprechiated - use interface names instead!");
+         sts = get_ip_by_host(ptr, &addr_myself);
+      }
+
+
+
       /* check the extracted VIA against my own host addresses */
-      sts = get_ip_by_host(ptr, &addr_myself);
-
       if (via->port) port=atoi(via->port);
       else port=SIP_PORT;
 
@@ -371,8 +393,8 @@ void secure_enviroment (void) {
  * fetches own IP address by its interface name
  */
 #define MAX_IF  32
-struct in_addr* get_ip_by_ifname(char *ifname) {
-   static struct in_addr addr;
+int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
+   struct in_addr addr;
    int sock, err, i, found;
    struct ifconf netconf;
    char buffer[sizeof(struct ifreq)*MAX_IF];
@@ -381,7 +403,7 @@ struct in_addr* get_ip_by_ifname(char *ifname) {
    
    if (ifname == NULL) {
       ERROR("get_ip_by_ifname: got NULL ifname passed");
-      return NULL;
+      return STS_FAILURE;
    }
 
    netconf.ifc_len=sizeof(struct ifreq)*MAX_IF;
@@ -438,9 +460,10 @@ struct in_addr* get_ip_by_ifname(char *ifname) {
    if (found==1) {
       DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: interface %s has IP: %s",
              ifname, inet_ntoa(addr));
-      return &addr;
+      if (retaddr) memcpy(retaddr, &addr, sizeof(addr));
+      return STS_SUCCESS;
    } else {
       ERROR("get_ip_by_ifname: interface %s does not exist", ifname);
-      return NULL;
+      return STS_FAILURE;
    }
 }

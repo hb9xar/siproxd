@@ -146,10 +146,6 @@ int main (int argc, char *argv[])
    /* initialize the registration facility */
    register_init();
 
-/*
- *TEST
- */
-get_ip_by_ifname("ppp0");
    /* listen for incomming messages */
    sts=sipsock_listen();
    if (sts == STS_FAILURE) {

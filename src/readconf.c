@@ -114,8 +114,9 @@ static int parse_config (FILE *configfile) {
    char buff[128];
    char *ptr;
    int i;
-   int j;
+   int k;
    int num;
+   char *tmpptr;
 
    struct cfgopts {
       char *keyword;
@@ -127,6 +128,8 @@ static int parse_config (FILE *configfile) {
       { "daemonize",           TYP_INT4,   &configuration.daemonize },
       { "host_inbound",        TYP_STRING, &configuration.inboundhost },
       { "host_outbound",       TYP_STRING, &configuration.outboundhost },
+      { "if_inbound",          TYP_STRING, &configuration.inbound_if },
+      { "if_outbound",         TYP_STRING, &configuration.outbound_if },
       { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
       { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
       { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
@@ -165,16 +168,16 @@ static int parse_config (FILE *configfile) {
       DEBUGC(DBCLASS_CONFIG,"pc:\"%s\"",buff);
 
       /* scan for known keyword */
-      for (j=0; configoptions[j].keyword != NULL; j++) {
-         if ((ptr=strstr(buff, configoptions[j].keyword)) != NULL) {
-            ptr += strlen(configoptions[j].keyword);
+      for (k=0; configoptions[k].keyword != NULL; k++) {
+         if ((ptr=strstr(buff, configoptions[k].keyword)) != NULL) {
+            ptr += strlen(configoptions[k].keyword);
             DEBUGC(DBCLASS_CONFIG,"got keyword:\"%s\"",
-	                          configoptions[j].keyword);
+	                          configoptions[k].keyword);
 
 	    /* check for argument separated by '=' */
             if ((ptr=strchr(ptr,'=')) == NULL) {;
 	       ERROR("argument missing to config parameter %s",
-	             configoptions[j].keyword);
+	             configoptions[k].keyword);
 	       break;
             }
 	    do {ptr++;} while (*ptr == ' '); /* skip spaces after '=' */
@@ -182,23 +185,25 @@ static int parse_config (FILE *configfile) {
             DEBUGC(DBCLASS_CONFIG,"got argument:\"%s\"",ptr);
 
 	    num=0;
-	    switch (configoptions[j].type) {
+	    switch (configoptions[k].type) {
 	    case TYP_INT4:
-	         num=sscanf(ptr,"%i",(int*)configoptions[j].dest);
-                 DEBUGC(DBCLASS_BABBLE,"INT4=%i",*(int*)configoptions[j].dest);
+	         num=sscanf(ptr,"%i",(int*)configoptions[k].dest);
+                 DEBUGC(DBCLASS_BABBLE,"INT4=%i",*(int*)configoptions[k].dest);
 	      break;	    
 
 	    case TYP_STRING:
 	         /* the %as within sscanf seems to be not too portable.
                   * it is supposed to allocate the memory
-                  * num=sscanf(ptr,"%as",(char**)configoptions[j].dest);
+                  * num=sscanf(ptr,"%as",(char**)configoptions[k].dest);
                   */
 
 		 /* figure out the amount of space we need */
-	         num=strlen(ptr);
-		 configoptions[j].dest=(char*)malloc(num);
-	         num=sscanf(ptr,"%s",(char*)configoptions[j].dest);
-                 DEBUGC(DBCLASS_BABBLE,"STRING=%s",(char*)configoptions[j].dest);
+	         num=strlen(ptr)+1; /* include terminating zero!*/
+                 tmpptr=(char*)malloc(num);
+                 memcpy(configoptions[k].dest, &tmpptr, sizeof(tmpptr));
+	         num=sscanf(ptr,"%s",tmpptr);
+                 DEBUGC(DBCLASS_BABBLE,"STRING=%s",
+                         *(char**)configoptions[k].dest);
 	      break;	    
 
 	    default:
@@ -212,6 +217,5 @@ static int parse_config (FILE *configfile) {
 	 }
       }
    }
-
    return STS_SUCCESS;
 }

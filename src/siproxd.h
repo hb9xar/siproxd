@@ -49,6 +49,7 @@ int is_via_local (via_t *via);						/*X*/
 int get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
 int compare_url(url_t *url1, url_t *url2);				/*X*/
 void secure_enviroment (void);
+int get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
@@ -91,6 +92,8 @@ struct siproxd_config {
    int debuglevel;
    char *inboundhost;
    char *outboundhost;
+   char *inbound_if;
+   char *outbound_if;
    int sip_listen_port;
    int daemonize;
    int rtp_port_low;

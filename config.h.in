@@ -39,8 +39,8 @@
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
 
-/* Define if you have the getopt_long_only function.  */
-#undef HAVE_GETOPT_LONG_ONLY
+/* Define if you have the getopt_long function.  */
+#undef HAVE_GETOPT_LONG
 
 /* Define if you have the getpwnam function.  */
 #undef HAVE_GETPWNAM
@@ -117,12 +117,37 @@
 /* Define if you have the osip library (-losip).  */
 #undef HAVE_LIBOSIP
 
-/* Define if you have the pthread library (-lpthread).  */
-#undef HAVE_LIBPTHREAD
-
 /* Name of package */
 #undef PACKAGE
 
 /* Version number of package */
 #undef VERSION
+
+/* building on Linux platform */
+#undef _LINUX
+
+/* building on BSD platform */
+#undef _BSD
+
+/* building on FreeBSD platform */
+#undef _FREEBSD
+
+/* building on BSD platform */
+#undef _BSD
+
+/* building on OpenBSD platform */
+#undef _OPENBSD
+
+/* building on BSD platform */
+#undef _BSD
+
+/* building on NetBSD platform */
+#undef _NETBSD
+
+/* Define to the necessary symbol if this constant
+                           uses a non-standard name on your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
 

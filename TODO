@@ -1,13 +1,23 @@
 TODOs, in random order:
 =======================
 
+- properly handle dynamic IP addresses
+  -> cyclically scan outbound interface, get IP address
+     and if changed, update my internal data structures
+  - adapt config file for inbound if name / outbound if name
+    and figure out the ip addresses during runtime (cache and 
+    renew the cache every minute or so...)
+    -> get_inbout_addr(void) get_outbound_addr(void)
+
+- automatized CVS snapshot beamed to siproxd homepage (siproxd.sourceforge.net)
+
 - Documentation (yeah, yeah...)
 
 - general security issues
 
 - automagically create a proper config file during install
 
-- get_ip_by_host: reduce DNS timeouts
+- get_ip_by_host: reduce DNS timeouts (seems to be a more complex problem...)
 
 - support for "full duplex" RTP proxying
 

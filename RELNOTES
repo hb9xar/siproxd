@@ -1,3 +1,95 @@
+Release Notes for siproxd-0.2.5
+===============================
+ - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
+ - Includes an RTP data stream proxy for *incomming* audio data
+   (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Port range to be used for incomming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user-ID after startup (if started as root)
+ - All configuration done via one simple ascii configuration file
+ - Proxy Authentication for registration of local clients (User Agents)
+   with individual passwords for each user
+ - Logging to syslog in Daemon mode
+ - Access control (IP based) for incomming traffic
+ - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
+ - should now works with "dial-up" conenctions (changing IP addresses)
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 
+
+Currently tested on:
+- Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2), should run
+  on others Linux distributions as well.
+- FreeBSD 4.7-STABLE (compilation only)
+
+
+Interoperability (tested with softphones):
+ - Linphone (http://www.linphone.org)
+ - Kphone (http://www.wirlab.net/kphone/)
+
+-----
+md5sum for siproxd-0.2.4.tar.gz: 	
+md5sum for siproxd-0.2.4-1rh60.i386.rpm:
+md5sum for siproxd-0.2.4-1rh72.i386.rpm:
+md5sum for siproxd-0.2.4-1.src.rpm:	
+
+GnuPG signature for siproxd-0.2.4.tar.gz archive:
+
+
+
+Release Notes for siproxd-0.2.4
+===============================
+ - supports Linux and FreeBSD (other BSD derivates not tested)
+ - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
+ - Includes an RTP data stream proxy for *incomming* audio data
+   (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Port range to be used for incomming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incomming traffic)
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user-ID after startup (if started as root)
+ - All configuration done via one simple ascii configuration file
+ - Proxy Authentication for registration of local clients (User Agents)
+   with individual passwords for each user
+ - Logging to syslog in Daemon mode
+ - Access control (IP based) for incomming traffic
+ - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
+ - should now works with "dial-up" conenctions (changing IP addresses)
+
+Requirements:
+ - pthreads
+ - libosip 0.8.8 
+
+Currently tested on:
+- Linux 2.2.x (Redhat 6.0) and 2.4.x (Redhat 7.2), should run
+  on others Linux distributions as well.
+- FreeBSD 4.7-STABLE (compilation only)
+
+
+Interoperability (tested with softphones):
+ - Linphone (http://www.linphone.org)
+ - Kphone (http://www.wirlab.net/kphone/)
+
+-----
+md5sum for siproxd-0.2.4.tar.gz: 	36f925b910e13b81b494c106e9871dcb
+md5sum for siproxd-0.2.4-1rh60.i386.rpm:
+md5sum for siproxd-0.2.4-1rh72.i386.rpm:
+md5sum for siproxd-0.2.4-1.src.rpm:	
+
+GnuPG signature for siproxd-0.2.4.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj3fuXMACgkQPOYHDi42pIoFcQCdEUdSOu3u5IpD4fWqQwISxU0S
+UJEAoJ5iIgnDHe2YJKhoAhMT49iPwt4q
+=kBq0
+-----END PGP SIGNATURE-----
+
+
+
 Release Notes for siproxd-0.2.3
 ===============================
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
@@ -13,7 +105,7 @@ Release Notes for siproxd-0.2.3
    with individual passwords for each user
  - Logging to syslog in Daemon mode
  - Access control (IP based) for incomming traffic
- - RPM support (spec file)
+ - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
 
 Requirements:
  - pthreads
@@ -27,12 +119,19 @@ Interoperability (tested with softphones):
  - Kphone (http://www.wirlab.net/kphone/)
 
 -----
-md5sum for siproxd-0.2.3.tar.gz: 
-md5sum for siproxd-0.2.3-1rh60.i386.rpm
-md5sum for siproxd-0.2.3-1rh72.i386.rpm
-md5sum for siproxd-0.2.3-1.src.rpm
+md5sum for siproxd-0.2.3.tar.gz: 	91feadda140bdd5beba58de66d97b168
+md5sum for siproxd-0.2.3-1rh60.i386.rpm:bde445eff2af345f2d04f02c7049ef5c
+md5sum for siproxd-0.2.3-1rh72.i386.rpm:a24887563d10083d5762e819d85c5b79
+md5sum for siproxd-0.2.3-1.src.rpm:	18bca360d8021a98ec4b6d0f03af4c93
 
 GnuPG signature for siproxd-0.2.3.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj3OX5QACgkQPOYHDi42pIpR0wCgooTOhk6mpV6cNi9q/WPLITbN
+z28AoONvmvpy+uS7khruF18SPfb6znvl
+=loxH
+-----END PGP SIGNATURE-----
 
 
 

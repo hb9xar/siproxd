@@ -492,9 +492,15 @@ int proxy_add_myvia (sip_t *request, int interface) {
    int sts;
 
    if (interface == 0) {
-      sts = get_ip_by_host(configuration.outboundhost, &addr);
+      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         sts = get_ip_by_host(configuration.outboundhost, &addr);
+      }
    } else {
-      sts = get_ip_by_host(configuration.inboundhost, &addr);
+      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         sts = get_ip_by_host(configuration.inboundhost, &addr);
+      }
    }
 
    sprintf(tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
@@ -586,7 +592,11 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
     * RTP proxy: get ready and start forwarding
     */
    sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
-   sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
+   sts = get_ip_by_ifname(configuration.outbound_if, &outb_addr);
+   if (sts == STS_FAILURE) {
+      sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
+   }
+
    inb_clnt_port = atoi(sdp_m_port_get(sdp,0));
    /* start an RTP proxying stream */
    rtp_start_fwd(msg_getcall_id(mymsg),

@@ -1,5 +1,5 @@
 %define name		siproxd
-%define ver		0.2.3
+%define ver		0.2.5
 %define release		1
 %define serial		1
 %define prefix		%{_prefix}

@@ -1,3 +1,16 @@
+0.2.4
+=====
+- 23-Nov-2002:	- released 0.2.4 (feature enhancements)
+		- BSD: resolved some compatibility issues (sscanf ->
+		  resulted in coredump when reading config file)
+		  should now build on *BSD (tested on FreeBSD 4-7)
+		- inbound/outbound interfaces now can be specified
+		  by their interface name - this removes the need
+		  for a 'quasi' static IP and restarting siproxd at
+		  change of IP address.
+- 13-Nov-2002:	- working on portability - goal is building on *BSD
+		  (feedback from Georg Schwarz)
+
 0.2.3
 =====
 - 10-Nov-2002:  - released 0.2.3 (minor fixes)
