@@ -329,7 +329,7 @@ int compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2) {
    DEBUGC(DBCLASS_BABBLE, "comparing callid - matched: "
           "%s@%s <-> %s@%s",
           cid1->number, cid1->host, cid2->number, cid2->host);
-   return STS_FAILURE;
+   return STS_SUCCESS;
 
 mismatch:
    DEBUGC(DBCLASS_BABBLE, "comparing callid - mismatch: "

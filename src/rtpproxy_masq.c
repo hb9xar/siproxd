@@ -101,7 +101,7 @@ int rtp_masq_init( void ) {
 int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
                        struct in_addr outbound_ipaddr, int *outbound_lcl_port,
                        struct in_addr lcl_client_ipaddr, int lcl_clientport) {
-   int sts, i;
+   int sts, i, j;
    int freeidx;
    time_t t;
    osip_call_id_t cid;
@@ -162,32 +162,25 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
     * media_stream_no). This can be due to UDP repetitions of the
     * INVITE request...
     */
+   freeidx=-1;
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
-      if (rtp_proxytable[i].sock &&
-         (compare_callid(callid, &cid) == STS_SUCCESS) &&
-         (rtp_proxytable[i].media_stream_no == media_stream_no)) {
-         /* return the already known port number */
-         DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
-                "id=%s, #=%i)", rtp_proxytable[i].outboundport,
-                rtp_proxytable[i].callid_number,
-                rtp_proxytable[i].media_stream_no);
-         return STS_SUCCESS;
-      }
-   }
-
-
-   /*
-    * find first free slot in rtp_proxytable
-    */
-   freeidx=-1;
-   for (i=0; i<RTPPROXY_SIZE; i++) {
-      if (rtp_proxytable[i].sock==0) {
-         freeidx=i;
-	 break;
-      }
-   }
+      if (rtp_proxytable[i].sock != 0) {
+         if((compare_callid(callid, &cid) == STS_SUCCESS) &&
+            (rtp_proxytable[i].media_stream_no == media_stream_no)) {
+            /* return the already known port number */
+            DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
+                   "id=%s, #=%i)", rtp_proxytable[i].outboundport,
+                   rtp_proxytable[i].callid_number,
+                   rtp_proxytable[i].media_stream_no);
+            return STS_SUCCESS;
+         } /* compare */
+      } else {
+         /* remember the first free slot */
+         if (freeidx < 0) freeidx=i;
+      } /* if .sock */
+   } /* for i */
 
    /* rtp_proxytable port pool full? */
    if (freeidx == -1) {
@@ -200,6 +193,22 @@ int rtp_masq_start_fwd(osip_call_id_t *callid, int media_stream_no,
  * allocate a UDP tunnel. If not successful - Buh! return port=0
  */
    for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i++) {
+      /* check if this port is already allocated in another stream.
+       * IPCHAINS will print errors in SYSLOG when I try to use
+       * the same port twice (IF it is still 'open' - no DST address
+       * known yet) */
+      DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: checking port %i",i);
+      for (j=0; j<RTPPROXY_SIZE; j++) {
+         if (rtp_proxytable[j].sock ==0) continue;
+         if (rtp_proxytable[j].outboundport == i) {
+            DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: port %i occupied",i);
+            break;
+         }
+      }
+      if (j < RTPPROXY_SIZE) continue; /* try next port */
+
+      DEBUGC(DBCLASS_RTP,"rtp_masq_start_fwd: using port %i",i);
+
       *outbound_lcl_port=i;
       sts = _create_listening_masq(&masq_table[freeidx],
                              lcl_client_ipaddr, lcl_clientport,
