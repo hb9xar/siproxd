@@ -366,7 +366,7 @@ char *utils_inet_ntoa(struct in_addr in) {
       string[0]='\0';
    }
    return string;
-#elif definef(HAVE_INET_NTOA)
+#elif defined(HAVE_INET_NTOA)
    return inet_ntoa(in);
 #else
 #error "need inet_ntop() or inet_ntoa()"
@@ -384,7 +384,7 @@ char *utils_inet_ntoa(struct in_addr in) {
 int  utils_inet_aton(const char *cp, struct in_addr *inp) {
 #if defined(HAVE_INET_PTON)
    return inet_pton (AF_INET, cp, inp);
-#elif definef(HAVE_INET_ATON)
+#elif defined(HAVE_INET_ATON)
    return inet_aton(cp, inp);
 #else
 #error "need inet_pton() or inet_aton()"
