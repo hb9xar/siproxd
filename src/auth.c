@@ -90,6 +90,7 @@ int authenticate_proxy(osip_message_t *request) {
  */
 int auth_include_authrq(osip_message_t *response) {
    osip_proxy_authenticate_t *p_auth;
+   char *realm=NULL;
 
    if (osip_proxy_authenticate_init(&p_auth) != 0) {
       ERROR("proxy_authenticate_init failed");
@@ -98,7 +99,15 @@ int auth_include_authrq(osip_message_t *response) {
 
    osip_proxy_authenticate_set_auth_type(p_auth, osip_strdup("Digest"));
    osip_proxy_authenticate_set_nonce(p_auth, osip_strdup(auth_generate_nonce()));
-   osip_proxy_authenticate_set_realm(p_auth, osip_strdup(configuration.proxy_auth_realm));
+   realm=malloc(strlen(configuration.proxy_auth_realm)+3); /* add 2x" and \0 */
+   if (realm) {
+      sprintf(realm,"\"%s\"",configuration.proxy_auth_realm);
+      osip_proxy_authenticate_set_realm(p_auth, realm);
+   } else {
+      ERROR("unable to malloc() %i bytes for authentication realm",
+            strlen(configuration.proxy_auth_realm)+3);
+      return STS_FAILURE;
+   }
 
    osip_list_add (response->proxy_authenticates, p_auth, -1);
 
