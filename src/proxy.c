@@ -967,6 +967,9 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    }
 
    sts = sip_body_to_str(body, &bodybuff);
+   if (sts != 0) {
+      ERROR("rewrite_invitation_body: unable to sip_body_to_str");
+   }
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, bodybuff);
    osip_free(bodybuff);
@@ -1211,6 +1214,9 @@ if (configuration.debuglevel)
 
    /* include new body */
    sip_message_set_body(mymsg, bodybuff);
+   if (sts != 0) {
+      ERROR("rewrite_invitation_body: unable to sip_message_set_body body");
+   }
 
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);

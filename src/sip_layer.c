@@ -19,6 +19,7 @@
 */
 
 #include <osipparser2/osip_parser.h>
+#include <log.h>
 
 static char const ident[]="$Id$";
 
@@ -39,8 +40,15 @@ int sip_message_parse(osip_message_t * sip, const char *buf) {
 
 int sip_message_to_str(osip_message_t * sip, char **dest) {
 #ifdef  HAVE_FUNC_OSIP_MESSAGE_TO_STR_3
+   int sts;
    size_t len;
-   return osip_message_to_str(sip, dest, &len);
+   sts = osip_message_to_str(sip, dest, &len);
+   /*
+    * NULL termination (libosip2-2.2.0 does NOT do this properly,
+    * there is always one byte too much :-( )
+    */
+   (*dest)[len]='\0';
+   return sts;
 #else 
    return osip_message_to_str(sip, dest);
 #endif
@@ -48,8 +56,15 @@ int sip_message_to_str(osip_message_t * sip, char **dest) {
 
 int sip_body_to_str(const osip_body_t * body, char **dest) {
 #ifdef  HAVE_FUNC_OSIP_BODY_TO_STR_3
+   int sts;
    size_t len;
-   return osip_body_to_str (body, dest, &len);
+   sts = osip_body_to_str(body, dest, &len);
+   /*
+    * NULL termination (libosip2-2.2.0 does NOT do this properly,
+    * there is always one byte too much :-( )
+    */
+   (*dest)[len]='\0';
+   return sts;
 #else 
    return osip_body_to_str(body, &dest);
 #endif
