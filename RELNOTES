@@ -1,8 +1,8 @@
-Release Notes for siproxd-0.5.8
+Release Notes for siproxd-0.5.9
 ===============================
 
-Major changes since 0.5.7:
-   Several bugfixes and preliminary support for Record-Route headers.
+Major changes since 0.5.8:
+   Several bugfixes and better support for Record-Route headers.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -70,7 +70,8 @@ Reported interoperability with SIP service providers:
  the list.
 
 Known bugs:
-   There will be...
+   - SRV DNS records are not yet looked up, only A records
+   There will be more...
 
 If you port siproxd to a new platform or do other kinds of changes
 or bugfixes that might be of general interest, please drop me a
@@ -79,21 +80,22 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.8.tar.gz: 	b987151719fced722b6df7d16c06f58d
+md5sum for siproxd-0.5.9.tar.gz: 	7428bc04eb8d60a5741d68190b06f10b
 
-GnuPG signature for siproxd-0.5.8.tar.gz archive:
+GnuPG signature for siproxd-0.5.9.tar.gz archive:
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.3 (GNU/Linux)
 
-iD8DBQBBUcuoCfzBioe83JQRAkywAJ4t/fijGYFbEnEN9n/Qe+/mRtTD2QCgkNCP
-yu88yMfHeUWUbdd7AusGZK8=
-=/Rgd
+iD8DBQBBiU0nCfzBioe83JQRAr7zAKCmGQSmgigXuZewX7TAn5qt0PcYsACfbE4H
+J351yL2YttRZXxnd6C2HSSU=
+=Xoms
 -----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
 -      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
 -      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
-VoIP:  sip:17476691342@proxy01.sipphone.com
+VoIP:  sip:17476691342@proxy01.sipphone.com | sip:431783@fwd.pulver.com
+
 
 

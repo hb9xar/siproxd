@@ -1,7 +1,8 @@
 0.5.9
 =====
+  03-Nov-2004:  - Released 0.5.9
   31-Oct-2004:  - fix: A negative response to an INVITE shall stop
-                  initiated RTP streams
+                  any associated initiated RTP streams
   24-Oct-2004:  - Default Expires timeout is now configurable.
   23-Oct-2004:  - fix: route_processing.c - when adding my record-route header,
                   the 'lr' parameter was not dynamically allocated memory
@@ -10,11 +11,7 @@
                   some typos corrected (by Tero Pelander)
                 - fix: various correction in Record-Route processing
   13-Oct-2004:  - utils.c: preparation for chroot() (consider syslog)
-  09-Oct-2004:  - comp_osip.c: libosip2-2.0.9 compatibility (There SEEM
-                  to happen some API changes forward and backward:
-                  osip_message_to_str, osip_body_to_str,
-                  osip_message_set_body, osip_message_parse)
-                - included startup script (by Guido Trentalancia)
+  09-Oct-2004:  - included startup script (by Guido Trentalancia)
                 - siproxd.spec: create PID and registrations directories
                   and install startup script
 
