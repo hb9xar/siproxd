@@ -88,7 +88,7 @@ System Settings
       Password: <authorization password>
       Domain/Realm: <host part of SIP URI>
       SIP Proxy: <IP address of 3rd party registrar>
-      Out Bound Porxy: <inbound IP address of siproxd>
+      Out Bound Proxy: <inbound IP address of siproxd>
       Use Out Bound Proxy: Always
       Send Internal IP: Default
       Register: Always

@@ -131,7 +131,7 @@ int read_config(char *name, int search) {
  *	STS_FAILURE on error
  */
 static int parse_config (FILE *configfile) {
-   char buff[128];
+   char buff[1024];
    char *ptr;
    int i;
    int k;

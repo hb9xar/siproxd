@@ -380,7 +380,7 @@ mismatch:
 
 /*
  * check if a given request is addressed to local. I.e. it is addressed
- * to the porxy itself (IP of my inbound or outbound interface, same port)
+ * to the proxy itself (IP of my inbound or outbound interface, same port)
  *
  * RETURNS
  *	STS_TRUE if the request is addressed local
