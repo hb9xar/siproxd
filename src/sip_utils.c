@@ -114,6 +114,23 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
  *	STS_FALSE if no loop
  */
 int check_vialoop (sip_t *my_msg) {
+/*
+!!! actually this is a problematic one.
+1) for requests, I must search the whole VIA list
+   (topmost via is the previos station in the path)
+
+2) for responses I must skip the topmost via, as this is mine
+   (and will be removed later on)
+
+3) What happens if we have 'clashes'  with private addresses??
+   From that point of view, siproxd *should* not try to
+   check against it's local IF addresses if thei are private.
+   this then of course again can lead to a endless loop...
+   
+   can we use something like a Tag in via headers?? (a veriy likely
+   to-be-unique ID)
+
+*/
    int sts;
    int pos;
    int found_own_via;
@@ -371,8 +388,10 @@ int check_rewrite_rq_uri (sip_t *sip) {
          }
          DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: [%s:%s, i=%i, j=%i] "
                 "got action %s",
-                sip->strtline->sipmethod, ua_hdr->hvalue, i, j,
-                (sts==STS_TRUE)? "rewrite":"norewrite");
+                (sip && sip->strtline && sip->strtline->sipmethod) ?
+                  sip->strtline->sipmethod : "*NULL*",
+                (ua_hdr && ua_hdr->hvalue)? ua_hdr->hvalue:"*NULL*",
+                 i, j, (sts==STS_TRUE)? "rewrite":"norewrite");
          return sts;
       }
    } /* for j */

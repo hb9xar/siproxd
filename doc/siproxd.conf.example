@@ -74,7 +74,7 @@ rtp_port_high = 7080
 #    after this number of seconds, an RTP stream is considered dead
 #    and proxying it will be stopped.
 #    
-rtp_timeout = 60
+rtp_timeout = 120
 
 ######################################################################
 # Proxy authentication

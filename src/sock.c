@@ -135,7 +135,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    }
 
    if (buffer == NULL) {
-      ERROR("sipsock_send_udp go tNULL buffer");
+      ERROR("sipsock_send_udp got NULL buffer");
       return STS_FAILURE;
    }
 

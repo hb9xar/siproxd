@@ -64,7 +64,7 @@ int proxy_request (sip_t *request) {
    int i;
    int sts;
    int type;
-   struct in_addr addr;
+   struct in_addr sendto_addr;
    contact_t *contact;
    url_t *url;
    int port;
@@ -143,6 +143,8 @@ int proxy_request (sip_t *request) {
    * from an external host to the internal masqueraded host
    */
    case REQTYP_INCOMING:
+      sts = get_ip_by_host(urlmap[i].true_url->host, &sendto_addr);
+
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
       if (check_rewrite_rq_uri(request)==STS_TRUE) {
@@ -167,10 +169,12 @@ int proxy_request (sip_t *request) {
    * from the internal masqueraded host to an external host
    */
    case REQTYP_OUTGOING:
+      /* get destination address */
+      url=msg_geturi(request);
+      sts = get_ip_by_host(url->host, &sendto_addr);
       /* if it is addressed to myself, then it must be some request
        * method that I as a proxy do not support. Reject */
       if (is_sipuri_local(request) == STS_TRUE) {
-         url=msg_geturi(request);
          WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
 	    request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
 	    request->from->url->username? request->from->url->username:"*NULL*",
@@ -249,16 +253,6 @@ int proxy_request (sip_t *request) {
    }
 
 
-/* get target address from request URL */
-   url=msg_geturi(request);
-
-   if (url) {
-      sts = get_ip_by_host(url->host, &addr);
-   } else {
-      ERROR("proxy_request: got NULL URL");
-      return STS_FAILURE;
-   }
-
    sts = msg_2char(request, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: msg_2char failed");
@@ -272,7 +266,7 @@ int proxy_request (sip_t *request) {
       port=SIP_PORT;
    }
 
-   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
+   sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
    return STS_SUCCESS;
 }

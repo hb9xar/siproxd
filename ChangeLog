@@ -1,3 +1,11 @@
+0.3.1
+=====
+- 29-May-2003:	- released 0.3.1
+		- fix in configure.in for statically linking to libosip
+		- fix in rewriting SIP messages, figure out proper
+                   destination if *not* rewriting the SIP URI
+		- another NULL pointer related crash (no UA header present)
+
 0.3.0
 =====
 - 29-May-2003:	- released 0.3.0
