@@ -104,6 +104,8 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    this modified request.
 
    NOT IMPLEMENTED*/
+
+
    /*
     * Check if I am listed at the topmost Route header (if any Route
     * header is existing at all). If so, remove it from the list and
@@ -131,18 +133,6 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
          /* request->routes will be freed by osip_message_free() */
          DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
       }
-
-      /* rewrite request URI to now topmost Route header */
-      url=osip_message_get_uri(request);
-      route = (osip_route_t *) osip_list_get(request->routes, 0);
-      if (route && route->url && route->url->host) {
-         DEBUGC(DBCLASS_PROXY, "rewriting request URI from %s to %s",
-                url->host, route->url->host);
-         osip_uri_free(url);
-         url=NULL;
-         osip_uri_clone(route->url, &url);
-      }
-
    }
       
 
@@ -510,7 +500,49 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    /*
     * RFC 3261, Section 16.6 step 6
     * Proxy Behavior - Request Forwarding - Postprocess routing information
+    *
+    * If the copy contains a Route header field, the proxy MUST
+    * inspect the URI in its first value.  If that URI does not
+    * contain an lr parameter, the proxy MUST modify the copy as
+    * follows:
+    *
+    * -  The proxy MUST place the Request-URI into the Route header
+    *    field as the last value.
+    *
+    * -  The proxy MUST then place the first Route header field value
+    *    into the Request-URI and remove that value from the Route
+    *    header field.
     */
+   if (request->routes && !osip_list_eol(request->routes, 0)) {
+      osip_route_t *route=NULL;
+      osip_uri_param_t *param=NULL;
+
+      route = (osip_route_t *) osip_list_get(request->routes, 0);
+      if (route->url) {
+         /* check for non existing lr parameter */
+         if (osip_uri_uparam_get_byname(route->url, "lr", &param) != 0) {
+            osip_route_t *new_route=NULL;
+            url=osip_message_get_uri(request);
+
+            /* push Request URI into Route header list at the last position */
+            osip_route_init(&new_route);
+            osip_uri_clone(url, &new_route->url);
+            osip_list_add(request->routes, new_route, -1);
+            
+
+            /* rewrite request URI to now topmost Route header */
+            DEBUGC(DBCLASS_PROXY, "Route header w/o 'lr': rewriting request "
+                   "URI from %s to %s", url->host, route->url->host);
+            osip_uri_free(url);
+            url=NULL;
+            osip_uri_clone(route->url, &url);
+            /* remove first Route header from list & free */
+            osip_list_remove(request->routes, 0);
+            osip_route_free(route);
+            route = NULL;
+         }
+      }
+   }
 
    /*
     * RFC 3261, Section 16.6 step 7
