@@ -1,6 +1,8 @@
 0.5.7
 =====
-  27-May-2004:  - Route header processing (RFC3261, 16.6, step 6)
+  29-May-2004:  - "determine next hop" also takes Route header into account
+                  (outgoing packets only, incoming can not have a proxy
+                  in between siproxd and the client anyway)
   25-May-2004:  - sip_utils.c:sip_del_myvia check for NULL list
   24-May-2004:  - included doc/sample_* to package
   23-May-2004:  - doc/: added configuration example for X-Lite

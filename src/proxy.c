@@ -513,6 +513,11 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
     *    into the Request-URI and remove that value from the Route
     *    header field.
     */
+#if 0
+/* we are not a real proxy - and from the outside we look like an UA.
+So we should not fiddle around with the Route headers.
+We should use the first Route header to send the packet to
+(RFC3261, section 8.1.2) */
    if (request->routes && !osip_list_eol(request->routes, 0)) {
       osip_route_t *route=NULL;
       osip_uri_param_t *param=NULL;
@@ -543,6 +548,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
          }
       }
    }
+#endif
 
    /*
     * RFC 3261, Section 16.6 step 7
@@ -561,6 +567,29 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
          port=configuration.outbound_proxy_port;
       } else {
          port = SIP_PORT;
+      }
+   } else if ((type == REQTYP_OUTGOING) && 
+              (request->routes && !osip_list_eol(request->routes, 0))) {
+      /* get the destination from the Route Header */
+      osip_route_t *route=NULL;
+      route = (osip_route_t *) osip_list_get(request->routes, 0);
+      if (route==NULL || route->url==NULL || route->url->host==NULL) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: got broken Route header "
+                "- discarding packet");
+         return STS_FAILURE;
+      }
+
+      sts = get_ip_by_host(route->url->host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve Route URI [%s]",
+                route->url->host);
+         return STS_FAILURE;
+      }
+
+      if (route->url->port) {
+         port=atoi(route->url->port);
+      } else {
+         port=SIP_PORT;
       }
    } else {
       /* get the destination from the SIP URI */

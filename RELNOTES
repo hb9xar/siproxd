@@ -43,11 +43,12 @@ Currently tested on:
   are not extensively tested by myself.
 
 Builds on:
-- Linux     (Fedora Core1)
-- FreeBSD   (FreeBSD 4.10-BETA)
-- OpenBSD   (OpenBSD 3.4 GENERIC#18)
-- SunOS     (SunOS 5.9)
-- Mac OS X  (Darwin 6.8)
+- Linux:	Fedora Core1
+		WRT54g (133mhz mipsel router)
+- FreeBSD:	FreeBSD 4.10-BETA
+- OpenBSD:	OpenBSD 3.4 GENERIC#18
+- SunOS:	SunOS 5.9
+- Mac OS X:	Darwin 6.8
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series

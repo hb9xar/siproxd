@@ -259,6 +259,22 @@ A:
    Media Max Port: 7080			   (RTP ports)
 
 ---------------------------------------------------------------------------
+Q: If I update both inbound and outbound to
+   if_inbound  = ppp0
+   if_outbound = ppp0
+   will this work ?
+
+A: Very likely this will not work properly. Siproxd does masquerade User
+   Agents hidden behind a NAT firewall (inbound network) so they can access
+   other User Agents located in the public internet (outbound network).
+   Therefore there MUST be 2 networks connected to the host running
+   siproxd:
+   - Inbound network 
+   - Outbound network
+
+   If you just want a proxy located in the public IP range you should not
+   use siproxd, but get a real SIP proxy server instead.
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------

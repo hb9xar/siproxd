@@ -177,8 +177,12 @@ static int parse_config (FILE *configfile) {
       /* life insurance */
       buff[sizeof(buff)-1]='\0';
 
-      /* strip newline if present */
-      if (buff[strlen(buff)-1]=='\n') buff[strlen(buff)-1]='\0';
+      /* strip New line & CR if present */
+      for (i=1; i<=2; i++) {
+         if ((buff[strlen(buff)-i]=='\n') || (buff[strlen(buff)-i]=='\r')) {
+            buff[strlen(buff)-i]='\0';
+         }
+      }
 
       /* strip emtpy lines */
       if (strlen(buff) == 0) continue;
