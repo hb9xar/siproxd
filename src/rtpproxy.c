@@ -68,7 +68,8 @@ int rtpproxy_init( void ) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
+int rtp_start_fwd (osip_call_id_t *callid, rtp_direction dir,
+                   int media_stream_no,
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport) {
   int sts=STS_FAILURE;
@@ -76,15 +77,15 @@ int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
-      sts = rtp_relay_start_fwd (callid, media_stream_no,
+      sts = rtp_relay_start_fwd (callid, dir, media_stream_no,
                                   outbound_ipaddr, outboundport,
                                   lcl_client_ipaddr, lcl_clientport);
    } else if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
-      sts = rtp_masq_start_fwd (callid, media_stream_no,
+      sts = rtp_masq_start_fwd (callid, dir, media_stream_no,
                                  outbound_ipaddr, outboundport,
                                  lcl_client_ipaddr, lcl_clientport);
    } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
-      sts = rtp_masq_start_fwd (callid, media_stream_no,
+      sts = rtp_masq_start_fwd (callid, dir, media_stream_no,
                                    outbound_ipaddr, outboundport,
                                    lcl_client_ipaddr, lcl_clientport);
    } else {
@@ -103,17 +104,17 @@ int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_stop_fwd (osip_call_id_t *callid) {
+int rtp_stop_fwd (osip_call_id_t *callid, rtp_direction dir) {
    int sts = STS_FAILURE;
 
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
-      sts = rtp_relay_stop_fwd(callid, 0);
+      sts = rtp_relay_stop_fwd(callid, dir, 0);
    } else if (configuration.rtp_proxy_enable == 2) { // MASQ tunnels (ipchains)
-      sts = rtp_masq_stop_fwd(callid);
+      sts = rtp_masq_stop_fwd(callid, dir);
    } else if (configuration.rtp_proxy_enable == 3) { // MASQ tunnels (netfilter)
-      sts = rtp_masq_stop_fwd(callid);
+      sts = rtp_masq_stop_fwd(callid, dir);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);

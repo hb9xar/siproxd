@@ -167,12 +167,22 @@ INFO("stopping RTP proxy stream for: %s@%s",
      osip_message_get_call_id(request)->number, 
      osip_message_get_call_id(request)->host);
 #endif
-         /* stop the RTP proxying stream */
-         rtp_stop_fwd(osip_message_get_call_id(request));
+         /* stop the RTP proxying stream(s) */
+         rtp_stop_fwd(osip_message_get_call_id(request), incoming);
+         rtp_stop_fwd(osip_message_get_call_id(request), outgoing);
 
-      /* check for incomming request */
+      /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
          osip_uri_t *contact;
+
+         /* First, rewrite the body */
+         sts = proxy_rewrite_invitation_body(request, incoming);
+
+         /*
+          * Note: Incoming request has no need to rewrite Contact
+          * header as we are not masquerading something there
+          */
+
          contact=((osip_contact_t*)(request->contacts->node->element))->url;
          if (contact) {
             INFO("Incomming Call from: %s:%s",
@@ -219,7 +229,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
-         sts = proxy_rewrite_invitation_body(request);
+         sts = proxy_rewrite_invitation_body(request, outgoing);
       }
 
       /* rewrite Contact header to represent the masqued address */
@@ -259,7 +269,8 @@ INFO("stopping RTP proxy stream for: %s@%s",
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         rtp_stop_fwd(osip_message_get_call_id(request));
+         rtp_stop_fwd(osip_message_get_call_id(request), incoming);
+         rtp_stop_fwd(osip_message_get_call_id(request), outgoing);
       }
 
       break;
@@ -410,6 +421,17 @@ int proxy_response (osip_message_t *response) {
    * from an external host to the internal masqueraded host
    */
    case RESTYP_INCOMING:
+      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
+          ((MSG_TEST_CODE(response, 200)) || 
+           (MSG_TEST_CODE(response, 183)))) {
+         /* This is an incoming response, therefore we need an incoming stream */
+         sts = proxy_rewrite_invitation_body(response, incoming);
+
+         /*
+          * Note: Incoming request has no need to rewrite Contact
+          * header as we are not masquerading something there
+          */
+      }
       break;
    
   /*
@@ -422,7 +444,8 @@ int proxy_response (osip_message_t *response) {
       if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
-         sts = proxy_rewrite_invitation_body(response);
+         /* This is an outgoing response, therefore an outgoing stream */
+         sts = proxy_rewrite_invitation_body(response, outgoing);
       }
 
       /* rewrite Contact header to represent the masqued address */
@@ -518,14 +541,14 @@ int proxy_response (osip_message_t *response) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_rewrite_invitation_body(osip_message_t *mymsg){
+int proxy_rewrite_invitation_body(osip_message_t *mymsg, rtp_direction dir){
    osip_body_t *body;
    sdp_message_t  *sdp;
-   struct in_addr outb_addr, lcl_clnt_addr;
+   struct in_addr map_addr, msg_addr, outside_addr, inside_addr;
    int sts;
    char *bodybuff;
    char clen[8]; /* content length: probably never more than 7 digits !*/
-   int outb_rtp_port, inb_clnt_port;
+   int map_port, msg_port;
    int media_stream_no;
    sdp_connection_t *sdp_conn;
    sdp_media_t *sdp_med;
@@ -552,7 +575,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg){
    sts = sdp_message_parse (sdp, bodybuff);
    osip_free(bodybuff);
    if (sts != 0) {
-      ERROR("rewrite_invitation_body: unable to sdp_parse body");
+      ERROR("rewrite_invitation_body: unable to sdp_message_parse body");
       return STS_FAILURE;
    }
 
@@ -573,28 +596,54 @@ if (configuration.debuglevel)
     * RTP proxy: get ready and start forwarding
     * start forwarding for each media stream ('m=' item in SIP message)
     */
-   sts = get_ip_by_host(sdp_message_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
+   sts = get_ip_by_host(sdp_message_c_addr_get(sdp,-1,0), &msg_addr);
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: cannot resolve "
              "m= (media) host [%s]", sdp_message_c_addr_get(sdp,-1,0));
       return STS_FAILURE;
    }
 
-   sts = get_ip_by_ifname(configuration.outbound_if, &outb_addr);
+   sts = get_ip_by_ifname(configuration.outbound_if, &outside_addr);
    if (sts == STS_FAILURE) {
       ERROR("can't find outbound interface %s - configuration error?",
-            configuration.inbound_if);
+            configuration.outbound_if);
       return STS_FAILURE;
+   }
+   sts = get_ip_by_ifname(configuration.inbound_if, &inside_addr);
+   if (sts == STS_FAILURE) {
+      ERROR("can't find inbound interface %s - configuration error?",
+             configuration.inbound_if);
+       return STS_FAILURE;
+    }
+
+   /* figure out what address to use for RTP masquerading */
+   if (MSG_IS_REQUEST(mymsg)) {
+      if (dir == incoming)
+         map_addr = inside_addr;
+      else
+         map_addr = outside_addr;
+   } else /* MSG_IS_REPONSE(mymsg) */ {
+      if (dir == incoming)
+         map_addr = inside_addr;
+      else
+         map_addr = outside_addr;
    }
 
    /*
     * rewrite c= address
+    *  !! an IP address of 0.0.0.0 means *MUTE*, don't rewrite such one
     */
    sdp_conn = sdp_message_connection_get (sdp, -1, 0);
    if (sdp_conn && sdp_conn->c_addr) {
-      osip_free(sdp_conn->c_addr);
-      sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
-      sprintf(sdp_conn->c_addr, "%s", utils_inet_ntoa(outb_addr));
+      if (strcmp(sdp_conn->c_addr, "0.0.0.0") != 0) {
+         /* have a valid address */
+         osip_free(sdp_conn->c_addr);
+         sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
+         sprintf(sdp_conn->c_addr, "%s", utils_inet_ntoa(map_addr));
+      } else {
+         /* 0.0.0.0 - don't rewrite */
+         DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: got a MUTE c= record");
+      }
    } else {
       ERROR("got NULL c= address record - can't rewrite");
    }
@@ -609,20 +658,20 @@ if (configuration.debuglevel)
 
       /* start an RTP proxying stream */
       if (sdp_message_m_port_get(sdp, media_stream_no)) {
-         inb_clnt_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
+         msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
 
-         if (inb_clnt_port > 0) {
-            rtp_start_fwd(osip_message_get_call_id(mymsg), media_stream_no,
-                          outb_addr, &outb_rtp_port,
-	                  lcl_clnt_addr, inb_clnt_port);
+         if (msg_port > 0) {
+            rtp_start_fwd(osip_message_get_call_id(mymsg), dir, media_stream_no,
+                          map_addr, &map_port,
+                          msg_addr, msg_port);
             /* and rewrite the port */
             sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
             if (sdp_med && sdp_med->m_port) {
                osip_free(sdp_med->m_port);
                sdp_med->m_port=osip_malloc(8);
-               sprintf(sdp_med->m_port, "%i", outb_rtp_port);
+               sprintf(sdp_med->m_port, "%i", map_port);
                DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                      "m= rewrote port to [%i]",outb_rtp_port);
+                      "m= rewrote port to [%i]",map_port);
 
             } else {
                ERROR("rewriting port in m= failed sdp_med=%p, "
@@ -686,10 +735,12 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
 
    DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
    url=osip_message_get_uri(mymsg);
-   osip_free(url->host);url->host=NULL;
 
    /* set the true host */
    if(urlmap[idx].true_url->host) {
+      osip_free(url->host);url->host=NULL;
+      DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: host=%s",
+             urlmap[idx].true_url->host);
       host = (char *)malloc(strlen(urlmap[idx].true_url->host)+1);
       memcpy(host, urlmap[idx].true_url->host, strlen(urlmap[idx].true_url->host));
       host[strlen(urlmap[idx].true_url->host)]='\0';
@@ -698,6 +749,9 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
 
    /* set the true port */
    if(urlmap[idx].true_url->port) {
+      osip_free(url->port);url->port=NULL;
+      DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: port=%s",
+             urlmap[idx].true_url->port);
       port = (char *)malloc(strlen(urlmap[idx].true_url->port)+1);
       memcpy(port, urlmap[idx].true_url->port, strlen(urlmap[idx].true_url->port));
       port[strlen(urlmap[idx].true_url->port)]='\0';

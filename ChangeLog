@@ -1,5 +1,12 @@
 0.5.1
 =====
+  17-Dec-2003:	- full duplex RTP proxy (many thanks to Chris Ross for
+		  his work on this). Up to now, only the RTP *Relay*
+                  has been tested (works with KPhone, BudgeTone)
+		- fix: SIP phones that allocate a random port for
+                  incomming SIP traffic should now work (like BudgeTone)
+		- fix: some SIP phones do change the RTP port number
+                  during a session (like KPhone during HOLD/unHOLD)
   15-Dec-2003:	- use even port numbers for RTP traffic
   05-Dec-2003:	- some changes & enhancements inspired by Chris Ross:
 		  * 183 Trying *may* contain SDP data

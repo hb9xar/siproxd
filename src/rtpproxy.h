@@ -25,6 +25,7 @@ typedef struct {
    int sock;
    char callid_number[CALLIDNUM_SIZE];          /* call ID */
    char callid_host[CALLIDHOST_SIZE];           /*  --"--  */
+   rtp_direction direction;                     /* Direction of RTP stream */
    int media_stream_no;
    struct in_addr outbound_ipaddr;              /* lcl outbound IP */
    int outboundport;                            /* lcl allocd outbound port */
@@ -37,20 +38,22 @@ typedef struct {
  * RTP relay
  */
 int  rtp_relay_init(void);
-int  rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
+int  rtp_relay_start_fwd (osip_call_id_t *callid, rtp_direction dir,
+                          int media_stream_no,
 		          struct in_addr outbound_ipaddr, int *outboundport,
                           struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock);
+int  rtp_relay_stop_fwd (osip_call_id_t *callid, rtp_direction dir, int nolock);
 
 
 /*
  * RTP masquerading
  */
 int  rtp_masq_init(void);
-int  rtp_masq_start_fwd (osip_call_id_t *callid, int media_stream_no,
+int  rtp_masq_start_fwd (osip_call_id_t *callid, rtp_direction dir,
+                          int media_stream_no,
 		          struct in_addr outbound_ipaddr, int *outboundport,
                           struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_masq_stop_fwd (osip_call_id_t *callid);
+int  rtp_masq_stop_fwd (osip_call_id_t *callid, rtp_direction dir);
 
 /*
  * RTP masquerading (ipchains part)

@@ -252,10 +252,12 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
 
       /* write entry */
       urlmap[i].active=1;
+      /* Contact: field */
       osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
-        	 &urlmap[i].true_url);	/* Contact: field */
+        	 &urlmap[i].true_url);
+      /* To: field */
       osip_uri_clone( my_msg->to->url, 
-        	 &urlmap[i].reg_url);	/* To: field */
+        	 &urlmap[i].reg_url);
 
       DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
              (url1_contact->username) ? url1_contact->username : "*NULL*",
@@ -318,8 +320,21 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
       /* remember the VIA for later use */
 //      osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
 //                      &urlmap[i].via);
-   } /* if new entry */
-
+   } else { /* if new entry */
+   /*
+    * Some phones (like BudgeTones *may* dynamically grab a SIP port
+    * so we might want to update the true_url and reg_url each time
+    * we get an REGISTER
+    */
+      /* Contact: field */
+      osip_uri_free(urlmap[i].true_url);
+      osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
+        	 &urlmap[i].true_url);
+      /* To: field */
+      osip_uri_free(urlmap[i].reg_url);
+      osip_uri_clone( my_msg->to->url, 
+        	 &urlmap[i].reg_url);
+   }
    /* give some safety margin for the next update */
    if (expires > 0) expires+=30;
 

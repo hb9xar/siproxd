@@ -22,6 +22,12 @@
  #include <dmalloc.h>
 #endif
 
+/* typedef for specifying the direction of an RTP stream [being proxied] */
+typedef enum {
+   incoming,
+   outgoing,
+} rtp_direction;
+
 /*				function returns STS_* status values     vvv */
 
 /* sock.c */
@@ -42,7 +48,7 @@ int  register_response(osip_message_t *request, int flag);		/*X*/
 /* proxy.c */
 int proxy_request (osip_message_t *request);				/*X*/
 int proxy_response (osip_message_t *response);				/*X*/
-int proxy_rewrite_invitation_body(osip_message_t *mymsg);		/*X*/
+int proxy_rewrite_invitation_body(osip_message_t *m, rtp_direction d);  /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 
 /* utils.c */
@@ -71,10 +77,11 @@ int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,	/*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, rtp_direction dir,          /*X*/
+                    int media_stream_no,
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (osip_call_id_t *callid);     			/*X*/
+int  rtp_stop_fwd (osip_call_id_t *callid, rtp_direction dir);          /*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */

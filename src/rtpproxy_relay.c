@@ -201,8 +201,8 @@ if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
                DEBUGC(DBCLASS_RTP,"RTP stream sock=%i %s@%s (idx=%i) "
                       "has expired", rtp_proxytable[i].sock,
                       callid.number, callid.host, i);
-	       rtp_relay_stop_fwd(&callid, 1); /* don't lock the mutex, as we own
-	       				    the lock already here */
+               /* don't lock the mutex, as we own the lock already here */
+               rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, 1);
 	    }
 	 }
       } /* if (t>...) */
@@ -228,9 +228,10 @@ if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
-		   struct in_addr outbound_ipaddr, int *outboundport,
-                   struct in_addr lcl_client_ipaddr, int lcl_clientport) {
+int rtp_relay_start_fwd (osip_call_id_t *callid, rtp_direction dir,
+                         int media_stream_no, struct in_addr outbound_ipaddr,
+                         int *outboundport, struct in_addr lcl_client_ipaddr,
+                         int lcl_clientport) {
    int i, j;
    int sock, port;
    int freeidx;
@@ -262,8 +263,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
       return STS_FAILURE;
    }
 
-   DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s #=%i",
-          callid->number, callid->host, media_stream_no);
+   DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
+          "stream for: %s@%s (%s) #=%i",
+          callid->number, callid->host,
+          ((dir == incoming) ? "incoming" : "outgoing"), media_stream_no);
 
    /* lock mutex */
    #define return is_forbidden_in_this_code_section
@@ -279,7 +282,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
 
    /*
     * figure out, if this is an request to start an RTP proxy stream
-    * that is already existing (identified by SIP Call-ID and
+    * that is already existing (identified by SIP Call-ID, direction and
     * media_stream_no). This can be due to UDP repetitions of the
     * INVITE request...
     */
@@ -288,7 +291,18 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
+         (rtp_proxytable[i].direction == dir) &&
          (rtp_proxytable[i].media_stream_no == media_stream_no) ) {
+         /*
+          * The RTP port number reported by the UA MAY change
+          * for a given media stream
+          * (seen with KPhone during HOLD/unHOLD)
+          */
+         if (rtp_proxytable[i].inbound_client_port != lcl_clientport) {
+            DEBUGC(DBCLASS_RTP,"RTP port number changed %i -> %i",
+                   rtp_proxytable[i].inbound_client_port, lcl_clientport);
+            rtp_proxytable[i].inbound_client_port = lcl_clientport;
+         }
          /* return the already known port number */
          DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
                 "id=%s, #=%i)", rtp_proxytable[i].outboundport,
@@ -369,6 +383,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int media_stream_no,
       rtp_proxytable[freeidx].callid_host[0]='\0';
    }
 
+   rtp_proxytable[freeidx].direction = dir;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
    memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
           &outbound_ipaddr, sizeof(struct in_addr));
@@ -403,7 +418,8 @@ unlock_and_exit:
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
+int rtp_relay_stop_fwd (osip_call_id_t *callid, rtp_direction dir,
+                        int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
@@ -414,8 +430,10 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
       return STS_FAILURE;
    }
 
-   DEBUGC(DBCLASS_RTP,"stopping RTP proxy stream for: %s@%s",
-          callid->number, callid->host);
+   DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd: stopping RTP proxy "
+          "stream for: %s@%s (%s)",
+          callid->number, callid->host,
+          ((dir == incoming) ? "incoming" : "outgoing"));
 
    /*
     * lock mutex - only if not requested to skip the lock.
@@ -452,7 +470,8 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].sock &&
-         (compare_callid(callid, &cid) == STS_SUCCESS)) {
+         (compare_callid(callid, &cid) == STS_SUCCESS) &&
+         (rtp_proxytable[i].direction == dir)) {
          sts = close(rtp_proxytable[i].sock);
 	 DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",
@@ -474,8 +493,10 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid, int nolock) {
 
    /* did not find an active stream... */
    if (!got_match) {
-      DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd: can't find active stream for %s@%s",
-             callid->number, callid->host);
+      DEBUGC(DBCLASS_RTP,
+             "rtp_relay_stop_fwd: can't find active stream for %s@%s (%s)",
+             callid->number, callid->host,
+             ((dir == incoming) ? "incoming" : "outgoing"));
       retsts = STS_FAILURE;
       goto unlock_and_exit;
    }
