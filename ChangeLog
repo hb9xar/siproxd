@@ -1,5 +1,6 @@
 0.5.5
 =====
+   4-Apr-2004:  - Realtime Scheduling for RTP proxy
    3-Apr-2004:  - fix: SDP 'c=' items in media part
    2-Apr-2004:  - PID file
   31-Mar-2004:  - accessctl.c: text correction in ERROR output

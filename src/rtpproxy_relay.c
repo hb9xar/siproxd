@@ -9,7 +9,7 @@
     (at your option) any later version.
     
     Siproxd is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warrantry of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
     
@@ -31,6 +31,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h>
+
+#ifdef HAVE_PTHREAD_SETSCHEDPARAM
+   #include <sched.h>
+#endif
 
 #include <osipparser2/osip_parser.h>
 
@@ -102,6 +106,35 @@ int rtp_relay_init( void ) {
    DEBUGC(DBCLASS_RTP,"create thread");
    sts=pthread_create(&rtpproxy_tid, NULL, rtpproxy_main, (void *)&arg);
    DEBUGC(DBCLASS_RTP,"created, sts=%i", sts);
+
+   /* set realtime scheduling - if started by root */
+#ifdef HAVE_PTHREAD_SETSCHEDPARAM
+   {
+      int uid,euid;
+      struct sched_param schedparam;
+
+      uid=getuid();
+      euid=geteuid();
+      if (uid != euid) seteuid(0);
+
+      if (geteuid()==0) {
+         int pmin, pmax;
+         /* place ourself at 1/3 of the available priority space */
+         pmin=sched_get_priority_min(SCHED_RR);
+         pmax=sched_get_priority_max(SCHED_RR);
+         schedparam.sched_priority=pmin+(pmax-pmin)/3;
+         DEBUGC(DBCLASS_RTP,"pmin=%i, pmax=%i, using p=%i", pmin, pmax,
+                schedparam.sched_priority);
+         sts=pthread_setschedparam(rtpproxy_tid, SCHED_RR, &schedparam);
+         if (sts != 0) {
+            ERROR("pthread_setschedparam failed: %s", strerror(errno));
+         }
+      } else {
+         WARN("Cannot set realtime scheduling for RTP (start siproxd as root)");
+      }
+      if (uid != euid)  seteuid(euid);
+   }
+#endif
 
    return STS_SUCCESS;
 }

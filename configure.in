@@ -335,6 +335,9 @@ AC_CHECK_FUNCS(hstrerror,,AC_CHECK_LIB(resolv,hstrerror,[
 	       AC_DEFINE_UNQUOTED(HAVE_HSTRERROR)
 	       LIBS="$LIBS -lresolv"]))
 AC_CHECK_FUNCS(inet_pton inet_ntop inet_aton inet_ntoa)
+AC_CHECK_FUNCS(pthread_setschedparam sched_get_priority_min)
+AC_CHECK_FUNCS(sched_get_priority_max)
+
 
 
 dnl
