@@ -1,6 +1,7 @@
 0.2.8
 =====
-- 24-Mar-2003:	- made compile with uClibc (see doc/FLI4L_HOWTO.txt)
+- 23-Mar-2003:	- released 0.2.8
+		- made compile with uClibc (see doc/FLI4L_HOWTO.txt)
 - 22-Mar-2003:	- made compile on SUSE5.3 (libc5)
 		- added --enable-almost-static feature switch. This will
                   build siproxd statically linked against libosip & pthreads
