@@ -68,7 +68,7 @@ echo "Edit the config file %{sysconfigdir}/siproxd.conf!"
 
 * Fri Oct 24 2003 Thomas Ries <tries@gmx.net>
 - added config files and some more doc files
-- rename sample config file and remind uder to edit it.
+- rename sample config file and remind user to edit it.
 - minor cleanup
 
 * Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
