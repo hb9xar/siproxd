@@ -49,6 +49,8 @@ int security_check_raw(char *sip_buffer, int size) {
    /*
     * empiric: size must be >= 16 bytes
     *   2 byte <CR><LF> packets have been seen in the wild
+    *   also 4 bytes with 0x00 (seem to be used to keep potential UDP
+    *   masquerading tunnels open)
     */
    if (size<SEC_MINLEN) return STS_FAILURE;
 
