@@ -1,13 +1,15 @@
 0.5.3
 =====
-   1-Feb-2004:	- Added handling of Max-Forwards header
-		- a detected via loop results in an 482 Loop detected
-  31-Jan-2004:	- Allow 2 of my vias in header to let 2 UA's sitting
-		  behind the same siproxd have conversation together
+   7-Feb-2004:  - Fix for local-UA to local-UA RTP proxying, symmetric
+                  RTP was not working.
+   1-Feb-2004:  - Added handling of Max-Forwards header
+                - a detected via loop results in an 482 Loop detected
+  31-Jan-2004:  - Allow 2 of my vias in header to let 2 UA's sitting
+                  behind the same siproxd have conversation together
                   UA1 -->--\   >   /-->--\
                             siproxd       Registrar
                   UA2 --<--/   <   \--<--/
-		- Redone code for evaluation if a received packet
+                - Redone code for evaluation if a received packet
                   is coming from the inbound or outbound network
                 - RTP streams are now identified by call_id AND
                   USERNAME of the contact header. This provides
@@ -17,26 +19,26 @@
                   UA1 -->--\
                             siproxd 
                   UA2 --<--/ 
-		- Rewriting of SUBSCRIBE messages should now work.
+                - Rewriting of SUBSCRIBE messages should now work.
                 - Removed obsolete prototypes from rtpproxy.h
-		- If the RTP stream in one direction is found to be
+                - If the RTP stream in one direction is found to be
                   aborted (sendto() failure), also stop the stream
                   for the opposite direction
 
 0.5.2
 =====
-  31-Jan-2004:	- Released 0.5.2
-  30-Jan-2004:	- If RTP proxy is disabled, don't rewrite incomming
-		  SDP bodies (patch from Robert Högberg)
-  29-Jan-2004:	- new doc/RFC3261_compliance.txt and comments in the
-		  code that refer to the RFC.
-  28-Jan-2004:	- don't die on INVITE requests that include no Contact
+  31-Jan-2004:  - Released 0.5.2
+  30-Jan-2004:  - If RTP proxy is disabled, don't rewrite incomming
+                  SDP bodies (patch from Robert Högberg)
+  29-Jan-2004:  - new doc/RFC3261_compliance.txt and comments in the
+                  code that refer to the RFC.
+  28-Jan-2004:  - don't die on INVITE requests that include no Contact
                   header - which is legal. (patch from Robert Högberg)
-		- RTP proxy: don't try to forward empty RTP packets
-		- renamed some variables of rtp_proxytable_t to make
+                - RTP proxy: don't try to forward empty RTP packets
+                - renamed some variables of rtp_proxytable_t to make
                   better sense (changed meaning in fullduplex RTP proxy)
-  27-Jan-2004:	- added doc/KNOWN_BUGS
-		- better branch parameter calculation (via header),
+  27-Jan-2004:  - added doc/KNOWN_BUGS
+                - better branch parameter calculation (via header),
                   now honors RFC3261 for stateless proxies (section 16.11)
                 - SIP request: remove a Route header pointing to myself.
                   This was an issue with Linphone 0.12.1.
@@ -46,14 +48,14 @@
                   use one single port (and socket) on each side (inbound/
                   outbound) to send and receive RTP traffic for every
                   active stream (patch from Christof Meerwald).
-  22-Jan-2004:	- ./configure option: --enable-static to build
-		  a completely statically linked executable
+  22-Jan-2004:  - ./configure option: --enable-static to build
+                  a completely statically linked executable
                 - REGISTER honors the expires parameter
                   of the contact header
                 - Contact header of REGISTER response must be
                   rewritten back to the local (true) URL
-  18-Jan-2004:	- security_check_raw:
-		  size check: >= 16 bytes
+  18-Jan-2004:  - security_check_raw:
+                  size check: >= 16 bytes
                 - at exit, check registration file to be writable
                 - no WARNING if SIP user-agent header is not supplied.
                 - Call logging: distinguish between In & Out
@@ -61,70 +63,70 @@
 
 0.5.1
 =====
-  22-Dec-2003:	- Released 0.5.1
-  21-Dec-2003:	- possibility to log call establishment
-  17-Dec-2003:	- full duplex RTP proxy (many thanks to Chris Ross for
-		  his work on this). Up to now, only the RTP *Relay*
+  22-Dec-2003:  - Released 0.5.1
+  21-Dec-2003:  - possibility to log call establishment
+  17-Dec-2003:  - full duplex RTP proxy (many thanks to Chris Ross for
+                  his work on this). Up to now, only the RTP *Relay*
                   has been tested (it works with KPhone, BudgeTone)
-		- fix: SIP phones that allocate a random port for
+                - fix: SIP phones that allocate a random port for
                   incomming SIP traffic should now work (like BudgeTone)
-		- fix: some SIP phones do change the RTP port number
+                - fix: some SIP phones do change the RTP port number
                   during a session (like KPhone during HOLD/unHOLD)
-		- textual corrections
-  15-Dec-2003:	- use only even port numbers for RTP traffic
-  05-Dec-2003:	- some changes & enhancements inspired by Chris Ross:
-		  * 183 Trying *may* contain SDP data
+                - textual corrections
+  15-Dec-2003:  - use only even port numbers for RTP traffic
+  05-Dec-2003:  - some changes & enhancements inspired by Chris Ross:
+                  * 183 Trying *may* contain SDP data
                   * compare_url: now does compare the scheme,
                     if a host is not resolveable, hostnames will be
                     compared as strings
-  04-Dec-2003:	- have registrations persistent across restarts of
-		  the daemon ('registration_file' config option)
-  29-Nov-2003:	- some documentation & FAQ updates
+  04-Dec-2003:  - have registrations persistent across restarts of
+                  the daemon ('registration_file' config option)
+  29-Nov-2003:  - some documentation & FAQ updates
 
 0.5.0
 =====
-  26-Nov-2003:	- released 0.5.0
-		- included preliminary support for IPTABLES (netfiler)
-		  based systems.
-  24-Nov-2003:	- some fixes in sockbind() (FreeBSD) by Jeremy Shaw
-  23-Nov-2003:	- got the gethostbyname() failure problem solved.
-		  (the resolver needs a shared lib that was tried
-		  to load AFTER chrooting...)
-  22-Nov-2003:	- utils.c: use gethostbyname_r() in favor of
-		  gethostbyname - if available (siproxd uses threads!)
-		- some small items & cleanup
-  19-Nov-2003:	- Integrated a patch from Chris Ross:
-		  * have siproxd compile on Solaris and BSD/OS (more to come)
-		  * ./configure option --with-libosip-prefix
-		  * properly handle getopt_long()/getopt()
-  18-Nov-2003:	- readconfig.c: include sysconfdir to the list of locations
-		  where siproxd will search for its config file
-  14-Nov-2003:	- rtpproxy.c: sys/types.h needed for *BSD
-		- tested: siproxd builds on FreeBSD 4.9
-   2-Nov-2003:	- rtpproxy bugfix: On repetitive INVITES, the UDP media
+  26-Nov-2003:  - released 0.5.0
+                - included preliminary support for IPTABLES (netfiler)
+                  based systems.
+  24-Nov-2003:  - some fixes in sockbind() (FreeBSD) by Jeremy Shaw
+  23-Nov-2003:  - got the gethostbyname() failure problem solved.
+                  (the resolver needs a shared lib that was tried
+                  to load AFTER chrooting...)
+  22-Nov-2003:  - utils.c: use gethostbyname_r() in favor of
+                  gethostbyname - if available (siproxd uses threads!)
+                - some small items & cleanup
+  19-Nov-2003:  - Integrated a patch from Chris Ross:
+                  * have siproxd compile on Solaris and BSD/OS (more to come)
+                  * ./configure option --with-libosip-prefix
+                  * properly handle getopt_long()/getopt()
+  18-Nov-2003:  - readconfig.c: include sysconfdir to the list of locations
+                  where siproxd will search for its config file
+  14-Nov-2003:  - rtpproxy.c: sys/types.h needed for *BSD
+                - tested: siproxd builds on FreeBSD 4.9
+   2-Nov-2003:  - rtpproxy bugfix: On repetitive INVITES, the UDP media
                   port could end up as -1 in the rewritten packet.
-   1-Nov-2003:	- siproxd can use another outbound proxy (chaining)
-		- Linux 2.4.x: siproxd with RTP relay could hang
+   1-Nov-2003:  - siproxd can use another outbound proxy (chaining)
+                - Linux 2.4.x: siproxd with RTP relay could hang
                   on termination (Thread termination). Fixed.
                   
 0.4.2
 =====
-  31-Oct-2003:	- released 0.4.2
-		- Makefile: install siproxd to sbin (was bin)
-  24-Oct-2003:	- SPEC file: included config files & more docu
-  19-Oct-2003:	- included compiling support for DMALLOC debugging
-		- fixed 2 memory leaks in proxy.c
+  31-Oct-2003:  - released 0.4.2
+                - Makefile: install siproxd to sbin (was bin)
+  24-Oct-2003:  - SPEC file: included config files & more docu
+  19-Oct-2003:  - included compiling support for DMALLOC debugging
+                - fixed 2 memory leaks in proxy.c
 
 0.4.1
 =====
-  12-Oct-2003:	- released 0.4.1
-  12-Oct-2003:	- Local registration of UAs was simply broken. Fixed.
+  12-Oct-2003:  - released 0.4.1
+  12-Oct-2003:  - Local registration of UAs was simply broken. Fixed.
 
 0.4.0
 =====
-  11-Oct-2003:	- released 0.4.0
-  08-Oct-2003:	- rtpproxy_masq: fixed an issue in port allocation
-  		  which lead to syslog entries from IPCHAINS complaining
+  11-Oct-2003:  - released 0.4.0
+  08-Oct-2003:  - rtpproxy_masq: fixed an issue in port allocation
+                  which lead to syslog entries from IPCHAINS complaining
                   about 'already used connection' in the syslog.
                 - added INFO() for incomming SIP Calls
   04-Oct-2003:  - Siproxd now also works as outbound proxy 'only',

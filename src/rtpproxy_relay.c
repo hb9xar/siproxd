@@ -183,23 +183,26 @@ static void *rtpproxy_main(void *arg) {
              * have got some data in it (count > 0)
              */
             if (count > 0) {
+               /* find the corresponding TX socket */
                if (rtp_proxytable[i].rtp_tx_sock == 0) {
                   int j;
-                  int direction = rtp_proxytable[i].direction;
+                  int rtp_direction = rtp_proxytable[i].direction;
                   int media_stream_no = rtp_proxytable[i].media_stream_no;
 
                   callid.number = rtp_proxytable[i].callid_number;
                   callid.host = rtp_proxytable[i].callid_host;
 
                   for (j=0;(j<RTPPROXY_SIZE);j++) {
+                     char *client_id = rtp_proxytable[i].client_id;
                      osip_call_id_t cid;
                      cid.number = rtp_proxytable[j].callid_number;
                      cid.host = rtp_proxytable[j].callid_host;
 
                      if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
-                          (direction != rtp_proxytable[j].direction) &&
+                          (rtp_direction != rtp_proxytable[j].direction) &&
                           (media_stream_no == rtp_proxytable[j].media_stream_no) &&
-                          (compare_callid(&callid, &cid) == STS_SUCCESS) ) {
+                          (compare_callid(&callid, &cid) == STS_SUCCESS) &&
+                          (strcmp(rtp_proxytable[j].client_id, client_id) != 0) ) {
                         rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
                         break;
                      }
@@ -280,7 +283,7 @@ static void *rtpproxy_main(void *arg) {
  *	STS_FAILURE on error
  */
 int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
-                         int direction,
+                         int rtp_direction,
                          int media_stream_no, struct in_addr local_ipaddr,
                          int *local_port, struct in_addr remote_ipaddr,
                          int remote_port) {
@@ -319,17 +322,17 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
             strlen(callid->host),CALLIDHOST_SIZE);
       return STS_FAILURE;
    }
-   if (client_id && strlen(client_id) > USERNAME_SIZE) {
-      ERROR("rtp_relay_start_fwd: received contact user "
-            "has too many characters (%i, max=%i)",
-            strlen(client_id),USERNAME_SIZE);
+   if (client_id && strlen(client_id) > CLIENT_ID_SIZE) {
+      ERROR("rtp_relay_start_fwd: client ID has too many characters "
+            "(%i, max=%i) (maybe you need to increase CLIENT_ID_SIZE",
+            strlen(client_id),CLIENT_ID_SIZE);
       return STS_FAILURE;
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
-          "stream for: %s@%s (%s) #=%i",
-          callid->number, callid->host,
-          ((direction == DIR_INCOMING) ? "incoming" : "outgoing"),
+          "stream for: %s@%s[%s] (%s) #=%i",
+          callid->number, callid->host, client_id,
+          ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           media_stream_no);
 
    /* lock mutex */
@@ -355,7 +358,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
-         (rtp_proxytable[i].direction == direction) &&
+         (rtp_proxytable[i].direction == rtp_direction) &&
          (rtp_proxytable[i].media_stream_no == media_stream_no) &&
          (strcmp(rtp_proxytable[i].client_id, client_id) == 0)) {
          /*
@@ -456,7 +459,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
       rtp_proxytable[freeidx].client_id[0]='\0';
    }
 
-   rtp_proxytable[freeidx].direction = direction;
+   rtp_proxytable[freeidx].direction = rtp_direction;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
    memcpy(&rtp_proxytable[freeidx].local_ipaddr,
           &local_ipaddr, sizeof(struct in_addr));
@@ -492,7 +495,7 @@ unlock_and_exit:
  *	STS_FAILURE on error
  */
 int rtp_relay_stop_fwd (osip_call_id_t *callid,
-                        int direction, int nolock) {
+                        int rtp_direction, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
@@ -506,7 +509,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
    DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd: stopping RTP proxy "
           "stream for: %s@%s (%s)",
           callid->number, callid->host,
-          ((direction == DIR_INCOMING) ? "incoming" : "outgoing"));
+          ((rtp_direction == DIR_INCOMING) ? "incoming" : "outgoing"));
 
    /*
     * lock mutex - only if not requested to skip the lock.
@@ -544,7 +547,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
-         (rtp_proxytable[i].direction == direction)) {
+         (rtp_proxytable[i].direction == rtp_direction)) {
          sts = close(rtp_proxytable[i].rtp_rx_sock);
 	 DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",
@@ -569,7 +572,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
       DEBUGC(DBCLASS_RTP,
              "rtp_relay_stop_fwd: can't find active stream for %s@%s (%s)",
              callid->number, callid->host,
-             ((direction == DIR_INCOMING) ? "incoming" : "outgoing"));
+             ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"));
       retsts = STS_FAILURE;
       goto unlock_and_exit;
    }

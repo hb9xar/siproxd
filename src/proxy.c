@@ -330,13 +330,13 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       }
 #endif
 
+      /* rewrite Contact header to represent the masqued address */
+      sip_rewrite_contact(request, DIR_OUTGOING);
+
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
          sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
       }
-
-      /* rewrite Contact header to represent the masqued address */
-      sip_rewrite_contact(request, DIR_OUTGOING);
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -806,6 +806,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    int media_stream_no;
    sdp_connection_t *sdp_conn;
    sdp_media_t *sdp_med;
+   int rtp_direction=0;
 
    /*
     * get SDP structure
@@ -877,15 +878,21 @@ if (configuration.debuglevel)
 
    /* figure out what address to use for RTP masquerading */
    if (MSG_IS_REQUEST(mymsg)) {
-      if (direction == DIR_INCOMING)
+      if (direction == DIR_INCOMING) {
          map_addr = inside_addr;
-      else
+         rtp_direction = DIR_OUTGOING;
+      } else {
          map_addr = outside_addr;
+         rtp_direction = DIR_INCOMING;
+      }
    } else /* MSG_IS_REPONSE(mymsg) */ {
-      if (direction == DIR_INCOMING)
+      if (direction == DIR_INCOMING) {
          map_addr = inside_addr;
-      else
+         rtp_direction = DIR_OUTGOING;
+      } else {
          map_addr = outside_addr;
+         rtp_direction = DIR_INCOMING;
+      }
    }
 
    /*
@@ -929,7 +936,7 @@ if (configuration.debuglevel)
 
                rtp_start_fwd(osip_message_get_call_id(mymsg),
                              user,
-                             direction,
+                             rtp_direction,
                              media_stream_no,
                              map_addr, &map_port,
                              msg_addr, msg_port);
