@@ -82,6 +82,7 @@ int main (int argc, char *argv[])
 {
    int sts;
    int i;
+   int buflen;
    int access;
    char buff [BUFFER_SIZE];
    sip_ticket_t ticket;
@@ -291,8 +292,9 @@ int main (int argc, char *argv[])
       /* got input, process */
       DEBUGC(DBCLASS_BABBLE,"back from sipsock_wait");
 
-      i=sipsock_read(&buff, sizeof(buff)-1, &ticket.from, &ticket.protocol);
-      buff[i]='\0';
+      buflen=sipsock_read(&buff, sizeof(buff)-1, &ticket.from,
+                           &ticket.protocol);
+      buff[buflen]='\0';
 
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(ticket.from);
@@ -302,7 +304,7 @@ int main (int argc, char *argv[])
       }
 
       /* integrity checks */
-      sts=security_check_raw(buff, i);
+      sts=security_check_raw(buff, buflen);
       if (sts != STS_SUCCESS) {
          DEBUGC(DBCLASS_SIP,"security check (raw) failed");
          continue; /* there are no resources to free */
@@ -321,10 +323,10 @@ int main (int argc, char *argv[])
        * Proxy Behavior - Request Validation - Reasonable Syntax
        * (parse the received message)
        */
-      sts=sip_message_parse(ticket.sipmsg, buff);
+      sts=sip_message_parse(ticket.sipmsg, buff, buflen);
       if (sts != 0) {
          ERROR("sip_message_parse() failed... this is not good");
-         DUMP_BUFFER(-1, buff, i);
+         DUMP_BUFFER(-1, buff, buflen);
          goto end_loop; /* skip and free resources */
       }
 
@@ -332,7 +334,7 @@ int main (int argc, char *argv[])
       sts=security_check_sip(&ticket);
       if (sts != STS_SUCCESS) {
          ERROR("security_check_sip() failed... this is not good");
-         DUMP_BUFFER(-1, buff, i);
+         DUMP_BUFFER(-1, buff, buflen);
          goto end_loop; /* skip and free resources */
       }
 

@@ -533,6 +533,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
    osip_via_t *via;
    int port;
    char *buffer;
+   int buflen;
    struct in_addr addr;
 
    /* create the response template */
@@ -563,7 +564,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
       }
    }   
 
-   sts = sip_message_to_str(response, &buffer);
+   sts = sip_message_to_str(response, &buffer, &buflen);
    if (sts != 0) {
       ERROR("sip_gen_response: msg_2char failed");
       return STS_FAILURE;
@@ -577,7 +578,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
    }
 
    /* send to destination */
-   sipsock_send(addr, port, ticket->protocol, buffer, strlen(buffer));
+   sipsock_send(addr, port, ticket->protocol, buffer, buflen);
 
    /* free the resources */
    osip_message_free(response);

@@ -202,10 +202,10 @@ int fwapi_stop_rtp(int rtp_direction,
                    struct in_addr remote_ipaddr, int remote_port);
 
 /* sip_layer.c */
-int sip_message_parse(osip_message_t * sip, const char *buf);
-int sip_message_to_str(osip_message_t * sip, char **dest);
-int sip_body_to_str(const osip_body_t * body, char **dest);
-int sip_message_set_body(osip_message_t * sip, const char *buf);
+int sip_message_parse(osip_message_t * sip, const char *buf, int len);
+int sip_message_to_str(osip_message_t * sip, char **dest, int *len);
+int sip_body_to_str(const osip_body_t * body, char **dest, int *len);
+int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 
 
 /*

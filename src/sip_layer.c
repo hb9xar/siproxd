@@ -30,49 +30,53 @@ static char const ident[]="$Id$";
  * argument for a number of functions used by siproxd.
  */
 
-int sip_message_parse(osip_message_t * sip, const char *buf) {
+int sip_message_parse(osip_message_t * sip, const char *buf, int len) {
 #ifdef HAVE_FUNC_OSIP_MESSAGE_PARSE_3
-   return osip_message_parse(sip, buf, strlen(buf));
+   return osip_message_parse(sip, buf, len);
 #else 
    return osip_message_parse(sip, buf);
 #endif
 }
 
-int sip_message_to_str(osip_message_t * sip, char **dest) {
+int sip_message_to_str(osip_message_t * sip, char **dest, int *len) {
 #ifdef  HAVE_FUNC_OSIP_MESSAGE_TO_STR_3
    int sts;
-   size_t len;
-   sts = osip_message_to_str(sip, dest, &len);
+   sts = osip_message_to_str(sip, dest, len);
    /*
     * NULL termination (libosip2-2.2.0 does NOT do this properly,
     * there is always one byte too much :-( )
     */
-   (*dest)[len]='\0';
+   (*dest)[*len]='\0';
    return sts;
 #else 
-   return osip_message_to_str(sip, dest);
+   int sts;
+   sts = osip_message_to_str(sip, dest);
+   *len = strlen(*dest);
+   return sts;
 #endif
 }
 
-int sip_body_to_str(const osip_body_t * body, char **dest) {
+int sip_body_to_str(const osip_body_t * body, char **dest, int *len) {
 #ifdef  HAVE_FUNC_OSIP_BODY_TO_STR_3
    int sts;
-   size_t len;
-   sts = osip_body_to_str(body, dest, &len);
+   sts = osip_body_to_str(body, dest, len);
    /*
     * NULL termination (libosip2-2.2.0 does NOT do this properly,
     * there is always one byte too much :-( )
     */
-   (*dest)[len]='\0';
+   (*dest)[*len]='\0';
    return sts;
 #else 
-   return osip_body_to_str(body, &dest);
+   int sts;
+   sts = osip_body_to_str(body, &dest);
+   *len = strlen(*dest);
+   return sts;
 #endif
 }
 
-int sip_message_set_body(osip_message_t * sip, const char *buf) {
+int sip_message_set_body(osip_message_t * sip, const char *buf, int len) {
 #ifdef  HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3
-   return osip_message_set_body(sip, buf, strlen(buf));
+   return osip_message_set_body(sip, buf, len);
 #else 
    return osip_message_set_body(sip, buf);
 #endif

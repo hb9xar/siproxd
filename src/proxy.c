@@ -81,6 +81,7 @@ int proxy_request (sip_ticket_t *ticket) {
    osip_uri_t *url;
    int port;
    char *buffer;
+   int buflen;
    osip_message_t *request;
    struct sockaddr_in *from;
 
@@ -516,14 +517,14 @@ int proxy_request (sip_ticket_t *ticket) {
    * RFC 3261, Section 16.6 step 10
    * Proxy Behavior - Forward the new request
    */
-   sts = sip_message_to_str(request, &buffer);
+   sts = sip_message_to_str(request, &buffer, &buflen);
    if (sts != 0) {
       ERROR("proxy_request: sip_message_to_str failed");
       return STS_FAILURE;
    }
 
    sipsock_send(sendto_addr, port, ticket->protocol,
-                buffer, strlen(buffer)); 
+                buffer, buflen); 
    osip_free (buffer);
 
   /*
@@ -565,6 +566,7 @@ int proxy_response (sip_ticket_t *ticket) {
    osip_via_t *via;
    int port;
    char *buffer;
+   int buflen;
    osip_message_t *response;
    struct sockaddr_in *from;
 
@@ -910,14 +912,14 @@ int proxy_response (sip_ticket_t *ticket) {
       }
    }
 
-   sts = sip_message_to_str(response, &buffer);
+   sts = sip_message_to_str(response, &buffer, &buflen);
    if (sts != 0) {
       ERROR("proxy_response: sip_message_to_str failed");
       return STS_FAILURE;
    }
 
    sipsock_send(sendto_addr, port, ticket->protocol,
-                buffer, strlen(buffer)); 
+                buffer, buflen); 
    osip_free (buffer);
    return STS_SUCCESS;
 }
@@ -938,6 +940,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    struct in_addr map_addr, addr_sess, addr_media, outside_addr, inside_addr;
    int sts;
    char *bodybuff;
+   int bodybuflen;
    char clen[8]; /* content length: probably never more than 7 digits !*/
    int map_port, msg_port;
    int media_stream_no;
@@ -966,28 +969,31 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
       }
    }
 
-   sts = sip_body_to_str(body, &bodybuff);
+   sts = sip_body_to_str(body, &bodybuff, &bodybuflen);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_body_to_str");
    }
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, bodybuff);
-   osip_free(bodybuff);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_message_parse body");
+      DUMP_BUFFER(-1, bodybuff, bodybuflen);
+      osip_free(bodybuff);
       sdp_message_free(sdp);
       return STS_FAILURE;
    }
+   osip_free(bodybuff);
 
 
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
+   int tmplen;
    sts = osip_message_get_body(mymsg, 0, &body);
-   sts = sip_body_to_str(body, &tmp);
+   sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
-         tmp2, strlen(tmp), tmp);
+         tmp2, tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
 }
@@ -1208,12 +1214,13 @@ if (configuration.debuglevel)
 
    /* dump new body */
    sdp_message_to_str(sdp, &bodybuff);
+   bodybuflen=strlen(bodybuff);
 
    /* free sdp structure */
    sdp_message_free(sdp);
 
    /* include new body */
-   sip_message_set_body(mymsg, bodybuff);
+   sip_message_set_body(mymsg, bodybuff, bodybuflen);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_message_set_body body");
    }
@@ -1221,7 +1228,7 @@ if (configuration.debuglevel)
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
    mymsg->content_length=NULL;
-   sprintf(clen,"%i",strlen(bodybuff));
+   sprintf(clen,"%i",bodybuflen);
    sts = osip_message_set_content_length(mymsg, clen);
 
    /* free old body */
@@ -1230,11 +1237,12 @@ if (configuration.debuglevel)
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
+   int tmplen;
    sts = osip_message_get_body(mymsg, 0, &body);
-   sts = sip_body_to_str(body, &tmp);
+   sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body after rewrite (clen=%s, strlen=%i):\n%s\n----",
-         tmp2, strlen(tmp), tmp);
+         tmp2, tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
 }

@@ -495,6 +495,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
    osip_via_t *via;
    int port;
    char *buffer;
+   int buflen;
    struct in_addr addr;
    osip_header_t *expires_hdr;
 
@@ -550,7 +551,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
       }
    }   
 
-   sts = sip_message_to_str(response, &buffer);
+   sts = sip_message_to_str(response, &buffer, &buflen);
    if (sts != 0) {
       ERROR("register_response: msg_2char failed");
       return STS_FAILURE;
@@ -563,7 +564,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send(addr, port, ticket->protocol, buffer, strlen(buffer));
+   sipsock_send(addr, port, ticket->protocol, buffer, buflen);
 
    /* free the resources */
    osip_message_free(response);
