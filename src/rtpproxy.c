@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -35,6 +35,7 @@
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
+#include "rtpproxy.h"
 #include "log.h"
 
 static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
@@ -50,19 +51,7 @@ pthread_mutex_t rtp_proxytable_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * table to remember all active rtp proxy streams
  */
-#define CALLIDNUM_SIZE	256
-#define CALLIDHOST_SIZE	32
-struct {
-   int sock;
-   char callid_number[CALLIDNUM_SIZE];
-   char callid_host[CALLIDHOST_SIZE];
-   int media_stream_no;
-   struct in_addr outbound_ipaddr;
-   int outboundport;
-   struct in_addr inbound_client_ipaddr;
-   int inbound_client_port; 
-   time_t timestamp;  
-} rtp_proxytable[RTPPROXY_SIZE];
+rtp_proxytable_t rtp_proxytable[RTPPROXY_SIZE];
 
 
 /* thread id of RTP proxy */
@@ -85,7 +74,7 @@ void sighdl_alm(int sig) {/* do nothing, just wake up from select() */};
  */
 int rtpproxy_init( void ) {
    int sts;
-   int arg=7;
+   int arg=0;
    struct sigaction sigact;
 
    /* clean proxy table */
@@ -106,11 +95,6 @@ int rtpproxy_init( void ) {
    sts=pthread_create(&rtpproxy_tid, NULL, rtpproxy_main, (void *)&arg);
    DEBUGC(DBCLASS_RTP,"created, sts=%i", sts);
 
-#if 0 /* don't detach */
-//   sts=pthread_detach(rtpproxy_tid);
-//   DEBUGC(DBCLASS_RTP,"detached, sts=%i", sts);
-#endif
-
    return STS_SUCCESS;
 }
 
@@ -122,11 +106,9 @@ void *rtpproxy_main(void *arg) {
    fd_set fdset;
    int fd_max;
    time_t t, last_t=0;
-   int i, count, sts;
+   int i;
    int num_fd;
-   static int rtp_socket=0;
    osip_call_id_t callid;
-   char rtp_buff[RTP_BUFFER_SIZE];
 
    memcpy(&fdset, &master_fdset, sizeof(fdset));
    fd_max=master_fd_max;
@@ -164,44 +146,42 @@ if (num_fd<0) {
 #endif
       time(&t);
 
-      if (configuration.rtp_proxy_enable) {
-
       /*
        * LOCK the MUTEX
        */
       pthread_mutex_lock(&rtp_proxytable_mutex);
 
+      /*
+       * RTP relay configured
+       */
+      if (configuration.rtp_proxy_enable == 1) {
+         /* do the relaying of received UDP packets */
+         rtp_relay(num_fd, &fdset, t);
+      }
 
-      /* check for data available and send to destination */
-      for (i=0;(i<RTPPROXY_SIZE) && (num_fd>0);i++) {
-         if ( (rtp_proxytable[i].sock != 0) && 
-	      FD_ISSET(rtp_proxytable[i].sock, &fdset) ) {
-            /* yup, have some data to send */
-
-	    /* read from sock rtp_proxytable[i].sock*/
-            count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
-
-#ifdef MOREDEBUG /*&&&&*/
-if (count<0) {WARN("read() returned error [%s]",strerror(errno));}
+      /*
+       * RTP masquerading configured
+       */
+#if 0
+      if (configuration.rtp_proxy_enable == 2) {
+         /* do the masquerading - which means nothing here.
+          * we only have to care that the UDP tunnels are
+          * opened and closed */
+         /* &&&& 
+            actually we have a problem here - as the incomming
+            RTP data is out of our hands, how shall I know if
+            this RTP stream now really has timed out or not...
+            We might do a 'poll' for the local maddr & mport
+            if it is still occupied.
+            So... what do we do here? I think for now I just let
+            the RTP stream expire and finished.
+          */
+      }
 #endif
 
-	    /* write to dest via socket rtp_inbound*/
-            sts=sipsock_send_udp(&rtp_socket,
-	                     rtp_proxytable[i].inbound_client_ipaddr,
-			     rtp_proxytable[i].inbound_client_port,
-			     rtp_buff, count, 0); /* don't dump it */
-#ifdef MOREDEBUG /*&&&&*/
-if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
-#endif
-            /* update timestamp of last usage */
-            rtp_proxytable[i].timestamp=t;
-
-	    num_fd--;
-         }
-      } /* for i */
-
-
-      /* age and clean rtp_proxytable (check every 10 seconds)*/
+      /*
+       * age and clean rtp_proxytable (check every 10 seconds)
+       */
       if (t > (last_t+10) ) {
          last_t = t;
 	 for (i=0;i<RTPPROXY_SIZE; i++) {
@@ -210,11 +190,6 @@ if (sts != STS_SUCCESS) {WARN("sipsock_send_udp() returned error");}
                /* time one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
-#ifdef MOREDEBUG /*&&&&*/
-INFO("RTP stream sock=%i %s@%s (idx=%i) "
-       "has expired", rtp_proxytable[i].sock,
-       callid.number, callid.host, i);
-#endif
                DEBUGC(DBCLASS_RTP,"RTP stream sock=%i %s@%s (idx=%i) "
                       "has expired", rtp_proxytable[i].sock,
                       callid.number, callid.host, i);
@@ -232,8 +207,6 @@ INFO("RTP stream sock=%i %s@%s (idx=%i) "
        * UNLOCK the MUTEX
        */
       pthread_mutex_unlock(&rtp_proxytable_mutex);
-
-      } /* rtp proxy enabled? */
    } /* for(;;) */
 
    return NULL;
@@ -255,7 +228,7 @@ INFO("RTP stream sock=%i %s@%s (idx=%i) "
 int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport) {
-   int i, j;
+   int j;
    int sock, port;
    int freeidx;
    int sts=STS_SUCCESS;
@@ -287,10 +260,6 @@ int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
       return STS_FAILURE;
    }
 
-#ifdef MOREDEBUG /*&&&&*/
-INFO("starting RTP proxy stream for: %s@%s #=%i",
-     callid->number, callid->host, media_stream_no);
-#endif
    DEBUGC(DBCLASS_RTP,"starting RTP proxy stream for: %s@%s #=%i",
           callid->number, callid->host, media_stream_no);
 
@@ -305,7 +274,6 @@ INFO("starting RTP proxy stream for: %s@%s #=%i",
     * !! place in the code and unlocked also at *exactly one* place.
     * !! this minimizes the risk of deadlocks.
     */
-
 
    /*
     * figure out, if this is an request to start an RTP proxy stream
@@ -329,35 +297,9 @@ INFO("starting RTP proxy stream for: %s@%s #=%i",
    }
 
 
-
-
-/* TODO: randomize the port allocation - start at a random offset to
-         search in the allowed port range (so some modulo stuff w/
-	 random start offset 
-	 - for i=x to (p1-p0)+x; p=p0+mod(x,p1-p0) */
-
-   /* find a local outbound port number to use and bind to it*/
-   sock=0;
-   port=0;
-   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i++) {
-      for (j=0; j<RTPPROXY_SIZE; j++) {
-         /* outbound port already in use */
-         if ((memcmp(&rtp_proxytable[j].outbound_ipaddr,
-	             &outbound_ipaddr, sizeof(struct in_addr))== 0) &&
-	     (rtp_proxytable[j].outboundport == i) ) break;
-      }
-
-      /* port is available, try to allocate */
-      if (j == RTPPROXY_SIZE) {
-         port=i;
-         sock=sockbind(outbound_ipaddr, port, 0);
-         /* if success break, else try further on */
-         if (sock) break;
-      }
-   }
-
-
-   /* find first free slot in rtp_proxytable */
+   /*
+    * find first free slot in rtp_proxytable
+    */
    freeidx=-1;
    for (j=0; j<RTPPROXY_SIZE; j++) {
       if (rtp_proxytable[j].sock==0) {
@@ -366,26 +308,50 @@ INFO("starting RTP proxy stream for: %s@%s #=%i",
       }
    }
 
+   /* rtp_proxytable port pool full? */
+   if (freeidx == -1) {
+      ERROR("rtp_start_fwd: rtp_proxytable is full!");
+      sts = STS_FAILURE;
+      goto unlock_and_exit;
+   }
+
+
+   /*
+    * RTP relay configured
+    */
+   if (configuration.rtp_proxy_enable == 1) {
+      sts = rtp_relay_start_fwd(&sock, &port, outbound_ipaddr);
+
+      /* could bind to desired port? */
+      if (sock == 0) {
+         ERROR("rtp_start_fwd: unable to bind to outbound port!");
+         sts = STS_FAILURE;
+         goto unlock_and_exit;
+      }
+   }
+
+   /*
+    * RTP masquerading configured
+    */
+   if (configuration.rtp_proxy_enable == 2) {
+      /* do the masquerading - which means to open up
+       * an UDP tunnel in the firewall within the desired range */
+      sts = rtp_masq_start_fwd(freeidx, outbound_ipaddr, &port,
+                               lcl_client_ipaddr, lcl_clientport);
+      if (sts != STS_SUCCESS) {
+         ERROR("rtp_start_fwd: unable to create masquerading tunnel!");
+         sts = STS_FAILURE;
+         goto unlock_and_exit;
+      }
+      sock=1; /* 0 indicates 'not allocated' - so we simply put in non-zero */
+   }
+
    DEBUGC(DBCLASS_RTP,"rtp_start_fwd: port=%i, sock=%i freeidx=%i",
           port, sock, freeidx);
 
    /* found an unused port? No -> RTP port pool fully allocated */
    if (port == 0) {
       ERROR("rtp_start_fwd: no RTP port available. Check rtp_port_* config!");
-      sts = STS_FAILURE;
-      goto unlock_and_exit;
-   }
-
-   /* could bind to desired port? */
-   if (sock == 0) {
-      ERROR("rtp_start_fwd: unable to allocate outbound port!");
-      sts = STS_FAILURE;
-      goto unlock_and_exit;
-   }
-
-   /* rtp_proxytable port pool full? */
-   if (freeidx == -1) {
-      ERROR("rtp_start_fwd: rtp_proxytable is full!");
       sts = STS_FAILURE;
       goto unlock_and_exit;
    }
@@ -440,10 +406,6 @@ int rtp_stop_fwd (osip_call_id_t *callid, int nolock) {
       return STS_FAILURE;
    }
 
-#ifdef MOREDEBUG /*&&&&*/
-INFO("stopping RTP proxy stream for: %s@%s",
-     callid->number, callid->host);
-#endif
    DEBUGC(DBCLASS_RTP,"stopping RTP proxy stream for: %s@%s",
           callid->number, callid->host);
 
@@ -484,23 +446,34 @@ INFO("stopping RTP proxy stream for: %s@%s",
          (strcmp(rtp_proxytable[i].callid_number, callid->number)==0) &&
 	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
 
-         /* match: close socket and clean slot in rtp_proxytable */
-         sts = close(rtp_proxytable[i].sock);
-         if (sts < 0) {
-            ERROR("Error in close(%i): %s nolock=%i %s:%s\n",
-                  rtp_proxytable[i].sock,
-                  strerror(errno), nolock,
-                  callid->number, callid->host);
+         /*
+          * RTP relay configured
+          */
+         if (configuration.rtp_proxy_enable == 1) {
+            sts = rtp_relay_stop_fwd(rtp_proxytable[i].sock);
+	    DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
+                   "%s:%s == %s:%s  (idx=%i) sts=%i",
+	           rtp_proxytable[i].sock,
+	           rtp_proxytable[i].callid_number,
+	           rtp_proxytable[i].callid_host,
+	           callid->number, callid->host, i, sts);
+            if (sts < 0) {
+               ERROR("Error in close(%i): %s nolock=%i %s:%s\n",
+                     rtp_proxytable[i].sock,
+                     strerror(errno), nolock,
+                     callid->number, callid->host);
+            }
          }
 
-	 DEBUGC(DBCLASS_RTP,"closing socket %i for RTP stream "
-                "%s:%s == %s:%s  (idx=%i) sts=%i",
-	        rtp_proxytable[i].sock,
-	        rtp_proxytable[i].callid_number,
-	        rtp_proxytable[i].callid_host,
-	        callid->number,
-	        callid->host,
-	        i, sts);
+         /*
+          * RTP masquerading configured
+          */
+         if (configuration.rtp_proxy_enable == 2) {
+            /* do the masquerading - which means to open up
+             * an UDP tunnel in the firewall within the desired range */
+            sts = rtp_masq_stop_fwd(i);
+         }
+
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
       }

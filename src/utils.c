@@ -175,12 +175,11 @@ void secure_enviroment (void) {
    DEBUGC(DBCLASS_CONFIG,"running w/uid=%i, euid=%i, gid=%i, egid=%i",
           getuid(), geteuid(), getgid(), getegid());
 
-   if ((getuid()==0)|| (geteuid()==0)) {
+   if ((getuid()==0) || (geteuid()==0)) {
       /*
        * preparation - after chrooting there will be NOTHING more around
        */
       if (configuration.user) passwd=getpwnam(configuration.user);
-
 
       /*
        * change root directory into chroot jail
@@ -193,7 +192,6 @@ void secure_enviroment (void) {
 	                      configuration.chrootjail, strerror(errno));
          chdir("/");
       }
-
 
       /*
        * change user ID and group ID 
@@ -209,9 +207,11 @@ void secure_enviroment (void) {
          DEBUGC(DBCLASS_CONFIG,"changed egid to %i - %s",
 	        passwd->pw_gid, (sts==0)?"Ok":"Failed");
 
-         sts = setuid(passwd->pw_uid);
-         DEBUGC(DBCLASS_CONFIG,"changed uid to %i - %s",
-	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
+/* don't set the real user id - as we need to elevate privs
+   when setting up an RTP masquerading tunnel */
+//         sts = setuid(passwd->pw_uid);
+//         DEBUGC(DBCLASS_CONFIG,"changed uid to %i - %s",
+//	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
 
          sts = seteuid(passwd->pw_uid);
          DEBUGC(DBCLASS_CONFIG,"changed euid to %i - %s",

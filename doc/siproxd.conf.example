@@ -68,7 +68,12 @@ user = nobody
 #chrootjail = /var/lib/siproxd/
 
 ######################################################################
-# global switch to enable (1) or disable (0) the RTP proxy feature
+# global switch to control the RTP proxy behaviour
+#       0 - RTP proxy disabled
+#       1 - RTP proxy (UDP relay of siproxd)
+#       2 - RTP masquerading (Siproxd will open masquerading tunnels
+#                             in the firewall. Requires ipchains.
+#                             NOTE: siproxd must be started by root!)
 #    
 rtp_proxy_enable = 1
 

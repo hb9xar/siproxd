@@ -13,6 +13,8 @@ dnl	 6-Apr-2003	tries	redone the fli4l specific build options
 dnl				now: --enable-fli4l-libc5, --enable-fli4l-uclibc
 dnl	 7-Apr-2003	tries	added siproxd.spec to autoconf process
 dnl	31-Jul-2003	tries	changed to support OSIP2 only
+dnl	 1-Sep-2003	tries	check for IPCHAINS
+dnl      5-Sep-2003     tries   test for pthreads before libosip stuff
 dnl
 dnl
 dnl
@@ -28,7 +30,7 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=3
-SPD_MICRO_VERSION=5
+SPD_MICRO_VERSION=6
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -86,6 +88,7 @@ case "$target" in
   *-*-linux*)
     AC_MSG_RESULT("Linux")
     AC_DEFINE(_LINUX,,[building on Linux platform])
+    AC_CHECK_HEADERS(linux/ip_masq.h)
     ;;
   *-*-freebsd*)
     AC_MSG_RESULT("FreeBSD")
@@ -167,6 +170,33 @@ fi
 
 
 dnl
+dnl Check for pthreads
+dnl
+ACX_PTHREAD(,
+   echo "*** ERROR: pthreads is required!"; exit 1;)
+if test "x$build_static_pthread" = "xno"; then
+   dnl link dynamically (default)
+   LIBS="$PTHREAD_LIBS $LIBS"
+   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   CC="$PTHREAD_CC"
+else
+   dnl link statically to this lib
+   dnl (this probably only will work on linux yet...)
+   AC_MSG_CHECKING("where I can find static threads library")
+   libpthreads_static=`find $extra_libs /lib /usr/lib /usr/local/lib \
+                       -name 'lib*thread*.a' 2>/dev/null| \
+                       egrep 'lib[p]?thread[s]?.a' |head -1`
+   if test "x$libpthreads_static" != "x"; then
+      LIBS="$libpthreads_static $LIBS"
+      AC_MSG_RESULT($libpthreads_static)
+   else
+      echo "*** ERROR: a static threads library is required!";exit 1;
+   fi
+   CC="$PTHREAD_CC"
+fi
+
+
+dnl
 dnl Check for libosip
 dnl
 if test "x$build_static_libosip" = "xno"; then
@@ -198,33 +228,6 @@ else
    else
       echo "*** ERROR: a static libosip library is required!";exit 1;
    fi
-fi
-
-
-dnl
-dnl Check for pthreads
-dnl
-ACX_PTHREAD(,
-   echo "*** ERROR: pthreads is required!"; exit 1;)
-if test "x$build_static_pthread" = "xno"; then
-   dnl link dynamically (default)
-   LIBS="$PTHREAD_LIBS $LIBS"
-   CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-   CC="$PTHREAD_CC"
-else
-   dnl link statically to this lib
-   dnl (this probably only will work on linux yet...)
-   AC_MSG_CHECKING("where I can find static threads library")
-   libpthreads_static=`find $extra_libs /lib /usr/lib /usr/local/lib \
-                       -name 'lib*thread*.a' 2>/dev/null| \
-                       egrep 'lib[p]?thread[s]?.a' |head -1`
-   if test "x$libpthreads_static" != "x"; then
-      LIBS="$libpthreads_static $LIBS"
-      AC_MSG_RESULT($libpthreads_static)
-   else
-      echo "*** ERROR: a static threads library is required!";exit 1;
-   fi
-   CC="$PTHREAD_CC"
 fi
 
 
