@@ -1,6 +1,12 @@
 0.5.7
 =====
-  13-Jun-2004:  - fix: get_ip_by_host() and buffers for reentrant functions
+  18-Jun-2004:  - 2 fixes for using a port number != 5060 (by Miguel Angel)
+  13-Jun-2004:  - fix: get_ip_by_host() and buffer allocation for reentrant
+                  gethostbyname_r() functions
+                - if compiled for fli4l 2.0.x, don't use reentrant
+                  gethostbyname_r() - in some cases it fails reproduceably
+                  when running under fli4l (however, the same binary
+                  does behave properly under an old SUSE libc5 system)
   12-Jun-2004:  - use SIGUSR2 for dmalloc debugging (SIGUSR1 is occupied
                   with old libc5 & threads)
                 - reworked calling parameters for passing SIP data

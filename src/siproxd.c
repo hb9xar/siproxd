@@ -377,10 +377,13 @@ int main (int argc, char *argv[])
          if (access & ACCESSCTL_REG) {
             osip_uri_t *url;
             struct in_addr addr1, addr2, addr3;
+            int dest_port;
 
             url = osip_message_get_uri(ticket.sipmsg);
+            dest_port= (url->port)?atoi(url->port):SIP_PORT;
 
             if ( (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) &&
+                 (configuration.sip_listen_port == dest_port) &&
                  (get_ip_by_ifname(configuration.inbound_if,&addr2) ==
                   STS_SUCCESS) &&
                  (get_ip_by_ifname(configuration.outbound_if,&addr3) ==

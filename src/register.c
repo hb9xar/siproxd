@@ -366,12 +366,16 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          if (force_lcl_masq) {
             struct in_addr addr;
             char *addrstr;
+            char *portstr;
+
             if (get_ip_by_ifname(configuration.outbound_if, &addr) !=
                 STS_SUCCESS) {
                ERROR("can't find outbound interface %s - configuration error?",
                      configuration.outbound_if);
                return STS_FAILURE;
             }
+
+            /* host part */
             addrstr = utils_inet_ntoa(addr);
             DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
                    (url1_contact->username) ? url1_contact->username : "*NULL*",
@@ -379,8 +383,14 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                    (url1_contact->username) ? url1_contact->username : "*NULL*",
                    addrstr);
             urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                    strlen(addrstr)+1);
+                                             strlen(addrstr)+1);
             strcpy(urlmap[i].masq_url->host, addrstr);
+
+            /* port number if required */
+            if (configuration.sip_listen_port != SIP_PORT) {
+               urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
+               sprintf(portstr, "%i", configuration.sip_listen_port);
+            }
          }
 
       } else { /* if new entry */

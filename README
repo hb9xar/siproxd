@@ -94,6 +94,14 @@ If siproxd crashes, a stack backtrace usually is helpful to me:
 4) copy-paste all the output and include it in your problem report.
 
 
+
+SENDING A PATCH
+===============
+If you send a patch, please make the diff using "diff -Naur" and
+include the version of siproxd you used to patch. It makes it a lot
+easier for me to merge it.
+
+
 WHAT SIPROXD DOES
 =================
 Siproxd's purpose is to act as an SIP proxy for softphones located
