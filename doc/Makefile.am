@@ -32,3 +32,4 @@ install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	$(INSTALL_DATA) siproxd.conf.example	$(DESTDIR)$(sysconfdir)/
 	$(INSTALL_DATA) siproxd_passwd.cfg	$(DESTDIR)$(sysconfdir)/
+        chmod 600 siproxd_passwd.cfg
