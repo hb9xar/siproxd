@@ -118,7 +118,7 @@ int check_vialoop (sip_t *my_msg) {
       via_t *via;
       via = (via_t *) list_get (my_msg->vias, pos);
       sts = is_via_local (via);
-      if (sts == 1) found_own_via=1;
+      if (sts == STS_TRUE) found_own_via=1;
       pos++;
    }
    return (found_own_via)? STS_TRUE : STS_FALSE;
@@ -307,17 +307,27 @@ int compare_url(url_t *url1, url_t *url2) {
       ERROR("compare_url: NULL ptr: url1=0x%p, url2=0x%p",url1, url2);
       return STS_FAILURE;
    }
-   if ((url1->username == NULL) || (url2->username == NULL)) {
-      ERROR("compare_url: NULL ptr: url1->username=0x%p, url2->username=0x%p",
-            url1->username, url2->username);
-      return STS_FAILURE;
-   }
    if ((url1->host == NULL) || (url2->host == NULL)) {
       ERROR("compare_url: NULL ptr: url1->host=0x%p, url2->host=0x%p",
             url1->host, url2->host);
       return STS_FAILURE;
    }
+   if ((url1->username == NULL) || (url2->username == NULL)) {
+      /* Broken(?) MSN messenger - does not supply a user name part.
+         So we simply compare the host part then */
+      WARN("compare_url: NULL username pointer: MSN messenger is known to "
+           "trigger this one! [url1->username=0x%p, url2->username=0x%p]",
+            url1->username, url2->username);
+      DEBUGC(DBCLASS_BABBLE, "comparing broken urls (no user): %s -> %s",
+            url1->host, url2->host);
+      if (strcmp(url1->host, url2->host)==0) {
+         sts = STS_SUCCESS;
+      } else {
+         sts = STS_FAILURE;
+      }
+   }
 
+   /* we have a proper URL */
    /* comparison of hosts should be based on IP addresses, no? */
    DEBUGC(DBCLASS_BABBLE, "comparing urls: %s@%s -> %s@%s",
          url1->username, url1->host, url2->username, url2->host);

@@ -170,7 +170,8 @@ int proxy_request (sip_t *request) {
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
             DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           contact->url->username, contact->url->host,
+	           (contact->url->username) ? contact->url->username : "*NULL*",
+                   (contact->url->host) ? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
             list_remove(request->contacts,0);
@@ -365,7 +366,8 @@ int proxy_response (sip_t *response) {
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
             DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           contact->url->username, contact->url->host,
+	           (contact->url->username) ? contact->url->username : "*NULL*",
+                   (contact->url->host) ? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
             list_remove(response->contacts,0);

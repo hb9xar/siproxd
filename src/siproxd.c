@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
 
       /* integrity checks */
       sts=security_check(buff, i);
-      if (sts != 0) continue; /* there are no resources to free */
+      if (sts != STS_SUCCESS) continue; /* there are no resources to free */
 
       /* parse the received message */
       sts=msg_init(&my_msg);

@@ -1,5 +1,8 @@
 Release Notes for siproxd-0.2.5
 ===============================
+ This release mainly fixes some annoying (and stupid) bugs.
+ See the ChangeLog for details.
+
  - supports Linux and FreeBSD (other BSD derivates not tested)
  - SIP Proxy for SIP based softphones hidden behind a masquerading firewall
  - Includes an RTP data stream proxy for *incomming* audio data
@@ -30,17 +33,26 @@ Reported to build on:
 - OpenBSD 2.9
 
 
-Interoperability (tested with softphones):
+Reported interoperability (tested with softphones):
  - Linphone (http://www.linphone.org)
  - Kphone (http://www.wirlab.net/kphone/)
+ - MSN messenger 4.6
+
 
 -----
-md5sum for siproxd-0.2.5.tar.gz: 	
+md5sum for siproxd-0.2.5.tar.gz: 	042986602efeaaa77a14bb0b1a416083
 md5sum for siproxd-0.2.5-1rh60.i386.rpm:
 md5sum for siproxd-0.2.5-1rh72.i386.rpm:
 md5sum for siproxd-0.2.5-1.src.rpm:	
 
 GnuPG signature for siproxd-0.2.5.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.5 (GNU/Linux)
+
+iEYEABECAAYFAj3v6zkACgkQPOYHDi42pIppDACfc0Bw3vcNFE5+qSHIzMacdHow
+kGgAn11c69ibc9bLd+la9j0otqxhAWIK
+=OZ6c
+-----END PGP SIGNATURE-----
 
 
 

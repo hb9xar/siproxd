@@ -128,10 +128,10 @@ int register_client(sip_t *my_msg) {
       url2_contact=urlmap[i].true_url;
 
       if ( (compare_url(url1_to, url2_to)==STS_SUCCESS) &&
-           (strcmp(url1_contact->username, url2_contact->username)==0) &&
-           (strcmp(url1_contact->host,     url2_contact->host    )==0) ) {
+           (compare_url(url1_contact, url2_contact)==STS_SUCCESS) ) {
          DEBUGC(DBCLASS_REG, "found entry for %s@%s at slot=%i, exp=%li",
-	        url1_contact->username,url1_contact->host,
+	        (url1_contact->username) ? url1_contact->username : "*NULL*",
+                (url1_contact->host) ? url1_contact->host : "*NULL*",
 		i, urlmap[i].expires-time_now);
          break;
       }
