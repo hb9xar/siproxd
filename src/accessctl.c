@@ -132,7 +132,7 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       /* address */
       p2=strchr(p1,'/');
       if (!p2) {
-         ERROR("CONFIG: hosts_deny_sip - no mask separator found");
+         ERROR("CONFIG: accesslist [%s]- no mask separator found", aclist);
 	 return STS_FAILURE;
       }
       memset(address,0,sizeof(address));

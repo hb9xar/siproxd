@@ -1,5 +1,6 @@
 0.5.5
 =====
+  31-Mar-2004:  - accessctl.c: text correction in ERROR output
   30-Mar-2004:  - Again '*' Contact header in unREGISTER
                 - new: tools/extract_sip.pl 
   26-Mar-2004:  - SDP rewrite: properly handle 'c=' items in session
