@@ -30,6 +30,6 @@ EXTRA_DIST = 	siproxd.conf.example \
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) siproxd.conf.example	$(DESTDIR)$(sysconfdir)/
-	$(INSTALL_DATA) siproxd_passwd.cfg	$(DESTDIR)$(sysconfdir)/
-	chmod 600 siproxd_passwd.cfg
+	$(INSTALL_DATA) $(srcdir)/siproxd.conf.example	$(DESTDIR)$(sysconfdir)/
+	$(INSTALL_DATA) $(srcdir)/siproxd_passwd.cfg	$(DESTDIR)$(sysconfdir)/
+	chmod 600 $(DESTDIR)$(sysconfdir)/siproxd_passwd.cfg
