@@ -181,12 +181,12 @@ static int parse_config (FILE *configfile) {
       /* strip newline if present */
       if (buff[strlen(buff)-1]=='\n') buff[strlen(buff)-1]='\0';
 
-      /* strip emty lines */
+      /* strip emtpy lines */
       if (strlen(buff) == 0) continue;
 
       /* strip comments and line with only whitespaces */
       for (i=0;i<strlen(buff);i++) {
-         if ((buff[i] == ' ') && (buff[i] == '\t')) continue;
+         if ((buff[i] == ' ') || (buff[i] == '\t')) continue;
          if (buff[i] =='#') i=strlen(buff);
          break;
       }

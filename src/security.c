@@ -70,7 +70,35 @@ int security_check_raw(char *sip_buffer, int size) {
          return STS_FAILURE;
       }
    }
-      
+
+
+   /* As libosip2 is *VERY* sensitive to corrupt imput data, we need to
+      do more stuff here. For example, libosip2 can be crashed (with a
+      "<port_malloc.c> virtual memory exhausted" error - God knows why)
+      by sending the following few bytes. It will die in osip_message_parse()
+      ---BUFFER DUMP follows---
+        6e 74 2f 38 30 30 30 0d 0a 61 3d 66 6d 74 70 3a nt/8000..a=fmtp:
+        31 30 31 20 30 2d 31 35 0d 0a                   101 0-15..      
+      ---end of BUFFER DUMP---
+
+      By looking at the code in osip_message_parse.c, I'd guess it is
+      the 'only one space present' that leads to a faulty size
+      calculation (VERY BIG NUMBER), which in turn then dies inside 
+      osip_malloc.
+      So, we need at least 2 spaces to survive that coda part of libosip2.
+    */
+   p1 = strchr(sip_buffer, ' ');
+   if (p1 && ((p1+1) < (sip_buffer+size))) {
+      p2 = strchr(p1+1, ' ');
+   } else {
+         DEBUGC(DBCLASS_SIP,"security_check_raw: found no space");
+         return STS_FAILURE;
+   }
+   if (p2==NULL) {
+         DEBUGC(DBCLASS_SIP,"security_check_raw: found only one space");
+         return STS_FAILURE;
+   }
+    
 
    /* TODO: still way to go here ... */
    return STS_SUCCESS;

@@ -72,12 +72,6 @@
 /* Define to 1 if you have the `osipparser2' library (-losipparser2). */
 #undef HAVE_LIBOSIPPARSER2
 
-/* Define to 1 if you have the <linux/ip_masq.h> header file. */
-#undef HAVE_LINUX_IP_MASQ_H
-
-/* Define to 1 if you have the <linux/netfilter.h> header file. */
-#undef HAVE_LINUX_NETFILTER_H
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 

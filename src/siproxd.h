@@ -186,8 +186,10 @@ struct siproxd_config {
 
 /* constants for security testing */
 #define SEC_MINLEN	16	/* minimum received length */
-#define SEC_MAXLINELEN	256	/* maximum acceptable length of one line
-				   in the SIP telegram (security check) */
+#define SEC_MAXLINELEN	1024	/* maximum acceptable length of one line
+				   in the SIP telegram (security check)
+                                   Careful: Proxy-Authorization lines may
+                                   get quite long */
 
 /* symbols for access control */
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/

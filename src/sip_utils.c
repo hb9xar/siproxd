@@ -773,8 +773,9 @@ int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
    param=NULL;
    osip_via_param_get_byname(via, "branch", &param);
    if (param && param->gvalue) {
+      DEBUGC(DBCLASS_BABBLE, "looking for magic cookie [%s]",param->gvalue);
       if (strncmp(param->gvalue, magic_cookie,
-                  strlen(magic_cookie))) {
+                  strlen(magic_cookie))==0) {
          /* calculate MD5 hash */
          MD5_CTX Md5Ctx;
          HASH HA1;

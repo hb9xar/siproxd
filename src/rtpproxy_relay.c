@@ -115,6 +115,7 @@ int rtp_relay_init( void ) {
 
       uid=getuid();
       euid=geteuid();
+      DEBUGC(DBCLASS_RTP,"uid=%i, euid=%i", uid, euid);
       if (uid != euid) seteuid(0);
 
       if (geteuid()==0) {
@@ -130,7 +131,8 @@ int rtp_relay_init( void ) {
             ERROR("pthread_setschedparam failed: %s", strerror(errno));
          }
       } else {
-         WARN("Cannot set realtime scheduling for RTP (start siproxd as root)");
+         INFO("Unable to use realtime scheduling for RTP proxy");
+         INFO("You may want to start siproxd as root and switch UID afterwards");
       }
       if (uid != euid)  seteuid(euid);
    }

@@ -21,6 +21,6 @@ while (<>) {
 
    for (my $i=0; $i<16; $i++) {
       # write HEX byte as character
-      print chr(hex($hex[$i]));
+      if (hex($hex[$i]) != "") {print chr(hex($hex[$i]));}
    }
 }

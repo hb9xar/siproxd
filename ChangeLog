@@ -1,5 +1,10 @@
 0.5.5
 =====
+   5-Apr-2004:  - config file: don't complain on line s with only whitespaces
+                - fix: Via branch calculation
+                - security.c: increased max acceptable line length
+                - security.c: prevent libosip2 to die with "out of memory"
+                  on some malformed headers
    4-Apr-2004:  - Realtime Scheduling for RTP proxy
    3-Apr-2004:  - fix: SDP 'c=' items in media part
    2-Apr-2004:  - PID file
