@@ -64,6 +64,10 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    int i, j;
    time_t t;
    struct hostent *hostentry;
+#if defined(HAVE_GETHOSTBYNAME_R)
+   struct hostent result_buffer;
+   char tmp[GETHOSTBYNAME_BUFLEN];
+#endif
    int error;
    static struct {
       time_t timestamp;
@@ -117,9 +121,6 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    /* need to deal with reentrant versions of gethostbyname_r()
     * as we may use threads... */
 #if defined(HAVE_GETHOSTBYNAME_R)
-   {
-   struct hostent result_buffer;
-   char tmp[GETHOSTBYNAME_BUFLEN];
 
    /* gethostbyname_r() with 3 arguments (e.g. osf/1) */
    #if defined(HAVE_FUNC_GETHOSTBYNAME_R_3)
@@ -148,7 +149,6 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    #else
       #error "gethostbyname_r() with 3, 5 or 6 arguments supported only"
    #endif   
-   }
 #elif defined(HAVE_GETHOSTBYNAME)
    hostentry=gethostbyname(hostname);
    if (hostentry == NULL) error = h_errno;
