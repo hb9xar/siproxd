@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C; c-basic-offset: 3 -*-
     Copyright (C) 2002  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
@@ -254,7 +254,7 @@ INFO("daemonizing done (pid=%i)", getpid());
 {char tmp[32];
 strncpy(tmp, buff, 30);
 tmp[30]='\0';
-INFO("got packet [%i bytes]from %s [%s]", i,
+INFO("got packet [%i bytes] from %s [%s]", i,
      utils_inet_ntoa(from.sin_addr), tmp);}
 #endif
       /* evaluate the access lists (IP based filter)*/
@@ -307,11 +307,13 @@ INFO("got packet [%i bytes]from %s [%s]", i,
 
             url = osip_message_get_uri(my_msg);
             sts = get_ip_by_host(url->host, &addr1);
-            sts = get_ip_by_ifname(configuration.inbound_if,&addr2);
-            sts = get_ip_by_ifname(configuration.outbound_if,&addr3);
 
-            if ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-                (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) {
+            get_ip_by_ifname(configuration.inbound_if,&addr2);
+            get_ip_by_ifname(configuration.outbound_if,&addr3);
+
+            if ((sts == STS_SUCCESS) &&
+                ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+                 (memcmp(&addr1, &addr3, sizeof(addr1)) == 0))) {
                /* I'm the registrar, send response myself */
                sts = register_client(my_msg, 0);
                sts = register_response(my_msg, sts);

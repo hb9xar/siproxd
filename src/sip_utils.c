@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C; c-basic-offset: 3 -*-
     Copyright (C) 2002  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
@@ -209,14 +209,14 @@ int is_via_local (osip_via_t *via) {
 
 /*
  * compares two URLs
- * (by now, only hostname and username are compared)
+ * (by now, only scheme, hostname and username are compared)
  *
  * RETURNS
  *	STS_SUCCESS if equal
  *	STS_FAILURE if non equal or error
  */
 int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
-   int sts;
+   int sts1, sts2;
    struct in_addr addr1, addr2;
 
    /* sanity checks */
@@ -232,49 +232,70 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       return STS_FAILURE;
    }
 
+   DEBUGC(DBCLASS_PROXY, "comparing urls: %s:%s@%s -> %s:%s@%s",
+         (url1->scheme)   ? url1->scheme :   "(null)",
+         (url1->username) ? url1->username : "(null)",
+         (url1->host)     ? url1->host :     "(null)",
+         (url2->scheme)   ? url2->scheme :   "(null)",
+         (url2->username) ? url2->username : "(null)",
+         (url2->host)     ? url2->host :     "(null)");
+
+   /* compare SCHEME (if present) case INsensitive */
+   if (url1->scheme && url2->scheme) {
+      if (strcasecmp(url1->scheme, url2->scheme) != 0) {
+         DEBUGC(DBCLASS_PROXY, "compare_url: scheme mismatch");
+         return STS_FAILURE;
+      } else {
+         WARN("compare_url: NULL scheme - ignoring");
+      }
+   }
+
+   /* compare username (if present) case sensitive */
+   if (url1->username && url2->username) {
+      if (strcmp(url1->username, url2->username) != 0) {
+         DEBUGC(DBCLASS_PROXY, "compare_url: username mismatch");
+         return STS_FAILURE;
+      } else {
+         WARN("compare_url: NULL username - ignoring");
+      }
+   }
+
+
+   /*
+    * now, try to resolve the host. If resolveable, compare
+    * IP addresses - if not resolveable, compare the host names
+    * itselfes
+    */
+
    /* get the IP addresses from the (possible) hostnames */
-   sts=get_ip_by_host(url1->host, &addr1);
-   if (sts == STS_FAILURE) {
+   sts1=get_ip_by_host(url1->host, &addr1);
+   if (sts1 == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
              url1->host);
-      return STS_FAILURE;
    }
 
-   sts=get_ip_by_host(url2->host, &addr2);
-   if (sts == STS_FAILURE) {
+   sts2=get_ip_by_host(url2->host, &addr2);
+   if (sts2 == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
              url2->host);
-      return STS_FAILURE;
    }
 
-   /* Broken(?) MSN messenger - does not supply a user name part.
-      So we simply compare the host part then */
-   if ((url1->username == NULL) || (url2->username == NULL)) {
-/* let's be nice to Billy boy and don't complain evey time ;-)
-//      WARN("compare_url: NULL username pointer: MSN messenger is known to "
-//           "trigger this one!"); */
-      DEBUGC(DBCLASS_PROXY, "comparing broken urls (no user): "
-            "%s <-> %s", url1->host, url2->host);
-      if (memcmp(&addr1, &addr2, sizeof(addr1))==0) {
-         sts = STS_SUCCESS;
-      } else {
-         sts = STS_FAILURE;
+   if ((sts1 == STS_SUCCESS) && (sts2 == STS_SUCCESS)) {
+      /* compare IP addresses */
+      if (memcmp(&addr1, &addr2, sizeof(addr1))!=0) {
+         DEBUGC(DBCLASS_PROXY, "compare_url: IP mismatch");
+         return STS_FAILURE;
       }
-      return sts;
-   }
-
-   /* we have a proper URL */
-   /* comparison of hosts should be based on IP addresses, no? */
-   DEBUGC(DBCLASS_PROXY, "comparing urls: %s@%s -> %s@%s",
-         url1->username, url1->host, url2->username, url2->host);
-   if ((strcmp(url1->username, url2->username)==0) &&
-       (memcmp(&addr1, &addr2, sizeof(addr1))==0)) {
-      sts = STS_SUCCESS;
    } else {
-      sts = STS_FAILURE;
+      /* compare hostname strings case INsensitive */
+      if (osip_strcasecmp(url1->host, url2->host) != 0) {
+         DEBUGC(DBCLASS_PROXY, "compare_url: host name mismatch");
+         return STS_FAILURE;
+      }
    }
 
-   return sts;
+   /* the two URLs did pass all tests successfully - MATCH */
+   return STS_SUCCESS;
 }
 
 

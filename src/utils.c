@@ -147,7 +147,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 		   &hostentry,
 		   &error);
    #else
-      #error "gethostbyname_s() with 3, 5 or 6 arguments supported only"
+      #error "gethostbyname_r() with 3, 5 or 6 arguments supported only"
    #endif   
    }
 #elif defined(HAVE_GETHOSTBYNAME)
@@ -158,14 +158,26 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 #endif
 
    if (hostentry==NULL) {
-      if (h_errno == HOST_NOT_FOUND) {
-         /* this is actually not really an error */
+      /*
+       * Some errors just tell us that there was no IP resolvable.
+       * From the manpage:
+       *   HOST_NOT_FOUND
+       *      The specified host is unknown.
+       *   HOST_NOT_FOUND
+       *      The specified host is unknown.
+       *   NO_ADDRESS or NO_DATA
+       *      The requested name is valid but does not have an IP
+       *      address.
+       */
+      if ((error == HOST_NOT_FOUND) ||
+          (error == NO_ADDRESS) ||
+          (error == NO_DATA)) {
 #ifdef HAVE_HSTRERROR
          DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: %s",
-                hostname, hstrerror(h_errno));
+                hostname, hstrerror(error));
 #else
          DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: h_errno=%i",
-                hostname, h_errno);
+                hostname, error);
 #endif
       } else {
 #ifdef HAVE_HSTRERROR

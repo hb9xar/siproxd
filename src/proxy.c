@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C; c-basic-offset: 3 -*-
     Copyright (C) 2002  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
@@ -417,9 +417,11 @@ int proxy_response (osip_message_t *response) {
    */
    case RESTYP_OUTGOING:
       #define satoi atoi  /* used in MSG_TEST_CODE macro ... */
-      /* If an 200 answer to an INVITE request, rewrite body */
+      /* If an 200 OK or 183 Trying answer to an INVITE request,
+       * rewrite body */
       if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
-          (MSG_TEST_CODE(response, 200))) {
+          ((MSG_TEST_CODE(response, 200)) || 
+           (MSG_TEST_CODE(response, 183)))) {
          sts = proxy_rewrite_invitation_body(response);
       }
 
@@ -510,7 +512,7 @@ int proxy_response (osip_message_t *response) {
 /*
  * PROXY_REWRITE_INVITATION_BODY
  *
- * rewrites the outgoing INVITATION packet
+ * rewrites the outgoing INVITATION request or response packet
  * 
  * RETURNS
  *	STS_SUCCESS on success
@@ -533,8 +535,16 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg){
     */
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
-      ERROR("rewrite_invitation_body: no body found in message");
-      return STS_FAILURE;
+      if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
+          (MSG_TEST_CODE(mymsg, 183))) {
+         /* 183 Trying *MAY* contain SDP data */
+         DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
+                "no body found in message");
+      } else {
+         /* INVITE request and 200 response *MUST* contain SDP data */
+         ERROR("rewrite_invitation_body: no body found in message");
+         return STS_FAILURE;
+      }
    }
 
    sts = osip_body_to_str(body, &bodybuff);

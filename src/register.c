@@ -27,10 +27,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef _SOLARIS
-#include <sys/socket.h>
-#endif
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
