@@ -440,10 +440,10 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
        * seems to have disapeared on 2.4 (RH7)
        * len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
        */
-      len=sizeof(struct ifreq);
+      len=IFNAMSIZ;
 #endif
          af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
-         i+=len+IFNAMSIZ;
+         i+=len;
          if(af != AF_INET) continue;
 
          DEBUG("[i=%i] IF %s, l=%i af=%i -> IP:%s", i, 
@@ -465,10 +465,10 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
        * seems to have disapeared on 2.4 (RH7)
        * len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
        */
-      len=sizeof(struct ifreq);
+      len=IFNAMSIZ;
 #endif
       af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
-      i+=len+IFNAMSIZ;
+      i+=len;
       if(af != AF_INET) continue;
 
       if (strcmp(ifr->ifr_name, ifname)==0) {
