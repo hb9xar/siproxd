@@ -3,13 +3,13 @@
    1-Feb-2004:	- Added handling of Max-Forwards header
 		- a detected via loop results in an 482 Loop detected
   31-Jan-2004:	- Allow 2 of my vias in header to let 2 UA's sitting
-		  behind the same siproxd to have conversation together
-                  UA1 -->--\       /-->--\
+		  behind the same siproxd have conversation together
+                  UA1 -->--\   >   /-->--\
                             siproxd       Registrar
-                  UA2 --<--/       \--<--/
+                  UA2 --<--/   <   \--<--/
 		- Redone code for evaluation if a received packet
-                  if coming from inbound or outbound interface
-                - RTP stream are now identified by call_id AND
+                  is coming from the inbound or outbound network
+                - RTP streams are now identified by call_id AND
                   USERNAME of the contact header. This provides
                   support for RTP proxying between 2 UAs sitting on the
                   inbound network. -> Calls between local UAs going via
@@ -17,10 +17,11 @@
                   UA1 -->--\
                             siproxd 
                   UA2 --<--/ 
-		- Rewriting of SUBSCRIBE should now work.
+		- Rewriting of SUBSCRIBE messages should now work.
                 - Removed obsolete prototypes from rtpproxy.h
 		- If the RTP stream in one direction is found to be
-                  stopped (sendto()) also stop the opposite direction
+                  aborted (sendto() failure), also stop the stream
+                  for the opposite direction
 
 0.5.2
 =====
