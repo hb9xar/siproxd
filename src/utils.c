@@ -63,6 +63,14 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
    msg_setstatuscode (response, tmp);
    msg_setreasonphrase (response, msg_getreason (code));
 
+   if (request->to==NULL) {
+      ERROR("msg_make_template_reply: empty To in request header");
+   }
+
+   if (request->from==NULL) {
+      ERROR("msg_make_template_reply: empty From in request header");
+   }
+
    to_clone (request->to, &response->to);
    from_clone (request->from, &response->from);
 
@@ -102,7 +110,7 @@ int check_vialoop (sip_t *my_msg) {
 
    found_own_via=0;
    pos = 1;	/* for detecting a loop, don't check the first entry 
-   		   as this is my VIA! */
+   		   as this is my own VIA! */
    while (!list_eol (my_msg->vias, pos)) {
       via_t *via;
       via = (via_t *) list_get (my_msg->vias, pos);
@@ -179,7 +187,15 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    } dns_cache[DNS_CACHE_SIZE];
    static int cache_initialized=0;
 
-   if (hostname == NULL) return STS_FAILURE;
+   if (hostname == NULL) {
+      ERROR("get_ip_by_host: NULL hostname requested");
+      return STS_FAILURE;
+   }
+
+   if (addr == NULL) {
+      ERROR("get_ip_by_host: NULL in_addr passed");
+      return STS_FAILURE;
+   }
 
    /* first time: initialize DNS cache */
    if (cache_initialized == 0) {
@@ -260,7 +276,20 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 int compare_url(url_t *url1, url_t *url2) {
    int sts;
 
-   if ((url1 == NULL) || (url2 == NULL)) return STS_FAILURE;
+   if ((url1 == NULL) || (url2 == NULL)) {
+      ERROR("compare_url: NULL ptr: url1=0x%p, url2=0x%p",url1, url2);
+      return STS_FAILURE;
+   }
+   if ((url1->username == NULL) || (url2->username == NULL)) {
+      ERROR("compare_url: NULL ptr: url1->username=0x%p, url2->username=0x%p",
+            url1->username, url2->username);
+      return STS_FAILURE;
+   }
+   if ((url1->host == NULL) || (url2->host == NULL)) {
+      ERROR("compare_url: NULL ptr: url1->host=0x%p, url2->host=0x%p",
+            url1->host, url2->host);
+      return STS_FAILURE;
+   }
 
    /* comparison of hosts should be based on IP addresses, no? */
    DEBUGC(DBCLASS_BABBLE, "comparing urls: %s@%s -> %s@%s",

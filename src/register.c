@@ -143,7 +143,7 @@ int register_client(sip_t *my_msg) {
    }
 
    if (i >= URLMAP_SIZE) {
-      /* entry no existing, create new one */
+      /* entry not existing, create new one */
       i=j;
       DEBUGC(DBCLASS_REG,"create new entry for %s@%s at slot=%i",
              url1_contact->username, url1_contact->host, i);

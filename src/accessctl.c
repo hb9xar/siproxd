@@ -102,7 +102,7 @@ int accesslist_check (struct sockaddr_in from) {
 
 
 /*
- * checks for a match of the 'from' address with the supplies
+ * checks for a match of the 'from' address with the supplied
  * access list.
  *
  * RETURNS

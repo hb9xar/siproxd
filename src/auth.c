@@ -80,7 +80,7 @@ int authenticate_proxy(sip_t *request) {
    }
 
    /* authentication failed */
-   DEBUGC(DBCLASS_AUTH,"proxy-auth failed");
+   WARN("authenticate_proxy failed");
    return STS_FAILURE;
 }
 

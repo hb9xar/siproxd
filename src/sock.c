@@ -138,7 +138,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
       DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
    }
 
-   sts = sendto (*sock, buffer, size, 0, &dst_addr, sizeof(dst_addr));
+   sts = sendto(*sock, buffer, size, 0, &dst_addr, sizeof(dst_addr));
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {

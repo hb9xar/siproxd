@@ -185,23 +185,24 @@ int proxy_request (sip_t *request) {
       /* add my Via header line (outbound interface)*/
       sts = proxy_add_myvia(request, 0);
       if (sts == STS_FAILURE) {
-         WARN("adding my outbound via failed!");
+         ERROR("adding my outbound via failed!");
       }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         /* stop the RTP proxying stream */
          rtp_stop_fwd(msg_getcall_id(request));
       }
 
       break;
    
    default:
-      DEBUGC(DBCLASS_PROXY,"request: refuse to proxy - UA not registered?");
+      DEBUGC(DBCLASS_PROXY,"proxy_request: refused to proxy");
       WARN("request from/to unregistered UA (%s@%s)",
 	        request->from->url->username,
 		request->from->url->host);
-/* some clients seem to run amok when passing back a negative response */
+/* some clients seem to run amok when passing back a negative response
+ * so we simply drop the request silently
+ */
 //      proxy_gen_response(request, 403 /*forbidden*/);
       return STS_FAILURE;
    }
@@ -377,7 +378,10 @@ int proxy_response (sip_t *response) {
       break;
    
    default:
-      DEBUGC(DBCLASS_PROXY,"response: refuse to proxy - UA not registered?");
+      DEBUGC(DBCLASS_PROXY,"proxy_response: refused to proxy");
+      WARN("response from/to unregistered UA (%s@%s)",
+	        request->from->url->username,
+		request->from->url->host);
 /* some clients seem to run amok when passing back a negative response */
 //      proxy_gen_response(request, 403 /*forbidden*/);
       return STS_FAILURE;
@@ -488,14 +492,16 @@ int proxy_add_myvia (sip_t *request, int interface) {
       sts = get_ip_by_host(configuration.inboundhost, &addr);
    }
 
-   sprintf (tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
-            configuration.sip_listen_port);
+   sprintf(tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
+           configuration.sip_listen_port);
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
    sts = via_init(&via);
    if (sts!=0) return STS_FAILURE; /* allocation failed */
+
    sts = via_parse(via, tmp);
    if (sts!=0) return STS_FAILURE;
+
    list_add(request->vias,via,0);
 
    return STS_SUCCESS;
@@ -693,9 +699,6 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
       /* copy the rest */
       memcpy (ptr, data2_c, strlen(data2_c));
    }
-
-
-
 
 }
 
