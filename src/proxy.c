@@ -43,7 +43,6 @@ extern struct siproxd_config configuration;
 extern int errno;
 extern struct urlmap_s urlmap[];		/* URL mapping table     */
 extern struct lcl_if_s local_addresses;
-extern int sip_socket;				/* sending SIP datagrams */
 
 
 /*
@@ -547,7 +546,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       return STS_FAILURE;
    }
 
-   sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
+   sipsock_send(sendto_addr, port, buffer, strlen(buffer)); 
    osip_free (buffer);
 
   /*
@@ -730,6 +729,7 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
           (osip_strncasecmp(ua_hdr->hvalue,"grandstream", 11)==0) &&
           (MSG_IS_RESPONSE_FOR(response,"SUBSCRIBE")) &&
           (MSG_TEST_CODE(response, 202))) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: Grandstream hack 202->404");
          response->status_code=404;
       }
 }
@@ -811,7 +811,7 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
       return STS_FAILURE;
    }
 
-   sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
+   sipsock_send(sendto_addr, port, buffer, strlen(buffer)); 
    osip_free (buffer);
    return STS_SUCCESS;
 }

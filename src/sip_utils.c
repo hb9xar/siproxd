@@ -50,7 +50,6 @@ static char const ident[]="$Id$";
 extern struct siproxd_config configuration;
 
 extern int h_errno;
-extern int sip_socket;				/* sending SIP datagrams */
 
 extern struct urlmap_s urlmap[];		/* URL mapping table     */
 
@@ -571,8 +570,7 @@ int sip_gen_response(osip_message_t *request, int code) {
    }
 
    /* send to destination */
-   sipsock_send_udp(&sip_socket, addr, port,
-                    buffer, strlen(buffer), 1);
+   sipsock_send(addr, port, buffer, strlen(buffer));
 
    /* free the resources */
    osip_message_free(response);

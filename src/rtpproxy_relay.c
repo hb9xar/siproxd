@@ -299,24 +299,34 @@ static void *rtpproxy_main(void *arg) {
                } /* rtp_tx_sock == 0 */
 
                if (rtp_proxytable[i].rtp_tx_sock != 0) {
-                   /* write to dest via socket rtp_tx_sock */
-                   sts = sipsock_send_udp(&rtp_proxytable[i].rtp_tx_sock,
-                                          rtp_proxytable[i].remote_ipaddr,
-                                          rtp_proxytable[i].remote_port,
-                                          rtp_buff, count, 0); /* don't dump it */
+                  /* write to dest via socket rtp_tx_sock */
+                  struct sockaddr_in dst_addr;
+                  dst_addr.sin_family = AF_INET;
+                  memcpy(&dst_addr.sin_addr.s_addr,
+                         &rtp_proxytable[i].remote_ipaddr, 
+                         sizeof(struct in_addr));
+                  dst_addr.sin_port= htons(rtp_proxytable[i].remote_port);
 
-                  if (sts != STS_SUCCESS) {
-                     /* if sendto() fails with bad filedescriptor,
-                      * this means that the opposite stream has been
-                      * canceled or timed out.
-                      * we should then cancel this stream as well.*/
+                  sts = sendto(rtp_proxytable[i].rtp_tx_sock, rtp_buff,
+                               count, 0, (const struct sockaddr *)&dst_addr,
+                               (socklen_t)sizeof(dst_addr));
+                  if (sts == -1) {
+                     if (errno != ECONNREFUSED) {
+                        ERROR("sendto() [%s:%i size=%i] call failed: %s",
+                        utils_inet_ntoa(rtp_proxytable[i].remote_ipaddr),
+                        rtp_proxytable[i].remote_port, count, strerror(errno));
 
-                     WARN("stopping opposite stream");
-                     /* don't lock the mutex, as we own the lock */
-                     callid.number=rtp_proxytable[i].callid_number;
-                     callid.host=rtp_proxytable[i].callid_host;
-                     rtp_relay_stop_fwd(&callid,
-                                        rtp_proxytable[i].direction, 1);
+                    /* if sendto() fails with bad filedescriptor,
+                     * this means that the opposite stream has been
+                     * canceled or timed out.
+                     * we should then cancel this stream as well.*/
+
+                    WARN("stopping opposite stream");
+                    /* don't lock the mutex, as we own the lock */
+                    callid.number=rtp_proxytable[i].callid_number;
+                    callid.host=rtp_proxytable[i].callid_host;
+                    rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, 1);
+                     }
                   }
                }
             } /* count > 0 */

@@ -44,6 +44,10 @@ static char const ident[]="$Id$";
 /* configuration storage */
 extern struct siproxd_config configuration;
 
+/* socket used for sending SIP datagrams */
+int sip_udp_socket=0;
+
+
 /*
  * binds to SIP UDP socket for listening to incoming packets
  *
@@ -51,17 +55,15 @@ extern struct siproxd_config configuration;
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sipsock_listen (int *sock) {
+int sipsock_listen (void) {
    struct in_addr ipaddr;
 
-   if (sock == NULL) return STS_FAILURE;
-
    memset(&ipaddr, 0, sizeof(ipaddr));
-   *sock=sockbind(ipaddr, configuration.sip_listen_port, 1);
-   if (*sock == 0) return STS_FAILURE; /* failure*/
+   sip_udp_socket=sockbind(ipaddr, configuration.sip_listen_port, 1);
+   if (sip_udp_socket == 0) return STS_FAILURE; /* failure*/
 
    INFO("bound to port %i", configuration.sip_listen_port);
-   DEBUGC(DBCLASS_NET,"bound socket %i",*sock);
+   DEBUGC(DBCLASS_NET,"bound socket %i",sip_udp_socket);
    return STS_SUCCESS;
 }
 
@@ -71,7 +73,7 @@ int sipsock_listen (int *sock) {
  *
  * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
  */
-int sipsock_wait(int sock) {
+int sipsock_wait(void) {
    int sts;
    fd_set fdset;
    struct timeval timeout;
@@ -80,8 +82,8 @@ int sipsock_wait(int sock) {
    timeout.tv_usec=0;
 
    FD_ZERO(&fdset);
-   FD_SET (sock, &fdset);
-   sts=select (sock+1, &fdset, NULL, NULL, &timeout);
+   FD_SET (sip_udp_socket, &fdset);
+   sts=select (sip_udp_socket+1, &fdset, NULL, NULL, &timeout);
 
    /* WARN on failures */
    if (sts<0) {
@@ -104,13 +106,13 @@ int sipsock_wait(int sock) {
  * RETURNS number of bytes read
  *         from is modified to return the sockaddr_in of the sender
  */
-int sipsock_read(int sock, void *buf, size_t bufsize,
+int sipsock_read(void *buf, size_t bufsize,
                  struct sockaddr_in *from) {
    int count;
    socklen_t fromlen;
 
    fromlen=sizeof(struct sockaddr_in);
-   count=recvfrom(sock, buf, bufsize, 0,
+   count=recvfrom(sip_udp_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
 
    if (count<0) {
@@ -132,23 +134,19 @@ int sipsock_read(int sock, void *buf, size_t bufsize,
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sipsock_send_udp(int *sock, struct in_addr addr, int port,
-                     char *buffer, int size, int allowdump) {
+int sipsock_send(struct in_addr addr, int port,
+                 char *buffer, int size) {
    struct sockaddr_in dst_addr;
    int sts;
 
    /* first time: allocate a socket for sending */
-   if (*sock == 0) {
-      *sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (*sock < 0) {
-         ERROR("socket() call failed:%s",strerror(errno));
-	 return STS_FAILURE;
-      }
-      DEBUGC(DBCLASS_NET,"allocated send socket %i",*sock);
+   if (sip_udp_socket == 0) {
+      ERROR("SIP socket not allocated");
+      return STS_FAILURE;
    }
 
    if (buffer == NULL) {
-      ERROR("sipsock_send_udp got NULL buffer");
+      ERROR("sipsock_send got NULL buffer");
       return STS_FAILURE;
    }
 
@@ -156,13 +154,11 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    memcpy(&dst_addr.sin_addr.s_addr, &addr, sizeof(struct in_addr));
    dst_addr.sin_port= htons(port);
 
-   if (allowdump) {
-      DEBUGC(DBCLASS_NET,"send UDP packet to %s: %i",
-             utils_inet_ntoa(addr),port);
-      DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
-   }
+   DEBUGC(DBCLASS_NET,"send UDP packet to %s: %i", utils_inet_ntoa(addr),port);
+   DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
 
-   sts = sendto(*sock, buffer, size, 0, (const struct sockaddr *)&dst_addr,
+   sts = sendto(sip_udp_socket, buffer, size, 0,
+                (const struct sockaddr *)&dst_addr,
                 (socklen_t)sizeof(dst_addr));
    
    if (sts == -1) {

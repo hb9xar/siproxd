@@ -42,8 +42,6 @@ extern struct siproxd_config configuration;
 
 struct urlmap_s urlmap[URLMAP_SIZE];		/* URL mapping table     */
 
-extern int sip_socket;				/* sending SIP datagrams */
-
 extern int errno;
 /*
  * initialize the URL mapping table
@@ -536,7 +534,7 @@ int register_response(osip_message_t *request, int flag) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1);
+   sipsock_send(addr, port, buffer, strlen(buffer));
 
    /* free the resources */
    osip_message_free(response);
