@@ -119,6 +119,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       get_ip_by_ifname(configuration.inbound_if, &addr2);
       get_ip_by_ifname(configuration.outbound_if, &addr3);
       
+      /* my own route header? */
       if ((sts == STS_SUCCESS) &&
           ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
            (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
@@ -128,8 +129,20 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
          osip_list_remove(request->routes, 0);
          osip_route_free(route);
          /* request->routes will be freed by osip_message_free() */
-         DEBUGC(DBCLASS_PROXY,"removed Route header pointing to myself");
+         DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
       }
+
+      /* rewrite request URI to now topmost Route header */
+      url=osip_message_get_uri(request);
+      route = (osip_route_t *) osip_list_get(request->routes, 0);
+      if (route && route->url && route->url->host) {
+         DEBUGC(DBCLASS_PROXY, "rewriting request URI from %s to %s",
+                url->host, route->url->host);
+         osip_uri_free(url);
+         url=NULL;
+         osip_uri_clone(route->url, &url);
+      }
+
    }
       
 
