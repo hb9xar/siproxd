@@ -284,11 +284,17 @@ int main (int argc, char *argv[])
 
       /* evaluate the access lists (IP based filter)*/
       access=accesslist_check(ticket.from);
-      if (access == 0) continue; /* there are no resources to free */
+      if (access == 0) {
+         DEBUGC(DBCLASS_ACCESS,"access for this packet was denied");
+         continue; /* there are no resources to free */
+      }
 
       /* integrity checks */
       sts=security_check_raw(buff, i);
-      if (sts != STS_SUCCESS) continue; /* there are no resources to free */
+      if (sts != STS_SUCCESS) {
+         DEBUGC(DBCLASS_SIP,"security check (raw) failed");
+         continue; /* there are no resources to free */
+      }
 
       /* init sip_msg */
       sts=osip_message_init(&ticket.sipmsg);

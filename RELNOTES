@@ -56,11 +56,13 @@ Reported interoperability with softphones:
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
  - X-Lite (Win XP Professional)
+ - SJPhone softphone
 
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
  - FWD		(http://www.fwd.pulver.com)
  - Sipgate	(http://www.sipgate.de)
+ - Stanaphone	(SIP Gateway to PSTN)
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update

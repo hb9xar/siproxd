@@ -582,6 +582,8 @@ We should use the first Route header to send the packet to
       } else {
          port = SIP_PORT;
       }
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
+             configuration.outbound_proxy_host, port);
    } else if ((type == REQTYP_OUTGOING) && 
               (request->routes && !osip_list_eol(request->routes, 0))) {
       /* get the destination from the Route Header */
@@ -605,6 +607,8 @@ We should use the first Route header to send the packet to
       } else {
          port=SIP_PORT;
       }
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
+             route->url->host, port);
    } else {
       /* get the destination from the SIP URI */
       sts = get_ip_by_host(url->host, &sendto_addr);
@@ -619,6 +623,8 @@ We should use the first Route header to send the packet to
       } else {
          port=SIP_PORT;
       }
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have SIP URI to %s:%i",
+             url->host, port);
    }
 
    /*

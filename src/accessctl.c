@@ -99,6 +99,7 @@ int accesslist_check (struct sockaddr_in from) {
       access |= ACCESSCTL_REG;
    }
 
+   DEBUGC(DBCLASS_ACCESS,"access check =%i", access);
    return access;
 }
 

@@ -1,5 +1,6 @@
 0.5.8
 =====
+  26-Aug-2004:  - more DEBUG output
   22-Aug-2004:  - fix: secure_enviroment - set proper EGID (by Daniel Mueller)
   19-Aug-2004:  - fix: don't crash on missing Contact header during registration
   18-Aug-2004:  - reworked configure.in for FLI4L building
