@@ -17,6 +17,7 @@ dnl	 1-Sep-2003	tries	check for IPCHAINS
 dnl      5-Sep-2003     tries   test for pthreads before libosip stuff
 dnl     19-Sep-2003     tries   DMALLOC support
 dnl	 1-Nov-2003	tries	check for NETFILTER (IPTABLES)
+dnl	18-Nov-2003	tries	include sysconfdir to search for config
 dnl
 dnl
 dnl
@@ -279,6 +280,19 @@ AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
 AC_CHECK_FUNCS(socket bind select read send sendto)
 AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf vsnprintf)
 AC_CHECK_FUNCS(fgets sscanf hstrerror)
+
+
+dnl
+dnl sysconfdir
+dnl
+SIPROXDCONFPATH=""
+tmpset="$sysconfdir"
+while test "x$tmpset" != "x$SIPROXDCONFPATH"; do
+  SIPROXDCONFPATH="$tmpset"
+  eval tmpset="$tmpset"
+done
+AC_DEFINE_UNQUOTED(SIPROXDCONFPATH,"$SIPROXDCONFPATH",
+                  [will search for config file here])
 
 
 AC_SUBST(CPPFLAGS)

@@ -166,3 +166,6 @@
 /* typedef socklen_t available */
 #undef socklen_t
 
+/* will search for config file here */
+#undef SIPROXDCONFPATH
+

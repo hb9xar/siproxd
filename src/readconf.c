@@ -60,6 +60,7 @@ int read_config(char *name, int search) {
    char tmp[256];
    const char *completion[] = {
 	"%s/.%src",		/* this one is special... (idx=0)*/
+	SIPROXDCONFPATH "/%s.conf",
 	"/etc/%s.conf",
 	"/usr/etc/%s.conf",
 	"/usr/local/etc/%s.conf",
