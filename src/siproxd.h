@@ -81,6 +81,7 @@ struct siproxd_config {
    char *registrationfile;
    int  log_calls;
    char *pid_file;
+   int  default_expires;
 };
 
 /*
@@ -163,6 +164,7 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
+int make_default_config(void);						/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
@@ -205,6 +207,7 @@ int comp_osip_message_parse   (osip_message_t *sip, const char *message);
  */
 #define SIP_PORT	5060	/* default port to listen */
 #define DEFAULT_MAXFWD	70	/* default Max-Forward count */
+#define DEFAULT_EXPIRES	3600	/* default Expires timeout */
 
 #define URLMAP_SIZE	32	/* number of URL mapping table entries	*/
 #define RTPPROXY_SIZE	64	/* number of rtp proxy entries		*/

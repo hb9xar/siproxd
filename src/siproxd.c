@@ -110,8 +110,7 @@ int main (int argc, char *argv[])
 /*
  * prepare default configuration
  */
-   memset (&configuration, 0, sizeof(configuration));
-   configuration.sip_listen_port=SIP_PORT;
+   make_default_config();
 
    log_set_pattern(configuration.debuglevel);      
 

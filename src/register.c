@@ -237,10 +237,13 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
       /* get expires from expires Header */
       expires=atoi(expires_hdr->hvalue);
    } else {
+      char tmp[16];
       /* it seems, the expires field is not present everywhere... */
-      DEBUGC(DBCLASS_REG,"no 'expires' header found - set time to 600 sec");
-      expires=600;
-      osip_message_set_expires(ticket->sipmsg, "600");
+      DEBUGC(DBCLASS_REG,"no 'expires' header found - set time to %i sec",
+             configuration.default_expires);
+      expires=configuration.default_expires;
+      sprintf(tmp,"%i",expires);
+      osip_message_set_expires(ticket->sipmsg, tmp);
    }
 
    url1_to=ticket->sipmsg->to->url;

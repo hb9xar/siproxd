@@ -169,6 +169,7 @@ static int parse_config (FILE *configfile) {
       { "registration_file",   TYP_STRING ,&configuration.registrationfile },
       { "log_calls",           TYP_INT4,   &configuration.log_calls },
       { "pid_file",            TYP_STRING ,&configuration.pid_file },
+      { "default_expires",     TYP_INT4   ,&configuration.default_expires },
       {0, 0, 0}
    };
 
@@ -292,5 +293,14 @@ static int parse_config (FILE *configfile) {
 	  ERROR("unknown keyword in config file, line:\"%s\"",buff);
        }
    } // while
+   return STS_SUCCESS;
+}
+
+
+int make_default_config(void){
+   memset (&configuration, 0, sizeof(configuration));
+   configuration.sip_listen_port=SIP_PORT;
+   configuration.default_expires=DEFAULT_EXPIRES;
+
    return STS_SUCCESS;
 }
