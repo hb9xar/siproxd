@@ -1,5 +1,5 @@
-Release Notes for siproxd-0.3.6
-===============================
+Release Notes for siproxd-0.3.6a
+================================
 
  - Fli4l OPT_SIP (still experimental) available, check
    http://home.arcor.de/jsffm/fli4l/
@@ -60,15 +60,15 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.3.6.tar.gz: 	2f17fcb5d13844ee75359dbe12d34e55
+md5sum for siproxd-0.3.6a.tar.gz: 	e47e8cae6b494e79f72367b76d8e2706
 
-GnuPG signature for siproxd-0.3.6.tar.gz archive:
+GnuPG signature for siproxd-0.3.6a.tar.gz archive:
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (GNU/Linux)
 
-iD8DBQA/b109CfzBioe83JQRAuXAAJwMLqgvdVwUCph0941ybGysJwnquwCeMnlK
-yH2kTVVq6cIRqG+TtgbY7M4=
-=h9bM
+iD8DBQA/cdADCfzBioe83JQRAol5AKC/ugXDRvwMCCmUeDkVgfxZmWKJSACfUi8Z
+hUdAYUxhye4JSHfql1EcBg4=
+=AXu4
 -----END PGP SIGNATURE-----
 
 
