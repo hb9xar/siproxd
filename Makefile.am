@@ -21,4 +21,4 @@
 
 SUBDIRS = src doc scripts contrib
 
-EXTRA_DIST = TODO RELNOTES siproxd.spec
+EXTRA_DIST = TODO RELNOTES siproxd.spec autogen.sh
