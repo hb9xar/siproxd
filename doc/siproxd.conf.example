@@ -151,16 +151,20 @@ debug_level =      0x00000000
 #
 # Some UAs will always use the host/ip they register with as
 # host part in the registration record (which will be the inbound
-# ip address / hostname of the proxy) and can not be told to register a
-# different host (public IP address). This Mask feature allows to force
-# such a UA to be masqueraded to a different host.
+# ip address / hostname of the proxy) and can not be told to use a
+# different host part in the registration record (like sipphone, FWD,
+# iptel, ...)
+# This Mask feature allows to force such a UA to be masqueraded to
+# use different host.
 # -> Siemens SIP Phones seem to need this feature.
+#
+# Unles you really KNOW that you need this, don't enable it.
 #
 # mask_host=<inbound_ip/hostname>
 # masked_host=<hostname_to_be_masqueraded_as>
 #
-# mask_host=<10.0.1.1>			-- inbound IP address of proxy
-# masked_host=<my.public.host>		-- outbound hostname proxy
+# mask_host=10.0.1.1			-- inbound IP address of proxy
+# masked_host=my.public.host		-- outbound hostname proxy
 
 ######################################################################
 # Outbound proxy

@@ -41,7 +41,7 @@ extern struct siproxd_config configuration;
 static int parse_config (FILE *configfile);
 
 
-/* try to open (witchever found first):
+/* try to open (whichever is found first):
  *	<name>
  *	$HOME/.<name>rc
  *	/etc/<name>.conf

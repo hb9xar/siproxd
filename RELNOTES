@@ -2,7 +2,11 @@ Release Notes for siproxd-0.5.6
 ===============================
 
 Major changes since 0.5.5:
- - 
+ - Better recognition of redirected incoming requests (incoming calls
+   from sipgate.de are now working)
+ - Bugfix for local registration iwth linphone
+ - made some corrections for building siproxd against uClibc for use
+   with fli4l 2.1.7.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -55,9 +59,10 @@ Reported interoperability with softphones:
  - MSN messenger 4.6 (remote and local UA)
  - X-Lite (Win XP Professional)
 
-Reported interoperability with service providers:
+Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
  - FWD		(http://www.fwd.pulver.com)
+ - Sipgate	(http://www.sipgate.de)
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update

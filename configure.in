@@ -23,6 +23,7 @@ dnl	22-Nov-2003	tries	test for gethostbyname_r() & # of args
 dnl	22-Jan-2004	tries	add --enable-static option
 dnl	06-Mar-2004	tries	del daemon(), add setsid()
 dnl	09-Apr-2004	tries	add --with-custom-fwmodule
+dnl	09-May-2004	tries	fli4l-uclibc links statically agains pthreads
 dnl
 dnl
 dnl
@@ -200,9 +201,9 @@ case "$target" in
 esac
 
 if test "x$build_fli4l_uclibc" = "xyes"; then
-   dnl FLI4l uClibc: make only libosip static
+   dnl FLI4l uClibc: make libosip and libpthread static
    build_static_libosip="yes"
-   build_static_pthread="no"
+   build_static_pthread="yes"
 elif test "x$build_fli4l_libc5" = "xyes"; then
    dnl FLI4l libc5: make libosip and libpthread static
    build_static_libosip="yes"
