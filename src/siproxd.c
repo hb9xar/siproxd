@@ -50,7 +50,7 @@ int sip_socket=0;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002-2003 Thomas Ries\n" \
+PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002-2004 Thomas Ries\n" \
 "\nUsage: siproxd [options]\n\n" \
 "options:\n" \
 "       --help              (-h) help\n" \

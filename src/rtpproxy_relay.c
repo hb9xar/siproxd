@@ -185,7 +185,6 @@ static void *rtpproxy_main(void *arg) {
             if (count > 0) {
                if (rtp_proxytable[i].rtp_tx_sock == 0) {
                   int j;
-                  osip_call_id_t callid;
                   int direction = rtp_proxytable[i].direction;
                   int media_stream_no = rtp_proxytable[i].media_stream_no;
 
@@ -194,7 +193,6 @@ static void *rtpproxy_main(void *arg) {
 
                   for (j=0;(j<RTPPROXY_SIZE);j++) {
                      osip_call_id_t cid;
-
                      cid.number = rtp_proxytable[j].callid_number;
                      cid.host = rtp_proxytable[j].callid_host;
 
@@ -223,6 +221,8 @@ static void *rtpproxy_main(void *arg) {
 
                      WARN("stopping opposite stream");
                      /* don't lock the mutex, as we own the lock */
+                     callid.number=rtp_proxytable[i].callid_number;
+                     callid.host=rtp_proxytable[i].callid_host;
                      rtp_relay_stop_fwd(&callid,
                                         rtp_proxytable[i].direction, 1);
                   }

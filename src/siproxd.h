@@ -197,13 +197,3 @@ struct siproxd_config {
 #define DIR_INCOMING	1
 #define DIR_OUTGOING	2
 
-/*
- * optional hacks
- */
-#define HACK1	/* linphone-0.9.0pre4: broken RQ URI hack */
-/* 14-Aug-2002 TR
-   Linphone puts in the proxies hostname in the request URI when
-   OUTBOUND proxy is activated. But ONLY the hostname. Username and
-   Port (!!!) are kept from the SIP address given by the user.
-   This issue is fixed in linphone-0.9.1pre1
-*/

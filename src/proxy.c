@@ -190,7 +190,7 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    }
 
    /*
-    * is the telegram directed to an internal registered host?
+    * is the telegram directed to an internally registered host?
     * -> it must be an INCOMING request
     */
    if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
@@ -205,38 +205,6 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
    }
 #endif
 
-
-/*
- * ok, we got a request that we are allowed to process.
- */
-#ifdef HACK1
-/* linphone-0.9.0pre4
-   take To address and place it into URI (at least the host part)
-   Linphone-0.9.0pre4 puts the proxy host in the request URI
-   if OUTBOUND proxy is activated!
-   This is only a hack to recreate the proper final request URI.
-   This issue has been fixed in 0.9.1pre1
-*/
-{
-   osip_header_t *header_ua;
-   osip_uri_t *url2;
-
-   url2=osip_message_get_uri(request);
-   osip_message_get_user_agent(request,0,&header_ua);
-
-   if ( header_ua && header_ua->hvalue &&
-        (strcmp(header_ua->hvalue,"oSIP/Linphone-0.8.0")==0) ) {
-      /* if an outgoing request, try to fix the SIP URI */
-      if (type == REQTYP_OUTGOING) {
-         WARN("broken linphone-0.8.0: restoring SIP URI");
-	 free (url2->host);
-	 url2->host=malloc(strlen(request->to->url->host));
-	 strcpy(url2->host,request->to->url->host);
-
-      }
-   }
-}
-#endif
 
    /*
     * logging of passing calls
