@@ -467,16 +467,29 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
           * The RTP port number reported by the UA MAY change
           * for a given media stream
           * (seen with KPhone during HOLD/unHOLD)
+          * Also the destination IP may change during a re-Invite
+          * (seen with Sipphone.com, re-Invites when using
+          * the SIP - POTS gateway [SIP Minutes] 
           */
+         /* Port number */
          if (rtp_proxytable[i].remote_port != remote_port) {
             DEBUGC(DBCLASS_RTP,"RTP port number changed %i -> %i",
                    rtp_proxytable[i].remote_port, remote_port);
             rtp_proxytable[i].remote_port = remote_port;
          }
+         /* IP address */
+         if (memcmp(&rtp_proxytable[i].remote_ipaddr, &remote_ipaddr,
+                    sizeof(remote_ipaddr))) {
+            DEBUGC(DBCLASS_RTP,"RTP IP address changed to %s",
+                   utils_inet_ntoa(remote_ipaddr));
+            memcpy (&rtp_proxytable[i].remote_ipaddr, &remote_ipaddr,
+                     sizeof(remote_ipaddr));
+         }
          /* return the already known local port number */
-         DEBUGC(DBCLASS_RTP,"RTP stream already active (raddr=%s, "
-                "port=%i, id=%s, #=%i)",
+         DEBUGC(DBCLASS_RTP,"RTP stream already active (remaddr=%s, "
+                "remport=%i, lclport=%i, id=%s, #=%i)",
                 utils_inet_ntoa(remote_ipaddr),
+                rtp_proxytable[i].remote_port,
                 rtp_proxytable[i].local_port,
                 rtp_proxytable[i].callid_number,
                 rtp_proxytable[i].media_stream_no);
