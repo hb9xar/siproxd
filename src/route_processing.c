@@ -64,14 +64,10 @@ int route_preprocess(sip_ticket_t *ticket){
       return STS_SUCCESS;
    }
 
-   if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
-      ERROR("can't find inbound interface %s - configuration error?",
-            configuration.inbound_if);
+   if (get_interface_ip(IF_INBOUND, &addr2) != STS_SUCCESS) {
       return STS_FAILURE;
    }
-   if (get_ip_by_ifname(configuration.outbound_if, &addr3)!= STS_SUCCESS) {
-      ERROR("can't find outbound interface %s - configuration error?",
-            configuration.outbound_if);
+   if (get_interface_ip(IF_OUTBOUND, &addr3)!= STS_SUCCESS) {
       return STS_FAILURE;
    }
 
@@ -249,17 +245,13 @@ int route_add_recordroute(sip_ticket_t *ticket){
    switch (ticket->direction) {
    case REQTYP_INCOMING:
    case RESTYP_INCOMING:
-      if (get_ip_by_ifname(configuration.inbound_if, &addr) != STS_SUCCESS) {
-         ERROR("can't find inbound interface %s - configuration error?",
-               configuration.inbound_if);
+      if (get_interface_ip(IF_INBOUND, &addr) != STS_SUCCESS) {
          return STS_FAILURE;
       }
       break;
    case REQTYP_OUTGOING:
    case RESTYP_OUTGOING:
-      if (get_ip_by_ifname(configuration.outbound_if, &addr) != STS_SUCCESS) {
-         ERROR("can't find outbound interface %s - configuration error?",
-               configuration.outbound_if);
+      if (get_interface_ip(IF_OUTBOUND, &addr) != STS_SUCCESS) {
          return STS_FAILURE;
       }
       break;
@@ -338,16 +330,10 @@ int route_purge_recordroute(sip_ticket_t *ticket){
 
             /* resolve IP addresses (of RR header, inbound & outbound IF) */
             sts = get_ip_by_host(r_route->url->host, &addr1);
-            if (get_ip_by_ifname(configuration.inbound_if, &addr2) 
-                != STS_SUCCESS) {
-               ERROR("can't find inbound interface %s - configuration error?",
-                     configuration.inbound_if);
+            if (get_interface_ip(IF_INBOUND, &addr2) != STS_SUCCESS) {
                return STS_FAILURE;
             }
-            if (get_ip_by_ifname(configuration.outbound_if, &addr3)
-                != STS_SUCCESS) {
-               ERROR("can't find outbound interface %s - configuration error?",
-                     configuration.outbound_if);
+            if (get_interface_ip(IF_OUTBOUND, &addr3) != STS_SUCCESS) {
                return STS_FAILURE;
             }
 

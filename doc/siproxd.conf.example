@@ -9,9 +9,19 @@
 ######################################################################
 # The interface names of INBOUND and OUTBOUND interface.
 #
+#    If siproxd is not running on the host doing the masquerading
+#    but on a host within the private network segment, "in front" of
+#    the masquerading router: define if_inbound and if_outbound to
+#    point to the same interface (the inbound interface). In *addition*
+#    define 'host_outbound' to hold your external (public) IP address
+#    or a hostname that resolves to that address (use a dyndns address for
+#    example).
+#
 if_inbound  = eth0
 if_outbound = ppp0
-
+# uncomment the following line ONLY IF YOU KNOW WHAT YOU ARE DOING!
+# READ THE FAQ FIRST!
+#host_outbound = 1.2.3.4
 
 ######################################################################
 # Access control.

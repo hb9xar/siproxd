@@ -1004,22 +1004,16 @@ if (configuration.debuglevel)
     */
 
    /* get outbound address */
-   if (get_ip_by_ifname(configuration.outbound_if, &outside_addr) != 
-       STS_SUCCESS) {
-      ERROR("can't find outbound interface %s - configuration error?",
-            configuration.outbound_if);
+   if (get_interface_ip(IF_OUTBOUND, &outside_addr) != STS_SUCCESS) {
       sdp_message_free(sdp);
       return STS_FAILURE;
    }
 
    /* get inbound address */
-   if (get_ip_by_ifname(configuration.inbound_if, &inside_addr) !=
-       STS_SUCCESS) {
-      ERROR("can't find inbound interface %s - configuration error?",
-             configuration.inbound_if);
+   if (get_interface_ip(IF_INBOUND, &inside_addr) != STS_SUCCESS) {
       sdp_message_free(sdp);
-       return STS_FAILURE;
-    }
+      return STS_FAILURE;
+   }
 
    /* figure out what address to use for RTP masquerading */
    if (MSG_IS_REQUEST(mymsg)) {
@@ -1178,6 +1172,27 @@ if (configuration.debuglevel)
             if (have_c_media == 0) {
                memcpy(&addr_media, &addr_sess, sizeof(addr_sess));
             }
+
+/*&&&& If I'm sitting BEFORE the actual masquerading router:
+ok:        I _must_ _not_ _try_ _to_ _use_ _my_ _outbound_ _address_ (map_addr)
+           but my inbound address instead. Also make sure that the port
+seems ok:  assignment does not get fucked up.
+todo:     RPORT option must be removed.
+seens ok: Possibly a new RTP_DIRECTION value is needed ("no double assignments
+          of same port on different IPs" or something similar)??
+*/
+/*
+ * I am running in front of the routing device. I cannot use the
+ * external IP to bind a listen socket to, so force the use of
+ * my inbound IP for listening
+ */
+if ((rtp_direction == DIR_INCOMING) &&
+    (configuration.outbound_host) &&
+    (strcmp(configuration.outbound_host, "")!=0)) {
+/*&&&&*/
+   INFO("**** Front-Routing Hack ****");
+   memcpy(&map_addr, &inside_addr, sizeof (map_addr));
+}
 
             sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
                                 client_id,

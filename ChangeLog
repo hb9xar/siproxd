@@ -1,6 +1,8 @@
 0.5.11
 ======
-  19-Feb-2005:  - more work an new libosip API
+   1-Mar-2005:  - working on running siproxd in front of a routing device
+                  and NOT on the firewall itself.
+  19-Feb-2005:  - more work on new libosip API
   13-Feb-2005:  - made compile with libosip2-2.2.0 (change of libosip2 API)
 
 0.5.10

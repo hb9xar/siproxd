@@ -424,10 +424,8 @@ int main (int argc, char *argv[])
             dest_port= (url->port)?atoi(url->port):SIP_PORT;
 
             if ( (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) &&
-                 (get_ip_by_ifname(configuration.inbound_if,&addr2) ==
-                  STS_SUCCESS) &&
-                 (get_ip_by_ifname(configuration.outbound_if,&addr3) ==
-                  STS_SUCCESS)) {
+                 (get_interface_ip(IF_INBOUND,&addr2) == STS_SUCCESS) &&
+                 (get_interface_ip(IF_OUTBOUND,&addr3) == STS_SUCCESS)) {
 
                if ((configuration.sip_listen_port == dest_port) &&
                    ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
@@ -457,7 +455,7 @@ int main (int argc, char *argv[])
        * If not, send back error to UA and
        * skip any proxying attempt
        */
-      } else if (get_ip_by_ifname(configuration.outbound_if,NULL) !=
+      } else if (get_interface_ip(IF_OUTBOUND,NULL) !=
                  STS_SUCCESS) {
          DEBUGC(DBCLASS_SIP, "got a %s to proxy, but outbound interface "
                 "is down", (MSG_IS_REQUEST(ticket.sipmsg))? "REQ" : "RES");

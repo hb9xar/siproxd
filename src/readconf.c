@@ -150,6 +150,7 @@ static int parse_config (FILE *configfile) {
       { "silence_log",         TYP_INT4,   &configuration.silence_log },
       { "if_inbound",          TYP_STRING, &configuration.inbound_if },
       { "if_outbound",         TYP_STRING, &configuration.outbound_if },
+      { "host_outbound",       TYP_STRING, &configuration.outbound_host },
       { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
       { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
       { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },

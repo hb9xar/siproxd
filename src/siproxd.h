@@ -60,6 +60,7 @@ struct siproxd_config {
    int debugport;
    char *inbound_if;
    char *outbound_if;
+   char *outbound_host;
    int sip_listen_port;
    int daemonize;
    int silence_log;
@@ -147,6 +148,7 @@ int route_determine_nexthop(sip_ticket_t *ticket,
 int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
 void secure_enviroment (void);
 int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
+int  get_interface_ip(int interface, struct in_addr *retaddr);		/*X*/
 char *utils_inet_ntoa(struct in_addr in);
 int  utils_inet_aton(const char *cp, struct in_addr *inp);
 
@@ -159,8 +161,6 @@ int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
 int  is_sipuri_local (sip_ticket_t *ticket);				/*X*/
 int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
 int  sip_gen_response(sip_ticket_t *ticket, int code);			/*X*/
-#define IF_OUTBOUND 0
-#define IF_INBOUND  1
 int  sip_add_myvia (sip_ticket_t *ticket, int interface);		/*X*/
 int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/
 int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);		/*X*/
@@ -242,8 +242,8 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 #define SEC_MINLEN	16	/* minimum received length */
 #define SEC_MAXLINELEN	1024	/* maximum acceptable length of one line
 				   in the SIP telegram (security check)
-                                   Careful: Proxy-Authorization lines may
-                                   get quite long */
+				   Careful: Proxy-Authorization lines may
+				   get quite long */
 
 /* symbols for access control */
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/
@@ -259,6 +259,10 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 /* symbolic direction of data */
 #define DIR_INCOMING	1
 #define DIR_OUTGOING	2
+
+/* Interfaces */
+#define IF_OUTBOUND 0
+#define IF_INBOUND  1
 
 /* various */
 #ifndef satoi

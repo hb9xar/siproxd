@@ -376,10 +376,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
             struct in_addr addr;
             char *addrstr;
 
-            if (get_ip_by_ifname(configuration.outbound_if, &addr) !=
-                STS_SUCCESS) {
-               ERROR("can't find outbound interface %s - configuration error?",
-                     configuration.outbound_if);
+            if (get_interface_ip(IF_OUTBOUND, &addr) != STS_SUCCESS) {
                return STS_FAILURE;
             }
 
