@@ -124,7 +124,7 @@ rtp_timeout = 300
 #
 # OR use individual per user passwords stored in a file
 #
-#proxy_auth_pwfile = doc/siproxd_passwd.cfg
+#proxy_auth_pwfile = /etc/siproxd_passwd.cfg
 #
 # 'proxy_auth_pwfile' has precedence over 'proxy_auth_passwd'
 

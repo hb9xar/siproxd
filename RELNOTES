@@ -1,14 +1,8 @@
-Release Notes for siproxd-0.5.5
+Release Notes for siproxd-0.5.6
 ===============================
 
-Major changes since 0.5.4:
- - several fixes in the SDP media rewriting part
- - use realtime scheduling for RTP proxy thread
- - PID file
- - custom firewall control module: siproxd can be linked against
-   custom library  that may perform specific actions on start/stop
-   of RTP streams (dynamically reconfigure firewall settings)
- - a number of enhancement in security checks
+Major changes since 0.5.5:
+ - 
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -79,16 +73,9 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.5.tar.gz: 	13e97e55d4bb6180b87777f6e8645c0b
+md5sum for siproxd-0.5.6.tar.gz: 	
 
-GnuPG signature for siproxd-0.5.5.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.3 (GNU/Linux)
-
-iD8DBQBAeSFjCfzBioe83JQRAoS0AKCLle8NfEG2tsohIejpQuflNfgW8wCbB2z/
-edt4Q+mdcAl2nTZAg1gwZdY=
-=nCOP
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.6.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

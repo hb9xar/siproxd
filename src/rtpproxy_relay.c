@@ -730,7 +730,20 @@ static int rtp_recreate_fdset(void) {
  */
 void rtpproxy_kill( void ) {
    void *thread_status;
+   osip_call_id_t cid;
+   int i, sts;
 
+   /* stop any active RTP stream */
+   for (i=0;i<RTPPROXY_SIZE;i++) {
+      if (rtp_proxytable[i].rtp_rx_sock != 0) {
+         cid.number = rtp_proxytable[i].callid_number;
+         cid.host   = rtp_proxytable[i].callid_host;
+         sts = rtp_relay_stop_fwd(&cid, rtp_proxytable[i].direction, 0);
+      }
+   }
+   
+
+   /* kill the thread */
    if (rtpproxy_tid) {
       pthread_cancel(rtpproxy_tid);
       pthread_kill(rtpproxy_tid, SIGALRM);

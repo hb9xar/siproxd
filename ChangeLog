@@ -1,3 +1,7 @@
+0.5.6
+=====
+  11-Apr-2004:  - on termination, stop all active RTP streams
+
 0.5.5
 =====
   11-Apr-2004:  - Released 0.5.5
@@ -6,7 +10,7 @@
                   module (library) that will be called for each RTP
                   stream that is started/stopped.
    8-Apr-2004:  - small FAQ updates
-   5-Apr-2004:  - config file: don't complain on line s with only whitespaces
+   5-Apr-2004:  - config file: don't complain on lines with only whitespaces
                 - fix: Via branch calculation
                 - security.c: increased max acceptable line length
                 - security.c: prevent libosip2 to die with "out of memory"
@@ -321,7 +325,7 @@
 - 23-Nov-2002:  - released 0.2.4 (feature enhancements)
                 - BSD: resolved some compatibility issues (sscanf ->
                   resulted in coredump when reading config file)
-                  should now build on *BSD (tested on FreeBSD 4-7)
+                  should now build on *BSD (tested on FreeBSD 4.7)
                 - inbound/outbound interfaces now can be specified
                   by their interface name - this removes the need
                   for a 'quasi' static IP and restarting siproxd at
@@ -335,7 +339,7 @@
                   (/etc/siproxd_passwd.cfg)
 -  8-Nov-2002:  - string manipulations & data structures: better error
                   handling on some places.
--  2-Nov-2002:  - 'make install' install now a templace config file
+-  2-Nov-2002:  - 'make install' install now a template config file
                   (/etc/siproxd.conf.example)
 - 24-Oct-2002:  - small docu updates in README
 - 17-Oct-2002:  - fix in ./configure - abort on missing libraries

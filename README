@@ -46,11 +46,6 @@ HOW TO GET STARTED
   At least configure  'if_inbound' and 'if_outbound'. The must represent
   the interface names (e.g. on Linux: ppp0, eth1) for the inbound
   and outbound interface.
-  ** The use of 'host_inbound' and 'host_outbound' is deprecated!
-     'host_inbound' is the firewalls IP address of your private network,
-     'host_outbound' is the  public IP address or hostname of the
-     firewall. (If you have dynamic IP addresses, then you might want
-     to use a hostname here and use a dynamic DNS service like [1])
 
 
 - edit /usr/etc/siproxd_passwd.cfg if you enable client authentication
@@ -114,7 +109,7 @@ Scenario
 --------
 
  private IP address range             :          Internet
- 10.0.0.x                             :          (publich IP address range)
+ 10.0.0.x                             :          (public IP address range)
                                       :
                                       :         foo.bar.org
  +-------------+	       +--------------+
@@ -143,24 +138,14 @@ IPCHAINS:
  $ ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
  $ ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
 
- Firewall rule for masquerading outgoing traffic:
- $ ipchains -A forward -i ppp0 -j MASQ -s 10.0.0.0/24 -d 0.0.0.0/0
-
 IPTABLES:
  Firewall rules for incoming traffic:
  $iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
  $iptables -A INPUT -i ppp0 -p udp -m udp --dport 7070:7080 -j ACCEPT 
 
- Firewall rule for masquerading outgoing traffic:
- $ iptables -t nat -A POSTROUTING -s 10.0.0.0/255.255.255.0 -j MASQUERADE
-
-
  The first line will allow incoming SIP traffic. The second line will
  allow incoming RTP traffic on the ports 7070 - 7080 (the default port
  range used by siproxd for incoming RTP traffic).
-
- The rule for masquerading will ensure that the outgoing RTP data stream
- is masqueraded properly and sent to the remote host.
 
 
 REFERENCES
