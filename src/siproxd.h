@@ -139,6 +139,8 @@ struct siproxd_config {
    char *proxy_auth_pwfile;
    stringa_t mask_host;
    stringa_t masked_host;
+   char *outbound_proxy_host;
+   int  outbound_proxy_port;
 };
 
 

@@ -142,8 +142,10 @@ static int parse_config (FILE *configfile) {
       { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
       { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
       { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
-      { "mask_host",           TYP_STRINGA, &configuration.mask_host },
-      { "masked_host",         TYP_STRINGA, &configuration.masked_host },
+      { "mask_host",           TYP_STRINGA,&configuration.mask_host },
+      { "masked_host",         TYP_STRINGA,&configuration.masked_host },
+      { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host },
+      { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
       {0, 0, 0}
    };
 

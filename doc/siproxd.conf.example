@@ -144,3 +144,13 @@ debug_level =      0x00000000
 # mask_host=<10.0.1.1>			-- inbound IP address of proxy
 # masked_host=<my.public.host>		-- outbound hostname proxy
 
+######################################################################
+# Outbound proxy
+#
+# Siproxd itself can be told to send all traffic to another
+# outbound proxy.
+# You can use this feature to 'chain' multiple siproxd proxys
+# if you have several masquerading firewalls to cross.
+#
+# outbound_proxy_host = my.outboundproxy.org
+# outbound_proxy_port = 5060

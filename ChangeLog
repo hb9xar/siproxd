@@ -1,3 +1,10 @@
+0.5.0
+=====
+   1-Nov-2003:	- siproxd can use another outbound proxy itself
+		- Linux 2.4.x: siproxd with RTP relay could hang
+                  on termination. Fixed.
+                  
+
 0.4.2
 =====
   31-Oct-2003:	- released 0.4.2

@@ -127,6 +127,7 @@ static void *rtpproxy_main(void *arg) {
       tv.tv_usec = 0;
 
       num_fd=select(fd_max+1, &fdset, NULL, NULL, &tv);
+      pthread_testcancel();
       if ((num_fd<0) && (errno==EINTR)) {
          /*
           * wakeup due to a change in the proxy table:
@@ -534,6 +535,7 @@ void rtpproxy_kill( void ) {
 
    if (rtpproxy_tid) {
       pthread_cancel(rtpproxy_tid);
+      pthread_kill(rtpproxy_tid, SIGALRM);
       pthread_join(rtpproxy_tid, &thread_status);
    }
 

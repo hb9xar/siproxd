@@ -191,7 +191,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
   /*
    * from the internal masqueraded host to an external host
    */
-   case REQTYP_OUTGOING:
+   case  REQTYP_OUTGOING:
       /* get destination address */
       url=osip_message_get_uri(request);
 
@@ -291,18 +291,35 @@ INFO("stopping RTP proxy stream for: %s@%s",
       return STS_FAILURE;
    }
 
+   /*
+    * check if we need to send to an outbound proxy
+    */
+   if ((type == REQTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
+      sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
+                " proxy host [%s]", configuration.outbound_proxy_host);
+         return STS_FAILURE;
+      }
+
+      if (configuration.outbound_proxy_port) {
+         port=configuration.outbound_proxy_port;
+      } else {
+         port = 5060;
+      }
+   } else {
+      /* the host part already has been resolved above*/
+      if (url->port) {
+         port=atoi(url->port);
+      } else {
+         port=SIP_PORT;
+      }
+   }
 
    sts = osip_message_to_str(request, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: osip_message_to_str failed");
       return STS_FAILURE;
-   }
-
-   /* send to destination */
-   if (url->port) {
-      port=atoi(url->port);
-   } else {
-      port=SIP_PORT;
    }
 
    sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
@@ -322,7 +339,7 @@ int proxy_response (osip_message_t *response) {
    int i;
    int sts;
    int type;
-   struct in_addr addr;
+   struct in_addr sendto_addr;
    osip_via_t *via;
    osip_contact_t *contact;
    int port;
@@ -439,18 +456,43 @@ int proxy_response (osip_message_t *response) {
       return STS_FAILURE;
    }
 
-   /* get target address from VIA header */
-   via = (osip_via_t *) osip_list_get (response->vias, 0);
-   if (via == NULL) {
-      ERROR("proxy_response: list_get via failed");
-      return STS_FAILURE;
-   }
+   /*
+    * check if we need to send to an outbound proxy
+    */
+   if ((type == RESTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
+      /* have an outbound proxy - use it to send the packet */
+      sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
+                " proxy host [%s]", configuration.outbound_proxy_host);
+         return STS_FAILURE;
+      }
 
-   sts = get_ip_by_host(via->host, &addr);
-   if (sts == STS_FAILURE) {
-      DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve via [%s]",
-             via->host);
-      return STS_FAILURE;
+      if (configuration.outbound_proxy_port) {
+         port=configuration.outbound_proxy_port;
+      } else {
+         port = 5060;
+      }
+   } else {
+      /* get target address and port from VIA header */
+      via = (osip_via_t *) osip_list_get (response->vias, 0);
+      if (via == NULL) {
+         ERROR("proxy_response: list_get via failed");
+         return STS_FAILURE;
+      }
+
+      sts = get_ip_by_host(via->host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve VIA [%s]",
+                via->host);
+         return STS_FAILURE;
+      }
+
+      if (via->port) {
+         port=atoi(via->port);
+      } else {
+         port=SIP_PORT;
+      }
    }
 
    sts = osip_message_to_str(response, &buffer);
@@ -459,14 +501,7 @@ int proxy_response (osip_message_t *response) {
       return STS_FAILURE;
    }
 
-   /* send to destination */
-   if (via->port) {
-      port=atoi(via->port);
-   } else {
-      port=SIP_PORT;
-   }
-
-   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
+   sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
    osip_free (buffer);
    return STS_SUCCESS;
 }

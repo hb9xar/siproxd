@@ -186,8 +186,12 @@ int main (int argc, char *argv[])
 INFO("daemonizing done (pid=%i)", getpid());
 #endif
 
-   /* initialize the RTP proxy thread */
-   rtpproxy_init();
+   /* initialize the RTP proxy */
+   sts=rtpproxy_init();
+   if (sts != STS_SUCCESS) {
+      ERROR("unable to initialize RTP proxy - aborting"); 
+      exit(1);
+   }
 
    /* init the oSIP parser */
    parser_init();
