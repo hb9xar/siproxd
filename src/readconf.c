@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include <osip/smsg.h>
@@ -188,9 +189,16 @@ static int parse_config (FILE *configfile) {
 	      break;	    
 
 	    case TYP_STRING:
-//	         num=sscanf(ptr,"%a[^#]",(char**)configoptions[j].dest);
-	         num=sscanf(ptr,"%as",(char**)configoptions[j].dest);
-                 DEBUGC(DBCLASS_BABBLE,"STRING=%s",*(char**)configoptions[j].dest);
+	         /* the %as within sscanf seems to be not too portable.
+                  * it is supposed to allocate the memory
+                  * num=sscanf(ptr,"%as",(char**)configoptions[j].dest);
+                  */
+
+		 /* figure out the amount of space we need */
+	         num=strlen(ptr);
+		 configoptions[j].dest=(char*)malloc(num);
+	         num=sscanf(ptr,"%s",(char*)configoptions[j].dest);
+                 DEBUGC(DBCLASS_BABBLE,"STRING=%s",(char*)configoptions[j].dest);
 	      break;	    
 
 	    default:

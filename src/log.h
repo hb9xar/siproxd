@@ -20,23 +20,25 @@
 
 #include <stdarg.h>
 
-#define DBCLASS_BABBLE	0x00000001	// babble (like entering/leaving fnc)
-#define DBCLASS_NET	0x00000002	// network
-#define DBCLASS_SIP	0x00000004	// SIP manipulations
-#define DBCLASS_REG	0x00000008	// Client registration
-#define DBCLASS_NOSPEC	0x00000010	// non specified class
-#define DBCLASS_PROXY	0x00000020	// proxy
-#define DBCLASS_DNS	0x00000040	// DNS stuff
-#define DBCLASS_NETTRAF	0x00000080	// network traffic
-#define DBCLASS_CONFIG	0x00000100	// configuration
-#define DBCLASS_RTP	0x00000200	// RTP proxy
-#define DBCLASS_ACCESS	0x00000400	// Access list evaluation
-#define DBCLASS_AUTH	0x00000800	// Authentication
+#define DBCLASS_BABBLE	0x00000001	/* babble (like entering/leaving fnc)*/
+#define DBCLASS_NET	0x00000002	/* network			     */
+#define DBCLASS_SIP	0x00000004	/* SIP manipulations		     */
+#define DBCLASS_REG	0x00000008	/* Client registration		     */
+#define DBCLASS_NOSPEC	0x00000010	/* non specified class		     */
+#define DBCLASS_PROXY	0x00000020	/* proxy			     */
+#define DBCLASS_DNS	0x00000040	/* DNS stuff			     */
+#define DBCLASS_NETTRAF	0x00000080	/* network traffic		     */
+#define DBCLASS_CONFIG	0x00000100	/* configuration		     */
+#define DBCLASS_RTP	0x00000200	/* RTP proxy			     */
+#define DBCLASS_ACCESS	0x00000400	/* Access list evaluation	     */
+#define DBCLASS_AUTH	0x00000800	/* Authentication		     */
 
 
 void log_set_pattern(int pattern);
+int  log_get_pattern(void);
 void log_set_tosyslog(int tosyslog);
 
+#undef DEBUG
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)
 
 #define DEBUGC(C,F...) log_debug(C,__FILE__, __LINE__,F)
@@ -49,6 +51,6 @@ void log_error(char *file, int line, const char *format, ...);
 void log_warn(char *file, int line, const char *format, ...);
 
 /* tobedone: dump a buffer */
-#define DUMP_BUFFER(C,F...) log_dump_buffer(C,__FILE__, __LINE__,F)
+#define DUMP_BUFFER(C,F,L) log_dump_buffer(C,__FILE__, __LINE__,F,L)
 void log_dump_buffer(int class, char *file, int line,
                      char *buffer, int length);

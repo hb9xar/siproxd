@@ -24,6 +24,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -144,7 +145,7 @@ int proxy_request (sip_t *request) {
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream */
-         rtp_stop_fwd(msg_getcall_id(request));
+         rtp_stop_fwd(msg_getcall_id(request), 0);
       }
 
       break;
@@ -190,7 +191,7 @@ int proxy_request (sip_t *request) {
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         rtp_stop_fwd(msg_getcall_id(request));
+         rtp_stop_fwd(msg_getcall_id(request), 0);
       }
 
       break;
@@ -203,7 +204,9 @@ int proxy_request (sip_t *request) {
 /* some clients seem to run amok when passing back a negative response
  * so we simply drop the request silently
  */
-//      proxy_gen_response(request, 403 /*forbidden*/);
+#if 0
+      proxy_gen_response(request, 403 /*forbidden*/);
+#endif
       return STS_FAILURE;
    }
 
@@ -383,7 +386,9 @@ int proxy_response (sip_t *response) {
 	        response->from->url->username,
 		response->from->url->host);
 /* some clients seem to run amok when passing back a negative response */
-//      proxy_gen_response(response, 403 /*forbidden*/);
+#if 0
+      proxy_gen_response(response, 403 /*forbidden*/);
+#endif
       return STS_FAILURE;
    }
 

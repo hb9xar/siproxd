@@ -24,6 +24,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <ctype.h>
 #include <time.h>
 #include <syslog.h>
 
@@ -38,6 +40,10 @@ int debug_pattern=0;
 
 void log_set_pattern(int pattern) {
    debug_pattern=pattern;
+}
+
+int  log_get_pattern(void) {
+   return debug_pattern;
 }
 
 void log_set_tosyslog(int tosyslog) {
@@ -142,14 +148,28 @@ void log_warn(char *file, int line, const char *format, ...) {
 
 void log_dump_buffer(int class, char *file, int line,
                      char *buffer, int length) {
-   int i;
+   int i, j;
+   char tmp[8], tmplin1[80], tmplin2[80];
 
    if ((debug_pattern & class) == 0) return;
    if (log_to_syslog) return;
 
    fprintf(stderr,"---BUFFER DUMP follows---\n");
+/*
    for (i=0;i<length;i++) {
       fprintf(stderr,"%c",buffer[i]);
+   }
+*/
+   for (i=0; i<length; i+=16) {
+      strcpy(tmplin1,"");
+      strcpy(tmplin2,"");
+      for (j=0;(j<16) && (i+j)<length ;j++) {
+         sprintf(tmp,"%2.2x ",(unsigned char)buffer[i+j]);
+         strcat(tmplin1, tmp);
+         sprintf(tmp, "%c",(isprint(buffer[i+j]))? buffer[i+j]: '.');
+         strcat(tmplin2, tmp);
+      }
+      fprintf(stderr, "  %-47.47s %-16.16s\n",tmplin1, tmplin2);
    }
 
    fprintf(stderr,"\n---end of BUFFER DUMP---\n");

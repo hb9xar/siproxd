@@ -95,8 +95,9 @@ int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    int count;
    socklen_t fromlen;
 
-   fromlen=sizeof(struct sockaddr);
-   count=recvfrom(listen_socket, buf, bufsize, 0, from, &fromlen);
+   fromlen=sizeof(struct sockaddr_in);
+   count=recvfrom(listen_socket, buf, bufsize, 0,
+                  (struct sockaddr *)from, &fromlen);
 
    DEBUGC(DBCLASS_NET,"received UDP packet, count=%i", count);
    DUMP_BUFFER(DBCLASS_NETTRAF, buf, count);
@@ -138,7 +139,8 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
       DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
    }
 
-   sts = sendto(*sock, buffer, size, 0, &dst_addr, sizeof(dst_addr));
+   sts = sendto(*sock, buffer, size, 0, (const struct sockaddr *)&dst_addr,
+                (socklen_t)sizeof(dst_addr));
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {

@@ -25,9 +25,12 @@
 #include <time.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 
 #include <sys/types.h>
 #include <pwd.h>
@@ -359,5 +362,85 @@ void secure_enviroment (void) {
          DEBUGC(DBCLASS_CONFIG,"changed euid to %i - %s",
 	        passwd->pw_uid, (sts==0)?"Ok":"Failed");
       }
+   }
+}
+
+
+/*
+ * get_ip_by_ifname:
+ * fetches own IP address by its interface name
+ */
+#define MAX_IF  32
+struct in_addr* get_ip_by_ifname(char *ifname) {
+   static struct in_addr addr;
+   int sock, err, i, found;
+   struct ifconf netconf;
+   char buffer[sizeof(struct ifreq)*MAX_IF];
+   struct ifreq *ifr;
+   int len, af;
+   
+   if (ifname == NULL) {
+      ERROR("get_ip_by_ifname: got NULL ifname passed");
+      return NULL;
+   }
+
+   netconf.ifc_len=sizeof(struct ifreq)*MAX_IF;
+   netconf.ifc_buf=buffer;
+
+   sock=socket(PF_INET, SOCK_DGRAM,0);
+   err=ioctl(sock,SIOCGIFCONF,&netconf);
+   if (err<0) ERROR("Error in ioctl: %s\n",strerror(errno));
+   close(sock);
+
+
+   if (log_get_pattern() && DBCLASS_BABBLE) {
+      for (i=0, ifr=(struct ifreq*)&buffer[i];
+           i<netconf.ifc_len;
+           ifr=(struct ifreq*)&buffer[i]) {
+#if defined(_BSD)
+         len=((struct sockaddr *)&ifr->ifr_addr)->sa_len;
+#else
+         len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+#endif
+         af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
+         i+=len+IFNAMSIZ;
+         if(af != AF_INET) continue;
+
+         DEBUG("[i=%i] IF %s, l=%i af=%i -> IP:%s", i, 
+               ifr->ifr_name, len, af, inet_ntoa(((struct sockaddr_in *)
+               (&ifr->ifr_addr))->sin_addr));
+      }
+   }
+
+   found=0;
+   memset(&addr, 0, sizeof(addr));
+   for (i=0, ifr=(struct ifreq*)&buffer[i];
+        i<netconf.ifc_len;
+        ifr=(struct ifreq*)&buffer[i]) {
+#if defined(_BSD)
+      len=((struct sockaddr *)&ifr->ifr_addr)->sa_len;
+#else
+      len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+#endif
+      af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
+      i+=len+IFNAMSIZ;
+      if(af != AF_INET) continue;
+
+      if (strcmp(ifr->ifr_name, ifname)==0) {
+         memcpy(&addr, &((struct sockaddr_in *)
+                (&ifr->ifr_addr))->sin_addr, 
+                sizeof(addr));
+         found=1;
+         break;
+      }
+   }
+
+   if (found==1) {
+      DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: interface %s has IP: %s",
+             ifname, inet_ntoa(addr));
+      return &addr;
+   } else {
+      ERROR("get_ip_by_ifname: interface %s does not exist", ifname);
+      return NULL;
    }
 }

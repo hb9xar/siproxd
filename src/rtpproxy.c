@@ -39,8 +39,8 @@
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-/* use a 'recursive mutex' for synchronizing */
-pthread_mutex_t rtp_proxytable_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+/* use a 'fast' mutex for synchronizing - as these are portable... */
+pthread_mutex_t rtp_proxytable_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * table to remember all active rtp proxy streams
@@ -178,7 +178,8 @@ DEBUGC(DBCLASS_RTP,"got data on sock=%i",rtp_proxytable[i].sock);
                callid.host=rtp_proxytable[i].callid_host;
                DEBUGC(DBCLASS_RTP,"RTP stream %s@%s (idx=%i) has expired",
 	              callid.number, callid.host, i);
-	       rtp_stop_fwd(&callid);
+	       rtp_stop_fwd(&callid, 1); /* don't lock the mutex, as we own
+	       				    the lock already here */
 	    }
 	 }
       } /* if (t>...) */
@@ -374,7 +375,7 @@ unlock_and_exit:
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_stop_fwd (call_id_t *callid) {
+int rtp_stop_fwd (call_id_t *callid, int nolock) {
    int i;
    int sts=STS_SUCCESS;
 
@@ -388,17 +389,23 @@ int rtp_stop_fwd (call_id_t *callid) {
    DEBUGC(DBCLASS_RTP,"stopping RTP proxy stream for: %s@%s",
           callid->number, callid->host);
 
-/* lock mutex */
-   #define return is_forbidden_in_this_code_section
-   pthread_mutex_lock(&rtp_proxytable_mutex);
    /*
-    * !! We now have a locked MUTEX! It is forbidden to return() from
-    * !! here up to the end of this funtion where the MUTEX is
-    * !! unlocked again.
-    * !! Per design, a mutex is locked (for one purpose) at *exactly one*
-    * !! place in the code and unlocked also at *exactly one* place.
-    * !! this minimizes the risk of deadlocks.
+    * lock mutex - only if not requested to skip the lock.
+    * this is needed as we are also called from within
+    * the RTP thread itself - and there we already own the lock.
     */
+   #define return is_forbidden_in_this_code_section
+   if (nolock == 0) {
+      pthread_mutex_lock(&rtp_proxytable_mutex);
+      /*
+       * !! We now have a locked MUTEX! It is forbidden to return() from
+       * !! here up to the end of this funtion where the MUTEX is
+       * !! unlocked again.
+       * !! Per design, a mutex is locked (for one purpose) at *exactly one*
+       * !! place in the code and unlocked also at *exactly one* place.
+       * !! this minimizes the risk of deadlocks.
+       */
+   }
 
    /* find the proper entry in rtp_proxytable */
    for (i=0; i<RTPPROXY_SIZE; i++) {
@@ -432,8 +439,14 @@ int rtp_stop_fwd (call_id_t *callid) {
       pthread_kill(rtpproxy_tid, SIGALRM);
 
 unlock_and_exit:
-/* unlock mutex */
-   pthread_mutex_unlock(&rtp_proxytable_mutex);
+   /*
+    * unlock mutex - only if not requested to skip the lock.
+    * this is needed as we are also called from within
+    * the RTP thread itself - and there we already own the lock.
+    */
+   if (nolock == 0) {
+      pthread_mutex_unlock(&rtp_proxytable_mutex);
+   }
    #undef return
 
    return sts;

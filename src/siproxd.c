@@ -93,7 +93,7 @@ int main (int argc, char *argv[])
       {0,0,0,0}
    };
 
-    while ((ch1 = getopt_long_only(argc, argv, "hc:d:n",
+    while ((ch1 = getopt_long(argc, argv, "hc:d:n",
                   long_options, &option_index)) != -1) {
       switch (ch1) {
       case 'h':	/* help */
@@ -146,6 +146,10 @@ int main (int argc, char *argv[])
    /* initialize the registration facility */
    register_init();
 
+/*
+ *TEST
+ */
+get_ip_by_ifname("ppp0");
    /* listen for incomming messages */
    sts=sipsock_listen();
    if (sts == STS_FAILURE) {
