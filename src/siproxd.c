@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -57,6 +58,18 @@ PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002-2003 Thomas Ries\n" \
 
 
 
+/*
+ * module local data
+ */
+static  int dmalloc_dump=0;
+static  int exit_program=0;
+
+/*
+ * local prototypes
+ */
+static void sighandler(int sig);
+
+
 int main (int argc, char *argv[]) 
 {
    int sts;
@@ -72,6 +85,25 @@ int main (int argc, char *argv[])
    char configfile[64]="siproxd";	/* basename of configfile */
    int  config_search=1;		/* search the config file */
    int  cmdline_debuglevel=0;
+
+   struct sigaction act;
+
+/*
+ * setup signal handlers
+ */
+   act.sa_handler=sighandler;
+   sigemptyset(&act.sa_mask);
+   act.sa_flags=SA_RESTART;
+   if (sigaction(SIGTERM, &act, NULL)) {
+      ERROR("Failed to install SIGTERM handler");
+   }
+   if (sigaction(SIGINT, &act, NULL)) {
+      ERROR("Failed to install SIGINT handler");
+   }
+   if (sigaction(SIGUSR1, &act, NULL)) {
+      ERROR("Failed to install SIGUSR1 handler");
+   }
+
 
 /*
  * prepare default configuration
@@ -180,12 +212,26 @@ INFO("daemonizing done (pid=%i)", getpid());
 /*
  * Main loop
  */
-   while (1) {
+   while (!exit_program) {
 
       DEBUGC(DBCLASS_BABBLE,"going into sip_wait\n");
-      while (sipsock_wait()==0) {
+      while (sipsock_wait()<=0) {
          /* got no input, here by timeout. do aging */
          register_agemap();
+
+         /* dump memory stats if requested to do so */
+         if (dmalloc_dump) {
+            dmalloc_dump=0;
+#ifdef DMALLOC
+            INFO("SIGUSR1 - DMALLOC statistics is dumped");
+            dmalloc_log_stats();
+            dmalloc_log_unfreed();
+#else
+            INFO("SIGUSR1 - DMALLOC support is not compiled in");
+#endif
+         }
+
+         if (exit_program) goto exit_prg;
       }
 
       /* got input, process */
@@ -324,6 +370,22 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
       osip_message_free(my_msg);
 
    } /* while TRUE */
+   exit_prg:
+   INFO("properly terminating siproxd");
 
+   return 0;
 } /* main */
 
+/*
+ * Signal handler
+ *
+ * this one is called asynchronously whevener a registered
+ * signal is applied. Just set a flag and don't do any funny
+ * things here.
+ */
+static void sighandler(int sig) {
+   if (sig==SIGTERM) exit_program=1;
+   if (sig==SIGINT)  exit_program=1;
+   if (sig==SIGUSR1) dmalloc_dump=1;
+   return;
+}

@@ -244,6 +244,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
             /* clone the masquerading url */
 	    osip_contact_init(&contact);
             osip_contact_parse(contact,tmp);
+            osip_free(tmp);
 	    osip_uri_free(contact->url);
             osip_uri_clone(urlmap[i].masq_url, &contact->url);
             osip_list_add(request->contacts,contact,-1);
@@ -602,7 +603,6 @@ if (configuration.debuglevel)
 
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
-//   osip_free(mymsg->content_length);
    mymsg->content_length=NULL;
    sprintf(clen,"%i",strlen(bodybuff));
    sts = osip_message_set_content_length(mymsg, clen);

@@ -15,6 +15,7 @@ dnl	 7-Apr-2003	tries	added siproxd.spec to autoconf process
 dnl	31-Jul-2003	tries	changed to support OSIP2 only
 dnl	 1-Sep-2003	tries	check for IPCHAINS
 dnl      5-Sep-2003     tries   test for pthreads before libosip stuff
+dnl     19-Sep-2003     tries   DMALLOC support
 dnl
 dnl
 dnl
@@ -30,7 +31,7 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=4
-SPD_MICRO_VERSION=1
+SPD_MICRO_VERSION=2
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -78,6 +79,15 @@ done
 for each in $extra_libs; do
    LIBS="$LIBS -L$each";
 done
+
+dnl
+dnl add
+dnl    --enable-dmalloc
+   AC_MSG_CHECKING("building with DMALLOC support")
+   AC_ARG_ENABLE(dmalloc,
+      [  --enable-dmalloc            build with DMALLOC support],
+      CFLAGS="$CFLAGS -DDMALLOC ";LIBS="-ldmallocth $LIBS";
+      AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 
 dnl

@@ -1,5 +1,10 @@
 0.4.1
 =====
+  19-Oct-2003:	- included compiling support for DMALLOC debugging
+		- fixed memory leak in proxy.c (39 bytes got lost
+                  every proxied message)
+0.4.1
+=====
   12-Oct-2003:	- released 0.4.1
   12-Oct-2003:	- Local registration of UAs was simply broken. Fixed.
 

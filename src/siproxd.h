@@ -18,6 +18,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+#ifdef DMALLOC
+ #include <dmalloc.h>
+#endif
+
 /*				function returns STS_* status values     vvv */
 
 /* sock.c */
