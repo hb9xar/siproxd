@@ -28,3 +28,5 @@
  	the registrar.
   For the definitive description -> RFC3261 section 10.
  
+* Siproxd does not honor a possibly existing Route header
+

@@ -77,6 +77,38 @@ int proxy_request (osip_message_t *request) {
       return STS_FAILURE;
    }
 
+   /*
+    * Check if I am listed at the topmost Route header (if any Route
+    * header is existing at all). If so, remove it from the list.
+    * -> RFC3261 Section 16.4
+    */
+   if (request->routes && !osip_list_eol(request->routes, 0)) {
+      struct in_addr addr1, addr2, addr3;
+      osip_route_t *route;
+      
+      route = (osip_route_t *) osip_list_get(request->routes, 0);
+      
+      sts = get_ip_by_host(route->url->host, &addr1);
+      get_ip_by_ifname(configuration.inbound_if, &addr2);
+      get_ip_by_ifname(configuration.outbound_if, &addr3);
+      
+      if ((sts == STS_SUCCESS) &&
+          ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+           (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
+           (route->url->port ?
+               configuration.sip_listen_port == atoi(route->url->port):
+               configuration.sip_listen_port == SIP_PORT)) {
+         osip_list_remove(request->routes, 0);
+         osip_route_free(route);
+         /* possibly request->routes will be freed by osip_message_free() */
+      }
+   }
+      
+
+   /*
+    * figure out whether this is an incoming or outgoing request
+    * by doing a lookup in the registration table.
+    */
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -116,8 +148,9 @@ int proxy_request (osip_message_t *request) {
 */
 {
    osip_header_t *header_ua;
+   osip_uri_t *url2;
 
-   url=osip_message_get_uri(request);
+   url2=osip_message_get_uri(request);
    osip_message_get_user_agent(request,0,&header_ua);
 
    if ( header_ua && header_ua->hvalue &&
@@ -125,9 +158,9 @@ int proxy_request (osip_message_t *request) {
       /* if an outgoing request, try to fix the SIP URI */
       if (type == REQTYP_OUTGOING) {
          WARN("broken linphone-0.8.0: restoring SIP URI");
-	 free (url->host);
-	 url->host=malloc(strlen(request->to->url->host));
-	 strcpy(url->host,request->to->url->host);
+	 free (url2->host);
+	 url2->host=malloc(strlen(request->to->url->host));
+	 strcpy(url2->host,request->to->url->host);
 
       }
    }
@@ -173,6 +206,8 @@ int proxy_request (osip_message_t *request) {
 
 
 
+   /* get destination address */
+   url=osip_message_get_uri(request);
 
    switch (type) {
   /*
@@ -182,7 +217,7 @@ int proxy_request (osip_message_t *request) {
       sts = get_ip_by_host(urlmap[i].true_url->host, &sendto_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
-                url->host);
+                urlmap[i].true_url->host);
          return STS_FAILURE;
       }
 
@@ -222,9 +257,6 @@ int proxy_request (osip_message_t *request) {
    * from the internal masqueraded host to an external host
    */
    case  REQTYP_OUTGOING:
-      /* get destination address */
-      url=osip_message_get_uri(request);
-
       sts = get_ip_by_host(url->host, &sendto_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
@@ -270,7 +302,6 @@ int proxy_request (osip_message_t *request) {
       break;
    
    default:
-      url=osip_message_get_uri(request);
       DEBUGC(DBCLASS_PROXY, "request [%s] from/to unregistered UA "
            "(RQ: %s@%s -> %s@%s)",
            request->sip_method? request->sip_method:"*NULL*",
