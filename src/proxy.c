@@ -1267,8 +1267,8 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    url=osip_message_get_uri(mymsg);
 
    /* set the true host */
-   if(urlmap[idx].true_url->host) {
-      osip_free(url->host);url->host=NULL;
+   if (url->host) osip_free(url->host);url->host=NULL;
+   if (urlmap[idx].true_url->host) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: host=%s",
              urlmap[idx].true_url->host);
       host = (char *)malloc(strlen(urlmap[idx].true_url->host)+1);
@@ -1278,8 +1278,8 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    }
 
    /* set the true port */
-   if(urlmap[idx].true_url->port) {
-      osip_free(url->port);url->port=NULL;
+   if (url->port) osip_free(url->port);url->port=NULL;
+   if (urlmap[idx].true_url->port) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: port=%s",
              urlmap[idx].true_url->port);
       port = (char *)malloc(strlen(urlmap[idx].true_url->port)+1);
