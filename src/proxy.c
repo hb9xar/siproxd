@@ -449,24 +449,12 @@ int proxy_request (sip_ticket_t *ticket) {
  * 3) SIP URI
  */
    /*
-    * fixed outbound proxy defined ?
+    * fixed or domain outbound proxy defined ?
     */
-   if ((type == REQTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
-      /* I have an outbound proxy configured */
-      sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
-                " proxy host [%s]", configuration.outbound_proxy_host);
-         return STS_FAILURE;
-      }
-
-      if (configuration.outbound_proxy_port) {
-         port=configuration.outbound_proxy_port;
-      } else {
-         port = SIP_PORT;
-      }
+   if ((type == REQTYP_OUTGOING) &&
+       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
-             configuration.outbound_proxy_host, port);
+             utils_inet_ntoa(sendto_addr), port);
    /*
     * Route present?
     * If so, fetch address from topmost Route: header and remove it.
@@ -883,20 +871,10 @@ int proxy_response (sip_ticket_t *ticket) {
    /*
     * check if we need to send to an outbound proxy
     */
-   if ((type == RESTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
-      /* have an outbound proxy - use it to send the packet */
-      sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve outbound "
-                " proxy host [%s]", configuration.outbound_proxy_host);
-         return STS_FAILURE;
-      }
-
-      if (configuration.outbound_proxy_port) {
-         port=configuration.outbound_proxy_port;
-      } else {
-         port = SIP_PORT;
-      }
+   if ((type == RESTYP_OUTGOING) &&
+       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
+      DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
    /*
     * Route present?
     * If so, fetch address from topmost Route: header and remove it.

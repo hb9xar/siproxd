@@ -871,3 +871,102 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
 
    return STS_SUCCESS;
 }
+
+
+/*
+ * SIP_FIND_OUTBOUND_PROXY
+ *
+ * performs the lookup for an apropriate outbound proxy
+ *
+ * RETURNS
+ *	STS_SUCCESS on successful lookup
+ *	STS_FAILURE if no outbound proxy to be used
+ */
+int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
+                             int *port) {
+   int i, sts;
+   char *domain=NULL;
+   osip_message_t *sipmsg;
+
+   sipmsg=ticket->sipmsg;
+
+   if (!addr ||!port) {
+      ERROR("sip_find_outbound_proxy called with NULL addr or port");
+      return STS_FAILURE;
+   }
+
+   if (sipmsg && sipmsg->from && sipmsg->from->url) {
+      domain=sipmsg->from->url->host;
+   }
+
+   if (domain == NULL) {
+      WARN("sip_find_outbound_proxy called with NULL from->url->host");
+      return STS_FAILURE;
+   }
+
+   /*
+    * check consistency of configuration:
+    * outbound_domain_name, outbound_domain_host, outbound_domain_port
+    * must match up
+    */
+   if ((configuration.outbound_proxy_domain_name.used !=
+        configuration.outbound_proxy_domain_host.used) ||
+       (configuration.outbound_proxy_domain_name.used !=
+        configuration.outbound_proxy_domain_port.used)) {
+      ERROR("configuration of outbound_domain_ inconsistent, check config");
+   } else {
+      /*
+       * perform the lookup for domain specific proxies
+       * first match wins
+       */
+      for (i=0; i<configuration.outbound_proxy_domain_name.used; i++) {
+         if (strcmp(configuration.outbound_proxy_domain_name.string[i],
+             domain)==0) {
+            sts = get_ip_by_host(configuration.outbound_proxy_domain_host.string[i],
+                                 addr);
+            if (sts == STS_FAILURE) {
+               ERROR("sip_find_outbound_proxy: cannot resolve "
+                     "outbound proxy host [%s], check config", 
+                     configuration.outbound_proxy_domain_host.string[i]);
+               return STS_FAILURE;
+            }
+            *port=atoi(configuration.outbound_proxy_domain_port.string[i]);
+            if (*port == 0) *port = SIP_PORT;
+
+            return STS_SUCCESS;
+
+         } /* strcmp */
+      } /* for i */
+   }
+
+   /*
+    * now check for a global outbound proxy
+    */
+   if (configuration.outbound_proxy_host) {
+      /* I have a global outbound proxy configured */
+      sts = get_ip_by_host(configuration.outbound_proxy_host, addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
+                " proxy host [%s]", configuration.outbound_proxy_host);
+         return STS_FAILURE;
+      }
+
+      if (configuration.outbound_proxy_port) {
+         *port=configuration.outbound_proxy_port;
+      } else {
+         *port = SIP_PORT;
+      }
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
+             configuration.outbound_proxy_host, *port);
+
+      return STS_SUCCESS;
+   }
+
+   return STS_FAILURE; /* no proxy */
+}
+
+
+
+
+
+

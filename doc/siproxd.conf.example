@@ -184,3 +184,14 @@ debug_level =      0x00000000
 #
 # outbound_proxy_host = my.outboundproxy.org
 # outbound_proxy_port = 5060
+
+######################################################################
+# Outbound proxy (Provider specific)
+#
+# Outbound proxies can be specified on a per-domain base.
+# This allows to use an outbound proxy needed for ProviderA
+# and none (or another) for ProviderB.
+#
+#outbound_domain_name = freenet.de
+#outbound_domain_host = proxy.for.domain.freende.de
+#outbound_domain_port = 5060

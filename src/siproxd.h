@@ -44,9 +44,9 @@ struct urlmap_s {
 
 
 /*
- * Array of strings - used withing configuration store
+ * Array of strings - used within configuration store
  */
-#define CFG_STRARR_SIZE		128
+#define CFG_STRARR_SIZE		128	/* max 128 entries in array */
 typedef struct {
    int  used;
    char *string[CFG_STRARR_SIZE];
@@ -78,6 +78,9 @@ struct siproxd_config {
    stringa_t masked_host;
    char *outbound_proxy_host;
    int  outbound_proxy_port;
+   stringa_t outbound_proxy_domain_name;
+   stringa_t outbound_proxy_domain_host;
+   stringa_t outbound_proxy_domain_port;
    char *registrationfile;
    int  log_calls;
    char *pid_file;
@@ -161,6 +164,8 @@ int  sip_add_myvia (sip_ticket_t *ticket, int interface);		/*X*/
 int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/
 int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);		/*X*/
 int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
+int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
+                             int *port);				/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/

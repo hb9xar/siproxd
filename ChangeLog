@@ -1,5 +1,6 @@
 0.5.10
 ======
+  29-Dec-2004:  - feature: Outbound proxies configurable per domain
   08-Dec-2004:  - make install will set siproxd_passwd.cfg to -rw-----
 
 0.5.9
