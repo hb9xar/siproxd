@@ -1,5 +1,8 @@
 0.3.3
 =====
+ 05-Jul-2003:	- released 0.3.3
+ 10-May-2003:	- rewritten code in proxy_rewrite_invitation_body
+		  should now work (better) with multiple media streams
  23-Apr-2003:	- FAQ updates: RTP internals
 		- more debug and error testing (MOREDEBUG)
   6-Apr-2003:	- build options for FLI4L builds (libc5 & uClibc)

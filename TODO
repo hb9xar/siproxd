@@ -17,7 +17,7 @@ TODOs, in random order:
 
 - Documentation (yeah, yeah...)
 
-- support for proxy chaining - UPNP support?
+- support for proxy chaining - "next-hop"
 
 - general security issues
 - security tests for received SIP messages (function securitycheck)

@@ -469,35 +469,43 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sdp_t  *sdp;
    struct in_addr outb_addr, lcl_clnt_addr;
    int sts;
-   char *oldbody;
-   char newbody[BODY_MESSAGE_MAX_SIZE];
+   char *bodybuff;
    char clen[8]; /* content length: probably never more than 7 digits !*/
    int outb_rtp_port, inb_clnt_port;
    int media_stream_no;
+   sdp_connection_t *sdp_conn;
+   sdp_media_t *sdp_med;
 
+   /*
+    * get SDP structure
+    */
    sts = msg_getbody(mymsg, 0, &body);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: no body found in message");
       return STS_FAILURE;
    }
 
-   sts = body_2char(body, &oldbody);
-
+   sts = body_2char(body, &bodybuff);
    sts = sdp_init(&sdp);
-   sts = sdp_parse (sdp, oldbody);
+   sts = sdp_parse (sdp, bodybuff);
+   free(bodybuff);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_parse body");
       return STS_FAILURE;
    }
 
+
+if (configuration.debuglevel)
 { /* just dump the buffer */
-   char *tmp2;
+   char *tmp, *tmp2;
+   sts = msg_getbody(mymsg, 0, &body);
+   sts = body_2char(body, &tmp);
    content_length_2char(mymsg->contentlength, &tmp2);
    DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
-         tmp2, strlen(oldbody), oldbody);
+         tmp2, strlen(tmp), tmp);
+   free(tmp);
    free(tmp2);
 }
-
 
    /*
     * RTP proxy: get ready and start forwarding
@@ -517,6 +525,22 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
       return STS_FAILURE;
    }
 
+   /*
+    * rewrite c= address
+    */
+   sdp_conn = sdp_connection_get (sdp, -1, 0);
+   if (sdp_conn && sdp_conn->c_addr) {
+      free(sdp_conn->c_addr);
+      sdp_conn->c_addr=malloc(HOSTNAME_SIZE);
+      sprintf(sdp_conn->c_addr, "%s", inet_ntoa(outb_addr));
+   } else {
+      ERROR("got NULL c= address record - can't rewrite");
+   }
+    
+   /*
+    * loop through all m= descritions,
+    * start RTP proxy and rewrite them
+    */
    for (media_stream_no=0;;media_stream_no++) {
       /* check if n'th media stream is present */
       if (sdp_m_port_get(sdp, media_stream_no) == NULL) break;
@@ -527,146 +551,50 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
          rtp_start_fwd(msg_getcall_id(mymsg), media_stream_no,
                        outb_addr, &outb_rtp_port,
 	               lcl_clnt_addr, inb_clnt_port);
+         /* and rewrite the port */
+         sdp_med=list_get(sdp->m_medias, media_stream_no);
+         if (sdp_med && sdp_med->m_port) {
+            free(sdp_med->m_port);
+            sdp_med->m_port=malloc(8);
+            sprintf(sdp_med->m_port, "%i", outb_rtp_port);
+            DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                   "m= rewrote port to [%i]",outb_rtp_port);
+
+         } else {
+            ERROR("rewriting port in m= failed sdp_med=%p, "
+                  "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+         }
       } else {
          /* no port defined - skip entry */
+         WARN("no port defined in m=(media) stream_no=&i", media_stream_no);
          continue;
       }
-
    }
-
-
-/*
- * yup, I know - here are some HARDCODED strings that we
- * search for in the connect information and media description
- * in the SDP part of the INVITE packet
- *
- * TODO: redo the rewriting section below,
- * using the nice sdp_ routines of libosip!
- *
- * Up to now, also only ONE incoming media port per session
- * is supported! I guess, there may be more allowed.
- */
-{
-   char *data_c=NULL;	/* connection information 'c=' line*/
-   char *data_m=NULL;	/* media description 'm=' line*/
-   char *data2_c=NULL;	/* end of IP address on 'c=' line */
-   char *data2_m=NULL;	/* end of port number on 'm=' line */
-   char *ptr=NULL;
-
-   memset(newbody, 0, sizeof(newbody));
-
-   /*
-    * find where to patch connection information (IP address)
-    */
-   data_c = strstr (oldbody, "\nc=");
-   if (data_c == NULL) data_c = strstr (oldbody, "\rc=");
-   if (data_c == NULL) {
-      ERROR("did not find a c= line in the body");
-      return STS_FAILURE;
-   }
-   data_c += 3;
-   /* can only rewrite IPV4 addresses by now */
-   if (strncmp(data_c,"IN IP4 ",7)!=0) {
-      ERROR("c= does not contain an IN IP4 address");
-      return STS_FAILURE;
-   }
-   data_c += 7; /* PTR to start of IP address */
-   /* find the end of the IP address -> end of line */
-   data2_c = strstr (data_c, "\n");
-   if (data2_c == NULL) data2_c = strstr (oldbody, "\r");
-   if (data2_c == NULL) {
-      ERROR("did not find a CR/LF after c= line");
-      return STS_FAILURE;
-   }
-
-   /*
-    * find where to patch media description (port number)
-    */
-   data_m = strstr (oldbody, "\nm=");
-   if (data_m == NULL) data_m = strstr (oldbody, "\rm=");
-   if (data_m == NULL) {
-      ERROR("did not find a m= line in the body");
-      return STS_FAILURE;
-   }
-   data_m += 3;
-   /* check for audio media */
-   if (strncmp(data_m,"audio ",6)!=0) {
-      ERROR("m= does not contain audio");
-      return STS_FAILURE;
-   }
-   data_m += 6; /* PTR to start of port number */
-   /* find the end of the IP address -> end of line */
-   data2_m = strstr (data_m, " RTP/");
-   if (data2_m == NULL) {
-      ERROR("did not find RTP/ on m= line");
-      return STS_FAILURE;
-   }
-
-   /* 
-    * what is first? c= or m= ?
-    * (Im sure this can be made nicer)
-    */
-   if (data_c < data_m) {
-      DEBUGC(DBCLASS_PROXY,"c= before m=");
-      /*
-       * c= line first, replace IP address, then port
-       */
-      /* copy up to the to-be-masqueraded address */
-      memcpy(newbody, oldbody, data_c-oldbody);
-      /* insert proxy outbound address */
-      ptr=newbody+(data_c-oldbody);
-      sprintf(ptr, "%s", inet_ntoa(outb_addr));
-      ptr += strlen(ptr);
-      /* copy up to the m= line */
-      memcpy (ptr, data2_c, data_m-data2_c);
-      ptr += strlen(ptr);
-      /* substitute port number */
-      sprintf(ptr, "%i", outb_rtp_port);
-      ptr += strlen(ptr);
-     /* copy the rest */
-      memcpy (ptr, data2_m, strlen(data2_m));
-   } else {
-      DEBUGC(DBCLASS_PROXY,"m= before c=");
-      /*
-       * m= line first, replace port, then IP address
-       */
-      /* copy up to the to-be-masqueraded port */
-      memcpy(newbody, oldbody, data_m-oldbody);
-      ptr=newbody+(data_m-oldbody);
-      /* substitute port number */
-      sprintf(ptr, "%i", outb_rtp_port);
-      ptr += strlen(ptr);
-      /* copy up to the c= line */
-      memcpy (ptr, data2_m, data_c-data2_m);
-      ptr += strlen(ptr);
-      /* insert proxy outbound address */
-      sprintf(ptr, "%s", inet_ntoa(outb_addr));
-      ptr += strlen(ptr);
-      /* copy the rest */
-      memcpy (ptr, data2_c, strlen(data2_c));
-   }
-
-}
 
    /* remove old body */
    sts = list_remove(mymsg->bodies, 0);
    body_free(body);
    free(body);
+
+   /* dump new body */
+   sdp_2char(sdp, &bodybuff);
+
    /* free sdp structure */
    sdp_free(sdp);
    free(sdp);
 
    /* include new body */
-   msg_setbody(mymsg, newbody);
+   msg_setbody(mymsg, bodybuff);
+   free(bodybuff);
 
    /* free content length resource and include new one*/
    content_length_free(mymsg->contentlength);
    free(mymsg->contentlength);
    mymsg->contentlength=NULL;
-   sprintf(clen,"%i",strlen(newbody));
+   sprintf(clen,"%i",strlen(bodybuff));
    sts = msg_setcontent_length(mymsg, clen);
 
-
+if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
    sts = msg_getbody(mymsg, 0, &body);
@@ -677,7 +605,6 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    free(tmp);
    free(tmp2);
 }
-   free(oldbody);
    return STS_SUCCESS;
 }
 

@@ -141,6 +141,7 @@ void *rtpproxy_main(void *arg) {
       tv.tv_usec = 0;
 
       num_fd=select(fd_max+1, &fdset, NULL, NULL, &tv);
+      if ((num_fd<0) && (errno==EINTR)) continue;
 #ifdef MOREDEBUG /*&&&&*/
 if (num_fd<0) {WARN("select() returned error [%s]",strerror(errno));}
 #endif

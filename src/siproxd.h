@@ -32,7 +32,7 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg);
 void register_init(void);
 int  register_client(sip_t *request);					/*X*/
 void register_agemap(void);
-int register_response(sip_t *request, int flag);			/*X*/
+int  register_response(sip_t *request, int flag);			/*X*/
 
 /* proxy.c */
 int proxy_request (sip_t *request);					/*X*/
@@ -182,4 +182,4 @@ struct siproxd_config {
    This issue is fixed in linphone-0.9.1pre1
 */
 
-//#define MOREDEBUG
+#define MOREDEBUG

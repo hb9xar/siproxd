@@ -78,10 +78,15 @@ The easiest way to do this:
 3) reproduce the error
 4) include the debug.log in your error report.
 
-If siproxd crashes (core dump), a stack backtrace usually is helpful to me:
-1) reproduce the crash -> core file
-2) use gdb to print the stack backtrace:
-   $ gdb ./src/siproxd core
+If siproxd crashes, a stack backtrace usually is helpful to me:
+1) start siproxd in the debugger (daemonize set to 0):
+   $ gdb ./src/siproxd
+   (gdb) set args -c /path/to/siproxd.conf
+   (gdb) run
+2) reproduce the crash
+3) use gdb to print the stack backtrace:
+   (gdb) info thread
+   ...
    (gdb) bt
    #0  0x400ec9ee in __select ()
    #1  0xbffff6f8 in ?? ()
@@ -91,7 +96,7 @@ If siproxd crashes (core dump), a stack backtrace usually is helpful to me:
        rtld_fini=0x4000a350 <_dl_fini>, stack_end=0xbffffc4c)
        at ../sysdeps/generic/libc-start.c:78
    (gdb) 
-
+4) copy-paste all the output and include it in your problem report.
 
 
 WHAT SIPROXD DOES
