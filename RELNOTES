@@ -2,8 +2,13 @@ Release Notes for siproxd-0.5.5
 ===============================
 
 Major changes since 0.5.4:
- - 
- - 
+ - several fixes in the SDP media rewriting part
+ - use realtime scheduling for RTP proxy thread
+ - PID file
+ - custom firewall control module: siproxd can be linked against
+   custom library  that may perform specific actions on start/stop
+   of RTP streams (dynamically reconfigure firewall settings)
+ - a number of enhancement in security checks
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -40,26 +45,29 @@ Requirements:
  - libosip2
 
 Currently tested on:
-- Redhat 6.0 (Kernel 2.2.x, Glibc)
-- Redhat 7.2 (Kernel 2.4.x, Glibc)
-- SUSE 5.3 (kernel 2.0.x, libc5)
-- Redhat 7.2 (build against uClibc)
-- SuSE 7.3
 - Fedora Core1 (Kernel 2.4.x, Glibc)
+  This is my main development and testing environment. Other platforms
+  are not extensively tested by myself.
 
 Reported to build on:
 - FreeBSD 4.7-STABLE
 - OpenBSD 2.9
 - Solaris2
 
-Reported interoperability (tested with softphones):
+Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
  - X-Lite (Win XP Professional)
- If you can confirm other SIP phones working, please drop me
- a short note.
+
+Reported interoperability with service providers:
+ - Sipphone	(http://www.sipphone.com)
+ - FWD		(http://www.fwd.pulver.com)
+
+ If you have siproxd successfully running with another SIP phone
+ and/or service provider, please drop me a short note so I can update
+ the list.
 
 Known bugs:
    There will be...

@@ -1,6 +1,8 @@
 
 /* TAKEN from rcf2617.txt */
 
+/* $Id$ */
+
 #ifndef _DIGCALC_H_
 #define _DIGCALC_H_
 

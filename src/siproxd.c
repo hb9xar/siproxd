@@ -38,9 +38,7 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
-			  BUILDSTR " $";
-
+static char const ident[]="$Id$";
 
 /* configuration storage */
 struct siproxd_config configuration;
@@ -197,7 +195,7 @@ int main (int argc, char *argv[])
       sts=unlink(configuration.pid_file);
       if ((sts==0) ||(errno == ENOENT)) {
          if ((pidfile=fopen(configuration.pid_file, "w"))) {
-            fprintf(pidfile,"%i\n",getpid());
+            fprintf(pidfile,"%i\n",(int)getpid());
             fclose(pidfile);
          } else {
             WARN("couldn't create new PID file: %s", strerror(errno));

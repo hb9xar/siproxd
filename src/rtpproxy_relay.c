@@ -42,9 +42,7 @@
 #include "rtpproxy.h"
 #include "log.h"
 
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
-			  BUILDSTR " $";
-
+static char const ident[]="$Id$";
 
 /* configuration storage */
 extern struct siproxd_config configuration;
@@ -119,6 +117,7 @@ int rtp_relay_init( void ) {
       if (uid != euid) seteuid(0);
 
       if (geteuid()==0) {
+#if defined(HAVE_SCHED_GET_PRIORITY_MAX) && defined(HAVE_SCHED_GET_PRIORITY_MIN)
          int pmin, pmax;
          /* place ourself at 1/3 of the available priority space */
          pmin=sched_get_priority_min(SCHED_RR);
@@ -126,6 +125,11 @@ int rtp_relay_init( void ) {
          schedparam.sched_priority=pmin+(pmax-pmin)/3;
          DEBUGC(DBCLASS_RTP,"pmin=%i, pmax=%i, using p=%i", pmin, pmax,
                 schedparam.sched_priority);
+#else
+         /* just taken a number out of thin air */
+         schedparam.sched_priority=10;
+         DEBUGC(DBCLASS_RTP,"using p=%i", schedparam.sched_priority);
+#endif
          sts=pthread_setschedparam(rtpproxy_tid, SCHED_RR, &schedparam);
          if (sts != 0) {
             ERROR("pthread_setschedparam failed: %s", strerror(errno));

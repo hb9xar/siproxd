@@ -19,6 +19,8 @@
 */
 
 
+/* $Id$ */
+
 /*
  * SIP Method 'knowledg base'
  * This table tells siproxd what incomming requests (which methods)

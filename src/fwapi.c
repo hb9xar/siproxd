@@ -24,6 +24,8 @@
 #include "fwapi.h"
 #include "log.h"
 
+static char const ident[]="$Id$";
+
 int fwapi_start_rtp(int rtp_direction,
                     struct in_addr local_ipaddr, int local_port,
                     struct in_addr remote_ipaddr, int remote_port) {

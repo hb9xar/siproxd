@@ -30,10 +30,7 @@
 #include <time.h>
 #include <syslog.h>
 
-
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
-			  BUILDSTR " $";
-
+static char const ident[]="$Id$";
 
 static int log_to_syslog=0;
 static int debug_pattern=0;

@@ -18,6 +18,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+/* $Id$ */
+
 #include <stdarg.h>
 
 #define DBCLASS_BABBLE	0x00000001	/* babble (like entering/leaving fnc)*/

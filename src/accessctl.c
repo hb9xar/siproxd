@@ -31,9 +31,7 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
-			  BUILDSTR " $";
-
+static char const ident[]="$Id$";
 
 /* configuration storage */
 struct siproxd_config configuration;

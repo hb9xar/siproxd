@@ -44,8 +44,7 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"
-			  BUILDSTR " $";
+static char const ident[]="$Id$";
 
 /* configuration storage */
 extern struct siproxd_config configuration;
@@ -350,7 +349,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    } /* for i */
 
    /* not found in cache, go and get it */
-   bzero(&ifr, sizeof(ifr));
+   memset(&ifr, 0, sizeof(ifr));
 
    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
       ERROR("Error in socket: %s\n",strerror(errno));
