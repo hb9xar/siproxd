@@ -1,5 +1,7 @@
 0.5.5
 =====
+  30-Mar-2004:  - Again '*' Contact header in unREGISTER
+                - new: tools/extract_sip.pl 
   26-Mar-2004:  - SDP rewrite: properly handle 'c=' items in session
                   *and* media part of SDP data.
   22-Mar-2004:  - deal with wildcard Contact header for unREGISTER

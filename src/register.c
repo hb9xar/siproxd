@@ -242,19 +242,38 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    }
 
    url1_to=my_msg->to->url;
-   url1_contact=((osip_contact_t*)(my_msg->contacts->node->element))->url;
 
-   DEBUGC(DBCLASS_REG,"register: %s@%s expires=%i seconds",
-          (url1_contact->username) ? url1_contact->username : "*NULL*",
-          (url1_contact->host) ? url1_contact->host : "*NULL*",
-          expires);
 
 
    /*
     * REGISTER
     */
    if (expires > 0) {
-      /* Update registration. There are two possibilities:
+      /*
+       * First make sure, we have a prober Contact header:
+       *  - url
+       *  - url -> hostname
+       *
+       * Libosip parses an:
+       * "Contact: *"
+       * the following way (Note: Display name!! and URL is NULL)
+       * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
+       * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
+       */
+      url1_contact=((osip_contact_t*)(my_msg->contacts->node->element))->url;
+      if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
+         /* Don't have reqiured Contact fields */
+         ERROR("tried registration with empty Contact header");
+         return STS_FAILURE;
+      }
+         
+      DEBUGC(DBCLASS_REG,"register: %s@%s expires=%i seconds",
+          (url1_contact->username) ? url1_contact->username : "*NULL*",
+          (url1_contact->host) ? url1_contact->host : "*NULL*",
+          expires);
+
+      /*
+       * Update registration. There are two possibilities:
        * - already registered, then update the existing record
        * - not registered, then create a new record
        */

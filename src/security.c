@@ -239,17 +239,6 @@ RFC 3261            SIP: Session Initiation Protocol           June 2002
       return STS_FAILURE;
    }
 
-  /*
-   * check for existing Contact: header
-   * according to RFC3261 not mandatory, but siproxd relies on it
-   * on REGISTER...
-   */
-   if (MSG_IS_REGISTER(sip) && ((sip->contacts==NULL)||
-       (sip->contacts->node==NULL)||(sip->contacts->node->element==NULL)||
-       ((osip_contact_t*)(sip->contacts->node->element))->url==NULL)) {
-      ERROR("security check failed: NULL Contact Header");
-      return STS_FAILURE;
-   }
 
 
    /* TODO: still way to go here ... */
