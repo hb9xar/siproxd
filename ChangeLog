@@ -1,18 +1,20 @@
 0.5.1
 =====
+  21-Dec-2003:	- possibility to log call establishment
   17-Dec-2003:	- full duplex RTP proxy (many thanks to Chris Ross for
 		  his work on this). Up to now, only the RTP *Relay*
-                  has been tested (works with KPhone, BudgeTone)
+                  has been tested (it works with KPhone, BudgeTone)
 		- fix: SIP phones that allocate a random port for
                   incomming SIP traffic should now work (like BudgeTone)
 		- fix: some SIP phones do change the RTP port number
                   during a session (like KPhone during HOLD/unHOLD)
-  15-Dec-2003:	- use even port numbers for RTP traffic
+		- textual corrections
+  15-Dec-2003:	- use only even port numbers for RTP traffic
   05-Dec-2003:	- some changes & enhancements inspired by Chris Ross:
 		  * 183 Trying *may* contain SDP data
                   * compare_url: now does compare the scheme,
-                    if a host is not resolveable hostnames will be
-                    compares as strings
+                    if a host is not resolveable, hostnames will be
+                    compared as strings
   04-Dec-2003:	- have registrations persistent across restarts of
 		  the daemon ('registration_file' config option)
   29-Nov-2003:	- some documentation & FAQ updates

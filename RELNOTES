@@ -1,55 +1,55 @@
-Release Notes for siproxd-0.5.0
+Release Notes for siproxd-0.5.1
 ===============================
 
-As quite some changes have been made now, I decided to make another
-release - even if some new feature are not yet completely ready,
-like IPTABLES (netfilter) support in the RTP proxy.
-However, it includes some important bugfixes and some other goodies.
+Just before my vacations I'll make another release. Some new features
+have been added and some changes are still going on.
+After giving some thoughts, I decided to discontinue the IPCHAINS
+and IPTABLES support. Reasons for this are, the RTP relay does
+fulfill the same task (with the cost of more CPU time needed),
+but it is much easier to support (portability and support
+on other platforms) and has no need for any special firewall
+masquerading configuration.
 
-Major changes since 0.4.2:
- - Feature: Proxy chaining - siproxd itself may now use an additional
-   outbound proxy. This allows for example to chain serveal siproxd
-   (cross multiple firewalls).
 
- - Feature: Includes *preliminary* support for IPTABLES (netfilter)
-   based systems. Current restrictions: The executable 'iptables'
-   must reside in /sbin/iptables. Chroot jail not working.
-   Must be run as root, don't let siproxd change the UID.
-   This item is stil under work, it may or may not work for you.
+Major changes since 0.5.0:
+ - Feature: Full duplex RTP proxy - masquerading for outgoing
+   RTP stream is no longer needed.Only the RTP relay has been
+   tested yet. However, I'm planning to discontinue IPCHAINS and 
+   IPTABLES support in the near future for the sake of less
+   dependency of the OS and portability.
 
- - Feature: Some changes to have siproxd compile under Solaris.
-   Runtime is not tested yet.
+ - Feature: The BudgeTone SIP phones now DO work with the RTP relay.
 
- - Fix: Bugfixes and cleanup for building of FreeBSD
+ - Feature: UA registrations now survive a restart of siproxd
+   (ongoing sessions however do not survive).
 
- - Fix: Chroot jail did not work properly and resultet in ERRORs
-   during hostname lookups (gethostbyname)
+ - Fix: cope with changing RTP port numbers suring a session
+   (e.g. kphone does it when doing HOLD/unHOLD)
+
 
 General Overview:
+ - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
+   masquerading firewall
+ - works with "dial-up" conenctions (dynamic IP addresses)
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Access control (IP based) for incoming traffic
+ - Proxy Authentication for registration of local clients (User Agents)
+   with individual passwords for each user
  - May be used as pure Outbound proxy (registration of local UAs
    to a 3rd party registrar)
  - Fli4l OPT_SIP (still experimental) available, check
    http://home.arcor.de/jsffm/fli4l/
  - supports Linux and FreeBSD (other BSD derivates not yet tested)
- - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
-   masquerading firewall
- - Includes an RTP data stream proxy for *incoming* audio data
-   (outgoing RTP data should be handled by IP masquerading by the firewall)
- - Includes Linux/IPCHAINS support for UDP masquerading tunnels as RTP proxy
-   (Kernels 2,2,x so far - 2.4.x with IPTABLES is not yet supported)
- - Port range to be used for incoming RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for incoming traffic)
+ - Full duplex RTP data stream proxy for *incoming* and *outgoing*
+   audio data - no firewall masquerading entries needed
+ - Port range to be used for RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for RTP traffic)
  - RTP proxy can handle multiple RTP streams (eg. audio + video)
    within a single SIP session.
- - Multiple local users/hosts can be masqueraded simultaneously
  - Supports running in a chroot jail and changing user-ID after startup
  - All configuration done via one simple ascii configuration file
- - Proxy Authentication for registration of local clients (User Agents)
-   with individual passwords for each user
  - Logging to syslog in daemon mode
- - Access control (IP based) for incoming traffic
- - RPM package available
- - works with "dial-up" conenctions (dynamic IP addresses)
+ - RPM package
  - The host part of UA registration entries can be masqueraded
    (mask_host, masked_host config items). Some Siemens SIP phones seem to
    need this 'feature'.
@@ -69,33 +69,29 @@ Currently tested on:
 
 Reported to build on:
 - OpenBSD 2.9
+- Solaris2
 
 Reported interoperability (tested with softphones):
- - Grandstream BudgeTone-100 series (only works with IPCHAINS RTP proxy)
+ - Grandstream BudgeTone-100 series
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
+ If you can confirm other SIP phones working, please drop me
+ a short note.
 
 Known bugs:
    There will be...
 
-   If you port siproxd to a new platform or do other kinds of changes
-   or bugfixes that might be of general interest, please drop me a
-   line. Also if you intend to include siproxd into a distribution
-   I'd be happy to get a short notice.
+If you port siproxd to a new platform or do other kinds of changes
+or bugfixes that might be of general interest, please drop me a
+line. Also if you intend to include siproxd into a software
+distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.0.tar.gz: 506efb9c88d68944f63ab42130e15ae6	
+md5sum for siproxd-0.5.1.tar.gz: 	
 
-GnuPG signature for siproxd-0.5.0.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/xPhdCfzBioe83JQRAp8CAKDFBUJEFiTraZc1xl8MJSHtqjevsACffF2N
-yuUjpOq58gUC4XEQRsYspuk=
-=YsPE
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.1.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

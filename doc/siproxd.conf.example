@@ -1,9 +1,9 @@
 #
 # /etc/siproxd.conf - siproxd configuration file
 #
-# !! This is a sample file, adapt it to your needs before using it
+# !! This is a sample file, adapt it to your needs before using it !!
 #
-# !! Strings MUST NOT contain spaces in between !!
+# !! Strings MUST NOT contain spaces !!
 #
 
 ######################################################################
@@ -16,21 +16,21 @@ if_outbound = ppp0
 ######################################################################
 # Access control.
 #    Access lists in the form: IP/mask (ex. 10.0.0.1/24)
-#    multiple entries may be separated by commas NO SPACES ARE ALLOWED!!
+#    Multiple entries may be separated by commas NO SPACES ARE ALLOWED!!
 #    Empty list means 'does not apply' - no filtering is done then.
 #    For *allow* lists this means: always allow, for *deny* lists that
 #    this means never deny.
 #
-#    hosts_allow_reg: defines nets where we accept registrations from
-#    hosts_allow_sip: defines nets where we accept SIP traffic from
-#    hosts_deny_sip:  defines nets where we deny SIP traffic from
+#    hosts_allow_reg: defines nets from which we accept registrations
+#    hosts_allow_sip: defines nets from which we accept SIP traffic
+#    hosts_deny_sip:  defines nets from which we deny SIP traffic
 #
 #    - The deny list takes precedence over the allow lists.
-#    - The allow_reg list implies also allowance for sip.
+#    - The allow_reg list also implies allowance for sip.
 #
 #    Example for usage:
 #      local private net -> allow_reg list
-#      external nets (where we accept incoming calls from) -> allow_sip
+#      external nets (from which we accept incoming calls) -> allow_sip
 #
 #hosts_allow_reg = 192.168.1.8/24
 #hosts_allow_sip = 123.45.0.0/16,123.46.0.0/16
@@ -39,7 +39,7 @@ if_outbound = ppp0
 
 ######################################################################
 # Port to listen for incoming SIP messages.
-#    5060 is usually the correct choise - don't change is unless you
+#    5060 is usually the correct choice - don't change this unless you
 #    know what you're doing
 #
 sip_listen_port = 5060
@@ -61,6 +61,11 @@ daemonize = 1
 silence_log = 0
 
 ######################################################################
+# Shall I log call establishment to syslog?
+#
+log_calls = 1
+
+######################################################################
 # Secure Enviroment settings:
 #   user:	uid/gid to switch to after startup
 #   chrootjail:	path to chroot to (chroot jail)
@@ -69,8 +74,9 @@ user = nobody
 
 ######################################################################
 # Registration file:
-#   Where to store the current registrations
-#   empty means we do not save registrations
+#   Where to store the current registrations.
+#   An empty value means we do not save registrations. Make sure that
+#   the specified directory path does exist!
 registration_file = /var/lib/siproxd/siproxd_registrations
 
 ######################################################################
@@ -87,8 +93,8 @@ registration_file = /var/lib/siproxd/siproxd_registrations
 rtp_proxy_enable = 1
 
 ######################################################################
-# Port range where to allocate listen ports for incoming RTP traffic
-#    this should be a range that is not blocked by the firewall
+# Port range to allocate listen ports from for incoming RTP traffic
+#    This should be a range that is not blocked by the firewall
 #    
 rtp_port_low  = 7070
 rtp_port_high = 7080
@@ -96,7 +102,7 @@ rtp_port_high = 7080
 ######################################################################
 # Timeout for RTP streams
 #    after this number of seconds, an RTP stream is considered dead
-#    and proxying it will be stopped.
+#    and proxying for it will be stopped.
 #    
 rtp_timeout = 120
 
@@ -108,12 +114,11 @@ rtp_timeout = 120
 #
 #proxy_auth_realm = Authentication_Realm
 #
-# the password to use (right now, only one global password for
-# registration is supported -> same for all local clients)
+# the (global) password to use (will be the same for all local clients)
 #
 #proxy_auth_passwd = password
 #
-# or use individual per user passwords stored in a file
+# OR use individual per user passwords stored in a file
 #
 #proxy_auth_pwfile = doc/siproxd_passwd.cfg
 #
@@ -140,7 +145,7 @@ debug_level =      0x00000000
 ######################################################################
 # Mask feature (experimental)
 #
-# Some UAs will always use the host/ip they register to as
+# Some UAs will always use the host/ip they register with as
 # host part in the registration record (which will be the inbound
 # ip address / hostname of the proxy) and can not be told to register a
 # different host (public IP address). This Mask feature allows to force
