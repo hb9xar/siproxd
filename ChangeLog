@@ -1,5 +1,8 @@
 0.5.6
 =====
+  14-May-2004:  - INFO/WARN/ERROR are always logged to syslog, even
+                  if running in foreground (syslog still can be silenced
+                  using the silence_log config option)
   09-May-2004:  - Authentication headers: enquote Realm (linphone)
                 - complain about empty values in config file
                 - fli4l-uclibc: statically link against libpthread

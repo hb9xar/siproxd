@@ -32,7 +32,7 @@
 
 static char const ident[]="$Id$";
 
-static int log_to_syslog=0;
+static int log_to_stdout=0;
 static int debug_pattern=0;
 /*
  * What shall I log to syslog?
@@ -59,8 +59,8 @@ int  log_get_pattern(void) {
    return debug_pattern;
 }
 
-void log_set_tosyslog(int tosyslog) {
-   log_to_syslog=tosyslog;
+void log_set_stdout(int tostdout) {
+   log_to_stdout=tostdout;
 }
 
 void log_set_silence(int level) {
@@ -86,7 +86,10 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
    va_start(ap, format);
 
    pthread_mutex_lock(&log_mutex);
-   if (! log_to_syslog) {
+   /*
+    * DEBUG output is either STDOUT or SYSLOG, but not both
+    */
+   if (log_to_stdout) {
       /* not running as daemon - log to STDERR */
       time(&t);
       tim=localtime(&t);
@@ -117,7 +120,11 @@ void log_error(char *file, int line, const char *format, ...) {
    va_start(ap, format);
 
    pthread_mutex_lock(&log_mutex);
-   if (! log_to_syslog) {
+   /*
+    * INFO, WARN, ERROR output is always to syslog and if not daemonized
+    * st STDOUT as well.
+    */
+   if (log_to_stdout) {
       /* not running as daemon - log to STDERR */
       time(&t);
       tim=localtime(&t);
@@ -126,7 +133,8 @@ void log_error(char *file, int line, const char *format, ...) {
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
       fflush(stderr);
-   } else if (silence_level < 4) {
+   }
+   if (silence_level < 4) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
@@ -148,7 +156,11 @@ void log_warn(char *file, int line, const char *format, ...) {
    va_start(ap, format);
 
    pthread_mutex_lock(&log_mutex);
-   if (! log_to_syslog) {
+   /*
+    * INFO, WARN, ERROR output is always to syslog and if not daemonized
+    * st STDOUT as well.
+    */
+   if (log_to_stdout) {
       /* not running as daemon - log to STDERR */
       time(&t);
       tim=localtime(&t);
@@ -157,7 +169,8 @@ void log_warn(char *file, int line, const char *format, ...) {
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
       fflush(stderr);
-   } else if (silence_level < 3) {
+   }
+   if (silence_level < 3) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
@@ -179,7 +192,11 @@ void log_info(char *file, int line, const char *format, ...) {
    va_start(ap, format);
 
    pthread_mutex_lock(&log_mutex);
-   if (! log_to_syslog) {
+   /*
+    * INFO, WARN, ERROR output is always to syslog and if not daemonized
+    * st STDOUT as well.
+    */
+   if (log_to_stdout) {
       /* not running as daemon - log to STDERR */
       time(&t);
       tim=localtime(&t);
@@ -188,7 +205,8 @@ void log_info(char *file, int line, const char *format, ...) {
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
       fflush(stderr);
-   } else if (silence_level < 2) {
+   }
+   if (silence_level < 2) {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
@@ -207,7 +225,7 @@ void log_dump_buffer(int class, char *file, int line,
    char tmp[8], tmplin1[80], tmplin2[80];
 
    if ((debug_pattern & class) == 0) return;
-   if (log_to_syslog) return;
+   if (!log_to_stdout) return;
 
    pthread_mutex_lock(&log_mutex);
    fprintf(stderr,"---BUFFER DUMP follows---\n");

@@ -85,6 +85,8 @@ int main (int argc, char *argv[])
 
    struct sigaction act;
 
+   log_set_stdout(1);
+
 /*
  * setup signal handlers
  */
@@ -181,7 +183,7 @@ int main (int argc, char *argv[])
       setsid();
       if (fork()!=0) exit(0);
 
-      log_set_tosyslog(1);
+      log_set_stdout(0);
       INFO("daemonized, pid=%i", getpid());
    }
 
