@@ -25,6 +25,8 @@ dnl	06-Mar-2004	tries	del daemon(), add setsid()
 dnl	09-Apr-2004	tries	add --with-custom-fwmodule
 dnl	09-May-2004	tries	fli4l-uclibc links statically agains pthreads
 dnl	29-May-2004	tries	use AC_CHECK_TYPE to check for socklen_t
+dnl	09-May-2004	tries	fli4l-libc5 does NOT use gethostbyname_r()
+dnl				(there seems to be a bug somewhere)
 dnl
 dnl
 dnl
@@ -352,8 +354,13 @@ AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strerror)
 
-AC_CHECK_FUNCS(gethostbyname gethostbyname_r)
-ACX_WHICH_GETHOSTBYNAME_R()
+AC_CHECK_FUNCS(gethostbyname)
+
+
+if test "x$build_fli4l_libc5" = "xno"; then
+   AC_CHECK_FUNCS(gethostbyname_r)
+   ACX_WHICH_GETHOSTBYNAME_R()
+fi
 
 AC_CHECK_FUNCS(getopt_long setsid syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
