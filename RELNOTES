@@ -1,20 +1,10 @@
-Release Notes for siproxd-0.5.2
+Release Notes for siproxd-0.5.3
 ===============================
 
-After some time, again a release of siproxd. This release
-does not introduce new features, it contains mainly fixes
-and enhancements to follow better RFC3261.
-IPCHAINS & IPTABLES (netfilter) proxy support has been removed
-as the RTP relay now seems to work reliable.
-
-Major changes since 0.5.1:
- - removed IPCHAINS & IPTABLES (netfilter) proxy support
- - RTPPROXY correction: match RTP ports crosswise -
-   use one single port (and socket) on each side (inbound/
-   outbound) to send and receive RTP traffic for every
-   active stream (patch from Christof Meerwald). 
- - Handle with Route headers pointing to myself
- - Include mandatory branch parameter in added via headers
+Major changes since 0.5.2:
+ - Support for connections between 2 local (masqueraded) UAs
+ - Symmetric SIP signalling
+ - handling of Max-Forwards header
  - A lot of smaller bugfixes
 
 General Overview:
@@ -29,7 +19,7 @@ General Overview:
    to a 3rd party registrar)
  - Fli4l OPT_SIP (still experimental) available, check
    http://home.arcor.de/jsffm/fli4l/
- - supports Linux and FreeBSD (other BSD derivates not yet tested)
+ - supports Linux, FreeBSD and Solaris
  - Full duplex RTP data stream proxy for *incoming* and *outgoing*
    audio data - no firewall masquerading entries needed
  - Port range to be used for RTP traffic is configurable
@@ -54,7 +44,6 @@ Currently tested on:
 - Redhat 7.2 (Kernel 2.4.x, Glibc)
 - SUSE 5.3 (kernel 2.0.x, libc5)
 - Redhat 7.2 build against uClibc
-- should run on others Linux distributions as well.
 
 Reported to build on:
 - FreeBSD 4.7-STABLE
@@ -79,15 +68,15 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.2.tar.gz: 	aac78f680d22c4e1d153c761ba07d84a
+md5sum for siproxd-0.5.3.tar.gz: 	00a3d5d8d847da0db6cb9b16751f027a
 
-GnuPG signature for siproxd-0.5.2.tar.gz archive:
+GnuPG signature for siproxd-0.5.3.tar.gz archive:
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (GNU/Linux)
 
-iD8DBQBAGublCfzBioe83JQRAr3OAKCJv/3HqBEWKj6nN1mxLO/FpwrnFwCcD7mP
-MSz8yMxL4n2tUwTfX8ne8aA=
-=n/yR
+iD8DBQBALfgaCfzBioe83JQRAu0sAJ9u0NkyeU2RUrTil73VDXBhbGg2dwCeJO1G
+Uf3/9BnBuxsp+zuPGcsEYIs=
+=4NVr
 -----END PGP SIGNATURE-----
 
 
