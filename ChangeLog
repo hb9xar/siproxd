@@ -1,5 +1,7 @@
 0.5.11
 ======
+  20-Mar-2005:  - when allocating local ports for RTP relaying, do this
+                  in a round-robin way over the available port range.
    1-Mar-2005:  - working on running siproxd in front of a routing device
                   and NOT on the firewall itself.
   19-Feb-2005:  - more work on new libosip API
