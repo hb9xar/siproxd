@@ -1,31 +1,21 @@
 Release Notes for siproxd-0.5.2
 ===============================
 
-Just before my vacations I'll make another release. Some new features
-have been added and some changes are still going on.
-After giving some thoughts, I decided to discontinue the IPCHAINS
-and IPTABLES support. Reasons for this are, the RTP relay does
-fulfill the same task (with the cost of more CPU time needed),
-but it is much easier to support (portability and support
-on other platforms) and has no need for any special firewall
-masquerading configuration.
+After some time, again a release of siproxd. This release
+does not introduce new features, it contains mainly fixes
+and enhancements to follow better RFC3261.
+IPCHAINS & IPTABLES (netfilter) proxy support has been removed
+as the RTP relay now seems to work reliable.
 
-
-Major changes since 0.5.0:
- - Feature: Full duplex RTP proxy - masquerading for outgoing
-   RTP stream is no longer needed.Only the RTP relay has been
-   tested yet. However, I'm planning to discontinue IPCHAINS and 
-   IPTABLES support in the near future for the sake of less
-   dependency of the OS and portability.
-
- - Feature: The BudgeTone SIP phones now DO work with the RTP relay.
-
- - Feature: UA registrations now survive a restart of siproxd
-   (ongoing sessions however do not survive).
-
- - Fix: cope with changing RTP port numbers suring a session
-   (e.g. kphone does it when doing HOLD/unHOLD)
-
+Major changes since 0.5.1:
+ - removed IPCHAINS & IPTABLES (netfilter) proxy support
+ - RTPPROXY correction: match RTP ports crosswise -
+   use one single port (and socket) on each side (inbound/
+   outbound) to send and receive RTP traffic for every
+   active stream (patch from Christof Meerwald). 
+ - Handle with Route headers pointing to myself
+ - Include mandatory branch parameter in added via headers
+ - A lot of smaller bugfixes
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -57,7 +47,7 @@ General Overview:
 Requirements:
  - pthreads (Linux)
  - glibc2 / libc5 / uClibc
- - libosip2 (libosip1 is no longer supported!)
+ - libosip2
 
 Currently tested on:
 - Redhat 6.0 (Kernel 2.2.x, Glibc)
@@ -65,9 +55,9 @@ Currently tested on:
 - SUSE 5.3 (kernel 2.0.x, libc5)
 - Redhat 7.2 build against uClibc
 - should run on others Linux distributions as well.
-- FreeBSD 4.7-STABLE (compilation)
 
 Reported to build on:
+- FreeBSD 4.7-STABLE
 - OpenBSD 2.9
 - Solaris2
 
@@ -89,9 +79,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.2.tar.gz: 	
+md5sum for siproxd-0.5.2.tar.gz: 	aac78f680d22c4e1d153c761ba07d84a
 
 GnuPG signature for siproxd-0.5.2.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.1 (GNU/Linux)
+
+iD8DBQBAGublCfzBioe83JQRAr3OAKCJv/3HqBEWKj6nN1mxLO/FpwrnFwCcD7mP
+MSz8yMxL4n2tUwTfX8ne8aA=
+=n/yR
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -22,7 +22,8 @@
 EXTRA_DIST = 	siproxd.conf.example \
 		siproxd_passwd.cfg \
                 FAQ KNOWN_BUGS \
-                FLI4L_HOWTO.txt
+                FLI4L_HOWTO.txt \
+                RFC3261_compliance.txt
 
 
 install-data-local:
