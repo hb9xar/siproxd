@@ -2,6 +2,7 @@
 ======
   08-Jan-2005:	- include ./autogen.sh into distribution
                 - fix: FreeBSD - libgnugetopt is optional library
+                - feature: build support for Cygwin (by Mathias Wohlfarth)
   01-Jan-2005:	- fix: doc/Makefile.am, install part (by David Taylor)
   30-Dec-2004:  - feature: remote TCP logging facility
   29-Dec-2004:  - feature: Outbound proxies configurable per domain

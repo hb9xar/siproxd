@@ -174,8 +174,7 @@ void log_tcp_connect(void) {
          INFO("Rejected DEBUG TCP connection");
       } else {
          debug_fd=accept(debug_listen_fd, NULL, NULL);
-         INFO("Accepted DEBUG TCP connection [fd=%i]", debug_fd);
-         DEBUGC(DBCLASS_ALL,UNAME);
+         INFO("Accepted DEBUG TCP connection [fd=%i] ("UNAME")", debug_fd);
       }
    }
 
