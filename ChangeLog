@@ -1,8 +1,7 @@
 0.4.1
 =====
   19-Oct-2003:	- included compiling support for DMALLOC debugging
-		- fixed memory leak in proxy.c (39 bytes got lost
-                  every proxied message)
+		- fixed 2 memory leaks in proxy.c
 0.4.1
 =====
   12-Oct-2003:	- released 0.4.1

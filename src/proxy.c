@@ -600,6 +600,7 @@ if (configuration.debuglevel)
 
    /* include new body */
    osip_message_set_body(mymsg, bodybuff);
+   osip_free(bodybuff);
 
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
