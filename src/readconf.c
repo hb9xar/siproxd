@@ -211,7 +211,12 @@ static int parse_config (FILE *configfile) {
             DEBUGC(DBCLASS_CONFIG,"got argument:\"%s\"",ptr);
 
 	    num=0;
-	    if (strlen(ptr)) switch (configoptions[k].type) {
+	    if (strlen(ptr) <= 0) {
+	       WARN("empty argument in config file, line:\"%s\"",buff);
+	       break;
+            }
+
+            switch (configoptions[k].type) {
 
 	    //
             // Integer4
