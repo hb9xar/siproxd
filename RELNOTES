@@ -28,6 +28,9 @@ Interoperability (tested with softphones):
 
 -----
 md5sum for siproxd-0.2.3.tar.gz: 
+md5sum for siproxd-0.2.3-1rh60.i386.rpm
+md5sum for siproxd-0.2.3-1rh72.i386.rpm
+md5sum for siproxd-0.2.3-1.src.rpm
 
 GnuPG signature for siproxd-0.2.3.tar.gz archive:
 

@@ -19,7 +19,8 @@
 #
 
 
-EXTRA_DIST = siproxd.conf.example FAQ
+EXTRA_DIST = siproxd.conf.example mysiproxd_passwd.cfg FAQ
 
 install-data-local:
-	$(INSTALL_DATA) siproxd.conf.example /etc/
+	$(INSTALL_DATA) siproxd.conf.example	/etc/
+	$(INSTALL_DATA) siproxd_passwd.cfg	/etc/

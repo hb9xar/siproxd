@@ -1,5 +1,10 @@
 0.2.3
 =====
+- 10-Nov-2002:  - released 0.2.3 (minor fixes)
+-  9-Nov-2002:	- make install also installs a sample password file
+		  (/etc/siproxd_passwd.cfg)
+-  8-Nov-2002:	- string manipulations & data structures: better error
+		  handling on some places.
 -  2-Nov-2002:	- 'make install' install now a templace config file
 		  (/etc/siproxd.conf.example)
 - 24-Oct-2002:	- small docu updates in README

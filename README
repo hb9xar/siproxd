@@ -39,8 +39,6 @@ HOW TO GET STARTED
 
 - make install
 
-- copy doc/sipproxd.conf.example to /etc/siproxd.conf
-
 - edit /etc/siproxd.conf according to your situation
   At least 'host_inbound' and 'host_outbound' *must* be adapted!
   'host_inbound' is the firewalls IP address of your private network,
@@ -48,8 +46,28 @@ HOW TO GET STARTED
   firewall. (If you have dynamic IP addresses, then you might want
   to use a hostname here and use a dynamic DNS service like [1])
 
+- edit /etc/siproxd_passwd.cfg if you enable client authentication
+  in siproxd.conf
+
 - start siproxd (siproxd does *not* require root privilegdes)
   $ siproxd
+
+
+
+PROBLEM REPORTING
+=================
+If you encounter problems/crashes and ask for support, please include
+as much information as possible. Very helpful is a debug log that
+has been recorded at the time of the misbehaviour.
+
+The easiest way to do this:
+1) make sure siproxd is not started as daemon.
+   -> 'daemonize = 0' in the config file.
+2) start siproxd:
+   $ ./siproxd -d -1 2>debug.log
+3) reproduce the error
+4) include the debug.log in your error report.
+
 
 
 WHAT SIPROXD DOES
@@ -135,7 +153,6 @@ REFERENCES
 LIMITATIONS
 ===========
 - currently, the SIP part only supports UDP
-- RTP proxy support is still experimantal (so as the rest of siproxd ;-)
 - very likely it does not follow the SIP spec (RFC3261) in all details
 - check the TODO file for more things that we-cannot-do-but-would-like-to
 
@@ -159,6 +176,7 @@ Please feel free to contact the author to:
    - ...
 
 and visit the website at http://siproxd.sourceforge.net/
+
 
 There is a siproxd mailinglist available on sourceforge.
 
