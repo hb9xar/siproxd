@@ -1,5 +1,6 @@
 0.5.10
 ======
+  01-Feb-2005:  - Released 0.5.10
   24-Jan-2005:  - fix: Re-Invites may change remote IP address as well
   08-Jan-2005:  - include ./autogen.sh into distribution
                 - fix: FreeBSD - libgnugetopt is optional library

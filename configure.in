@@ -14,8 +14,8 @@ dnl				now: --enable-fli4l-libc5, --enable-fli4l-uclibc
 dnl	 7-Apr-2003	tries	added siproxd.spec to autoconf process
 dnl	31-Jul-2003	tries	changed to support OSIP2 only
 dnl	 1-Sep-2003	tries	check for IPCHAINS
-dnl      5-Sep-2003     tries   test for pthreads before libosip stuff
-dnl     19-Sep-2003     tries   DMALLOC support
+dnl	 5-Sep-2003	tries	test for pthreads before libosip stuff
+dnl	19-Sep-2003	tries	DMALLOC support
 dnl	 1-Nov-2003	tries	check for NETFILTER (IPTABLES)
 dnl	18-Nov-2003	tries	include sysconfdir to search for config
 dnl	19-Nov-2003	tries	changes to support Solaris & BSD/OS

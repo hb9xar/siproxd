@@ -2,7 +2,14 @@ Release Notes for siproxd-0.5.10
 ===============================
 
 Major changes since 0.5.9:
-   Several bugfixes and better support for Record-Route headers.
+   Bugfix concerning re-Invites. This bug has probably affected quite
+   a number of SIP <-> PSTN gateways that would then not work properly
+   with siproxd.
+   Cygwin build support.
+   Siproxd can select outbound proxies on a per-provider base.
+   A new logging facility (via TCP connection) allows to create
+   debug files also on embedded platforms with a limited size
+   of filespace.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -32,6 +39,7 @@ General Overview:
  - The host part of UA registration entries can be masqueraded
    (mask_host, masked_host config items). Some Siemens SIP phones seem to
    need this 'feature'.
+ - Provider specific outbound proxies can be configured
 
 Requirements:
  - pthreads (Linux)
@@ -45,11 +53,13 @@ Currently tested on:
 
 Builds on:
 - Linux:	Fedora Core1
+		Fedora Core3 (x86_64 - 64 bit)
 		WRT54g (133mhz mipsel router)
 - FreeBSD:	FreeBSD 4.10-BETA
 - OpenBSD:	OpenBSD 3.4 GENERIC#18
 - SunOS:	SunOS 5.9
 - Mac OS X:	Darwin 6.8
+- Windows:	Cygwin environment
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
@@ -62,8 +72,12 @@ Reported interoperability with softphones:
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
  - FWD		(http://www.fwd.pulver.com)
- - Sipgate	(http://www.sipgate.de)
+ - Sipgate *)	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
+
+ *) There have been reports of people having problems using
+    siproxd with these providers.
+
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update
@@ -80,9 +94,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.10.tar.gz: 	
+md5sum for siproxd-0.5.10.tar.gz: 	f7c867affe6f1c6674bf174af6c9dd32
 
 GnuPG signature for siproxd-0.5.10.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBB/9bqCfzBioe83JQRAufVAJ4h5jyqc5OiNkDZqoA6xlz0gxJfMgCeMmjB
+S2RXc/uQkz55WmxhPLkU5do=
+=k+8D
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
