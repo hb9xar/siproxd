@@ -53,24 +53,10 @@ static int listen_socket=0;
  * returns 0 on success
  */
 int sipsock_listen (void) {
-   struct sockaddr_in my_addr;
-   int sts;
+   struct in_addr ipaddr;
 
-   my_addr.sin_family = AF_INET;
-   memset(&my_addr.sin_addr.s_addr, 0, sizeof(struct in_addr));
-   my_addr.sin_port= htons(configuration.sip_listen_port);
-
-   listen_socket=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-   if (listen_socket == 0) {
-      ERROR("socket() call failed:%s",strerror(errno));
-      return 1;
-   }
-
-   sts=bind(listen_socket, (struct sockaddr *)&my_addr, sizeof(my_addr));
-   if (sts != 0) {
-      ERROR("bind failed:%s",strerror(errno));
-      return 2;
-   }
+   memset(&ipaddr, 0, sizeof(struct in_addr));
+   listen_socket=sockbind(ipaddr, configuration.sip_listen_port);
 
    DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
    return 0;
@@ -106,29 +92,33 @@ int sipsock_read(void *buf, size_t bufsize) {
 /*
  * sends an UDP datagram to the specified destination
  */
-int sipsock_send_udp(struct in_addr addr, int port, char *buffer, int size) {
+int sipsock_send_udp(int *sock, struct in_addr addr, int port,
+                     char *buffer, int size, int allowdump) {
    struct sockaddr_in dst_addr;
-   static int s=0;
    int sts;
 
    /* first time: allocate a socket for sending */
-   if (s == 0) {
-      s=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (s == 0) {
+   if (*sock == 0) {
+      *sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (*sock == 0) {
          ERROR("socket() call failed:%s",strerror(errno));
 	 return 1;
       }
-      DEBUGC(DBCLASS_NET,"allocated send socket %i",s);
+      DEBUGC(DBCLASS_NET,"allocated send socket %i",*sock);
    }
 
    dst_addr.sin_family = AF_INET;
    memcpy(&dst_addr.sin_addr.s_addr, &addr, sizeof(struct in_addr));
    dst_addr.sin_port= htons(port);
 
-   DEBUGC(DBCLASS_NET,"send UDP packet to %s",inet_ntoa(addr));
-   DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
 
-   sts = sendto (s, buffer, size, 0, &dst_addr, sizeof(dst_addr));
+   if (allowdump) {
+      DEBUGC(DBCLASS_NET,"send UDP packet to %s:%i",
+             inet_ntoa(addr),port);
+      DUMP_BUFFER(DBCLASS_NETTRAF, buffer, size);
+   }
+
+   sts = sendto (*sock, buffer, size, 0, &dst_addr, sizeof(dst_addr));
    
    if (sts == -1) {
       ERROR("sendto() call failed:%s",strerror(errno));
@@ -138,3 +128,35 @@ int sipsock_send_udp(struct in_addr addr, int port, char *buffer, int size) {
    return 0;
 }
 
+
+
+/*
+ * generic routine to allocate and bind a socket to a specified
+ * local address and port (UDP)
+ *
+ * returns socket number on success, zero on failure
+ */
+int sockbind(struct in_addr ipaddr, int localport) {
+   struct sockaddr_in my_addr;
+   int sts;
+   int sock;
+
+   my_addr.sin_family = AF_INET;
+   memcpy(&my_addr.sin_addr.s_addr, &ipaddr, sizeof(struct in_addr));
+   my_addr.sin_port= htons(localport);
+
+   sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+   if (sock == 0) {
+      ERROR("socket() call failed:%s",strerror(errno));
+      return 0;
+   }
+
+   sts=bind(sock, (struct sockaddr *)&my_addr, sizeof(my_addr));
+   if (sts != 0) {
+      ERROR("bind failed:%s",strerror(errno));
+      close(sock);
+      return 0;
+   }
+
+   return sock;
+}

@@ -48,6 +48,9 @@
 /* Define if you have the osip library (-losip).  */
 #undef HAVE_LIBOSIP
 
+/* Define if you have the pthread library (-lpthread).  */
+#undef HAVE_LIBPTHREAD
+
 /* Name of package */
 #undef PACKAGE
 

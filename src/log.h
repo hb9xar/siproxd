@@ -29,6 +29,7 @@
 #define DBCLASS_DNS	0x00000040	// DNS stuff
 #define DBCLASS_NETTRAF	0x00000080	// network traffic
 #define DBCLASS_CONFIG	0x00000100	// configuration
+#define DBCLASS_RTP	0x00000200	// RTP proxy
 
 
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)

@@ -85,10 +85,10 @@ MAKEINFO = @MAKEINFO@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
-CFLAGS = @CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\"
+CFLAGS = @CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
 bin_PROGRAMS = siproxd
-siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c 		  log.c readconf.c
+siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c 		  log.c readconf.c rtpproxy.c
 
 
 noinst_HEADERS = log.h siproxd.h
@@ -105,7 +105,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 siproxd_OBJECTS =  siproxd.o proxy.o register.o sock.o utils.o log.o \
-readconf.o
+readconf.o rtpproxy.o
 siproxd_LDADD = $(LDADD)
 siproxd_DEPENDENCIES = 
 siproxd_LDFLAGS = 
@@ -122,7 +122,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/log.P .deps/proxy.P .deps/readconf.P .deps/register.P \
-.deps/siproxd.P .deps/sock.P .deps/utils.P
+.deps/rtpproxy.P .deps/siproxd.P .deps/sock.P .deps/utils.P
 SOURCES = $(siproxd_SOURCES)
 OBJECTS = $(siproxd_OBJECTS)
 

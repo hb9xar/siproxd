@@ -14,7 +14,9 @@
 #  DBCLASS_DNS     0x00000040	   // DNS stuff
 #  DBCLASS_NETTRAF 0x00000080	   // network traffic
 #  DBCLASS_CONFIG  0x00000100	   // configuration
-debug_level = 0x0ffffffe
+#  DBCLASS_RTP     0x00000200      // RTP proxy
+#
+debug_level = 0x000002fe
 
 ######################################################################
 # The IP addresses of the INBOUND and OUTBOUND interface can
@@ -25,8 +27,8 @@ debug_level = 0x0ffffffe
 #   or as dotted decimal IP:
 #
 # host_inbound=10.0.0.1
-
-host_inbound  = 192.168.1.8
+#
+host_inbound  = 192.168.1.1
 host_outbound = ries.homeip.net
 
 
@@ -34,11 +36,31 @@ host_outbound = ries.homeip.net
 # Port to listen for incomming SIP messages.
 #    5060 is usually the correct choise - don't change is unless you
 #    know what you're doing
-
-sip_port = 5060
+#
+sip_listen_port = 5060
 
 
 ######################################################################
 # Shall we daemonize?
+#
 daemonize = 0
+
+######################################################################
+# global switch to enable (1) or disable (0) the RTP proxy feature
+#    
+rtp_proxy_enable = 1
+
+######################################################################
+# Port range where to allocate listen ports for incomming RTP traffic
+#    this should be a range that is not blocked by the firewall
+#    
+rtp_port_low  = 7070
+rtp_port_high = 7080
+
+######################################################################
+# Timeout for RTP streams
+#    after this number of seconds, at RTP stream is considered dead
+#    and proxying it will be stopped.
+#    
+rtp_timeout = 60
 

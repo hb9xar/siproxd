@@ -1,9 +1,17 @@
+0.1.2
+=====
+-  7-Sep-2002:	Releases version 0.1.2
+		Experimental RTP proxying feature (using pthreads)
+- 26-Aug-2002:	Optimized DNS caching
 
 0.1.1
 =====
+- 25-Aug-2002:  Released version 0.1.1
+		can daemonize (detach and run in background)
+		do some DNS caching
 - 24-Aug-2002:	Imlemented support for a config file,
 		obsoletes siproxd_conf.h
 
 0.1.0
 =====
-- 19-Aug-2002:	Released version  0.1.0
+- 19-Aug-2002:	Released version 0.1.0

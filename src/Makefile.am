@@ -19,11 +19,11 @@
 #
 
 
-CFLAGS =@CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\"
+CFLAGS =@CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
 bin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
-		  log.c readconf.c
+		  log.c readconf.c rtpproxy.c
 
 noinst_HEADERS = log.h siproxd.h
 

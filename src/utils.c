@@ -113,6 +113,7 @@ int is_via_local (via_t *via) {
    struct in_addr addr_via, addr_myself;
    char *my_hostnames[]=
         { configuration.inboundhost, configuration.outboundhost, NULL };
+   int port;
    int i;
    char *ptr;
 
@@ -131,7 +132,11 @@ int is_via_local (via_t *via) {
       /* check the extracted VIA against my own host addresses */
       sts = get_ip_by_host(ptr, &addr_myself);
 
-      if (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) {
+      if (via->port) port=atoi(via->port);
+      else port=SIP_PORT;
+
+      if ( (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
+           (port == configuration.sip_listen_port) ) {
          sts=1;
 	 break;
       }
@@ -156,6 +161,8 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    } dns_cache[DNS_CACHE_SIZE];
    static int cache_initialized=0;
 
+   if (hostname == NULL) return 1;
+
    /* first time: initialize DNS cache */
    if (cache_initialized == 0) {
       DEBUGC(DBCLASS_DNS, "initializing DNS cache (%i entries)", DNS_CACHE_SIZE);
@@ -166,6 +173,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    time(&t);
    /* clean expired entries */
    for (i=0; i<DNS_CACHE_SIZE; i++) {
+      if (dns_cache[i].hostname[0]=='\0') continue;
       if ( (dns_cache[i].timestamp+DNS_MAX_AGE) < t ) {
          DEBUGC(DBCLASS_DNS, "cleaning DNS cache, entry %i)", i);
          memset (&dns_cache[i], 0, sizeof(dns_cache[0]));

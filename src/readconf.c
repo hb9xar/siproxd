@@ -19,6 +19,7 @@
 */
 
 #include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -111,11 +112,15 @@ static int parse_config (FILE *configfile) {
       enum type {TYP_INT4, TYP_STRING, TYP_FLOAT} type;
       void *dest;
    } configoptions[] = {
-      { "debug_level",   TYP_INT4,   &configuration.debuglevel },
-      { "sip_port",      TYP_INT4,   &configuration.sip_listen_port },
-      { "daemonize",     TYP_INT4,   &configuration.daemonize },
-      { "host_inbound",  TYP_STRING, &configuration.inboundhost },
-      { "host_outbound", TYP_STRING, &configuration.outboundhost },
+      { "debug_level",      TYP_INT4,   &configuration.debuglevel },
+      { "sip_listen_port",  TYP_INT4,   &configuration.sip_listen_port },
+      { "daemonize",        TYP_INT4,   &configuration.daemonize },
+      { "host_inbound",     TYP_STRING, &configuration.inboundhost },
+      { "host_outbound",    TYP_STRING, &configuration.outboundhost },
+      { "rtp_port_low",     TYP_INT4,   &configuration.rtp_port_low },
+      { "rtp_port_high",    TYP_INT4,   &configuration.rtp_port_high },
+      { "rtp_timeout",      TYP_INT4,   &configuration.rtp_timeout },
+      { "rtp_proxy_enable", TYP_INT4,   &configuration.rtp_proxy_enable },
       {0, 0, 0}
    };
 

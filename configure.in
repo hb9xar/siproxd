@@ -5,7 +5,7 @@ dnl ******************************************************************
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=1
-SPD_MICRO_VERSION=1
+SPD_MICRO_VERSION=2
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
 dnl *********************************************************************
@@ -22,6 +22,7 @@ AC_PROG_LN_S
 
 dnl Checks for libraries.
 AC_CHECK_LIB(osip, parser_init)
+AC_CHECK_LIB(pthread, pthread_create)
 
 dnl Checks for header files.
 AC_HEADER_STDC

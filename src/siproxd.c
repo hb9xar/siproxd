@@ -40,6 +40,9 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 /* configuration storage */
 struct siproxd_config configuration;
 
+/* socket used for sending SIP datagrams */
+int sip_socket=0;
+
 int main (int argc, char *argv[]) 
 {
    int sts;
@@ -119,6 +122,9 @@ int main (int argc, char *argv[])
 
    /* listen for incomming messages */
    sipsock_listen();
+
+   /* initialize the RTP proxy thread */
+   rtpproxy_init();
 
    /* daemonize if requested to */
    if (configuration.daemonize) {

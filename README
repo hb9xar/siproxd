@@ -1,8 +1,7 @@
 
 
 Be warned, this (and all the other) documentantation is far from
-complete. This is just a *very* preliminary pre-alpha release. Don't
-expect anything!
+complete. This is still considered an alpha release.
 
 
 Overview:
@@ -26,7 +25,7 @@ Requirements:
 - libosip-0.8.8		(http://www.fsf.org/software/osip/)
 
 Up to now, this packages only has been tested under an i386 Redhat Linux 6.0.
-However, it should build and run under newer versions.
+However, it should build and run under newer versions (feedback is welcome).
 
 
 
@@ -49,25 +48,41 @@ How to get started:
   here and use a dynamic DNS service like dyndns.org)
 
 
+
 What siproxd does:
 =================
-Siproxd's main purpose (up to now) is to rewrite SIP messages.
+Siproxd's main purpose (up to now) is to rewrite SIP messages
+to be able to operate via an masquerading firewall.
+Since release 0.1.2 siproxd can proxy incomming RTP streams.
 
 
 
 What siproxd does NOT do:
 =========================
-Siproxd does *not* (yet) create masquerading tunnels or port-forwarding
-for the data stream through the firewall.
 
-These forwarding rules have to be set-up manually.
+SINCE RELEASE 0.1.2:
+  Siproxd should be able to proxy incomming RTP data streams (UDP only).
+  This is still very experimental code ;-)
+  The config parameters 'rtp_port_low' and rtp_port_high' define
+  the port range that siproxd will use for incomming RTP data streams.
+  'rtp_timeout' defines after what time an unused  (no data received)
+  rtp stream is considered dead and removed.
+  
+  ** As I had not yet the possibility to test this feature,
+  ** I'd be glad about feedback.
 
-Example, using ipchains (mfw):
-# ipchains -A input --proto udp --dport 7078 -m 100 -j ACCEPT
-# ipmasqadm mfw -A -m 100 -r <remoteaddress> 7078
+PRIOR TO RELEASE 0.1.2:
+  Siproxd does *not* (yet) create masquerading tunnels or port-forwarding
+  for the data stream through the firewall.
 
-Example, using ipchains (portfw):
-# portfw -a -P udp -L <localaddress> 7078 -R <remoteaddress> 7078
+  These forwarding rules have to be set-up manually (currently)
+
+  Example, using ipchains (mfw):
+  # ipchains -A input --proto udp --dport 7078 -m 100 -j ACCEPT
+  # ipmasqadm mfw -A -m 100 -r <remoteaddress> 7078
+
+  Example, using ipchains (portfw):
+  # portfw -a -P udp -L <localaddress> 7078 -R <remoteaddress> 7078
 
 
 
@@ -80,17 +95,23 @@ Limitations:
 
 Important Notice:
 =================
-gethostbyname() leaks memory in RedHat 6.0 with glibc 2.1.1.
-
 The gethostbyname() function leaks memory in RedHat 6.0 with glibc 2.1.1.
 The quick fix is to delete nisplus service from hosts entry in
-/etc/nsswitch.conf. In my tests, memory use remained stable
-after I made the above change.
-(->http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
+/etc/nsswitch.conf. In my tests, memory use remained stable after I
+made the mentioned change.
+(source: http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
 
 
 Contacts:
 =========
+Please feel free to contact the author to:
+   - provide feedback
+   - report bugs,
+   - request for additional features
+   - report interoperability with softphones
+   - ...
+
+and visit the website at http://siproxd.sourceforge.net/
 
 Thomas Ries  (tries@gmx.net)
    GnuPG Public Key:

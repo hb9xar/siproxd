@@ -29,6 +29,7 @@
 #include <netdb.h>
 
 #include <osip/smsg.h>
+#include <osip/sdp.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -45,9 +46,15 @@ extern struct siproxd_config configuration;
  */
 
 extern int errno;
-extern struct urlmap_s urlmap[];		// URL mapping table
+extern struct urlmap_s urlmap[];		/* URL mapping table     */
 extern struct lcl_if_s local_addresses;
+extern int sip_socket;				/* sending SIP datagrams */
 
+
+/*
+ * PROXY_REQUEST
+ *
+ */
 int proxy_request (sip_t *request) {
    int i;
    int sts;
@@ -125,6 +132,13 @@ int proxy_request (sip_t *request) {
 
       /* add my Via header line (inbound interface)*/
       sts = proxy_add_myvia(request, 1);
+
+      /* if this is CANCEL/BYE request, stop RTP proxying */
+      if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
+         /* stop the RTP proxying stream */
+         sts = rtp_stop_fwd(msg_getcall_id(request));
+      }
+
       break;
    
   /*
@@ -138,6 +152,13 @@ int proxy_request (sip_t *request) {
 
       /* add my Via header line (outbound interface)*/
       sts = proxy_add_myvia(request, 0);
+
+      /* if this is CANCEL/BYE request, stop RTP proxying */
+      if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
+         /* stop the RTP proxying stream */
+         sts = rtp_stop_fwd(msg_getcall_id(request));
+      }
+
       break;
    
    default:
@@ -192,12 +213,16 @@ int proxy_request (sip_t *request) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send_udp(addr, port, buffer, strlen(buffer)); 
+   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
    return 0;
 }
 
 
+/*
+ * PROXY_RESPONSE
+ *
+ */
 int proxy_response (sip_t *response) {
    int i;
    int sts;
@@ -271,7 +296,7 @@ int proxy_response (sip_t *response) {
    */
    case RESTYP_INCOMMING:
 #if 0 /* do we really have to?? in the incomming response
-         we have the correct address. But we mus rewrite an
+         we have the correct address. But we must rewrite an
 	 outgoing response to an incomming INVITE request ! */
       /* If an 200 answer to an INVITE request, rewrite body */
       if ((MSG_IS_RESPONSEFOR(response,"INVITE") &&
@@ -319,18 +344,15 @@ int proxy_response (sip_t *response) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send_udp(addr, port, buffer, strlen(buffer)); 
+   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
    return 0;
 }
 
 
-
-
-
-
-
 /*
+ * PROXY_GEN_RESPONSE
+ *
  * send an proxy generated response back to the client.
  * Only errors are reported from the proxy itself.
  *  code =  SIP result code to deliver
@@ -373,7 +395,8 @@ DEBUGC(DBCLASS_PROXY,"response=%p",response);
    }
 
    /* send to destination */
-   sipsock_send_udp(addr, atoi(via->port), buffer, strlen(buffer));
+   sipsock_send_udp(&sip_socket, addr, atoi(via->port),
+                    buffer, strlen(buffer), 1);
 
    /* free the resources */
    msg_free(response);
@@ -384,10 +407,11 @@ DEBUGC(DBCLASS_PROXY,"response=%p",response);
 
 
 /*
- * routine to rewrite the header and message bodies
+ * PROXY_ADD_MYVIA
+ *
+ *
+ * interface == 0 -> outbound interface, else inbound interface
  */
-
-/* interface == 0 -> outbound interface, else inbound interface */
 int proxy_add_myvia (sip_t *request, int interface) {
    struct in_addr addr;
    char tmp[URL_STRING_SIZE];
@@ -414,7 +438,10 @@ int proxy_add_myvia (sip_t *request, int interface) {
 }
 
 
-
+/*
+ * PROXY_DEL_MYVIA
+ *
+ */
 int proxy_del_myvia (sip_t *response) {
    via_t *via;
    int sts;
@@ -434,14 +461,19 @@ int proxy_del_myvia (sip_t *response) {
 }
 
 
-
+/*
+ * PROXY_REWRITE_INVITATION_BODY
+ *
+ */
 int proxy_rewrite_invitation_body(sip_t *mymsg){
    body_t *body;
-   struct in_addr addr;
+   sdp_t  *sdp;
+   struct in_addr outb_addr, lcl_clnt_addr;
    int sts;
    char *oldbody;
    char newbody[BODY_MESSAGE_MAX_SIZE];
-   char clen[8]; /* probably never more than 7 digits for content length !*/
+   char clen[8]; /* content length: probably never more than 7 digits !*/
+   int outb_rtp_port, inb_clnt_port;
 
    sts = msg_getbody(mymsg, 0, &body);
    if (sts != 0) {
@@ -451,7 +483,14 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
 
    sts = body_2char(body, &oldbody);
 
-{
+   sts = sdp_init(&sdp);
+   sts = sdp_parse (sdp, oldbody);
+   if (sts != 0) {
+      ERROR("rewrite_invitation_body: unable to sdp_parse body");
+      return 1;
+   }
+
+{ /* just dump the buffer */
    char *tmp2;
    content_length_2char(mymsg->contentlength, &tmp2);
    DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
@@ -460,60 +499,141 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
 }
 
 
-/* TODO */
-/* - change the 'c=' line to present the outbound address (the other
-     side will send its audio data there 
-   - 'm=' line: here we should change the port number to a free local
-     (outbound) port and set up an port forwarding to the hidden
-     inbound client ...*/
+   /*
+    * RTP proxy: get ready and start forwarding
+    */
+   sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
+   sts = get_ip_by_host(configuration.outboundhost, &outb_addr);
+   inb_clnt_port = atoi(sdp_m_port_get(sdp,0));
+   /* start an RTP proxying stream */
+   sts = rtp_start_fwd(msg_getcall_id(mymsg),
+                       outb_addr, &outb_rtp_port,
+		       lcl_clnt_addr, inb_clnt_port);
 
 
+/*
+ * yup, I know - here are some HARDCODED strings that we
+ * search for in the connect information and media description
+ * in the SDP part of the INVITE packet
+ *
+ * TODO: redo the rewriting section below,
+ * using the nice sdp_ routines of libosip!
+ *
+ * Up to now, also only ONE incomming media port per session
+ * is supported! I guess, there may be more allowed.
+ */
 {
-   char *data=NULL;
-   char *data2=NULL;
+   char *data_c=NULL;	/* connection information 'c=' line*/
+   char *data_m=NULL;	/* media description 'm=' line*/
+   char *data2_c=NULL;	/* end of IP address on 'c=' line */
+   char *data2_m=NULL;	/* end of port number on 'm=' line */
    char *ptr=NULL;
 
    memset(newbody, 0, sizeof(newbody));
 
-   data = strstr (oldbody, "\nc=");
-   if (data == NULL) data = strstr (oldbody, "\rc=");
-   if (data == NULL) {
+   /*
+    * find where to patch connection information (IP address)
+    */
+   data_c = strstr (oldbody, "\nc=");
+   if (data_c == NULL) data_c = strstr (oldbody, "\rc=");
+   if (data_c == NULL) {
       ERROR("did not find a c= line in the body");
       return 1;
    }
-   data += 3;
-
+   data_c += 3;
    /* can only rewrite IPV4 addresses by now */
-   if (strncmp(data,"IN IP4 ",7)!=0) {
+   if (strncmp(data_c,"IN IP4 ",7)!=0) {
       ERROR("c= does not contain an IN IP4 address");
       return 1;
    }
-   data += 7;
-
-   data2 = strstr (data, "\n");
-   if (data2 == NULL) data2 = strstr (oldbody, "\r");
-   if (data2 == NULL) {
+   data_c += 7; /* PTR to start of IP address */
+   /* find the end of the IP address -> end of line */
+   data2_c = strstr (data_c, "\n");
+   if (data2_c == NULL) data2_c = strstr (oldbody, "\r");
+   if (data2_c == NULL) {
       ERROR("did not find a CR/LF after c= line");
       return 1;
    }
 
-   /* copy up to the to-be-masqueraded address */
-   memcpy(newbody, oldbody, data-oldbody);
+   /*
+    * find where to patch media description (port number)
+    */
+   data_m = strstr (oldbody, "\nm=");
+   if (data_m == NULL) data_m = strstr (oldbody, "\rm=");
+   if (data_m == NULL) {
+      ERROR("did not find a m= line in the body");
+      return 1;
+   }
+   data_m += 3;
+   /* check for audio media */
+   if (strncmp(data_m,"audio ",6)!=0) {
+      ERROR("m= does not contain audio");
+      return 1;
+   }
+   data_m += 6; /* PTR to start of port number */
+   /* find the end of the IP address -> end of line */
+   data2_m = strstr (data_m, " RTP/");
+   if (data2_m == NULL) {
+      ERROR("did not find RTP/ on m= line");
+      return 1;
+   }
 
-   /* insert proxy outbound address */
-   sts = get_ip_by_host(configuration.outboundhost, &addr);
-   ptr=newbody+(data-oldbody);
-   sprintf(ptr, "%s", inet_ntoa(addr));
-   ptr += strlen(ptr);
-   
-   /* copy rest */
-   memcpy (ptr, data2, strlen(data2));
+   /* 
+    * what is first? c= or m= ?
+    * (Im sure this can be made nicer)
+    */
+   if (data_c < data_m) {
+      DEBUGC(DBCLASS_PROXY,"c= before m=");
+      /*
+       * c= line first, replace IP address, then port
+       */
+      /* copy up to the to-be-masqueraded address */
+      memcpy(newbody, oldbody, data_c-oldbody);
+      /* insert proxy outbound address */
+      ptr=newbody+(data_c-oldbody);
+      sprintf(ptr, "%s", inet_ntoa(outb_addr));
+      ptr += strlen(ptr);
+      /* copy up to the m= line */
+      memcpy (ptr, data2_c, data_m-data2_c);
+      ptr += strlen(ptr);
+      /* substitute port number */
+      sprintf(ptr, "%i", outb_rtp_port);
+      ptr += strlen(ptr);
+     /* copy the rest */
+      memcpy (ptr, data2_m, strlen(data2_m));
+   } else {
+      DEBUGC(DBCLASS_PROXY,"m= before c=");
+      /*
+       * m= line first, replace port, then IP address
+       */
+      /* copy up to the to-be-masqueraded port */
+      memcpy(newbody, oldbody, data_m-oldbody);
+      ptr=newbody+(data_m-oldbody);
+      /* substitute port number */
+      sprintf(ptr, "%i", outb_rtp_port);
+      ptr += strlen(ptr);
+      /* copy up to the c= line */
+      memcpy (ptr, data2_m, data_c-data2_m);
+      ptr += strlen(ptr);
+      /* insert proxy outbound address */
+      sprintf(ptr, "%s", inet_ntoa(outb_addr));
+      ptr += strlen(ptr);
+      /* copy the rest */
+      memcpy (ptr, data2_c, strlen(data2_c));
+   }
+
+
+
+
 }
 
    /* remove old body */
    sts = list_remove(mymsg->bodies, 0);
    body_free(body);
    free(body);
+   /* free sdp structure */
+   sdp_free(sdp);
+   free(sdp);
 
    /* include new body */
    msg_setbody(mymsg, newbody);
@@ -526,7 +646,7 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    sts = msg_setcontent_length(mymsg, clen);
 
 
-{
+{ /* just dump the buffer */
    char *tmp, *tmp2;
    sts = msg_getbody(mymsg, 0, &body);
    sts = body_2char(body, &tmp);

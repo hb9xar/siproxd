@@ -24,7 +24,9 @@
 int sipsock_listen (void);
 int sipsock_wait(void);
 int sipsock_read(void *buf, size_t bufsize);
-int sipsock_send_udp(struct in_addr addr, int port, char *buffer, int size);
+int sipsock_send_udp(int *sock, struct in_addr addr, int port,
+                     char *buffer, int size, int allowdump);
+int sockbind(struct in_addr ipaddr, int localport);
 
 /* register.c */
 void register_init(void);
@@ -50,6 +52,13 @@ int compare_url(url_t *url1, url_t *url2);
 /* config.c */
 int read_config(char *name, int search);
 
+/* rtpproxy.c */
+int rtpproxy_init( void );
+int rtp_start_fwd (call_id_t *callid,
+		   struct in_addr outbound_ipaddr, int *outboundport,
+                   struct in_addr lcl_client_ipaddr, int lcl_clientport);
+int rtp_stop_fwd (call_id_t *callid);
+
 
 /*
  * table to hold the client registrations
@@ -72,6 +81,10 @@ struct siproxd_config {
    char *outboundhost;
    int sip_listen_port;
    int daemonize;
+   int rtp_port_low;
+   int rtp_port_high;
+   int rtp_timeout;
+   int rtp_proxy_enable;
 };
 
 
@@ -80,8 +93,11 @@ struct siproxd_config {
  */
 #define SIP_PORT	5060
 
-#define URLMAP_SIZE	128	// size of URL mapping table
+#define URLMAP_SIZE	8	// number of URL mapping table entries
+#define RTPPROXY_SIZE	8	// number of rtp proxy entries
+
 #define BUFFER_SIZE	1024	// input buffer for read from socket
+#define RTP_BUFFER_SIZE	512	// max size of an RTP frame
 #define URL_STRING_SIZE	128	// max size of an URL/URI string
 #define STATUSCODE_SIZE 5	// size of string representation of status
 #define DNS_CACHE_SIZE  32	// number of entries in internal DNS cache

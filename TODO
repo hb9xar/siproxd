@@ -13,3 +13,6 @@ TODOs, in anarchistic order:
 - logging via syslog if running in daemon mode
 
 - get_ip_by_host: reduce DNS timeouts
+
+- forwarding(proxying) of incomming RTP media streams
+  ? own thread/process (is pending)

@@ -39,7 +39,8 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 extern struct siproxd_config configuration;
 
 extern int errno;
-struct urlmap_s urlmap[URLMAP_SIZE];		// URL mapping table
+struct urlmap_s urlmap[URLMAP_SIZE];		/* URL mapping table     */
+extern int sip_socket;				/* sending SIP datagrams */
 
 /*
  * initialize the URL mapping table
@@ -237,7 +238,7 @@ int register_response(sip_t *request, int flag) {
       port=configuration.sip_listen_port;
    }
 
-   sipsock_send_udp(addr, port, buffer, strlen(buffer));
+   sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1);
 
    /* free the resources */
    msg_free(response);
