@@ -67,6 +67,7 @@ int  sip_gen_response(osip_message_t *request, int code);		/*X*/
 int  sip_add_myvia (osip_message_t *request, int interface);		/*X*/
 int  sip_del_myvia (osip_message_t *response);				/*X*/
 int  sip_rewrite_contact (osip_message_t *sip_msg, int direction);	/*X*/
+int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id);	/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
@@ -81,15 +82,16 @@ int  rtp_stop_fwd (osip_call_id_t *callid, int direction);              /*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
-int accesslist_check(struct sockaddr_in from);
+int  accesslist_check(struct sockaddr_in from);
 
 /* security.c */
-int security_check_raw(char *sip_buffer, int size);			/*X*/
-int security_check_sip(osip_message_t *sip);				/*X*/
+int  security_check_raw(char *sip_buffer, int size);			/*X*/
+int  security_check_sip(osip_message_t *sip);				/*X*/
 
 /* auth.c */
-int authenticate_proxy(osip_message_t *request);			/*X*/
-int auth_include_authrq(osip_message_t *response);			/*X*/
+int  authenticate_proxy(osip_message_t *request);			/*X*/
+int  auth_include_authrq(osip_message_t *response);			/*X*/
+void CvtHex(char *hash, char *hashstring);
 
 
 
@@ -172,7 +174,7 @@ struct siproxd_config {
 #define HOSTNAME_SIZE	64	/* max string length of a hostname	*/
 #define USERNAME_SIZE	64	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	64	/* max string length of a password (auth) */
-
+#define VIA_BRANCH_SIZE 64	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
 #if defined(PR_NETDB_BUF_SIZE)
    #define GETHOSTBYNAME_BUFLEN PR_NETDB_BUF_SIZE 

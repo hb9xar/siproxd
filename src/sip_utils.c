@@ -37,8 +37,10 @@
 
 #include <osipparser2/osip_parser.h>
 #include <osipparser2/osip_port.h>
+#include <osipparser2/osip_md5.h>
 
 #include "siproxd.h"
+#include "digcalc.h"
 #include "rewrite_rules.h"
 #include "log.h"
 
@@ -578,8 +580,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
    char tmp[URL_STRING_SIZE];
    osip_via_t *via;
    int sts;
-   char branch_id[64];
-   struct timeval tv;
+   char branch_id[VIA_BRANCH_SIZE];
 
    if (interface == IF_OUTBOUND) {
       sts = get_ip_by_ifname(configuration.outbound_if, &addr);
@@ -597,11 +598,7 @@ int sip_add_myvia (osip_message_t *request, int interface) {
       }
    }
 
-   /* prepare branch ID (the magic cookie z9hG4bK is added) */
-   gettimeofday (&tv, NULL);
-   sprintf(branch_id, "z9hG4bK%8.8lx%8.8lx%8.8x",
-           (long)tv.tv_sec, (long)tv.tv_usec, rand() );
-  
+   sts = sip_calculate_branch_id(request, branch_id);
 
    sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s;", utils_inet_ntoa(addr),
            configuration.sip_listen_port, branch_id);
@@ -704,3 +701,144 @@ int sip_rewrite_contact (osip_message_t *sip_msg, int direction) {
    return STS_SUCCESS;
 }
 
+
+/*
+ * SIP_CALCULATE_BRANCH
+ *
+ * Calculates a branch parameter according to RFC3261 section 16.11
+ *
+ * The returned 'id' will be HASHHEXLEN + strlen(magic_cookie)
+ * characters (32 + 7) long. The caller must supply at least this
+ * amount of space in 'id'.
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
+/* RFC3261 section 16.11 recommends the following procedure:
+ *   The stateless proxy MAY use any technique it likes to guarantee
+ *   uniqueness of its branch IDs across transactions.  However, the
+ *   following procedure is RECOMMENDED.  The proxy examines the
+ *   branch ID in the topmost Via header field of the received
+ *   request.  If it begins with the magic cookie, the first
+ *   component of the branch ID of the outgoing request is computed
+ *   as a hash of the received branch ID.  Otherwise, the first
+ *   component of the branch ID is computed as a hash of the topmost
+ *   Via, the tag in the To header field, the tag in the From header
+ *   field, the Call-ID header field, the CSeq number (but not
+ *   method), and the Request-URI from the received request.  One of
+ *   these fields will always vary across two different
+ *   transactions.
+ *
+ * The branch value will consist of:
+ * - magic cookie "z9hG4bK"
+ * - 1st part (unique calculated ID
+ * - 2nd part (value for loop detection) <<- not yet used by siproxd
+ */
+   static char *magic_cookie="z9hG4bK";
+   osip_via_t *via;
+   osip_uri_param_t *param=NULL;
+   osip_call_id_t *call_id=NULL;
+   HASHHEX hashstring;
+
+   hashstring[0]='\0';
+
+   /*
+    * Examine topmost via and look for a magic cookie.
+    * If it is there, I use THIS branch parameter as input for
+    * our hash calculation
+    */
+   via = osip_list_get (sip_msg->vias, 0);
+   if (via == NULL) {
+      ERROR("have a SIP message without any via header");
+      return STS_FAILURE;
+   }
+
+   param=NULL;
+   osip_via_param_get_byname(via, "branch", &param);
+   if (param && param->gvalue) {
+      if (strncmp(param->gvalue, magic_cookie,
+                  strlen(magic_cookie))) {
+         /* calculate MD5 hash */
+         MD5_CTX Md5Ctx;
+         HASH HA1;
+
+         MD5Init(&Md5Ctx);
+         MD5Update(&Md5Ctx, param->gvalue,
+                   strlen(param->gvalue));
+         MD5Final(HA1, &Md5Ctx);
+         CvtHex(HA1, hashstring);
+
+         DEBUGC(DBCLASS_BABBLE, "existing branch -> branch hash [%s]",
+                hashstring);
+      }
+   }
+
+   /*
+    * If I don't have a branch parameter in the existing topmost via,
+    * then I need:
+    *   - the topmost via
+    *   - the tag in the To header field
+    *   - the tag in the From header field
+    *   - the Call-ID header field
+    *   - the CSeq number (but not method)
+    *   - the Request-URI from the received request
+    */
+   if (hashstring[0] == '\0') {
+      /* calculate MD5 hash */
+      MD5_CTX Md5Ctx;
+      HASH HA1;
+      char *tmp;
+
+      MD5Init(&Md5Ctx);
+
+      /* topmost via */
+      if (osip_via_to_str(via, &tmp)) {
+         MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_free(tmp);
+      }
+     
+      /* Tag in To header */
+      osip_to_get_tag(sip_msg->to, &param);
+      if (param && param->gvalue) {
+         MD5Update(&Md5Ctx, param->gvalue, strlen(param->gvalue));
+      }
+
+      /* Tag in From header */
+      osip_from_get_tag(sip_msg->from, &param);
+      if (param && param->gvalue) {
+         MD5Update(&Md5Ctx, param->gvalue, strlen(param->gvalue));
+      }
+
+      /* Call-ID */
+      call_id = osip_message_get_call_id(sip_msg);
+      if (osip_call_id_to_str(call_id, &tmp)) {
+         MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_free(tmp);
+      }
+
+      /* CSeq number (but not method) */
+      tmp = osip_cseq_get_number(sip_msg->cseq);
+      if (tmp) {
+         MD5Update(&Md5Ctx, tmp, strlen(tmp));
+      }
+ 
+      /* Request URI */
+      if (osip_uri_to_str(sip_msg->req_uri, &tmp)) {
+         MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_free(tmp);
+      }
+
+      MD5Final(HA1, &Md5Ctx);
+      CvtHex(HA1, hashstring);
+
+      DEBUGC(DBCLASS_BABBLE, "non-existing branch -> branch hash [%s]",
+             hashstring);
+   }
+
+   /* include the magic cookie */
+   sprintf(id, "%s%s", magic_cookie, hashstring);
+
+   return STS_SUCCESS;
+}
