@@ -220,6 +220,9 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
+/* target platform */
+#undef UNAME
+
 /* Version number of package */
 #undef VERSION
 
@@ -228,6 +231,9 @@
 
 /* building on BSD/OS platform */
 #undef _BSDOS
+
+/* building on Cygwin (Windows) platform */
+#undef _CYGWIN
 
 /* building on FreeBSD platform */
 #undef _FREEBSD

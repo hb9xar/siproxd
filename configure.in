@@ -31,6 +31,7 @@ dnl	18-Aug-2004	tries	fli4l-uclibc -> fli4l-21-uclibc, fli4l-22-uclibc
 dnl				2.1.x has no pthread support, link -static
 dnl				2.2.x has (maybe) pthread support
 dnl	08-Jan-2005	tries	FreeBSD: check for libgnugetopt before using it
+dnl				Cygwin build support
 dnl
 dnl
 
@@ -117,6 +118,7 @@ dnl    --enable-dmalloc
 dnl
 dnl target platform specific stuff
 dnl
+AC_DEFINE_UNQUOTED(UNAME,"$target",[target platform])
 AC_MSG_CHECKING(target platform)
 case "$target" in
   *-*-linux*)
@@ -160,6 +162,10 @@ case "$target" in
   *-*-darwin*)
     AC_MSG_RESULT(Mac OS X)
     AC_DEFINE(_MACOSX,,[building on Mac OSX platform])
+    ;;
+  *-*-cygwin*)
+    AC_MSG_RESULT(Cygwin)
+    AC_DEFINE(_CYGWIN,,[building on Cygwin (Windows) platform])
     ;;
   *)
     AC_MSG_RESULT(Unknown Platform)

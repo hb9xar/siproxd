@@ -111,12 +111,15 @@ int rtp_relay_init( void ) {
       int uid,euid;
       struct sched_param schedparam;
 
+#ifndef _CYGWIN
       uid=getuid();
       euid=geteuid();
       DEBUGC(DBCLASS_RTP,"uid=%i, euid=%i", uid, euid);
       if (uid != euid) seteuid(0);
 
       if (geteuid()==0) {
+#endif
+
 #if defined(HAVE_SCHED_GET_PRIORITY_MAX) && defined(HAVE_SCHED_GET_PRIORITY_MIN)
          int pmin, pmax;
          /* place ourself at 1/3 of the available priority space */
@@ -134,11 +137,13 @@ int rtp_relay_init( void ) {
          if (sts != 0) {
             ERROR("pthread_setschedparam failed: %s", strerror(errno));
          }
+#ifndef _CYGWIN
       } else {
          INFO("Unable to use realtime scheduling for RTP proxy");
          INFO("You may want to start siproxd as root and switch UID afterwards");
       }
       if (uid != euid)  seteuid(euid);
+#endif
    }
 #endif
 
