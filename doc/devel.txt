@@ -6,3 +6,6 @@ FreeBSD:
   before
   #include <netinet/in.h>
 
+- #include <netinet/in.h>
+  before 
+  #include <arpa/inet.h>
