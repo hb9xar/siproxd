@@ -600,22 +600,25 @@ if (configuration.debuglevel)
       /* start an RTP proxying stream */
       if (sdp_message_m_port_get(sdp, media_stream_no)) {
          inb_clnt_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
-         rtp_start_fwd(osip_message_get_call_id(mymsg), media_stream_no,
-                       outb_addr, &outb_rtp_port,
-	               lcl_clnt_addr, inb_clnt_port);
-         /* and rewrite the port */
-         sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
-         if (sdp_med && sdp_med->m_port) {
-            osip_free(sdp_med->m_port);
-            sdp_med->m_port=osip_malloc(8);
-            sprintf(sdp_med->m_port, "%i", outb_rtp_port);
-            DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                   "m= rewrote port to [%i]",outb_rtp_port);
 
-         } else {
-            ERROR("rewriting port in m= failed sdp_med=%p, "
-                  "m_number_of_port=%p", sdp_med, sdp_med->m_port);
-         }
+         if (inb_clnt_port > 0) {
+            rtp_start_fwd(osip_message_get_call_id(mymsg), media_stream_no,
+                          outb_addr, &outb_rtp_port,
+	                  lcl_clnt_addr, inb_clnt_port);
+            /* and rewrite the port */
+            sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
+            if (sdp_med && sdp_med->m_port) {
+               osip_free(sdp_med->m_port);
+               sdp_med->m_port=osip_malloc(8);
+               sprintf(sdp_med->m_port, "%i", outb_rtp_port);
+               DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                      "m= rewrote port to [%i]",outb_rtp_port);
+
+            } else {
+               ERROR("rewriting port in m= failed sdp_med=%p, "
+                     "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+            }
+         } // port > 0
       } else {
          /* no port defined - skip entry */
          WARN("no port defined in m=(media) stream_no=&i", media_stream_no);

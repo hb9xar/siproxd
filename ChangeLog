@@ -1,8 +1,10 @@
 0.5.0
 =====
-   1-Nov-2003:	- siproxd can use another outbound proxy itself
+   2-Nov-2003:	- rtpproxy bugfix: On repetitive INVITES, the UDP media
+                  port could end up as -1 in the rewritten packet.
+   1-Nov-2003:	- siproxd can use another outbound proxy (chaining)
 		- Linux 2.4.x: siproxd with RTP relay could hang
-                  on termination. Fixed.
+                  on termination (Thread termination). Fixed.
                   
 
 0.4.2
