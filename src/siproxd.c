@@ -48,13 +48,20 @@ FILE *siproxd_passwordfile;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2004 Thomas Ries\n"
+PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2005 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
-"       --help               (-h) help\n"
-"       --debug <pattern>    (-d) set debug-pattern\n"
-"       --config <cfgfile>   (-c) use the specified config file\n"
-"       --pid-file <pidfile> (-p) create pid file <pidfile>\n"
+#ifdef	HAVE_GETOPT_LONG
+"       -h, --help                 help\n"
+"       -d, --debug <pattern>      set debug-pattern\n"
+"       -c, --config <cfgfile>     use the specified config file\n"
+"       -p, --pid-file <pidfile>   create pid file <pidfile>\n"
+#else
+"       -h              help\n"
+"       -d <pattern>    set debug-pattern\n"
+"       -c <cfgfile>    use the specified config file\n"
+"       -p <pidfile>    create pid file <pidfile>\n"
+#endif
 "";
 
 

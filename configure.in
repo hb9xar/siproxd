@@ -30,6 +30,7 @@ dnl				(there seems to be a bug somewhere)
 dnl	18-Aug-2004	tries	fli4l-uclibc -> fli4l-21-uclibc, fli4l-22-uclibc
 dnl				2.1.x has no pthread support, link -static
 dnl				2.2.x has (maybe) pthread support
+dnl	08-Jan-2005	tries	FreeBSD: check for libgnugetopt before using it
 dnl
 dnl
 
@@ -127,7 +128,8 @@ case "$target" in
     AC_DEFINE(_BSD,,[building on BSD platform])
     AC_DEFINE(_FREEBSD,,[building on FreeBSD platform])
     CPPFLAGS="$CPPFLAGS -I/usr/local/include/"
-    LIBS="$LIBS -L/usr/local/lib/ -lgnugetopt"
+    LIBS="$LIBS -L/usr/local/lib/"
+    AC_CHECK_LIB(gnugetopt,getopt_long,[LIBS="$LIBS -lgnugetopt"])
     ;;
   *-*-openbsd*)
     AC_MSG_RESULT(OpenBSD)
