@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
