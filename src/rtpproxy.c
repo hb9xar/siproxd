@@ -20,6 +20,10 @@
 
 #include "config.h"
 
+#ifdef _BSD
+#include <sys/types.h>
+#endif
+
 #include <netinet/in.h>
 
 #include <osipparser2/osip_parser.h>
