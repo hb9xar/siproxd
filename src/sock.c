@@ -44,8 +44,6 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-static int listen_socket=0;
-
 /*
  * binds to SIP UDP socket for listening to incoming packets
  *
@@ -53,15 +51,17 @@ static int listen_socket=0;
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sipsock_listen (void) {
+int sipsock_listen (int *sock) {
    struct in_addr ipaddr;
 
-   memset(&ipaddr, 0, sizeof(ipaddr));
-   listen_socket=sockbind(ipaddr, configuration.sip_listen_port, 1);
-   if (listen_socket == 0) return STS_FAILURE; /* failure*/
+   if (sock == NULL) return STS_FAILURE;
 
-   INFO("listening on port %i", configuration.sip_listen_port);
-   DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
+   memset(&ipaddr, 0, sizeof(ipaddr));
+   *sock=sockbind(ipaddr, configuration.sip_listen_port, 1);
+   if (*sock == 0) return STS_FAILURE; /* failure*/
+
+   INFO("bound to port %i", configuration.sip_listen_port);
+   DEBUGC(DBCLASS_NET,"bound socket %i",*sock);
    return STS_SUCCESS;
 }
 
@@ -71,7 +71,7 @@ int sipsock_listen (void) {
  *
  * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
  */
-int sipsock_wait(void) {
+int sipsock_wait(int sock) {
    int sts;
    fd_set fdset;
    struct timeval timeout;
@@ -80,8 +80,8 @@ int sipsock_wait(void) {
    timeout.tv_usec=0;
 
    FD_ZERO(&fdset);
-   FD_SET (listen_socket, &fdset);
-   sts=select (listen_socket+1, &fdset, NULL, NULL, &timeout);
+   FD_SET (sock, &fdset);
+   sts=select (sock+1, &fdset, NULL, NULL, &timeout);
 
    /* WARN on failures */
    if (sts<0) {
@@ -104,12 +104,13 @@ int sipsock_wait(void) {
  * RETURNS number of bytes read
  *         from is modified to return the sockaddr_in of the sender
  */
-int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
+int sipsock_read(int sock, void *buf, size_t bufsize,
+                 struct sockaddr_in *from) {
    int count;
    socklen_t fromlen;
 
    fromlen=sizeof(struct sockaddr_in);
-   count=recvfrom(listen_socket, buf, bufsize, 0,
+   count=recvfrom(sock, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
 
    if (count<0) {
@@ -214,9 +215,9 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
 
    /*
     * It has been seen on linux 2.2.x systems that for some
-    * reason (kernel bug?) inside the RTP relay, select()
+    * reason (bug?) inside the RTP relay, select()
     * claims that a certain file descriptor has data available to
-    * read, a subsequent call to read() or recv() the does block!!
+    * read, a subsequent call to read() or recv() then does block!!
     * So lets make the FD's we are going to use non-blocking, so
     * we will at least survive and not run into a deadlock.
     *

@@ -165,16 +165,22 @@ static void *rtpproxy_main(void *arg) {
             if (count < 0) {
                /*
                 * It has been seen on linux 2.2.x systems that for some
-                * reason (kernel bug?) inside the RTP relay, select()
+                * reason (ICMP issue? -> below) inside the RTP relay, select()
                 * claims that a certain file descriptor has data available to
-                * read, a subsequent call to read() or recv() the does block!!
+                * read, a subsequent call to read() or recv() then does block!!
                 * So lets make the FD's we are going to use non-blocking, so
                 * we will at least survive and not run into a deadlock.
                 * 
-                * We catch this here with this workaround (pronounce "hack")
+                * We catch this here with this workaround (pronounce "HACK")
                 * and hope that next time we pass by it will be ok again.
                 */
                if (errno == EAGAIN) {
+                  /*&&&& I may want to remove this WARNing */
+                  WARN("read() [fd=%i, %s:%i] would block, but select() "
+                       "claimed to be readable!",
+                       rtp_proxytable[i].rtp_rx_sock,
+                       utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
+                       rtp_proxytable[i].local_port);
                   continue;
                }
 
@@ -191,6 +197,7 @@ static void *rtpproxy_main(void *arg) {
                 *       done above!
                 */
                if (errno != ECONNREFUSED) {
+                  /* some other error that I probably want to know about */
                   int j;
                   WARN("read() [fd=%i, %s:%i] returned error [%i:%s]",
                   rtp_proxytable[i].rtp_rx_sock,

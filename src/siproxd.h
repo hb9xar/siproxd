@@ -26,9 +26,10 @@
 /*				function returns STS_* status values     vvv */
 
 /* sock.c */
-int sipsock_listen (void);						/*X*/
-int sipsock_wait(void);
-int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from);
+int sipsock_listen (int *sock);						/*X*/
+int sipsock_wait(int sock);
+int sipsock_read(int sock, void *buf, size_t bufsize,
+                 struct sockaddr_in *from);
 int sipsock_send_udp(int *sock, struct in_addr addr, int port,		/*X*/
                      char *buffer, int size, int allowdump);
 int sockbind(struct in_addr ipaddr, int localport, int errflg);

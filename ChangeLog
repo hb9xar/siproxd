@@ -1,5 +1,7 @@
 0.5.3
 =====
+  11-Feb-2004:  - Use same SIP port number for RX & TX (-> support
+                  symmetric SIP signalling)
    7-Feb-2004:  - Fix for local-UA to local-UA RTP proxying, symmetric
                   RTP was not working.
                 - logging routines now use a MUTEX to be thread safe.

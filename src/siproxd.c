@@ -201,7 +201,7 @@ int main (int argc, char *argv[])
    parser_init();
 
    /* listen for incoming messages */
-   sts=sipsock_listen();
+   sts=sipsock_listen(&sip_socket);
    if (sts == STS_FAILURE) {
       /* failure to allocate SIP socket... */
       ERROR("unable to bind to SIP listening socket - aborting"); 
@@ -223,7 +223,7 @@ int main (int argc, char *argv[])
    while (!exit_program) {
 
       DEBUGC(DBCLASS_BABBLE,"going into sip_wait\n");
-      while (sipsock_wait()<=0) {
+      while (sipsock_wait(sip_socket)<=0) {
          /* got no input, here by timeout. do aging */
          register_agemap();
 
@@ -245,7 +245,7 @@ int main (int argc, char *argv[])
       /* got input, process */
       DEBUGC(DBCLASS_BABBLE,"back from sip_wait");
 
-      i=sipsock_read(&buff, sizeof(buff)-1, &from);
+      i=sipsock_read(sip_socket, &buff, sizeof(buff)-1, &from);
       buff[i]='\0';
 
       /* evaluate the access lists (IP based filter)*/
