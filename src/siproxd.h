@@ -30,15 +30,15 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
 void register_init(void);
-int  register_client(sip_t *request);					/*X*/
+int  register_client(osip_message_t *request);					/*X*/
 void register_agemap(void);
-int  register_response(sip_t *request, int flag);			/*X*/
+int  register_response(osip_message_t *request, int flag);			/*X*/
 
 /* proxy.c */
-int proxy_request (sip_t *request);					/*X*/
-int proxy_response (sip_t *response);					/*X*/
-int proxy_rewrite_invitation_body(sip_t *mymsg);			/*X*/
-int proxy_rewrite_request_uri(sip_t *mymsg, int idx);			/*X*/
+int proxy_request (osip_message_t *request);					/*X*/
+int proxy_response (osip_message_t *response);					/*X*/
+int proxy_rewrite_invitation_body(osip_message_t *mymsg);			/*X*/
+int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);			/*X*/
 
 /* utils.c */
 int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
@@ -46,27 +46,27 @@ void secure_enviroment (void);
 int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
 
 /* sip_utils.c */
-sip_t * msg_make_template_reply (sip_t * request, int code);
-int  check_vialoop (sip_t *my_msg);					/*X*/
-int  is_via_local (via_t *via);						/*X*/
-int  compare_url(url_t *url1, url_t *url2);				/*X*/
-int  is_sipuri_local (sip_t *sip);					/*X*/
-int  check_rewrite_rq_uri (sip_t *sip);					/*X*/
-int  sip_gen_response(sip_t *request, int code);			/*X*/
+osip_message_t * msg_make_template_reply (osip_message_t * request, int code);
+int  check_vialoop (osip_message_t *my_msg);					/*X*/
+int  is_via_local (osip_via_t *via);						/*X*/
+int  compare_url(osip_uri_t *url1, osip_uri_t *url2);				/*X*/
+int  is_sipuri_local (osip_message_t *sip);					/*X*/
+int  check_rewrite_rq_uri (osip_message_t *sip);					/*X*/
+int  sip_gen_response(osip_message_t *request, int code);			/*X*/
 #define IF_OUTBOUND 0
 #define IF_INBOUND  1
-int  sip_add_myvia (sip_t *request, int interface);			/*X*/
-int  sip_del_myvia (sip_t *response);					/*X*/
+int  sip_add_myvia (osip_message_t *request, int interface);			/*X*/
+int  sip_del_myvia (osip_message_t *response);					/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (call_id_t *callid, int media_stream_no,		/*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,		/*X*/
 		    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int  rtp_stop_fwd (call_id_t *callid, int nolock);			/*X*/
+int  rtp_stop_fwd (osip_call_id_t *callid, int nolock);			/*X*/
 void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
@@ -74,11 +74,11 @@ int accesslist_check(struct sockaddr_in from);
 
 /* security.c */
 int security_check_raw(char *sip_buffer, int size);				/*X*/
-int security_check_sip(sip_t *sip);					/*X*/
+int security_check_sip(osip_message_t *sip);					/*X*/
 
 /* auth.c */
-int authenticate_proxy(sip_t *request);					/*X*/
-int auth_include_authrq(sip_t *response);				/*X*/
+int authenticate_proxy(osip_message_t *request);					/*X*/
+int auth_include_authrq(osip_message_t *response);				/*X*/
 
 
 
@@ -88,10 +88,10 @@ int auth_include_authrq(sip_t *response);				/*X*/
 struct urlmap_s {
    int  active;
    int  expires;
-   url_t *true_url;		// true URL of UA  (inbound URL)
-   url_t *masq_url;		// masqueraded URL (outbound URL)
-   url_t *reg_url;		// registered URL  (masq URL as wished by UA)
-   via_t *via;
+   osip_uri_t *true_url;	// true URL of UA  (inbound URL)
+   osip_uri_t *masq_url;	// masqueraded URL (outbound URL)
+   osip_uri_t *reg_url;		// registered URL  (masq URL as wished by UA)
+   osip_via_t *via;
 };
 /*
  * the difference between masq_url and reg_url is, 

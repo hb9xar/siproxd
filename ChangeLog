@@ -1,3 +1,10 @@
+0.3.4
+=====
+ 05-Aug-2003:	- released 0.3.4
+ 31-Jul-2003:	- now supports only OSIP2 only (due to rather big changes
+		  in the API libosip -> libosip2). Compiles cleanly w/
+                  libosip2 2.0.2
+
 0.3.3
 =====
  05-Jul-2003:	- released 0.3.3

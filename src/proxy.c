@@ -29,13 +29,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-   #include <osip2/sdp.h>
-#else
-   #include <osip/smsg.h>
-   #include <osip/sdp.h>
-#endif
+#include <osipparser2/osip_parser.h>
+#include <osipparser2/sdp_message.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -60,13 +55,13 @@ extern int sip_socket;				/* sending SIP datagrams */
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_request (sip_t *request) {
+int proxy_request (osip_message_t *request) {
    int i;
    int sts;
    int type;
    struct in_addr sendto_addr;
-   contact_t *contact;
-   url_t *url;
+   osip_contact_t *contact;
+   osip_uri_t *url;
    int port;
    char *buffer;
 
@@ -119,10 +114,10 @@ int proxy_request (sip_t *request) {
    This issue has been fixed in 0.9.1pre1
 */
 {
-   header_t *header_ua;
+   osip_header_t *header_ua;
 
-   url=msg_geturi(request);
-   msg_getuser_agent(request,0,&header_ua);
+   url=osip_message_get_uri(request);
+   osip_message_get_user_agent(request,0,&header_ua);
 
    if ( header_ua && header_ua->hvalue &&
         (strcmp(header_ua->hvalue,"oSIP/Linphone-0.8.0")==0) ) {
@@ -167,10 +162,11 @@ int proxy_request (sip_t *request) {
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
 #ifdef MOREDEBUG /*&&&&*/
 INFO("stopping RTP proxy stream for: %s@%s",
-     msg_getcall_id(request)->number, msg_getcall_id(request)->host);
+     osip_message_get_call_id(request)->number, 
+     osip_message_get_call_id(request)->host);
 #endif
          /* stop the RTP proxying stream */
-         rtp_stop_fwd(msg_getcall_id(request), 0);
+         rtp_stop_fwd(osip_message_get_call_id(request), 0);
       }
 
       break;
@@ -180,7 +176,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
    */
    case REQTYP_OUTGOING:
       /* get destination address */
-      url=msg_geturi(request);
+      url=osip_message_get_uri(request);
 
       sts = get_ip_by_host(url->host, &sendto_addr);
       if (sts == STS_FAILURE) {
@@ -193,7 +189,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
        * method that I as a proxy do not support. Reject */
       if (is_sipuri_local(request) == STS_TRUE) {
          WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
-	    request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
+	    request->sip_method? request->sip_method:"*NULL*",
 	    request->from->url->username? request->from->url->username:"*NULL*",
 	    request->from->url->host? request->from->url->host : "*NULL*",
 	    url->username? url->username : "*NULL*",
@@ -210,7 +206,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
       }
 
       /* rewrite Contact header to represent the masqued address */
-      msg_getcontact(request,0,&contact);
+      osip_message_get_contact(request,0,&contact);
       if (contact != NULL) {
          for (i=0;i<URLMAP_SIZE;i++){
 	    if (urlmap[i].active == 0) continue;
@@ -219,18 +215,21 @@ INFO("stopping RTP proxy stream for: %s@%s",
          }
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
+            char *tmp;
             DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
 	           (contact->url->username)? contact->url->username : "*NULL*",
                    (contact->url->host)? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
-            list_remove(request->contacts,0);
-            contact_free(contact);
-            free(contact);
+            osip_list_remove(request->contacts,0);
+	    osip_contact_to_str(contact, &tmp);
+            osip_contact_free(contact);
             /* clone the masquerading url */
-	    contact_init(&contact);
-            url_clone(urlmap[i].masq_url, &contact->url);
-            list_add(request->contacts,contact,-1);
+	    osip_contact_init(&contact);
+            osip_contact_parse(contact,tmp);
+	    osip_uri_free(contact->url);
+            osip_uri_clone(urlmap[i].masq_url, &contact->url);
+            osip_list_add(request->contacts,contact,-1);
          }     
       }
 
@@ -242,16 +241,16 @@ INFO("stopping RTP proxy stream for: %s@%s",
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         rtp_stop_fwd(msg_getcall_id(request), 0);
+         rtp_stop_fwd(osip_message_get_call_id(request), 0);
       }
 
       break;
    
    default:
-      url=msg_geturi(request);
+      url=osip_message_get_uri(request);
       DEBUGC(DBCLASS_PROXY, "request [%s] from/to unregistered UA "
            "(RQ: %s@%s -> %s@%s)",
-           request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
+           request->sip_method? request->sip_method:"*NULL*",
 	   request->from->url->username? request->from->url->username:"*NULL*",
 	   request->from->url->host? request->from->url->host : "*NULL*",
 	   url->username? url->username : "*NULL*",
@@ -275,9 +274,9 @@ INFO("stopping RTP proxy stream for: %s@%s",
    }
 
 
-   sts = msg_2char(request, &buffer);
+   sts = osip_message_to_str(request, &buffer);
    if (sts != 0) {
-      ERROR("proxy_request: msg_2char failed");
+      ERROR("proxy_request: osip_message_to_str failed");
       return STS_FAILURE;
    }
 
@@ -289,7 +288,7 @@ INFO("stopping RTP proxy stream for: %s@%s",
    }
 
    sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
-   free (buffer);
+   osip_free (buffer);
    return STS_SUCCESS;
 }
 
@@ -301,13 +300,13 @@ INFO("stopping RTP proxy stream for: %s@%s",
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_response (sip_t *response) {
+int proxy_response (osip_message_t *response) {
    int i;
    int sts;
    int type;
    struct in_addr addr;
-   via_t *via;
-   contact_t *contact;
+   osip_via_t *via;
+   osip_contact_t *contact;
    int port;
    char *buffer;
 
@@ -383,13 +382,13 @@ int proxy_response (sip_t *response) {
    case RESTYP_OUTGOING:
       #define satoi atoi  /* used in MSG_TEST_CODE macro ... */
       /* If an 200 answer to an INVITE request, rewrite body */
-      if ((MSG_IS_RESPONSEFOR(response,"INVITE")) &&
+      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
           (MSG_TEST_CODE(response, 200))) {
          sts = proxy_rewrite_invitation_body(response);
       }
 
       /* rewrite Contact header to represent the masqued address */
-      msg_getcontact(response,0,&contact);
+      osip_message_get_contact(response,0,&contact);
       if (contact != NULL) {
          for (i=0;i<URLMAP_SIZE;i++){
 	    if (urlmap[i].active == 0) continue;
@@ -403,13 +402,12 @@ int proxy_response (sip_t *response) {
                    (contact->url->host) ? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
-            list_remove(response->contacts,0);
-            contact_free(contact);
-            free(contact);
+            osip_list_remove(response->contacts,0);
+            osip_contact_free(contact);
             /* clone the masquerading url */
-	    contact_init(&contact);
-            url_clone(urlmap[i].masq_url, &contact->url);
-            list_add(response->contacts,contact,-1);
+	    osip_contact_init(&contact);
+            osip_uri_clone(urlmap[i].masq_url, &contact->url);
+            osip_list_add(response->contacts,contact,-1);
          }     
       }
 
@@ -423,7 +421,7 @@ int proxy_response (sip_t *response) {
    }
 
    /* get target address from VIA header */
-   via = (via_t *) list_get (response->vias, 0);
+   via = (osip_via_t *) osip_list_get (response->vias, 0);
    if (via == NULL) {
       ERROR("proxy_response: list_get via failed");
       return STS_FAILURE;
@@ -436,9 +434,9 @@ int proxy_response (sip_t *response) {
       return STS_FAILURE;
    }
 
-   sts = msg_2char(response, &buffer);
+   sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
-      ERROR("proxy_response: msg_2char failed");
+      ERROR("proxy_response: osip_message_to_str failed");
       return STS_FAILURE;
    }
 
@@ -450,7 +448,7 @@ int proxy_response (sip_t *response) {
    }
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
-   free (buffer);
+   osip_free (buffer);
    return STS_SUCCESS;
 }
 
@@ -464,9 +462,9 @@ int proxy_response (sip_t *response) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_rewrite_invitation_body(sip_t *mymsg){
-   body_t *body;
-   sdp_t  *sdp;
+int proxy_rewrite_invitation_body(osip_message_t *mymsg){
+   osip_body_t *body;
+   sdp_message_t  *sdp;
    struct in_addr outb_addr, lcl_clnt_addr;
    int sts;
    char *bodybuff;
@@ -479,16 +477,16 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    /*
     * get SDP structure
     */
-   sts = msg_getbody(mymsg, 0, &body);
+   sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: no body found in message");
       return STS_FAILURE;
    }
 
-   sts = body_2char(body, &bodybuff);
-   sts = sdp_init(&sdp);
-   sts = sdp_parse (sdp, bodybuff);
-   free(bodybuff);
+   sts = osip_body_to_str(body, &bodybuff);
+   sts = sdp_message_init(&sdp);
+   sts = sdp_message_parse (sdp, bodybuff);
+   osip_free(bodybuff);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_parse body");
       return STS_FAILURE;
@@ -498,23 +496,23 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
-   sts = msg_getbody(mymsg, 0, &body);
-   sts = body_2char(body, &tmp);
-   content_length_2char(mymsg->contentlength, &tmp2);
+   sts = osip_message_get_body(mymsg, 0, &body);
+   sts = osip_body_to_str(body, &tmp);
+   osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
          tmp2, strlen(tmp), tmp);
-   free(tmp);
-   free(tmp2);
+   osip_free(tmp);
+   osip_free(tmp2);
 }
 
    /*
     * RTP proxy: get ready and start forwarding
     * start forwarding for each media stream ('m=' item in SIP message)
     */
-   sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
+   sts = get_ip_by_host(sdp_message_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: cannot resolve "
-             "m= (media) host [%s]", sdp_c_addr_get(sdp,-1,0));
+             "m= (media) host [%s]", sdp_message_c_addr_get(sdp,-1,0));
       return STS_FAILURE;
    }
 
@@ -528,10 +526,10 @@ if (configuration.debuglevel)
    /*
     * rewrite c= address
     */
-   sdp_conn = sdp_connection_get (sdp, -1, 0);
+   sdp_conn = sdp_message_connection_get (sdp, -1, 0);
    if (sdp_conn && sdp_conn->c_addr) {
-      free(sdp_conn->c_addr);
-      sdp_conn->c_addr=malloc(HOSTNAME_SIZE);
+      osip_free(sdp_conn->c_addr);
+      sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
       sprintf(sdp_conn->c_addr, "%s", inet_ntoa(outb_addr));
    } else {
       ERROR("got NULL c= address record - can't rewrite");
@@ -543,19 +541,19 @@ if (configuration.debuglevel)
     */
    for (media_stream_no=0;;media_stream_no++) {
       /* check if n'th media stream is present */
-      if (sdp_m_port_get(sdp, media_stream_no) == NULL) break;
+      if (sdp_message_m_port_get(sdp, media_stream_no) == NULL) break;
 
       /* start an RTP proxying stream */
-      if (sdp_m_port_get(sdp, media_stream_no)) {
-         inb_clnt_port=atoi(sdp_m_port_get(sdp, media_stream_no));
-         rtp_start_fwd(msg_getcall_id(mymsg), media_stream_no,
+      if (sdp_message_m_port_get(sdp, media_stream_no)) {
+         inb_clnt_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
+         rtp_start_fwd(osip_message_get_call_id(mymsg), media_stream_no,
                        outb_addr, &outb_rtp_port,
 	               lcl_clnt_addr, inb_clnt_port);
          /* and rewrite the port */
-         sdp_med=list_get(sdp->m_medias, media_stream_no);
+         sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
          if (sdp_med && sdp_med->m_port) {
-            free(sdp_med->m_port);
-            sdp_med->m_port=malloc(8);
+            osip_free(sdp_med->m_port);
+            sdp_med->m_port=osip_malloc(8);
             sprintf(sdp_med->m_port, "%i", outb_rtp_port);
             DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
                    "m= rewrote port to [%i]",outb_rtp_port);
@@ -572,38 +570,35 @@ if (configuration.debuglevel)
    }
 
    /* remove old body */
-   sts = list_remove(mymsg->bodies, 0);
-   body_free(body);
-   free(body);
+   sts = osip_list_remove(mymsg->bodies, 0);
+   osip_body_free(body);
 
    /* dump new body */
-   sdp_2char(sdp, &bodybuff);
+   sdp_message_to_str(sdp, &bodybuff);
 
    /* free sdp structure */
-   sdp_free(sdp);
-   free(sdp);
+   sdp_message_free(sdp);
 
    /* include new body */
-   msg_setbody(mymsg, bodybuff);
-   free(bodybuff);
+   osip_message_set_body(mymsg, bodybuff);
 
    /* free content length resource and include new one*/
-   content_length_free(mymsg->contentlength);
-   free(mymsg->contentlength);
-   mymsg->contentlength=NULL;
+   osip_content_length_free(mymsg->content_length);
+//   osip_free(mymsg->content_length);
+   mymsg->content_length=NULL;
    sprintf(clen,"%i",strlen(bodybuff));
-   sts = msg_setcontent_length(mymsg, clen);
+   sts = osip_message_set_content_length(mymsg, clen);
 
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
-   sts = msg_getbody(mymsg, 0, &body);
-   sts = body_2char(body, &tmp);
-   content_length_2char(mymsg->contentlength, &tmp2);
+   sts = osip_message_get_body(mymsg, 0, &body);
+   sts = osip_body_to_str(body, &tmp);
+   osip_content_length_to_str(mymsg->content_length, &tmp2);
    DEBUG("Body after rewrite (clen=%s, strlen=%i):\n%s\n----",
          tmp2, strlen(tmp), tmp);
-   free(tmp);
-   free(tmp2);
+   osip_free(tmp);
+   osip_free(tmp2);
 }
    return STS_SUCCESS;
 }
@@ -617,21 +612,21 @@ if (configuration.debuglevel)
  * RETURNS
  *	STS_SUCCESS on success
  */
-int proxy_rewrite_request_uri(sip_t *mymsg, int idx){
+int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    char *host;
    char *port;
-   url_t *url;
+   osip_uri_t *url;
 
    DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
-   url=msg_geturi(mymsg);
-   free(url->host);url->host=NULL;
+   url=osip_message_get_uri(mymsg);
+   osip_free(url->host);url->host=NULL;
 
    /* set the true host */
    if(urlmap[idx].true_url->host) {
       host = (char *)malloc(strlen(urlmap[idx].true_url->host)+1);
       memcpy(host, urlmap[idx].true_url->host, strlen(urlmap[idx].true_url->host));
       host[strlen(urlmap[idx].true_url->host)]='\0';
-      url_sethost(url, host);
+      osip_uri_set_host(url, host);
    }
 
    /* set the true port */
@@ -639,7 +634,7 @@ int proxy_rewrite_request_uri(sip_t *mymsg, int idx){
       port = (char *)malloc(strlen(urlmap[idx].true_url->port)+1);
       memcpy(port, urlmap[idx].true_url->port, strlen(urlmap[idx].true_url->port));
       port[strlen(urlmap[idx].true_url->port)]='\0';
-      url_setport(url, port);
+      osip_uri_set_port(url, port);
    }
    return STS_SUCCESS;
 }

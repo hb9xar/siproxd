@@ -30,11 +30,7 @@
 
 #include <getopt.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-#else
-   #include <osip/smsg.h>
-#endif
+#include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -51,7 +47,7 @@ int sip_socket=0;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE"-"VERSION"-"BUILDSTR" ("LIBOSIPVER") (c) 2002-2003 Thomas Ries\n" \
+PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002-2003 Thomas Ries\n" \
 "\nUsage: siproxd [options]\n\n" \
 "options:\n" \
 "       --help              (-h) help\n" \
@@ -68,7 +64,7 @@ int main (int argc, char *argv[])
    int access;
    struct sockaddr_in from;
    char buff [BUFFER_SIZE];
-   sip_t *my_msg=NULL;
+   osip_message_t *my_msg=NULL;
 
    extern char *optarg;
    int ch1;
@@ -192,7 +188,7 @@ INFO("rtpproxy_init done");
 INFO("sipsock_listen done");
 #endif
 
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" ("LIBOSIPVER") started");
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 /*
  * silence the log - if so required...
  */
@@ -229,15 +225,17 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
       if (sts != STS_SUCCESS) continue; /* there are no resources to free */
 
       /* parse the received message */
-      sts=msg_init(&my_msg);
+      sts=osip_message_init(&my_msg);
+      my_msg->message=NULL;
+
       if (sts != 0) {
-         ERROR("msg_init() failed... this is not good");
+         ERROR("osip_message_init() failed... this is not good");
 	 continue; /* skip, there are no resources to free */
       }
 
-      sts=msg_parse(my_msg, buff);
+      sts=osip_message_parse(my_msg, buff);
       if (sts != 0) {
-         ERROR("msg_parse() failed... this is not good");
+         ERROR("osip_message_parse() failed... this is not good");
          goto end_loop; /* skip and free resources */
       }
 
@@ -247,8 +245,8 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
 
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
-	     (my_msg->strtline->sipmethod)?
-              my_msg->strtline->sipmethod : "NULL") ;
+	     (my_msg->sip_method)?
+              my_msg->sip_method : "NULL") ;
 
       /*
       * if RQ REGISTER, just register
@@ -307,7 +305,7 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
       } else {
          ERROR("received unsupported SIP type %s %s",
 	       (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
-	       my_msg->strtline->sipmethod);
+	       my_msg->sip_method);
       }
 
 
@@ -315,8 +313,7 @@ INFO("got packet from %s [%s]", inet_ntoa(from.sin_addr), tmp);}
  * free the SIP message buffers
  */
       end_loop:
-      msg_free(my_msg);
-      free(my_msg);
+      osip_message_free(my_msg);
 
    } /* while TRUE */
 

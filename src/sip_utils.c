@@ -35,13 +35,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-   #include <osip2/port.h>
-#else
-   #include <osip/smsg.h>
-   #include <osip/port.h>
-#endif
+#include <osipparser2/osip_parser.h>
+#include <osipparser2/osip_port.h>
 
 #include "siproxd.h"
 #include "rewrite_rules.h"
@@ -60,19 +55,18 @@ extern int sip_socket;				/* sending SIP datagrams */
 /*
  * create a reply template from an given SIP request
  *
- * RETURNS a pointer to sip_t
+ * RETURNS a pointer to osip_message_t
  */
-sip_t *msg_make_template_reply (sip_t * request, int code) {
-   sip_t *response;
-   char *tmp;
+osip_message_t *msg_make_template_reply (osip_message_t * request, int code) {
+   osip_message_t *response;
    int pos;
 
-   msg_init (&response);
-   msg_setversion (response, sgetcopy ("SIP/2.0"));
-   tmp = malloc(STATUSCODE_SIZE);
-   snprintf (tmp, STATUSCODE_SIZE, "%i", code);
-   msg_setstatuscode (response, tmp);
-   msg_setreasonphrase (response, msg_getreason (code));
+   osip_message_init (&response);
+   response->message=NULL;
+   osip_message_set_version (response, osip_strdup ("SIP/2.0"));
+   osip_message_set_status_code (response, code);
+   osip_message_set_reason_phrase (response, 
+                                   osip_strdup(osip_message_get_reason (code)));
 
    if (request->to==NULL) {
       ERROR("msg_make_template_reply: empty To in request header");
@@ -82,24 +76,25 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
       ERROR("msg_make_template_reply: empty From in request header");
    }
 
-   to_clone (request->to, &response->to);
-   from_clone (request->from, &response->from);
+   osip_to_clone (request->to, &response->to);
+   osip_from_clone (request->from, &response->from);
 
 
    /* via headers */
    pos = 0;
-   while (!list_eol (request->vias, pos)) {
-      via_t *via;
-      via = (via_t *) list_get (request->vias, pos);
-      via_2char (via, &tmp);
+   while (!osip_list_eol (request->vias, pos)) {
+      char *tmp;
+      osip_via_t *via;
+      via = (osip_via_t *) osip_list_get (request->vias, pos);
+      osip_via_to_str (via, &tmp);
 
-      msg_setvia (response, tmp);
-      free (tmp);
+      osip_message_set_via (response, tmp);
+      osip_free (tmp);
       pos++;
    }
 
-   call_id_clone(request->call_id,&response->call_id);
-   cseq_clone(request->cseq,&response->cseq);
+   osip_call_id_clone(request->call_id,&response->call_id);
+   osip_cseq_clone(request->cseq,&response->cseq);
 
    return response;
 }
@@ -114,7 +109,7 @@ sip_t *msg_make_template_reply (sip_t * request, int code) {
  *	STS_TRUE if loop detected
  *	STS_FALSE if no loop
  */
-int check_vialoop (sip_t *my_msg) {
+int check_vialoop (osip_message_t *my_msg) {
 /*
 !!! actually this is a problematic one.
 1) for requests, I must search the whole VIA list
@@ -139,9 +134,9 @@ int check_vialoop (sip_t *my_msg) {
    found_own_via=0;
    pos = 1;	/* for detecting a loop, don't check the first entry 
    		   as this is my own VIA! */
-   while (!list_eol (my_msg->vias, pos)) {
-      via_t *via;
-      via = (via_t *) list_get (my_msg->vias, pos);
+   while (!osip_list_eol (my_msg->vias, pos)) {
+      osip_via_t *via;
+      via = (osip_via_t *) osip_list_get (my_msg->vias, pos);
       sts = is_via_local (via);
       if (sts == STS_TRUE) found_own_via=1;
       pos++;
@@ -151,14 +146,14 @@ int check_vialoop (sip_t *my_msg) {
 
 
 /*
- * check if a given via_t is local. I.e. its address is owned
+ * check if a given osip_via_t is local. I.e. its address is owned
  * by my inbound or outbound interface
  *
  * RETURNS
  *	STS_TRUE if the given VIA is one of my interfaces
  *	STS_FALSE otherwise
  */
-int is_via_local (via_t *via) {
+int is_via_local (osip_via_t *via) {
    int sts, found;
    struct in_addr addr_via, addr_myself;
    char *my_interfaces[]=
@@ -221,7 +216,7 @@ int is_via_local (via_t *via) {
  *	STS_SUCCESS if equal
  *	STS_FAILURE if non equal or error
  */
-int compare_url(url_t *url1, url_t *url2) {
+int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    int sts;
    struct in_addr addr1, addr2;
 
@@ -294,7 +289,7 @@ int compare_url(url_t *url1, url_t *url2) {
  *	STS_TRUE if the request is addressed local
  *	STS_FALSE otherwise
  */
-int is_sipuri_local (sip_t *sip) {
+int is_sipuri_local (osip_message_t *sip) {
    int sts, found;
    struct in_addr addr_uri, addr_myself;
    char *my_interfaces[]=
@@ -308,18 +303,18 @@ int is_sipuri_local (sip_t *sip) {
       return STS_FALSE;
    }
 
-   if (!sip || !sip->strtline || !sip->strtline->rquri) {
+   if (!sip || !sip->req_uri) {
       ERROR("is_sipuri_local: no request URI present");
       return STS_FALSE;
    }
 
    DEBUGC(DBCLASS_DNS,"check for local SIP URI %s:%s",
-          sip->strtline->rquri->host? sip->strtline->rquri->host : "*NULL*",
-          sip->strtline->rquri->port? sip->strtline->rquri->port : "*NULL*");
+          sip->req_uri->host? sip->req_uri->host : "*NULL*",
+          sip->req_uri->port? sip->req_uri->port : "*NULL*");
 
-   if (inet_aton(sip->strtline->rquri->host, &addr_uri) == 0) {
+   if (inet_aton(sip->req_uri->host, &addr_uri) == 0) {
       /* need name resolution */
-      get_ip_by_host(sip->strtline->rquri->host, &addr_uri);
+      get_ip_by_host(sip->req_uri->host, &addr_uri);
    }   
 
    found=0;
@@ -336,8 +331,8 @@ int is_sipuri_local (sip_t *sip) {
       }
 
       /* check the extracted HOST against my own host addresses */
-      if (sip->strtline->rquri->port) {
-         port=atoi(sip->strtline->rquri->port);
+      if (sip->req_uri->port) {
+         port=atoi(sip->req_uri->port);
       } else {
          port=SIP_PORT;
       }
@@ -364,23 +359,23 @@ int is_sipuri_local (sip_t *sip) {
  *	STS_TRUE if to be rewritten
  *	STS_FALSE otherwise
  */
-int check_rewrite_rq_uri (sip_t *sip) {
+int check_rewrite_rq_uri (osip_message_t *sip) {
    int i, j, sts;
    int dflidx;
-   header_t *ua_hdr;
+   osip_header_t *ua_hdr;
 
    /* get index of default entry */
    dflidx=(sizeof(RQ_rewrite)/sizeof(RQ_rewrite[0])) - 1;
 
    /* check fort existence of method */
-   if ((sip==NULL) || (sip->strtline==NULL) || 
-       (sip->strtline->sipmethod==NULL)) {
+   if ((sip==NULL) ||
+       (sip->sip_method==NULL)) {
       ERROR("check_rewrite_rq_uri: got NULL method");
       return STS_FALSE;
    }
 
    /* extract UA string */
-   msg_getuser_agent (sip, 0, &ua_hdr);
+   osip_message_get_user_agent (sip, 0, &ua_hdr);
    if ((ua_hdr==NULL) || (ua_hdr->hvalue==NULL)) {
       WARN("check_rewrite_rq_uri: NULL UA in Header, using default");
       i=dflidx;
@@ -398,7 +393,7 @@ int check_rewrite_rq_uri (sip_t *sip) {
 
    for (j=0; RQ_method[j].name; j++) {
       if (strncmp(RQ_method[j].name,
-                 sip->strtline->sipmethod, RQ_method[j].size)==0) {
+                 sip->sip_method, RQ_method[j].size)==0) {
          if (RQ_rewrite[i].action[j] >= 0) {
             sts = (RQ_rewrite[i].action[j])? STS_TRUE: STS_FALSE;
          } else {
@@ -406,8 +401,8 @@ int check_rewrite_rq_uri (sip_t *sip) {
          }
          DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: [%s:%s, i=%i, j=%i] "
                 "got action %s",
-                (sip && sip->strtline && sip->strtline->sipmethod) ?
-                  sip->strtline->sipmethod : "*NULL*",
+                (sip && sip->sip_method) ?
+                  sip->sip_method : "*NULL*",
                 (ua_hdr && ua_hdr->hvalue)? ua_hdr->hvalue:"*NULL*",
                  i, j, (sts==STS_TRUE)? "rewrite":"norewrite");
          return sts;
@@ -415,7 +410,7 @@ int check_rewrite_rq_uri (sip_t *sip) {
    } /* for j */
 
    WARN("check_rewrite_rq_uri: didn't get a hit of the method [%s]",
-        sip->strtline->sipmethod);
+        sip->sip_method);
    return STS_FALSE;
 }
 
@@ -431,10 +426,10 @@ int check_rewrite_rq_uri (sip_t *sip) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_gen_response(sip_t *request, int code) {
-   sip_t *response;
+int sip_gen_response(osip_message_t *request, int code) {
+   osip_message_t *response;
    int sts;
-   via_t *via;
+   osip_via_t *via;
    int port;
    char *buffer;
    struct in_addr addr;
@@ -446,7 +441,7 @@ int sip_gen_response(sip_t *request, int code) {
    }
 
    /* we must check if first via has x.x.x.x address. If not, we must resolve it */
-   msg_getvia (response, 0, &via);
+   osip_message_get_via (response, 0, &via);
    if (via == NULL)
    {
       ERROR("proxy_response: Cannot send response - no via field");
@@ -467,7 +462,7 @@ int sip_gen_response(sip_t *request, int code) {
       }
    }   
 
-   sts = msg_2char(response, &buffer);
+   sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
       ERROR("proxy_response: msg_2char failed");
       return STS_FAILURE;
@@ -485,9 +480,8 @@ int sip_gen_response(sip_t *request, int code) {
                     buffer, strlen(buffer), 1);
 
    /* free the resources */
-   msg_free(response);
-   free(response);
-   free (buffer);
+   osip_message_free(response);
+   osip_free(buffer);
    return STS_SUCCESS;
 }
 
@@ -501,10 +495,10 @@ int sip_gen_response(sip_t *request, int code) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_add_myvia (sip_t *request, int interface) {
+int sip_add_myvia (osip_message_t *request, int interface) {
    struct in_addr addr;
    char tmp[URL_STRING_SIZE];
-   via_t *via;
+   osip_via_t *via;
    int sts;
 
    if (interface == IF_OUTBOUND) {
@@ -527,13 +521,13 @@ int sip_add_myvia (sip_t *request, int interface) {
            configuration.sip_listen_port);
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
-   sts = via_init(&via);
+   sts = osip_via_init(&via);
    if (sts!=0) return STS_FAILURE; /* allocation failed */
 
-   sts = via_parse(via, tmp);
+   sts = osip_via_parse(via, tmp);
    if (sts!=0) return STS_FAILURE;
 
-   list_add(request->vias,via,0);
+   osip_list_add(request->vias,via,0);
 
    return STS_SUCCESS;
 }
@@ -546,21 +540,20 @@ int sip_add_myvia (sip_t *request, int interface) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int sip_del_myvia (sip_t *response) {
-   via_t *via;
+int sip_del_myvia (osip_message_t *response) {
+   osip_via_t *via;
    int sts;
 
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
-   via = list_get (response->vias, 0);
+   via = osip_list_get (response->vias, 0);
    
    if ( is_via_local(via) == STS_FALSE ) {
       ERROR("I'm trying to delete a VIA but it's not mine! host=%s",via->host);
       return STS_FAILURE;
    }
 
-   sts = list_remove(response->vias, 0);
-   via_free (via);
-   free(via);
+   sts = osip_list_remove(response->vias, 0);
+   osip_via_free (via);
    return STS_SUCCESS;
 }
 

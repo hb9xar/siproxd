@@ -27,11 +27,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-#else
-   #include <osip/smsg.h>
-#endif
+#include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -64,10 +60,10 @@ int security_check_raw(char *sip_buffer, int size){
  *	STS_SUCCESS if ok 
  * 	STS_FAILURE if the packed did not pass the checks
  */
-int security_check_sip(sip_t *sip){
+int security_check_sip(osip_message_t *sip){
 
    /* check for existing SIP URI */
-   if (sip->strtline == NULL) {
+   if (sip->req_uri == NULL) {
       ERROR("security check failed: NULL SIP URI");
       return STS_FAILURE;
    }

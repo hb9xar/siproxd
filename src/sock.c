@@ -33,11 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-#else
-   #include <osip/smsg.h>
-#endif
+#include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"

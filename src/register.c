@@ -28,11 +28,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-#else
-   #include <osip/smsg.h>
-#endif
+#include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -63,13 +59,13 @@ void register_init(void) {
  *    STS_FAILURE : registration failed
  *    STS_NEED_AUTH : authentication needed
  */
-int register_client(sip_t *my_msg) {
+int register_client(osip_message_t *my_msg) {
    int i, j, n, sts;
    int expires;
    time_t time_now;
-   url_t *url1_to, *url1_contact;
-   url_t *url2_to, *url2_contact;
-   header_t *expires_hdr;
+   osip_uri_t *url1_to, *url1_contact;
+   osip_uri_t *url2_to, *url2_contact;
+   osip_header_t *expires_hdr;
    
    /* check for proxy authentication */
    sts = authenticate_proxy(my_msg);
@@ -102,7 +98,7 @@ int register_client(sip_t *my_msg) {
    DEBUGC(DBCLASS_BABBLE,"sip_register:");
 
    /* evaluate Expires Header field */
-   msg_getexpires(my_msg, 0, &expires_hdr);
+   osip_message_get_expires(my_msg, 0, &expires_hdr);
 
    if (expires_hdr && expires_hdr->hvalue) {
       expires=atoi(expires_hdr->hvalue);
@@ -110,11 +106,11 @@ int register_client(sip_t *my_msg) {
       /* it seems the expires filed in not present everywhere... */
       WARN("no 'expires' header found - set time to 600 sec");
       expires=600;
-      msg_setexpires(my_msg, "600");
+      osip_message_set_expires(my_msg, "600");
    }
 
    url1_to=my_msg->to->url;
-   url1_contact=((contact_t*)(my_msg->contacts->node->element))->url;
+   url1_contact=((osip_contact_t*)(my_msg->contacts->node->element))->url;
 
    DEBUGC(DBCLASS_REG,"register: %s@%s expires=%i seconds",
           (url1_contact->username) ? url1_contact->username : "*NULL*",
@@ -161,9 +157,9 @@ int register_client(sip_t *my_msg) {
 
       /* write entry */
       urlmap[i].active=1;
-      url_clone( ((contact_t*)(my_msg->contacts->node->element))->url, 
+      osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
         	 &urlmap[i].true_url);	/* Contact: field */
-      url_clone( my_msg->to->url, 
+      osip_uri_clone( my_msg->to->url, 
         	 &urlmap[i].reg_url);	/* To: field */
 
       DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
@@ -176,8 +172,8 @@ int register_client(sip_t *my_msg) {
       /*
        * try to figure out if we ought to do some masquerading
        */
-      url_clone( my_msg->to->url, 
-        	 &urlmap[i].masq_url);
+      osip_uri_clone( my_msg->to->url, 
+        	      &urlmap[i].masq_url);
 
       n=configuration.mask_host.used;
       if (n != configuration.masked_host.used) {
@@ -205,7 +201,7 @@ int register_client(sip_t *my_msg) {
          strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
       }
 
-      via_clone( ((via_t*)(my_msg->vias->node->element)),
+      osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
                  &urlmap[i].via);	/* via field */
    } /* if new entry */
 
@@ -235,14 +231,10 @@ void register_agemap(void) {
 	 DEBUGC(DBCLASS_REG,"cleaned entry:%i %s@%s", i,
 	        urlmap[i].masq_url->username,  urlmap[i].masq_url->host);
          urlmap[i].active=0;
-         url_free(urlmap[i].true_url);
-         url_free(urlmap[i].masq_url);
-         url_free(urlmap[i].reg_url);
-	 via_free(urlmap[i].via);
-         free(urlmap[i].true_url);
-	 free(urlmap[i].masq_url);
-	 free(urlmap[i].reg_url);
-	 free(urlmap[i].via);
+         osip_uri_free(urlmap[i].true_url);
+         osip_uri_free(urlmap[i].masq_url);
+         osip_uri_free(urlmap[i].reg_url);
+	 osip_via_free(urlmap[i].via);
       }
    }
    return;
@@ -259,15 +251,15 @@ void register_agemap(void) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int register_response(sip_t *request, int flag) {
-   sip_t *response;
+int register_response(osip_message_t *request, int flag) {
+   osip_message_t *response;
    int code;
    int sts;
-   via_t *via;
+   osip_via_t *via;
    int port;
    char *buffer;
    struct in_addr addr;
-   header_t *expires_hdr;
+   osip_header_t *expires_hdr;
 
    /* ok -> 200, fail -> 503 */
    switch (flag) {
@@ -292,9 +284,9 @@ int register_response(sip_t *request, int flag) {
    }
 
    /* insert the expiration header */
-   msg_getexpires(request, 0, &expires_hdr);
+   osip_message_get_expires(request, 0, &expires_hdr);
    if (expires_hdr) {
-      msg_setexpires(response, expires_hdr->hvalue);
+      osip_message_set_expires(response, expires_hdr->hvalue);
    }
 
    /* if we send back an proxy authentication needed, 
@@ -304,7 +296,7 @@ int register_response(sip_t *request, int flag) {
    }
 
    /* get the IP address from existing VIA header */
-   msg_getvia (response, 0, &via);
+   osip_message_get_via (response, 0, &via);
    if (via == NULL) {
       ERROR("register_response: Cannot send response - no via field");
       return STS_FAILURE;
@@ -321,7 +313,7 @@ int register_response(sip_t *request, int flag) {
       }
    }   
 
-   sts = msg_2char(response, &buffer);
+   sts = osip_message_to_str(response, &buffer);
    if (sts != 0) {
       ERROR("register_response: msg_2char failed");
       return STS_FAILURE;
@@ -337,8 +329,7 @@ int register_response(sip_t *request, int flag) {
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1);
 
    /* free the resources */
-   msg_free(response);
-   free(response);
+   osip_message_free(response);
    free(buffer);
    return STS_SUCCESS;
 }

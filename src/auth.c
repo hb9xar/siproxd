@@ -29,17 +29,9 @@
 
 #include <netinet/in.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-   #include <osip2/port.h>
-   #include <osip2/global.h>
-   #include <osip2/md5.h>
-#else
-   #include <osip/smsg.h>
-   #include <osip/port.h>
-   #include <osip/global.h>
-   #include <osip/md5.h>
-#endif
+#include <osipparser2/osip_parser.h>
+#include <osipparser2/osip_port.h>
+#include <osipparser2/osip_md5.h>
 
 #include "digcalc.h"
 
@@ -54,7 +46,7 @@ extern struct siproxd_config configuration;
 
 /* local protorypes */
 static char *auth_generate_nonce(void);
-static int auth_check(proxy_authorization_t *proxy_auth);
+static int auth_check(osip_proxy_authorization_t *proxy_auth);
 static char *auth_getpwd(char *username);
 
 /*
@@ -65,8 +57,8 @@ static char *auth_getpwd(char *username);
  *	STS_FAILURE : authentication failed
  *	STS_NEEDAUTH: authentication needed
  */
-int authenticate_proxy(sip_t *request) {
-   proxy_authorization_t *proxy_auth;
+int authenticate_proxy(osip_message_t *request) {
+   osip_proxy_authorization_t *proxy_auth;
    
    /* required by config? */
    if (configuration.proxy_auth_realm == NULL) {
@@ -74,7 +66,7 @@ int authenticate_proxy(sip_t *request) {
    }
    
    /* supplied by UA? */
-   msg_getproxy_authorization(request, 0, &proxy_auth);
+   osip_message_get_proxy_authorization(request, 0, &proxy_auth);
    if (proxy_auth == NULL) {
       DEBUGC(DBCLASS_AUTH,"proxy-auth required, not supplied by UA");
       return STS_NEED_AUTH;
@@ -98,19 +90,19 @@ int authenticate_proxy(sip_t *request) {
  *	STS_SUCCESS
  *	STS_FAILURE
  */
-int auth_include_authrq(sip_t *response) {
-   proxy_authenticate_t *p_auth;
+int auth_include_authrq(osip_message_t *response) {
+   osip_proxy_authenticate_t *p_auth;
 
-   if (proxy_authenticate_init(&p_auth) != 0) {
+   if (osip_proxy_authenticate_init(&p_auth) != 0) {
       ERROR("proxy_authenticate_init failed");
       return STS_FAILURE;
    }
 
-   proxy_authenticate_setauth_type(p_auth, sgetcopy("Digest"));
-   proxy_authenticate_setnonce(p_auth, sgetcopy(auth_generate_nonce()));
-   proxy_authenticate_setrealm(p_auth, sgetcopy(configuration.proxy_auth_realm));
+   osip_proxy_authenticate_set_auth_type(p_auth, osip_strdup("Digest"));
+   osip_proxy_authenticate_set_nonce(p_auth, osip_strdup(auth_generate_nonce()));
+   osip_proxy_authenticate_set_realm(p_auth, osip_strdup(configuration.proxy_auth_realm));
 
-   list_add (response->proxy_authenticates, p_auth, -1);
+   osip_list_add (response->proxy_authenticates, p_auth, -1);
 
    DEBUGC(DBCLASS_AUTH,"added authentication header");
 
@@ -144,7 +136,7 @@ static char *auth_generate_nonce() {
  *	STS_SUCCESS if succeeded
  *	STS_FAILURE if failed
  */
-static int auth_check(proxy_authorization_t *proxy_auth) {
+static int auth_check(osip_proxy_authorization_t *proxy_auth) {
    char *password=NULL;
    int sts;
 
@@ -163,28 +155,28 @@ static int auth_check(proxy_authorization_t *proxy_auth) {
 
    /* if item exists, allocate& copy string without quotes */
    if (proxy_auth->username)
-      Username=sgetcopy_unquoted_string(proxy_auth->username);
+      Username=osip_strdup_without_quote(proxy_auth->username);
 
    if (proxy_auth->realm)
-      Realm=sgetcopy_unquoted_string(proxy_auth->realm);
+      Realm=osip_strdup_without_quote(proxy_auth->realm);
 
    if (proxy_auth->nonce)
-      Nonce=sgetcopy_unquoted_string(proxy_auth->nonce);
+      Nonce=osip_strdup_without_quote(proxy_auth->nonce);
 
    if (proxy_auth->cnonce)
-      CNonce=sgetcopy_unquoted_string(proxy_auth->cnonce);
+      CNonce=osip_strdup_without_quote(proxy_auth->cnonce);
 
    if (proxy_auth->nonce_count)
-      NonceCount=sgetcopy_unquoted_string(proxy_auth->nonce_count);
+      NonceCount=osip_strdup_without_quote(proxy_auth->nonce_count);
 
    if (proxy_auth->message_qop)
-      Qpop=sgetcopy_unquoted_string(proxy_auth->message_qop);
+      Qpop=osip_strdup_without_quote(proxy_auth->message_qop);
 
    if (proxy_auth->uri) 
-      Uri=sgetcopy_unquoted_string(proxy_auth->uri);
+      Uri=osip_strdup_without_quote(proxy_auth->uri);
 
    if (proxy_auth->response)
-      Response=sgetcopy_unquoted_string(proxy_auth->response);
+      Response=osip_strdup_without_quote(proxy_auth->response);
    
    /* get password */
    if (configuration.proxy_auth_pwfile) {

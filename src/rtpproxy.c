@@ -32,11 +32,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 
-#ifdef HAVE_OSIP2
-   #include <osip2/smsg.h>
-#else
-   #include <osip/smsg.h>
-#endif
+#include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"
@@ -128,7 +124,7 @@ void *rtpproxy_main(void *arg) {
    int i, count;
    int num_fd;
    static int rtp_socket=0;
-   call_id_t callid;
+   osip_call_id_t callid;
    char rtp_buff[RTP_BUFFER_SIZE];
 
    memcpy(&fdset, &master_fdset, sizeof(fdset));
@@ -231,7 +227,7 @@ INFO("RTP stream sock=%i %s@%s (idx=%i) "
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_start_fwd (call_id_t *callid, int media_stream_no,
+int rtp_start_fwd (osip_call_id_t *callid, int media_stream_no,
 		   struct in_addr outbound_ipaddr, int *outboundport,
                    struct in_addr lcl_client_ipaddr, int lcl_clientport) {
    int i, j;
@@ -405,7 +401,7 @@ unlock_and_exit:
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_stop_fwd (call_id_t *callid, int nolock) {
+int rtp_stop_fwd (osip_call_id_t *callid, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
