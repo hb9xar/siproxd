@@ -58,6 +58,7 @@ dnl
 AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_CPP
+AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
@@ -296,10 +297,10 @@ dnl add
 dnl    --with-custom-fwmodule
    AC_MSG_CHECKING(building with a custom FW module)
    AC_ARG_WITH(custom-fwmodule,
-      [  --with-custom-fwmodule=MODULE.o   use custom firewall control module],
-      LDFLAGS="$LDFLAGS $withval ";
+      [  --with-custom-fwmodule=LIBRARY.a   use custom firewall control module],
+      FWLIBS="$withval";
       AC_DEFINE(CUSTOM_FWMODULE, 1,[use custom firewall control module])
-      AC_MSG_RESULT($withval), AC_MSG_RESULT(no))
+      AC_MSG_RESULT($FWLIBS), AC_MSG_RESULT(no))
 
 
 dnl
@@ -362,8 +363,10 @@ done
 AC_DEFINE_UNQUOTED(SIPROXDCONFPATH,"$SIPROXDCONFPATH",
                   [will search for config file here])
 
+LIBS="$LIBS $FWLIBS"
 
 AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
 
 dnl

@@ -1,6 +1,9 @@
 0.5.5
 =====
    9-Apr-2004:  - SDP body: do rewrite 'o=' (originator) address, too
+                - siproxd can be linked to a customer firewall control
+                  module (library) that will be called for each RTP
+                  stream that is started/stopped.
    8-Apr-2004:  - small FAQ updates
    5-Apr-2004:  - config file: don't complain on line s with only whitespaces
                 - fix: Via branch calculation

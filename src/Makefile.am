@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2004  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
@@ -21,13 +21,25 @@
 
 AM_CFLAGS = -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
+#
+# Siproxd itself
+#
 sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c log.c readconf.c rtpproxy.c \
                   rtpproxy_relay.c accessctl.c \
-		  security.c auth.c
+		  security.c auth.c fwapi.c
 
-noinst_HEADERS = log.h rewrite_rules.h siproxd.h digcalc.h rtpproxy.h
+#
+# an example for a custom firewall control module
+# that can be linked into siproxd (--with-custom-fwmodule)
+#
+noinst_LIBRARIES = libcustom_fw_module.a
+libcustom_fw_module_a_SOURCES = custom_fw_module.c
+
+
+noinst_HEADERS = log.h rewrite_rules.h siproxd.h digcalc.h rtpproxy.h \
+		 fwapi.h
 
 EXTRA_DIST = .buildno
 

@@ -554,6 +554,13 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
 
    *local_port=port;
 
+   /* call to firewall API */
+   fwapi_start_rtp(rtp_proxytable[freeidx].direction,
+                   rtp_proxytable[freeidx].local_ipaddr,
+                   rtp_proxytable[freeidx].local_port,
+                   rtp_proxytable[freeidx].remote_ipaddr,
+                   rtp_proxytable[freeidx].remote_port);
+
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();
 
@@ -644,9 +651,16 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                   strerror(errno), nolock,
                   callid->number, callid->host);
          }
+         /* call to firewall API */
+         fwapi_stop_rtp(rtp_proxytable[i].direction,
+                   rtp_proxytable[i].local_ipaddr,
+                   rtp_proxytable[i].local_port,
+                   rtp_proxytable[i].remote_ipaddr,
+                   rtp_proxytable[i].remote_port);
+         /* clean up */
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
-         }
+      }
  
    }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2004  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -94,6 +94,13 @@ int  authenticate_proxy(osip_message_t *request);			/*X*/
 int  auth_include_authrq(osip_message_t *response);			/*X*/
 void CvtHex(char *hash, char *hashstring);
 
+/* fwapi.h */
+int fwapi_start_rtp(int rtp_direction,
+                    struct in_addr local_ipaddr, int local_port,
+                    struct in_addr remote_ipaddr, int remote_port);
+int fwapi_stop_rtp(int rtp_direction,
+                   struct in_addr local_ipaddr, int local_port,
+                   struct in_addr remote_ipaddr, int remote_port);
 
 
 /*
