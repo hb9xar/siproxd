@@ -1,5 +1,6 @@
 0.5.8
 =====
+  19-Aug-2004:  - don't crash on missing Contact header during registration
   18-Aug-2004:  - reworked configure.in for FLI4L building
   06-Jul-2004:  - patch from Dan Weber: Open the password file for SIP
 		  accounts at startup, so we still have access after

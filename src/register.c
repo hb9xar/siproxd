@@ -167,7 +167,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    int i, j, n, sts;
    int expires;
    time_t time_now;
-   osip_uri_t *url1_to, *url1_contact;
+   osip_uri_t *url1_to, *url1_contact=NULL;
    osip_uri_t *url2_to;
    osip_header_t *expires_hdr;
    osip_uri_param_t *expires_param=NULL;
@@ -223,9 +223,12 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    * look for an Contact expires parameter - in case of REGISTER
    * these two are equal. The Contact expires has higher priority!
    */
-   osip_contact_param_get_byname(
-           (osip_contact_t*) ticket->sipmsg->contacts->node->element,
-           EXPIRES, &expires_param);
+   if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
+       ticket->sipmsg->contacts->node->element) {
+      osip_contact_param_get_byname(
+              (osip_contact_t*) ticket->sipmsg->contacts->node->element,
+              EXPIRES, &expires_param);
+   }
 
    if (expires_param && expires_param->gvalue) {
       /* get expires from contact Header */
@@ -259,10 +262,13 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
        * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
        * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
        */
-      url1_contact=((osip_contact_t*)
-                   (ticket->sipmsg->contacts->node->element))->url;
+      if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
+          ticket->sipmsg->contacts->node->element) {
+         url1_contact=((osip_contact_t*)
+                      (ticket->sipmsg->contacts->node->element))->url;
+      }
       if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
-         /* Don't have reqiured Contact fields */
+         /* Don't have required Contact fields */
          ERROR("tried registration with empty Contact header");
          return STS_FAILURE;
       }

@@ -69,7 +69,7 @@ int security_check_raw(char *sip_buffer, int size) {
    }
 
 
-   /* As libosip2 is *VERY* sensitive to corrupt imput data, we need to
+   /* As libosip2 is *VERY* sensitive to corrupt input data, we need to
       do more stuff here. For example, libosip2 can be crashed (with a
       "<port_malloc.c> virtual memory exhausted" error - God knows why)
       by sending the following few bytes. It will die in osip_message_parse()
@@ -82,7 +82,7 @@ int security_check_raw(char *sip_buffer, int size) {
       the 'only one space present' that leads to a faulty size
       calculation (VERY BIG NUMBER), which in turn then dies inside 
       osip_malloc.
-      So, we need at least 2 spaces to survive that coda part of libosip2.
+      So, we need at least 2 spaces to survive that code part of libosip2.
     */
    p1 = strchr(sip_buffer, ' ');
    if (p1 && ((p1+1) < (sip_buffer+size))) {
