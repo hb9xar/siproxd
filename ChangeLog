@@ -1,5 +1,6 @@
 0.5.5
 =====
+   8-Apr-2004:  - small FAQ updates
    5-Apr-2004:  - config file: don't complain on line s with only whitespaces
                 - fix: Via branch calculation
                 - security.c: increased max acceptable line length

@@ -19,9 +19,6 @@ Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
 A: Since version 0.5.1, siproxd DOES do full duplex RTP proxying.
    This eliminates some problems with UAs that *insist* on symmetric
    RTP traffic.
-#A: This is the correct behaviour. Incoming RTP traffic
-#   is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
-#   to be handled by the firewall (IP masquerading).
 ---------------------------------------------------------------------------
 Q: How do I setup IP masquerading for the outgoing RTP traffic?
 
@@ -146,12 +143,6 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    (configurable) that will stop RTP streams that have been inactive
    (no data received) for a specified time.
    
-   The above only applies for reception of data FROM the outbound
-   interface (usually a public IP).
-   
-   Outgoing traffic must be handled (masqueraded) by the firewall itself
-   (using ipchains or iptables rules).
-
 ---------------------------------------------------------------------------
 Q: Does siproxd need to be installed on the same host as the
    firewall (ipchains/iptables) is running?
@@ -170,12 +161,6 @@ Q: How do I configure siproxd to use ICPHAINS based UDP masquerading
 
 A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
    Use the RTP relay instead.
-#A: Simple. In the config file set the configuration option
-#   rtp_proxy_enable = 2. Siproxd *must* then be started by root, I
-#   highly recommend to let siproxd drop privileges after startup
-#   (user, chrootjail config options).
-#   Note: The UDP port range for incomming RTP data still uses the same
-#   range as configured in the config file.
    
 ---------------------------------------------------------------------------
 Q: How do I use siproxd as a pure outbound proxy, so I can register with my
@@ -193,10 +178,6 @@ Q: I have a Grandstream Budgetone-100 SIP phone. The SIP communication
 A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
    Use the RTP relay instead. Grandstream SIP phones are now working
    properly with the RTP relay.
-#A: It has been observed that these SIP phone seems to be delicate there.
-#   You should use the IPCHAINS based RTP proxy and your SIP phone must
-#   be configured to use random ports. Connect with the web browser to
-#   the phone and make sure the 'Use random port' option is enabled.
 
 ---------------------------------------------------------------------------
 Q: I use Linux (kernel 2.4.x) with ipchains. However, siproxd
@@ -204,10 +185,6 @@ Q: I use Linux (kernel 2.4.x) with ipchains. However, siproxd
 
 A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
    Use the RTP relay instead.
-#A: Siproxd IPCHAIN support works only with kernels 2.2.x. The
-#   ipchains compatibility module for 2.4.x kernels lacks some features
-#   that allow user space programs to control masquerading tunnels.
-#   You  must use the RTP relay or IPTABLES based masquerading.
 
 ---------------------------------------------------------------------------
 Q: I  have two local UA (SIP phones) connected to siproxd. I can
@@ -216,10 +193,6 @@ Q: I  have two local UA (SIP phones) connected to siproxd. I can
    two locally connected does not succeed, why?
 
 A: Since Version 0.5.3 this is supported.
-#A: That is not a bug but a known limitation of siproxd. Currently it
-#   can only manage calls from the local (inbound) network to the 
-#   outside world (outbound network) and vice versa. Making calls
-#   locally is not supported.
 
 ---------------------------------------------------------------------------
 Q: When I'm experimenting with siproxd, sometimes it is not enough to
