@@ -140,7 +140,7 @@ int proxy_request (sip_t *request) {
    case REQTYP_INCOMING:
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
-      if (check_rewrite_rq_uri(request)) {
+      if (check_rewrite_rq_uri(request)==STS_TRUE) {
          proxy_rewrite_request_uri(request, i);
       }
 

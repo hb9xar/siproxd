@@ -334,7 +334,7 @@ int check_rewrite_rq_uri (sip_t *sip) {
 
    /* check fort existence of method */
    if ((sip==NULL) || (sip->strtline==NULL) || 
-       (sip->strtline->sipmethod)) {
+       (sip->strtline->sipmethod==NULL)) {
       ERROR("check_rewrite_rq_uri: got NULL method");
       return STS_FALSE;
    }
@@ -364,13 +364,15 @@ int check_rewrite_rq_uri (sip_t *sip) {
          } else {
 	    sts = (RQ_rewrite[dflidx].action[j])? STS_TRUE: STS_FALSE;
          }
-         DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: [%s/%s] got action %i",
-                sip->strtline->sipmethod, ua_hdr->hvalue);
+         DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: [%s:%s, i=%i, j=%i] "
+                "got action %s",
+                sip->strtline->sipmethod, ua_hdr->hvalue, i, j,
+                (sts==STS_TRUE)? "rewrite":"norewrite");
          return sts;
       }
    } /* for j */
 
-   WARN("check_rewrite_rq_uri: did'nt get a hit of the method [%s]",
+   WARN("check_rewrite_rq_uri: didn't get a hit of the method [%s]",
         sip->strtline->sipmethod);
    return STS_FALSE;
 }
