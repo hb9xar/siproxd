@@ -1,39 +1,19 @@
 TODOs, in random order:
 =======================
 
+- kphone 3.1: authentication w/ siproxd (libosip 0.8.8, 0.9.0, libosip2)
+  does not work (parse error in libosip)
+
+- libosip >0.8.8, libosip2: failure in msg_setproxy_authenticate
+
 - Documentation (yeah, yeah...)
 
-- support for proxy chaining
-
-- change host comparison to IP address level (resolve name, then compare addr)
+- support for proxy chaining - UPNP support?
 
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 
-- Georg Schwarz (1.Jan 2003)
-  Ein weiteres Problem ist, daß sich z.B. das Siemens-Phone (wenn man 202
-  als Telephonnummer einstellt) immer als 202@192.168.0.1 anmeldet beim
-  Proxy (da ihm gesagt worden ist, daß der Proxy auf 192.168.0.1 läuft und
-  es nicht weiß, daß dieser "von außen" unter einer anderen IP/FQDN
-  zusätzlich erreichbar ist).
-  Anrufe an 202@gate.geos.net.eu.org von außen werden daher nicht
-  durchgestellt. Hier sollte siproxd vielleicht erkennen, daß URIs mit der
-  lokalen Interface IP äquivalent sind, bzw. man sollte dieses Verhalten
-  ggfs. konfigurieren können (z.B. durch die Möglichkeit zur Angabe
-  mehrerer äquivalenter "Domainnamen").
-
-  ->
-  Ich könnte mir ein Feature vorstellen, das z.B. für ein Subnetz
-  einen FQDN forciert.
-
-  force_fqdn_net=10.0.0.0/8
-  force_fqdn_name=myhost.domain.org.
-
-- fli4l modul
-
 - multiple inbound interfaces
-
-- automatized CVS snapshot beamed to siproxd homepage (siproxd.sourceforge.net)
 
 - general security issues
 - security tests for received SIP messages (function securitycheck)
@@ -43,9 +23,6 @@ TODOs, in random order:
 - get_ip_by_host: reduce DNS timeouts (seems to be a more complex problem...)
 
 - (support for "full duplex" RTP proxying) 
-
-- portability to other platforms / operating systems
-  first goal: other Unixes (porting to FreeBSD is queued)
 
 - via loop detection: send 482 error code
 

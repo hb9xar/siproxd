@@ -35,8 +35,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include <osip/smsg.h>
-#include <osip/port.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+#else
+   #include <osip/smsg.h>
+#endif
 
 #include "siproxd.h"
 #include "log.h"
@@ -244,6 +247,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: interface %s has IP: %s",
           ifname, inet_ntoa(sin->sin_addr));
    if (retaddr) memcpy(retaddr, &sin->sin_addr, sizeof(sin->sin_addr));
+
+   close(sockfd);
    return STS_SUCCESS;
 }
 

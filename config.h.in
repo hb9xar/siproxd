@@ -117,9 +117,6 @@
 /* Define if you have the <varargs.h> header file.  */
 #undef HAVE_VARARGS_H
 
-/* Define if you have the osip library (-losip).  */
-#undef HAVE_LIBOSIP
-
 /* Name of package */
 #undef PACKAGE
 
@@ -146,6 +143,12 @@
 
 /* building on NetBSD platform */
 #undef _NETBSD
+
+/* type of libosip */
+#undef LIBOSIPVER
+
+/* have osip2 installed */
+#undef HAVE_OSIP2
 
 /* Define to the necessary symbol if this constant
                            uses a non-standard name on your system. */

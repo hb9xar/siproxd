@@ -29,10 +29,18 @@
 
 #include <netinet/in.h>
 
-#include <osip/smsg.h>
-#include <osip/port.h>
-#include <osip/global.h>
-#include <osip/md5.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+   #include <osip2/port.h>
+   #include <osip2/global.h>
+   #include <osip2/md5.h>
+#else
+   #include <osip/smsg.h>
+   #include <osip/port.h>
+   #include <osip/global.h>
+   #include <osip/md5.h>
+#endif
+
 #include "digcalc.h"
 
 #include "siproxd.h"

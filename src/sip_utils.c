@@ -35,8 +35,13 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include <osip/smsg.h>
-#include <osip/port.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+   #include <osip2/port.h>
+#else
+   #include <osip/smsg.h>
+   #include <osip/port.h>
+#endif
 
 #include "siproxd.h"
 #include "rewrite_rules.h"

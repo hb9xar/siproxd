@@ -29,8 +29,13 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <osip/smsg.h>
-#include <osip/sdp.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+   #include <osip2/sdp.h>
+#else
+   #include <osip/smsg.h>
+   #include <osip/sdp.h>
+#endif
 
 #include "siproxd.h"
 #include "log.h"

@@ -26,7 +26,11 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#include <osip/smsg.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+#else
+   #include <osip/smsg.h>
+#endif
 
 #include "siproxd.h"
 #include "log.h"

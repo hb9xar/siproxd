@@ -30,7 +30,11 @@
 
 #include <getopt.h>
 
-#include <osip/smsg.h>
+#ifdef HAVE_OSIP2
+   #include <osip2/smsg.h>
+#else
+   #include <osip/smsg.h>
+#endif
 
 #include "siproxd.h"
 #include "log.h"
@@ -47,7 +51,7 @@ int sip_socket=0;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE"-"VERSION"-"BUILDSTR" (c) 2002 Thomas Ries\n" \
+PACKAGE"-"VERSION"-"BUILDSTR" ("LIBOSIPVER") (c) 2002-2003 Thomas Ries\n" \
 "\nUsage: siproxd [options]\n\n" \
 "options:\n" \
 "       --help              (-h) help\n" \
@@ -174,7 +178,7 @@ int main (int argc, char *argv[])
    }
 
 
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" ("LIBOSIPVER") started");
 /*
  * Main loop
  */

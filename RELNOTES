@@ -1,3 +1,73 @@
+Release Notes for siproxd-0.2.9
+===============================
+
+ - Fli4l OPT_SIP (still experimental) available, see
+   http://home.arcor.de/jsffm/fli4l/
+ - supports Linux and FreeBSD (other BSD derivates not yet tested)
+ - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
+   masquerading firewall
+ - Includes an RTP data stream proxy for *incoming* audio data
+   (outgoing RTP data should be handled by IP masquerading by the firewall)
+ - Port range to be used for incoming RTP traffic is configurable
+   (-> easy to set up apropriate firewall rules for incoming traffic)
+ - RTP proxy can handle multiple RTP streams (eg. audio + video)
+   within a single SIP session.
+ - Multiple local users/hosts can be masqueraded simultaneously
+ - Supports running in a chroot jail (configurable)
+ - Supports changing user-ID after startup (if started as root)
+ - All configuration done via one simple ascii configuration file
+ - Proxy Authentication for registration of local clients (User Agents)
+   with individual passwords for each user
+ - Logging to syslog in daemon mode
+ - Access control (IP based) for incoming traffic
+ - RPM support (release includes SRC rpm and binary RPMS for Redhat 6.0, 7.2)
+ - works with "dial-up" conenctions (dynamic IP addresses)
+ - The host part of UA registration entries can be masqueraded
+   (mask_host, masked_host config items) Siemens SIP phones seem to
+   need this 'feature'.
+
+Requirements:
+ - pthreads
+ - glibc2 / libc5 / uClibc
+ - libosip 0.8.8 (using libosip 0.9.6, proxy authentication does *not*
+                  work. Unclear if this is a bug in libosip or not)
+
+Currently tested on:
+- Redhat 6.0 (Kernel 2.2.x, Glibc)
+- Redhat 7.2 (Kernel 2.4.x, Glibc)
+- SUSE 5.3 (kernel 2.0.x, libc5)
+- Redhat 7.2 build against uClibc
+- should run on others Linux distributions as well.
+- FreeBSD 4.7-STABLE (compilation)
+
+Reported to build on:
+- OpenBSD 2.9
+
+
+Reported interoperability (tested with softphones):
+ - Linphone (local and remote UA) (http://www.linphone.org)
+ - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
+ - MSN messenger 4.6 (remote and local UA)
+
+Known bugs:
+ - using libosip-0.9.3, the proxy authentication does *NOT* work.
+   Yet is is unclear to me if this is a bug in libosip or siproxd.
+   libosip-0.8.8 works.
+ - with kphone 3.1 & libosip-0.*, authentication does NOT work at
+   all (due to 'parse error' in libosip)
+ - libosip2-1.99 has the same problem (kphone bug?)
+
+
+-----
+md5sum for siproxd-0.2.9.tar.gz: 	
+md5sum for siproxd-0.2.9-1rh60.i386.rpm:
+md5sum for siproxd-0.2.9-1rh72.i386.rpm:
+md5sum for siproxd-0.2.9-1.src.rpm:	
+
+GnuPG signature for siproxd-0.2.9.tar.gz archive:
+
+
+
 Release Notes for siproxd-0.2.8
 ===============================
 

@@ -1,3 +1,13 @@
+0.2.9
+=====
+- 28-May-2003:	- changes in rewriting SIP messages - not everything
+		  is blindly rewritten now (e.g. SUBSCRIBE is NOT)
+                - fixed resource leak (sockets) in get_ip_by_ifname
+- 26-Mar-2003:	- Bugfix: some potential NULL pointers passed to atoi()
+		  of optional fields in SIP message could lead to crash
+- 23-Mar-2003:	- send 403 FORBIDDEN response to requests addressed
+		  to proxy itself (-> SUBSCRIBE bug) 
+
 0.2.8
 =====
 - 23-Mar-2003:	- released 0.2.8
@@ -5,7 +15,7 @@
 - 22-Mar-2003:	- made compile on SUSE5.3 (libc5)
 		- added --enable-almost-static feature switch. This will
                   build siproxd statically linked against libosip & pthreads
-                  (for Flifl use)
+                  (for Fli4l use)
 - 16-Mar-2003:	- ERROR on unknown keywords in config file
 		- introduced INFO logging
 
