@@ -327,7 +327,7 @@ ACX_WHICH_GETHOSTBYNAME_R()
 
 AC_CHECK_FUNCS(getopt_long daemon syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
-AC_CHECK_FUNCS(socket bind select read send sendto)
+AC_CHECK_FUNCS(socket bind select read send sendto fcntl)
 AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf vsnprintf)
 AC_CHECK_FUNCS(fgets sscanf)
 AC_CHECK_FUNCS(hstrerror,,AC_CHECK_LIB(resolv,hstrerror,[

@@ -30,6 +30,9 @@
 /* Define if you have the daemon function.  */
 #undef HAVE_DAEMON
 
+/* Define if you have the fcntl function.  */
+#undef HAVE_FCNTL
+
 /* Define if you have the fgets function.  */
 #undef HAVE_FGETS
 

@@ -29,6 +29,7 @@
 
 #include <sys/time.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -190,6 +191,7 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
    struct sockaddr_in my_addr;
    int sts;
    int sock;
+   int flags;
 
    memset(&my_addr, 0, sizeof(my_addr));
 
@@ -199,13 +201,37 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
 
    sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
    if (sock < 0) {
-      ERROR("socket() call failed:%s",strerror(errno));
+      ERROR("socket() call failed: %s",strerror(errno));
       return 0;
    }
 
    sts=bind(sock, (struct sockaddr *)&my_addr, sizeof(my_addr));
    if (sts != 0) {
-      if (errflg) ERROR("bind failed:%s",strerror(errno));
+      if (errflg) ERROR("bind failed: %s",strerror(errno));
+      close(sock);
+      return 0;
+   }
+
+   /*
+    * It has been seen on linux 2.2.x systems that for some
+    * reason (kernel bug?) inside the RTP relay, select()
+    * claims that a certain file descriptor has data available to
+    * read, a subsequent call to read() or recv() the does block!!
+    * So lets make the FD's we are going to use non-blocking, so
+    * we will at least survive and not run into a deadlock.
+    *
+    * There is a way to (more or less) reproduce this effect:
+    * Make a local UA to local UA call and then very quickly do
+    * HOLD/unHOLD, several times.
+    */
+   flags = fcntl(sock, F_GETFL);
+   if (flags < 0) {
+      ERROR("fcntl(F_SETFL) failed: %s",strerror(errno));
+      close(sock);
+      return 0;
+   }
+   if (fcntl(sock, F_SETFL, (long) flags | O_NONBLOCK) < 0) {
+      ERROR("fcntl(F_SETFL) failed: %s",strerror(errno));
       close(sock);
       return 0;
    }

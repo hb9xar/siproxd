@@ -135,7 +135,7 @@ static void *rtpproxy_main(void *arg) {
       if ((num_fd<0) && (errno==EINTR)) {
          /*
           * wakeup due to a change in the proxy table:
-          * lock mutex copy master FD set and unlock
+          * lock mutex, copy master FD set and unlock
           */
          pthread_mutex_lock(&rtp_proxytable_mutex);
          memcpy(&fdset, &master_fdset, sizeof(fdset));
@@ -154,35 +154,64 @@ static void *rtpproxy_main(void *arg) {
       /* check for data available and send to destination */
       for (i=0;(i<RTPPROXY_SIZE) && (num_fd>0);i++) {
          if ( (rtp_proxytable[i].rtp_rx_sock != 0) && 
-	       FD_ISSET(rtp_proxytable[i].rtp_rx_sock, &fdset) ) {
+            FD_ISSET(rtp_proxytable[i].rtp_rx_sock, &fdset) ) {
             /* yup, have some data to send */
+            num_fd--;
 
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].rtp_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
-#if 0
-/* looks like for some reason sometimes the socket
-   is not yet ready (right after start of rtp stream) */
-            if (count<0) {
-               int j;
-               WARN("read() [fd=%i, %s:%i] returned error [%s]",
-               rtp_proxytable[i].rtp_rx_sock,
-               utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
-               rtp_proxytable[i].local_port, strerror(errno));
-               for (j=0; j<RTPPROXY_SIZE;j++) {
-                  DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i "
-                         "lp:%i, rp:%i",
-                         j,
-                         rtp_proxytable[j].rtp_rx_sock,
-                         rtp_proxytable[j].rtp_tx_sock,
-                         rtp_proxytable[j].callid_number,
-                         rtp_proxytable[j].callid_host,
-                         rtp_proxytable[j].direction,
-                         rtp_proxytable[j].local_port,
-                         rtp_proxytable[j].remote_port);
+            /* check if something went banana */
+            if (count < 0) {
+               /*
+                * It has been seen on linux 2.2.x systems that for some
+                * reason (kernel bug?) inside the RTP relay, select()
+                * claims that a certain file descriptor has data available to
+                * read, a subsequent call to read() or recv() the does block!!
+                * So lets make the FD's we are going to use non-blocking, so
+                * we will at least survive and not run into a deadlock.
+                * 
+                * We catch this here with this workaround (pronounce "hack")
+                * and hope that next time we pass by it will be ok again.
+                */
+               if (errno == EAGAIN) {
+                  continue;
                }
-           }
-#endif
+
+               /*
+                * I *MAY* receive ICMP destination unreachable messages when I
+                * try to send RTP traffic to a destination that is in HOLD
+                * (better: is not listening on the UDP port where I send
+                * my RTP data to).
+                * So I should *not* do this - or ignore errors originating
+                * by this -> ECONNREFUSED
+                *
+                * Note: This error is originating from a previous send() on the
+                *       same socket and has nothing to do with the read() we have
+                *       done above!
+                */
+               if (errno != ECONNREFUSED) {
+                  int j;
+                  WARN("read() [fd=%i, %s:%i] returned error [%i:%s]",
+                  rtp_proxytable[i].rtp_rx_sock,
+                  utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
+                  rtp_proxytable[i].local_port, errno, strerror(errno));
+                  for (j=0; j<RTPPROXY_SIZE;j++) {
+                     DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i "
+                            "lp:%i, rp:%i rip:%s",
+                            j,
+                            rtp_proxytable[j].rtp_rx_sock,
+                            rtp_proxytable[j].rtp_tx_sock,
+                            rtp_proxytable[j].callid_number,
+                            rtp_proxytable[j].callid_host,
+                            rtp_proxytable[j].direction,
+                            rtp_proxytable[j].local_port,
+                            rtp_proxytable[j].remote_port,
+                            utils_inet_ntoa(rtp_proxytable[j].remote_ipaddr));
+                  } /* for j */
+              } /* if errno != ECONNREFUSED */
+            } /* count < 0 */
+
             /*
              * forwarding an RTP packet only makes sense if we really
              * have got some data in it (count > 0)
@@ -217,7 +246,7 @@ static void *rtpproxy_main(void *arg) {
                         rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
                         DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i) <-> entry %i (fd=%i)",
                                j, rtp_proxytable[j].rtp_rx_sock,
-                               i, rtp_proxytable[j].rtp_rx_sock);
+                               i, rtp_proxytable[i].rtp_rx_sock);
                         break;
                      }
                   }
@@ -248,8 +277,6 @@ static void *rtpproxy_main(void *arg) {
 
             /* update timestamp of last usage */
             rtp_proxytable[i].timestamp=t;
-
-	    num_fd--;
          }
       } /* for i */
 

@@ -68,10 +68,19 @@ int security_check_raw(char *sip_buffer, int size){
  */
 int security_check_sip(osip_message_t *sip){
 
-   /* check for existing SIP URI in request */
-   if (MSG_IS_REQUEST(sip) && (sip->req_uri == NULL)) {
-      ERROR("security check failed: NULL SIP URI");
-      return STS_FAILURE;
+   if (MSG_IS_REQUEST(sip)) {
+      /* check for existing SIP URI in request */
+      if ((sip->req_uri == NULL) || (sip->req_uri->scheme == NULL)) {
+         ERROR("security check failed: NULL SIP URI");
+         return STS_FAILURE;
+      }
+
+      /* check SIP URI scheme */
+      if (osip_strcasecmp(sip->req_uri->scheme, "sip")) {
+         ERROR("security check failed: unknown scheme: %s",
+               sip->req_uri->scheme);
+         return STS_FAILURE;
+      }
    }
 
    /* check for existing To: header */
@@ -79,13 +88,11 @@ int security_check_sip(osip_message_t *sip){
       ERROR("security check failed: NULL To Header");
       return STS_FAILURE;
    }
-
    /* check for existing To: URL */
    if (sip->to->url == NULL) {
       ERROR("security check failed: NULL To->url Header");
       return STS_FAILURE;
    }
-
     /* check for existing TO URL host*/
    if (sip->to->url->host == NULL) {
       ERROR("security check failed: NULL To->url->host Header");
@@ -97,18 +104,17 @@ int security_check_sip(osip_message_t *sip){
       ERROR("security check failed: NULL From Header");
       return STS_FAILURE;
    }
-
    /* check for existing FROM URL */
    if (sip->from->url == NULL) {
       ERROR("security check failed: NULL From->url Header");
       return STS_FAILURE;
    }
-
    /* check for existing FROM URL host*/
    if (sip->from->url->host == NULL) {
       ERROR("security check failed: NULL From->url->host Header");
       return STS_FAILURE;
    }
+
 
    /* TODO: still way to go here ... */
    return STS_SUCCESS;
