@@ -1,6 +1,7 @@
 0.2.7
 =====
--  9-Mar-2003:	- replaced get_ip_by_ifname by a simple one (to be *BSD tested)
+- 15-Mar-2003:	- released 0.2.7
+-  9-Mar-2003:	- replaced get_ip_by_ifname by a simpler (has to be *BSD tested)
 		- removed old host-name based style for in/outbound interface
                   configuration. This is only not done via interface names
                 - experimental: The host part of UA registration entries
