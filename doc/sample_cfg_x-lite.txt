@@ -74,6 +74,47 @@ Advanced System Settings:
 1) must be a hostname that resolves to the public IP address
    siproxd uses (outbound interface)
    
+   Codec Settings
+      g711u
+         Enabled: Yes
+         Magic Number: 0
+         Samples Per Frame: 160
+         DTMF Samples per Frame: 160
+         DTMF Prefix Force On: -
+         DTMF Prefix Force Off: -
+      g711a
+         Enabled: Yes
+         Magic Number: 8
+         Samples Per Frame: 160
+         DTMF Samples per Frame: 160
+         DTMF Prefix Force On: -
+         DTMF Prefix Force Off: -
+      gsm
+         Enabled: No
+         Magic Number: 3
+         Samples Per Frame: 160
+         DTMF Prefix Force On: -
+         DTMF Prefix Force Off: -
+      iLBC
+         Enabled: No
+         Magic Number: 98
+         Samples Per Frame: 240
+         DTMF Prefix Force On: -
+         DTMF Prefix Force Off: -
+      Speex
+         Enabled: No
+         Magic Number: 97
+         Speex Quality: 97
+         Speex Complexity: 4
+         DTMF Prefix Force On: -
+         DTMF Prefix Force Off: -
+   
+   Codec Order
+      g711u: 4
+      g711a: 5
+      gsm:   3
+      iLBC:  1
+      Speex: 2
 
 
 Remote registration at 3rd party registrar
