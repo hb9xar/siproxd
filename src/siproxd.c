@@ -246,13 +246,15 @@ INFO("got packet [%i bytes]from %s [%s]", i, inet_ntoa(from.sin_addr), tmp);}
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_REG) {
             osip_uri_t *url;
-            struct in_addr addr1, addr2;
+            struct in_addr addr1, addr2, addr3;
 
             url = osip_message_get_uri(my_msg);
             sts = get_ip_by_host(url->host, &addr1);
             sts = get_ip_by_ifname(configuration.inbound_if,&addr2);
+            sts = get_ip_by_ifname(configuration.outbound_if,&addr3);
 
-            if (memcmp(&addr1, &addr2, sizeof(addr1)) == 0) {
+            if ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+                (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) {
                /* I'm the registrar, send response myself */
                sts = register_client(my_msg, 0);
                sts = register_response(my_msg, sts);
