@@ -125,7 +125,7 @@ void *rtpproxy_main(void *arg) {
    memcpy(&fdset, &master_fdset, sizeof(fdset));
    fd_max=master_fd_max;
 
-/* test */
+   /* loop forever... */
    for (;;) {
 
       tv.tv_sec = 5;
@@ -147,10 +147,6 @@ void *rtpproxy_main(void *arg) {
          if ( (rtp_proxytable[i].sock != 0) && 
 	      FD_ISSET(rtp_proxytable[i].sock, &fdset) ) {
             /* yup, have some data to send */
-
-/* don't... it is a mess on the screen...
-DEBUGC(DBCLASS_RTP,"got data on sock=%i",rtp_proxytable[i].sock);
-*/
 
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
@@ -202,9 +198,9 @@ DEBUGC(DBCLASS_RTP,"got data on sock=%i",rtp_proxytable[i].sock);
 
 
 
-/******
+/*
  * helper routines to control the RTP proxy thread
- ******/
+ */
 
 /*
  * start an rtp stream on the proxy

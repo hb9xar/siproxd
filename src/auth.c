@@ -61,7 +61,7 @@ int authenticate_proxy(sip_t *request) {
    proxy_authorization_t *proxy_auth;
    
    /* required by config? */
-   if (configuration.proxy_auth_realm==NULL) {
+   if (configuration.proxy_auth_realm == NULL) {
       return STS_SUCCESS;
    }
    
@@ -72,9 +72,8 @@ int authenticate_proxy(sip_t *request) {
       return STS_NEED_AUTH;
    }
 
-
    /* verify supplied authentication */
-   if (auth_check(proxy_auth) == 0) {
+   if (auth_check(proxy_auth) == STS_SUCCESS) {
       DEBUGC(DBCLASS_AUTH,"proxy-auth succeeded");
       return STS_SUCCESS;
    }

@@ -72,7 +72,8 @@ int register_client(sip_t *my_msg) {
    if (sts == STS_FAILURE) {
    /* failed */
       WARN("proxy authentication failed for %s@%s",
-           my_msg->to->url->username,my_msg->to->url->host);
+           (my_msg->to->url->username)? my_msg->to->url->username : "*NULL*",
+           my_msg->to->url->host);
       return STS_FAILURE;
    } else if (sts == STS_NEED_AUTH) {
       /* needed */
@@ -99,7 +100,7 @@ int register_client(sip_t *my_msg) {
    /* evaluate Expires Header field */
    msg_getexpires(my_msg, 0, &expires_hdr);
 
-   if (expires_hdr) {
+   if (expires_hdr && expires_hdr->hvalue) {
       expires=atoi(expires_hdr->hvalue);
    } else {
       /* it seems the expires filed in not present everywhere... */

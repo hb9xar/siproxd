@@ -130,10 +130,14 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
       DEBUGC(DBCLASS_NET,"allocated send socket %i",*sock);
    }
 
+   if (buffer == NULL) {
+      ERROR("sipsock_send_udp go tNULL buffer");
+      return STS_FAILURE;
+   }
+
    dst_addr.sin_family = AF_INET;
    memcpy(&dst_addr.sin_addr.s_addr, &addr, sizeof(struct in_addr));
    dst_addr.sin_port= htons(port);
-
 
    if (allowdump) {
       DEBUGC(DBCLASS_NET,"send UDP packet to %s: %i",

@@ -35,13 +35,71 @@
 
 /*
  * do security and integrity checks on the received packet
+ * (raw buffer)
  *
  * RETURNS
  *	STS_SUCCESS if ok 
  * 	STS_FAILURE if the packed did not pass the checks
  */
-int security_check(char *sip_buffer, int size){
+int security_check_raw(char *sip_buffer, int size){
 
-/* TODO: still way to go here ... */
+   /* TODO: still way to go here ... */
+   return STS_SUCCESS;
+}
+
+
+/*
+ * do security and integrity checks on the received packet
+ * (parsed buffer)
+ *
+ * RETURNS
+ *	STS_SUCCESS if ok 
+ * 	STS_FAILURE if the packed did not pass the checks
+ */
+int security_check_sip(sip_t *sip){
+
+   /* check for existing SIP URI */
+   if (sip->strtline == NULL) {
+      ERROR("security check failed: NULL SIP URI");
+      return STS_FAILURE;
+   }
+
+   /* check for existing TO */
+   if (sip->to == NULL) {
+      ERROR("security check failed: NULL To Header");
+      return STS_FAILURE;
+   }
+
+   /* check for existing TO URL */
+   if (sip->to->url == NULL) {
+      ERROR("security check failed: NULL To->url Header");
+      return STS_FAILURE;
+   }
+
+    /* check for existing TO URL host*/
+   if (sip->to->url->host == NULL) {
+      ERROR("security check failed: NULL To->url->host Header");
+      return STS_FAILURE;
+   }
+
+  /* check for existing FROM */
+   if (sip->from == NULL) {
+      ERROR("security check failed: NULL From Header");
+      return STS_FAILURE;
+   }
+
+   /* check for existing FROM URL */
+   if (sip->from->url == NULL) {
+      ERROR("security check failed: NULL From->url Header");
+      return STS_FAILURE;
+   }
+
+   /* check for existing FROM URL host*/
+   if (sip->from->url->host == NULL) {
+      ERROR("security check failed: NULL From->url->host Header");
+      return STS_FAILURE;
+   }
+
+   /* TODO: still way to go here ... */
    return STS_SUCCESS;
 }

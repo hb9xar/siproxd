@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
       if (access == 0) continue; /* there are no resources to free */
 
       /* integrity checks */
-      sts=security_check(buff, i);
+      sts=security_check_raw(buff, i);
       if (sts != STS_SUCCESS) continue; /* there are no resources to free */
 
       /* parse the received message */
@@ -212,9 +212,14 @@ int main (int argc, char *argv[])
          goto end_loop; /* skip and free resources */
       }
 
+      /* integrity checks - parsed buffer*/
+      sts=security_check_sip(my_msg);
+      if (sts != STS_SUCCESS) continue; /* there are no resources to free */
+
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
-	     my_msg->strtline->sipmethod);
+	     (my_msg->strtline->sipmethod)?
+              my_msg->strtline->sipmethod : "NULL") ;
 
       /* if RQ REGISTER, just register and send an answer */
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {

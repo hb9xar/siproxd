@@ -41,15 +41,20 @@ int proxy_gen_response(sip_t *request, int code);			/*X*/
 int proxy_add_myvia (sip_t *request, int interface);			/*X*/
 int proxy_del_myvia (sip_t *response);					/*X*/
 int proxy_rewrite_invitation_body(sip_t *mymsg);			/*X*/
+int proxy_rewrite_request_uri(sip_t *mymsg, int idx);			/*X*/
 
 /* utils.c */
-sip_t * msg_make_template_reply (sip_t * request, int code);
-int check_vialoop (sip_t *my_msg);					/*X*/
-int is_via_local (via_t *via);						/*X*/
-int get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
-int compare_url(url_t *url1, url_t *url2);				/*X*/
+int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
 void secure_enviroment (void);
-int get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
+int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
+
+/* sip_utils.c */
+sip_t * msg_make_template_reply (sip_t * request, int code);
+int  check_vialoop (sip_t *my_msg);					/*X*/
+int  is_via_local (via_t *via);						/*X*/
+int  compare_url(url_t *url1, url_t *url2);				/*X*/
+int  is_sipuri_local (sip_t *sip);					/*X*/
+int  check_rewrite_rq_uri (sip_t *sip);					/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
@@ -65,7 +70,8 @@ int rtp_stop_fwd (call_id_t *callid, int nolock);			/*X*/
 int accesslist_check(struct sockaddr_in from);
 
 /* security.c */
-int security_check(char *sip_buffer, int size);				/*X*/
+int security_check_raw(char *sip_buffer, int size);				/*X*/
+int security_check_sip(sip_t *sip);					/*X*/
 
 /* auth.c */
 int authenticate_proxy(sip_t *request);					/*X*/
@@ -153,6 +159,7 @@ struct siproxd_config {
 #define STS_FAILURE	1	/* FAILURE				*/
 #define STS_FALSE	1	/* FALSE				*/
 #define STS_NEED_AUTH	1001	/* need authentication			*/
+
 
 /*
  * optional hacks

@@ -86,8 +86,8 @@ int proxy_request (sip_t *request) {
       if (compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=REQTYP_INCOMING;
          DEBUGC(DBCLASS_PROXY,"incoming request from %s@%s from outbound",
-	        request->from->url->username,
-		request->from->url->host);
+	   request->from->url->username? request->from->url->username:"*NULL*",
+           request->from->url->host? request->from->url->host: "*NULL*");
 	 break;
       }
 
@@ -95,8 +95,8 @@ int proxy_request (sip_t *request) {
       if (compare_url(request->from->url, urlmap[i].reg_url)==STS_SUCCESS) {
          type=REQTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
-	        request->from->url->username,
-		request->from->url->host);
+	   request->from->url->username? request->from->url->username:"*NULL*",
+           request->from->url->host? request->from->url->host: "*NULL*");
 	 break;
       }
    }
@@ -105,6 +105,34 @@ int proxy_request (sip_t *request) {
 /*
  * ok, we got a request that we are allowed to process.
  */
+#ifdef HACK1
+/* linphone-0.9.0pre4
+   take To address and place it into URI (at least the host part)
+   Linphone-0.9.0pre4 puts the proxy host in the request URI
+   if OUTBOUND proxy is activated!
+   This is only a hack to recreate the proper final request URI.
+   This issue has been fixed in 0.9.1pre1
+*/
+{
+   header_t *header_ua;
+
+   url=msg_geturi(request);
+   msg_getuser_agent(request,0,&header_ua);
+
+   if ( header_ua && header_ua->hvalue &&
+        (strcmp(header_ua->hvalue,"oSIP/Linphone-0.8.0")==0) ) {
+      /* if an outgoing request, try to fix the SIP URI */
+      if (type == REQTYP_OUTGOING) {
+         WARN("broken linphone-0.8.0: restoring SIP URI");
+	 free (url->host);
+	 url->host=malloc(strlen(request->to->url->host));
+	 strcpy(url->host,request->to->url->host);
+
+      }
+   }
+}
+#endif
+
    switch (type) {
   /*
    * from an external host to the internal masqueraded host
@@ -112,30 +140,9 @@ int proxy_request (sip_t *request) {
    case REQTYP_INCOMING:
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
-
-      /* THIS IS UGLY!!! I dont like it */
-      DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
-      url=msg_geturi(request);
-      free(url->host);url->host=NULL;
-{
-      char *host;
-      char *port;
-      /* set the true host */
-      if(urlmap[i].true_url->host) {
-	 host = (char *)malloc(strlen(urlmap[i].true_url->host)+1);
-	 memcpy(host, urlmap[i].true_url->host, strlen(urlmap[i].true_url->host));
-	 host[strlen(urlmap[i].true_url->host)]='\0';
-	 url_sethost(url, host);
+      if (check_rewrite_rq_uri(request)) {
+         proxy_rewrite_request_uri(request, i);
       }
-
-      /* set the true port */
-      if(urlmap[i].true_url->port) {
-	 port = (char *)malloc(strlen(urlmap[i].true_url->port)+1);
-	 memcpy(port, urlmap[i].true_url->port, strlen(urlmap[i].true_url->port));
-	 port[strlen(urlmap[i].true_url->port)]='\0';
-	 url_setport(url, port);
-      }
-}
 
       /* add my Via header line (inbound interface)*/
       sts = proxy_add_myvia(request, 1);
@@ -155,6 +162,23 @@ int proxy_request (sip_t *request) {
    * from the internal masqueraded host to an external host
    */
    case REQTYP_OUTGOING:
+      /* if it is addressed to myself, then it must be some request
+       * method that I as a proxy do not support. Reject */
+      if (is_sipuri_local(request) == STS_TRUE) {
+         url=msg_geturi(request);
+         WARN("unsupported request [%s] directed to proxy from %s@%s -> %s@%s",
+	    request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
+	    request->from->url->username? request->from->url->username:"*NULL*",
+	    request->from->url->host? request->from->url->host : "*NULL*",
+	    url->username? url->username : "*NULL*",
+	    url->host? url->host : "*NULL*");
+
+         proxy_gen_response(request, 403 /*forbidden*/);
+
+         return STS_FAILURE;
+      }
+
+
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
          sts = proxy_rewrite_invitation_body(request);
@@ -171,8 +195,8 @@ int proxy_request (sip_t *request) {
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
             DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           (contact->url->username) ? contact->url->username : "*NULL*",
-                   (contact->url->host) ? contact->url->host : "*NULL*",
+	           (contact->url->username)? contact->url->username : "*NULL*",
+                   (contact->url->host)? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
             list_remove(request->contacts,0);
@@ -201,17 +225,21 @@ int proxy_request (sip_t *request) {
    default:
       url=msg_geturi(request);
       DEBUGC(DBCLASS_PROXY,"proxy_request: refused to proxy");
-      WARN("request from/to unregistered UA (RQ: %s@%s -> %s@%s)",
-	        request->from->url->username,
-		request->from->url->host,
-	        url->username,
-		url->host);
-/* some clients seem to run amok when passing back a negative response
- * so we simply drop the request silently
+      WARN("request [%s] from/to unregistered UA (RQ: %s@%s -> %s@%s)",
+           request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
+	   request->from->url->username? request->from->url->username:"*NULL*",
+	   request->from->url->host? request->from->url->host : "*NULL*",
+	   url->username? url->username : "*NULL*",
+	   url->host? url->host : "*NULL*");
+
+/*
+ * if we end up here, we deal with a request that we have
+ * no proxy entry - so it must be ment to be for the proxy itself.
+ * As we only deal with REGISTER requests, we will anser this one
+ * with FORBIDDEN
  */
-#if 0
       proxy_gen_response(request, 403 /*forbidden*/);
-#endif
+
       return STS_FAILURE;
    }
 
@@ -219,33 +247,12 @@ int proxy_request (sip_t *request) {
 /* get target address from request URL */
    url=msg_geturi(request);
 
-#ifdef HACK1
-/* linphone-0.9.0pre4
-   take To address and place it into URI (at least the host part)
-   Linphone-0.9.0pre4 puts the proxy host in the request URI
-   if OUTBOUND proxy is activated!
-   This is only a hack to recreate the proper final request URI.
-   This issue has been fixed in 0.9.1pre1
-*/
-{
-   header_t *header_ua;
-   msg_getuser_agent(request,0,&header_ua);
-
-   if ( header_ua && header_ua->hvalue &&
-        (strcmp(header_ua->hvalue,"oSIP/Linphone-0.8.0")==0) ) {
-      /* if an outgoing request, try to fix the SIP URI */
-      if (type == REQTYP_OUTGOING) {
-         WARN("broken linphone-0.8.0: restoring SIP URI");
-	 free (url->host);
-	 url->host=malloc(strlen(request->to->url->host));
-	 strcpy(url->host,request->to->url->host);
-
-      }
+   if (url) {
+      sts = get_ip_by_host(url->host, &addr);
+   } else {
+      ERROR("proxy_request: got NULL URL");
+      return STS_FAILURE;
    }
-}
-#endif
-
-   sts = get_ip_by_host(url->host, &addr);
 
    sts = msg_2char(request, &buffer);
    if (sts != 0) {
@@ -257,7 +264,7 @@ int proxy_request (sip_t *request) {
    if (url->port) {
       port=atoi(url->port);
    } else {
-      port=configuration.sip_listen_port;
+      port=SIP_PORT;
    }
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
@@ -324,8 +331,8 @@ int proxy_response (sip_t *response) {
       if (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=RESTYP_INCOMING;
          DEBUGC(DBCLASS_PROXY,"incoming response for %s@%s from outbound",
-	        response->from->url->username,
-		response->from->url->host);
+	   response->from->url->username? response->from->url->username:"*NULL*",
+	   response->from->url->host? response->from->url->host : "*NULL*");
 	 break;
       }
 
@@ -333,8 +340,8 @@ int proxy_response (sip_t *response) {
       if (compare_url(response->to->url, urlmap[i].masq_url)==STS_SUCCESS) {
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
-	        response->from->url->username,
-		response->from->url->host);
+	   response->from->url->username? response->from->url->username:"*NULL*",
+	   response->from->url->host? response->from->url->host : "*NULL*");
 	 break;
       }
    }
@@ -371,7 +378,7 @@ int proxy_response (sip_t *response) {
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
             DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-	           (contact->url->username) ? contact->url->username : "*NULL*",
+	           (contact->url->username) ? contact->url->username:"*NULL*",
                    (contact->url->host) ? contact->url->host : "*NULL*",
 		   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
             /* remove old entry */
@@ -390,23 +397,23 @@ int proxy_response (sip_t *response) {
    default:
       DEBUGC(DBCLASS_PROXY,"proxy_response: refused to proxy");
       WARN("response from/to unregistered UA (%s@%s)",
-	        response->from->url->username,
-		response->from->url->host);
-/* some clients seem to run amok when passing back a negative response */
-#if 0
-      proxy_gen_response(response, 403 /*forbidden*/);
-#endif
+	   response->from->url->username? response->from->url->username:"*NULL*",
+	   response->from->url->host? response->from->url->host : "*NULL*");
       return STS_FAILURE;
    }
 
    /* get target address from VIA header */
    via = (via_t *) list_get (response->vias, 0);
+   if (via == NULL) {
+      ERROR("proxy_response: list_get via failed");
+      return STS_FAILURE;
+   }
 
    sts = get_ip_by_host(via->host, &addr);
 
    sts = msg_2char(response, &buffer);
    if (sts != 0) {
-      ERROR("proxy_request: msg_2char failed");
+      ERROR("proxy_response: msg_2char failed");
       return STS_FAILURE;
    }
 
@@ -414,7 +421,7 @@ int proxy_response (sip_t *response) {
    if (via->port) {
       port=atoi(via->port);
    } else {
-      port=configuration.sip_listen_port;
+      port=SIP_PORT;
    }
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
@@ -438,6 +445,7 @@ int proxy_gen_response(sip_t *request, int code) {
    sip_t *response;
    int sts;
    via_t *via;
+   int port;
    char *buffer;
    struct in_addr addr;
 
@@ -471,8 +479,15 @@ DEBUGC(DBCLASS_PROXY,"response=%p",response);
       return STS_FAILURE;
    }
 
+
+   if (via->port) {
+      port=atoi(via->port);
+   } else {
+      port=SIP_PORT;
+   }
+
    /* send to destination */
-   sipsock_send_udp(&sip_socket, addr, atoi(via->port),
+   sipsock_send_udp(&sip_socket, addr, port,
                     buffer, strlen(buffer), 1);
 
    /* free the resources */
@@ -617,10 +632,16 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
       if (sdp_m_port_get(sdp, media_stream_no) == NULL) break;
 
       /* start an RTP proxying stream */
-      inb_clnt_port = atoi(sdp_m_port_get(sdp, media_stream_no));
-      rtp_start_fwd(msg_getcall_id(mymsg), media_stream_no,
-                    outb_addr, &outb_rtp_port,
-	            lcl_clnt_addr, inb_clnt_port);
+      if (sdp_m_port_get(sdp, media_stream_no)) {
+         inb_clnt_port=atoi(sdp_m_port_get(sdp, media_stream_no));
+         rtp_start_fwd(msg_getcall_id(mymsg), media_stream_no,
+                       outb_addr, &outb_rtp_port,
+	               lcl_clnt_addr, inb_clnt_port);
+      } else {
+         /* no port defined - skip entry */
+         continue;
+      }
+
    }
 
 
@@ -767,5 +788,41 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
    free(tmp2);
 }
    free(oldbody);
+   return STS_SUCCESS;
+}
+
+
+/*
+ * PROXY_REWRITE_INVITATION_BODY
+ *
+ * rewrites the outgoing INVITATION packet
+ * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int proxy_rewrite_request_uri(sip_t *mymsg, int idx){
+   char *host;
+   char *port;
+   url_t *url;
+
+   DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
+   url=msg_geturi(mymsg);
+   free(url->host);url->host=NULL;
+
+   /* set the true host */
+   if(urlmap[idx].true_url->host) {
+      host = (char *)malloc(strlen(urlmap[idx].true_url->host)+1);
+      memcpy(host, urlmap[idx].true_url->host, strlen(urlmap[idx].true_url->host));
+      host[strlen(urlmap[idx].true_url->host)]='\0';
+      url_sethost(url, host);
+   }
+
+   /* set the true port */
+   if(urlmap[idx].true_url->port) {
+      port = (char *)malloc(strlen(urlmap[idx].true_url->port)+1);
+      memcpy(port, urlmap[idx].true_url->port, strlen(urlmap[idx].true_url->port));
+      port[strlen(urlmap[idx].true_url->port)]='\0';
+      url_setport(url, port);
+   }
    return STS_SUCCESS;
 }

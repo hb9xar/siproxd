@@ -51,9 +51,12 @@ int process_aclist (char *aclist, struct sockaddr_in from);
 int accesslist_check (struct sockaddr_in from) {
    int access = 0;
 
-   DEBUGC(DBCLASS_ACCESS,"deny  list (SIP):%s",configuration.hosts_deny_sip);
-   DEBUGC(DBCLASS_ACCESS,"allow list (SIP):%s",configuration.hosts_allow_sip);
-   DEBUGC(DBCLASS_ACCESS,"allow list (REG):%s",configuration.hosts_allow_reg);
+   DEBUGC(DBCLASS_ACCESS,"deny  list (SIP):%s",
+      configuration.hosts_deny_sip? configuration.hosts_deny_sip : "*NULL*");
+   DEBUGC(DBCLASS_ACCESS,"allow list (SIP):%s",
+      configuration.hosts_allow_sip? configuration.hosts_allow_sip : "*NULL*");
+   DEBUGC(DBCLASS_ACCESS,"allow list (REG):%s",
+      configuration.hosts_allow_reg? configuration.hosts_allow_reg : "*NULL*");
 
 /*
  * check DENY list
