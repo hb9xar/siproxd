@@ -1,5 +1,7 @@
 0.5.6
 =====
+  20-May-2004:  - Released 0.5.6
+                - some cleanup in configure.in
   14-May-2004:  - FAQ update
   16-May-2004:  - INFO/WARN/ERROR are always logged to syslog, even
                   if running in foreground (syslog still can be silenced

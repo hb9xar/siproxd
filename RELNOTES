@@ -4,7 +4,7 @@ Release Notes for siproxd-0.5.6
 Major changes since 0.5.5:
  - Better recognition of redirected incoming requests (incoming calls
    from sipgate.de are now working)
- - Bugfix for local registration iwth linphone
+ - Bugfix for local registration with linphone (authentication)
  - made some corrections for building siproxd against uClibc for use
    with fli4l 2.1.7.
 
@@ -47,10 +47,12 @@ Currently tested on:
   This is my main development and testing environment. Other platforms
   are not extensively tested by myself.
 
-Reported to build on:
-- FreeBSD 4.7-STABLE
-- OpenBSD 2.9
-- Solaris2
+Builds on:
+- Linux     (Fedora Core1)
+- FreeBSD   (FreeBSD 4.10-BETA)
+- OpenBSD   (OpenBSD 3.4 GENERIC#18)
+- SunOS     (SunOS 5.9)
+- Mac OS X  (Darwin 6.8)
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
@@ -78,9 +80,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.6.tar.gz: 	
+md5sum for siproxd-0.5.6.tar.gz: 	5983b09cbd395d87d080274f58534c9a
 
 GnuPG signature for siproxd-0.5.6.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBArNFWCfzBioe83JQRAmk9AKCCwXQlyNr+Pv3AB17R94XhkzrIcACfa5wL
+mqyRHk50D5e9o6H8iiCWHV4=
+=1n4d
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

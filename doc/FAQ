@@ -259,4 +259,64 @@ A:
    Media Max Port: 7080			   (RTP ports)
 
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
  
+...
+> Hier ist 40Mb logs mit overload problem. Wir haben auch probleme um neue 
+> verbindung einzustellen. Es ist wie ob den RTP timeout fur alle UA 
+> hinter den proxy bloquiert wenn eine bindung geschlossen wird. Nach 5 mn 
+> (oder 3 in unsere buro) geht es wieder ok (oder eine restart von 
+> siproxd). Manschmal, wenn eine von den beiden endpunkt die kommunikation 
+> schlisst, ist die andere immer noch up und denkt das die verbingun 
+> existiert. Wir haben den ganzen tag getestet mit lezte version von 17May:
+> 
+> 2 intranet hinten siproxd, der eine ohne seine UA zu registrieren 
+> (192.168.1.0/24). Der andere hat 1 BudgeTone, 1 HandyTone, 2 xlite ten 
+> und 1 linphone als klient (192.168.10.0/24).
+
+ACHTUNG!
+Siproxd unterstützt zur Zeit lediglich 1 internes Netz und ein externes
+Netz. ALLE lokalen UAs *müssen* sich:
+
+ - entweder bei SIPROXD registrieren
+
+oder
+
+ - sich bei einem externen REGSITRAR registrieren (siproxd muss als
+   OUTBOUND PROXY konfiguriert sein).
+
+
+Werden diese Spielregeln nicht eingehalten kommt es zu verschiedenen
+komischen Effekten, auch solche die Du beschrieben hast.
+
+
+
+UA1--+
+     |
+UA2--+
+     |
+UA3--+                                                +-----------+
+     |         +-----------+                          | externer  |
+     +---------| siproxd & |------>>Internet     <<---| Registrar |
+               | NAT       |                          +-----------+
+               +-----------+
+
+Spielregeln:
+- ALLE UAs (UA1, UA2, UA3) benutzen siproxd also OUTBOUND proxy
+- ALLE UAs (UA1, UA2, UA3) registrieren sich entweder direkt bei
+  siproxd ODER bei "externer Registrar"
+
+  Wenn Registrierung bei siproxd:
+  - SIP URL (address of record) hat die form  SIP:<user>@<host>
+  - <user> ist frei wählbar
+  - <host> MUSS einen DNS Eintrag haben, der auf die public IP
+    von siproxd auflöst
+
+
+  Wenn Registrierung bei "externer Registrar":
+  - <user> und <domain> wird von "externer Registrar" definiert
+
+
+

@@ -78,6 +78,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
@@ -153,6 +156,9 @@
 /* Define to 1 if you have the `syslog' function. */
 #undef HAVE_SYSLOG
 
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -226,6 +232,9 @@
 /* building on Linux platform */
 #undef _LINUX
 
+/* building on Mac OSX platform */
+#undef _MACOSX
+
 /* building on NetBSD platform */
 #undef _NETBSD
 
@@ -234,6 +243,9 @@
 
 /* building on Solaris2 platform */
 #undef _SOLARIS2
+
+/* building on unknown platform */
+#undef _UNKNOWN
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
