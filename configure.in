@@ -2,7 +2,8 @@ dnl
 dnl	History
 dnl	-------
 dnl	before time		a lot happend before start of history
-dnl	8-Sep-2002   tries	included more tests for used functions
+dnl	 8-Sep-2002	tries	included more tests for used functions
+dnl	17-Sep-2002	tries	fail configure if needed libs not there
 dnl
 dnl
 dnl
@@ -15,7 +16,7 @@ dnl ******************************************************************
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=2
-SPD_MICRO_VERSION=2
+SPD_MICRO_VERSION=3
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
 dnl *********************************************************************
@@ -31,8 +32,10 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 
 dnl Checks for libraries.
-AC_CHECK_LIB(osip, parser_init)
-AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(osip, parser_init,,
+             echo "*** ERROR: libosip is required!";exit 1;)
+AC_CHECK_LIB(pthread, pthread_create,,
+             echo "*** ERROR: pthreads is required!"; exit 1;)
 
 dnl Checks for header files.
 AC_HEADER_STDC

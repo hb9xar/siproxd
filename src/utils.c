@@ -263,7 +263,7 @@ int compare_url(url_t *url1, url_t *url2) {
    if ((url1 == NULL) || (url2 == NULL)) return STS_FAILURE;
 
    /* comparison of hosts should be based on IP addresses, no? */
-   DEBUGC(DBCLASS_BABBLE, "comparng urls: %s@%s -> %s@%s",
+   DEBUGC(DBCLASS_BABBLE, "comparing urls: %s@%s -> %s@%s",
          url1->username, url1->host, url2->username, url2->host);
    if ((strcmp(url1->username, url2->username)==0) &&
        (strcmp(url1->host, url2->host)==0)) {

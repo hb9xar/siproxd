@@ -20,3 +20,6 @@
 
 
 EXTRA_DIST = siproxd.conf.example FAQ
+
+install-data-local:
+	$(INSTALL_DATA) siproxd.conf.example /etc/

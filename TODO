@@ -12,7 +12,7 @@ TODOs, in random order:
 - support for "full duplex" RTP proxying
 
 - portability to other platforms / operating systems
-  first goal: other Unixes
+  first goal: other Unixes (porting to FreeBSD is queued)
 
 - security tests for received SIP messages (function securitycheck)
 

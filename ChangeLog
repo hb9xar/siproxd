@@ -1,10 +1,18 @@
+0.2.3
+=====
+-  2-Nov-2002:	- 'make install' install now a templace config file
+		  (/etc/siproxd.conf.example)
+- 24-Oct-2002:	- small docu updates in README
+- 17-Oct-2002:	- fix in ./configure - abort on missing libraries
+
 0.2.2
 =====
-- 12-Oct-2002:	- '-d' commandline option supersedes condig file setting
+- 12-Oct-2002:	- Released version 0.2.2
+		- '-d' commandline option supersedes config file setting
 		  of debug_level.
-		- reworked concept return status from functions - uses
-		  now symbolic values
-		- added individual user passowrds for authentication
+		- reworked return status from functions - now uses
+		  symbolic values and is more consistent
+		- added individual user passwords for authentication
 
 0.2.1
 =====

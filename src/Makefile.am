@@ -32,7 +32,7 @@ EXTRA_DIST = .buildno
 
 #
 # count BUILDs - each time increment by one and define the
-# C macro BUILDNO. bing it to a file everybody includes (log.h)
+# C macro BUILDNO. bind it to a file everybody includes (log.h)
 #
 log.h: increment_build
 

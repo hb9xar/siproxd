@@ -85,7 +85,7 @@ Scenario
  ! IntHost     !---------------! Firewall     !------------>>  
  !             !               !              !   
  +-------------+	       +--------------+
-                                      :
+                           eth0       :        ppp0
 
 
 
@@ -101,14 +101,29 @@ Scenario
  - foo.bar.org is the domain name corresponding to the public IP address
    of the firewall (eg use some dynamic DNS service [1])
 
- Firewall rules for incomming traffic (ipchains example):
+IPCHAINS:
+ Firewall rules for incomming traffic:
  $ ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
  $ ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
+
+ Firewall rule for masquerading outgoing traffic:
+ $ ipchains -A forward -i ppp0 -j MASQ -s 10.0.0.0/24 -d 0.0.0.0/0
+
+IPTABLES:
+ Firewall rules for incomming traffic:
+ $iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
+ $iptables -A INPUT -i ppp0 -p udp -m udp --dport 7070:7080 -j ACCEPT 
+
+ Firewall rule for masquerading outgoing traffic:
+ $ iptables -t nat -A POSTROUTING -s 10.0.0.0/255.255.255.0 -j MASQUERADE
+
 
  The first line will allow incomming SIP traffic. The second line will
  allow incomming RTP traffic on the ports 7070 - 7080 (the default port
  range used by siproxd for incomming RTP traffic).
 
+ The rule for masquerading will ensure that the outgoing RTP data stream
+ is masqueraded properly and sent to the remote host.
 
 
 REFERENCES
