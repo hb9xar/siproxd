@@ -211,7 +211,7 @@ static int parse_config (FILE *configfile) {
             DEBUGC(DBCLASS_CONFIG,"got argument:\"%s\"",ptr);
 
 	    num=0;
-	    switch (configoptions[k].type) {
+	    if (strlen(ptr)) switch (configoptions[k].type) {
 
 	    //
             // Integer4

@@ -1,6 +1,7 @@
 0.5.6
 =====
   09-May-2004:  - Authentication headers: enquote Realm (linphone)
+                - complain about empty values in config file
   02-May-2004:  - better recognition of redirected incoming requests
                   (like INVITES from sipgate.de - SIP URI points to
                   the real wanted target but To: header only points to
