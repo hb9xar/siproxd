@@ -710,13 +710,15 @@ if (configuration.debuglevel)
 
    /* include new body */
    osip_message_set_body(mymsg, bodybuff);
-   osip_free(bodybuff);
 
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
    mymsg->content_length=NULL;
    sprintf(clen,"%i",strlen(bodybuff));
    sts = osip_message_set_content_length(mymsg, clen);
+
+   /* free old body */
+   osip_free(bodybuff);
 
 if (configuration.debuglevel)
 { /* just dump the buffer */

@@ -1,4 +1,4 @@
-Release Notes for siproxd-0.5.1
+Release Notes for siproxd-0.5.2
 ===============================
 
 Just before my vacations I'll make another release. Some new features
@@ -89,16 +89,9 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.1.tar.gz: 	7bc01e78ba57aeaf9c83276900917bf5
+md5sum for siproxd-0.5.2.tar.gz: 	
 
-GnuPG signature for siproxd-0.5.1.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.1 (GNU/Linux)
-
-iD8DBQA/5tN7CfzBioe83JQRArf9AJ91kOKXa3T/8xtabc8XHXPgOf2ZmQCgoJll
-o551Dp/eXpzCWbwaNNeXSnY=
-=OIi0
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.5.2.tar.gz archive:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

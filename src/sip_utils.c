@@ -794,7 +794,8 @@ int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
       MD5Init(&Md5Ctx);
 
       /* topmost via */
-      if (osip_via_to_str(via, &tmp)) {
+      osip_via_to_str(via, &tmp);
+      if (tmp) {
          MD5Update(&Md5Ctx, tmp, strlen(tmp));
          osip_free(tmp);
       }
@@ -813,7 +814,8 @@ int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
 
       /* Call-ID */
       call_id = osip_message_get_call_id(sip_msg);
-      if (osip_call_id_to_str(call_id, &tmp)) {
+      osip_call_id_to_str(call_id, &tmp);
+      if (tmp) {
          MD5Update(&Md5Ctx, tmp, strlen(tmp));
          osip_free(tmp);
       }
@@ -825,7 +827,8 @@ int  sip_calculate_branch_id (osip_message_t *sip_msg, char *id) {
       }
  
       /* Request URI */
-      if (osip_uri_to_str(sip_msg->req_uri, &tmp)) {
+      osip_uri_to_str(sip_msg->req_uri, &tmp);
+      if (tmp) {
          MD5Update(&Md5Ctx, tmp, strlen(tmp));
          osip_free(tmp);
       }

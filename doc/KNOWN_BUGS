@@ -27,6 +27,4 @@
  	simply a suggested value.  The actual value is in the response from
  	the registrar.
   For the definitive description -> RFC3261 section 10.
- 
-* Siproxd does not honor a possibly existing Route header
 
