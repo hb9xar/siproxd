@@ -682,16 +682,21 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
 	response->from->url->username? response->from->url->username:"*NULL*",
 	response->from->url->host? response->from->url->host : "*NULL*");
 
+      /*
+       * Response for INVITE - deal with RTP data in body and
+       *                       start RTP proxy stream(s)
+       */
       if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
           ((MSG_TEST_CODE(response, 200)) || 
            (MSG_TEST_CODE(response, 183)))) {
-         /* This is an incoming response, therefore we need an incoming stream */
          if (configuration.rtp_proxy_enable == 1) {
             sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
          }
-
       }
 
+      /*
+       * Response for REGISTER - special handling of Contact header
+       */
       if (MSG_IS_RESPONSE_FOR(response,"REGISTER")) {
          /*
           * REGISTER returns *my* Contact header information.
@@ -699,6 +704,30 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
           * Other responses do return the Contact header of the sender.
           */
          sip_rewrite_contact(response, DIR_INCOMING);
+      }
+
+      /* 
+       * Response for SUBSCRIBE
+       *
+       * HACK for Grandstream SIP phones (with newer firmware like 1.0.4.40):
+       *   They send a SUBSCRIBE request to the registration server. In
+       *   case of beeing registering directly to siproxd, this request of
+       *   course will eventually be forwarded back to the same UA.
+       *   Grandstream then does reply with an '202' response (A 202
+       *   response merely indicates that the subscription has been
+       *   understood, and that authorization may or may not have been
+       *   granted), which then of course is forwarded back to the phone.
+       *   Ans it seems that the Grandstream can *not* *handle* this
+       *   response, as it immediately sends another SUBSCRIBE request.
+       *   And this games goes on and on and on...
+       *
+       *   As a workaround we will transform any 202 response to a
+       *   '404 unknown destination'
+       *   
+       */
+      if ((MSG_IS_RESPONSE_FOR(response,"SUBSCRIBE")) &&
+          (MSG_TEST_CODE(response, 202))) {
+         response->status_code=404;
       }
 
       break;

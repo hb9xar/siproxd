@@ -1,7 +1,11 @@
+0.5.4
+=====
+  14-Feb-2004:  - Hack for Grandstream SIP phones and SUBSCRIBE response
+
 0.5.3
 =====
   14-Feb-2004:  - Released 0.5.3
-		- Removed superfluous backslashes for line continuation
+                - Removed superfluous backslashes for line continuation
   11-Feb-2004:  - Use same SIP port number for RX & TX (-> support
                   symmetric SIP signalling)
    7-Feb-2004:  - Fix for local-UA to local-UA RTP proxying, symmetric
