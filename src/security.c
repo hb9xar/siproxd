@@ -83,29 +83,153 @@ int security_check_sip(osip_message_t *sip){
       }
    }
 
+   /*
+    * Check existence of mandatory headers
+    *
 
-   /* check for existing To: header */
-   if ((sip->to==NULL)||(sip->to->url==NULL)||(sip->to->url->host==NULL)) {
-      ERROR("security check failed: NULL To Header");
+Rosenberg, et. al.          Standards Track                   [Page 161]
+
+RFC 3261            SIP: Session Initiation Protocol           June 2002
+
+      Header field          where   proxy ACK BYE CAN INV OPT REG
+      ___________________________________________________________
+      Accept                  R            -   o   -   o   m*  o
+      Accept                 2xx           -   -   -   o   m*  o
+      Accept                 415           -   c   -   c   c   c
+      Accept-Encoding         R            -   o   -   o   o   o
+      Accept-Encoding        2xx           -   -   -   o   m*  o
+      Accept-Encoding        415           -   c   -   c   c   c
+      Accept-Language         R            -   o   -   o   o   o
+      Accept-Language        2xx           -   -   -   o   m*  o
+      Accept-Language        415           -   c   -   c   c   c
+      Alert-Info              R      ar    -   -   -   o   -   -
+      Alert-Info             180     ar    -   -   -   o   -   -
+      Allow                   R            -   o   -   o   o   o
+      Allow                  2xx           -   o   -   m*  m*  o
+      Allow                   r            -   o   -   o   o   o
+      Allow                  405           -   m   -   m   m   m
+      Authentication-Info    2xx           -   o   -   o   o   o
+      Authorization           R            o   o   o   o   o   o
+      Call-ID                 c       r    m   m   m   m   m   m
+      Call-Info                      ar    -   -   -   o   o   o
+      Contact                 R            o   -   -   m   o   o
+      Contact                1xx           -   -   -   o   -   -
+      Contact                2xx           -   -   -   m   o   o
+      Contact                3xx      d    -   o   -   o   o   o
+      Contact                485           -   o   -   o   o   o
+      Content-Disposition                  o   o   -   o   o   o
+      Content-Encoding                     o   o   -   o   o   o
+      Content-Language                     o   o   -   o   o   o
+      Content-Length                 ar    t   t   t   t   t   t
+      Content-Type                         *   *   -   *   *   *
+      CSeq                    c       r    m   m   m   m   m   m
+      Date                            a    o   o   o   o   o   o
+      Error-Info           300-699    a    -   o   o   o   o   o
+      Expires                              -   -   -   o   -   o
+      From                    c       r    m   m   m   m   m   m
+      In-Reply-To             R            -   -   -   o   -   -
+      Max-Forwards            R      amr   m   m   m   m   m   m
+      Min-Expires            423           -   -   -   -   -   m
+      MIME-Version                         o   o   -   o   o   o
+      Organization                   ar    -   -   -   o   o   o
+
+             Table 2: Summary of header fields, A--O
+
+
+
+
+
+
+Rosenberg, et. al.          Standards Track                   [Page 162]
+
+RFC 3261            SIP: Session Initiation Protocol           June 2002
+
+
+   Header field              where       proxy ACK BYE CAN INV OPT REG
+   ___________________________________________________________________
+   Priority                    R          ar    -   -   -   o   -   -
+   Proxy-Authenticate         407         ar    -   m   -   m   m   m
+   Proxy-Authenticate         401         ar    -   o   o   o   o   o
+   Proxy-Authorization         R          dr    o   o   -   o   o   o
+   Proxy-Require               R          ar    -   o   -   o   o   o
+   Record-Route                R          ar    o   o   o   o   o   -
+   Record-Route             2xx,18x       mr    -   o   o   o   o   -
+   Reply-To                                     -   -   -   o   -   -
+   Require                                ar    -   c   -   c   c   c
+   Retry-After          404,413,480,486         -   o   o   o   o   o
+                            500,503             -   o   o   o   o   o
+                            600,603             -   o   o   o   o   o
+   Route                       R          adr   c   c   c   c   c   c
+   Server                      r                -   o   o   o   o   o
+   Subject                     R                -   -   -   o   -   -
+   Supported                   R                -   o   o   m*  o   o
+   Supported                  2xx               -   o   o   m*  m*  o
+   Timestamp                                    o   o   o   o   o   o
+   To                        c(1)          r    m   m   m   m   m   m
+   Unsupported                420               -   m   -   m   m   m
+   User-Agent                                   o   o   o   o   o   o
+   Via                         R          amr   m   m   m   m   m   m
+   Via                        rc          dr    m   m   m   m   m   m
+   Warning                     r                -   o   o   o   o   o
+   WWW-Authenticate           401         ar    -   m   -   m   m   m
+   WWW-Authenticate           407         ar    -   o   -   o   o   o
+
+*/
+
+
+  /*
+   * => Mandatory for ALL requests and responses
+   * Call-ID                 c       r    m   m   m   m   m   m
+   * CSeq                    c       r    m   m   m   m   m   m
+   * From                    c       r    m   m   m   m   m   m
+   * To                      c(1)    r    m   m   m   m   m   m
+   * Via                     R      amr   m   m   m   m   m   m
+   */
+
+  /* check for existing Call-ID header */
+   if ((sip->call_id==NULL)||
+       ((sip->call_id->number==NULL)&&(sip->call_id->host==NULL))) {
+      ERROR("security check failed: NULL Call-Id Header");
       return STS_FAILURE;
    }
 
-  /* check for existing FROM */
-   if ((sip->from==NULL)||(sip->from->url==NULL)||(sip->from->url->host==NULL)) {
-      ERROR("security check failed: NULL From Header");
-      return STS_FAILURE;
-   }
-
-  /* check for existing CSEQ header */
-   if ((sip->cseq==NULL)||(sip->cseq->method==NULL)||(sip->cseq->number==NULL)) {
+  /* check for existing CSeq header */
+   if ((sip->cseq==NULL)||
+       (sip->cseq->method==NULL)||(sip->cseq->number==NULL)) {
       ERROR("security check failed: NULL CSeq Header");
       return STS_FAILURE;
    }
 
+   /* check for existing To: header */
+   if ((sip->to==NULL)||
+       (sip->to->url==NULL)||(sip->to->url->host==NULL)) {
+      ERROR("security check failed: NULL To Header");
+      return STS_FAILURE;
+   }
 
-/*
-   check the RFC and implement tests for ALL mandatory headers here
-*/
+  /* check for existing From: header */
+   if ((sip->from==NULL)||
+       (sip->from->url==NULL)||(sip->from->url->host==NULL)) {
+      ERROR("security check failed: NULL From Header");
+      return STS_FAILURE;
+   }
+
+  /* check for existing Via: header list */
+   if (sip->vias==NULL) {
+      ERROR("security check failed: No Via Headers");
+      return STS_FAILURE;
+   }
+
+  /*
+   * check for existing Contact: header
+   * according to RFC3261 not mandatory, but siproxd relies on it...
+   */
+   if ((sip->contacts==NULL)||
+       (sip->contacts->node==NULL)||(sip->contacts->node->element==NULL)||
+       ((osip_contact_t*)(sip->contacts->node->element))->url==NULL) {
+      ERROR("security check failed: NULL Contact Header");
+      return STS_FAILURE;
+   }
 
 
    /* TODO: still way to go here ... */

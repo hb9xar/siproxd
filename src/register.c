@@ -171,7 +171,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    int expires;
    time_t time_now;
    osip_uri_t *url1_to, *url1_contact;
-   osip_uri_t *url2_to, *url2_contact;
+   osip_uri_t *url2_to;
    osip_header_t *expires_hdr;
    osip_uri_param_t *expires_param=NULL;
    
@@ -205,6 +205,9 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
 
    To: -> address to be registered
    Contact: -> host is reachable there
+               Note: in case of un-REGISTER, the contact header may
+                     contain '*' only - which means "all registrations
+                     made by this UA"
    
    => Mapping is
    To: <1--n> Contact
@@ -246,134 +249,159 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
           (url1_contact->host) ? url1_contact->host : "*NULL*",
           expires);
 
-/* Update registration. There are two possibilities:
- * - already registered, then update the existing record
- * - not registered, then create a new record
- */
 
-   j=-1;
-   for (i=0; i<URLMAP_SIZE; i++) {
-      if (urlmap[i].active == 0) {
-	 if (j < 0) j=i; /* remember first hole */
-         continue;
-      }
-
-      url2_to=urlmap[i].reg_url;
-      url2_contact=urlmap[i].true_url;
-
-      if ( (compare_url(url1_to, url2_to)==STS_SUCCESS) &&
-           (compare_url(url1_contact, url2_contact)==STS_SUCCESS) ) {
-         DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
-                "slot=%i, exp=%li",
-	        (url1_contact->username) ? url1_contact->username : "*NULL*",
-                (url1_contact->host) ? url1_contact->host : "*NULL*",
-	        (url2_to->username) ? url2_to->username : "*NULL*",
-                (url2_to->host) ? url2_to->host : "*NULL*",
-		i, urlmap[i].expires-time_now);
-         break;
-      }
-   }
-
-   if ( (j < 0) && (i >= URLMAP_SIZE) ) {
-      /* oops, no free entries left... */
-      ERROR("URLMAP is full - registration failed");
-      return STS_FAILURE;
-   }
-
-   if (i >= URLMAP_SIZE) {
-      /* entry not existing, create new one */
-      i=j;
-
-      /* write entry */
-      urlmap[i].active=1;
-      /* Contact: field */
-      osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
-        	 &urlmap[i].true_url);
-      /* To: field */
-      osip_uri_clone( my_msg->to->url, 
-        	 &urlmap[i].reg_url);
-
-      DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
-             (url1_contact->username) ? url1_contact->username : "*NULL*",
-             (url1_contact->host) ? url1_contact->host : "*NULL*",
-	     (urlmap[i].reg_url->username) ? urlmap[i].reg_url->username : "*NULL*",
-             (urlmap[i].reg_url->host) ? urlmap[i].reg_url->host : "*NULL*",
-             i);
-
-      /*
-       * try to figure out if we ought to do some masquerading
-       */
-      osip_uri_clone( my_msg->to->url, 
-        	      &urlmap[i].masq_url);
-
-      n=configuration.mask_host.used;
-      if (n != configuration.masked_host.used) {
-         ERROR("# of mask_host is not equal to # of masked_host in config!");
-         n=0;
-      }
-
-      DEBUG("%i entries in MASK config table", n);
-      for (j=0; j<n; j++) {
-         DEBUG("compare [%s] <-> [%s]",configuration.mask_host.string[j],
-               my_msg->to->url->host);
-         if (strcmp(configuration.mask_host.string[j],
-             my_msg->to->url->host)==0)
-            break;
-      }
-      if (j<n) { 
-         /* we are masquerading this UA, replace the host part of the url */
-         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s as %s@%s",
-                (url1_contact->username) ? url1_contact->username : "*NULL*",
-                (url1_contact->host) ? url1_contact->host : "*NULL*",
-                (url1_contact->username) ? url1_contact->username : "*NULL*",
-                configuration.masked_host.string[j]);
-         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                 strlen(configuration.masked_host.string[j])+1);
-         strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
-      }
-
-      /*
-       * for transparent proxying: force device to be masqueraded
-       * as with the outbound IP
-       */
-      if (force_lcl_masq) {
-         struct in_addr addr;
-         char *addrstr;
-         sts = get_ip_by_ifname(configuration.outbound_if,&addr);
-         addrstr = utils_inet_ntoa(addr);
-         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
-                (url1_contact->username) ? url1_contact->username : "*NULL*",
-                (url1_contact->host) ? url1_contact->host : "*NULL*",
-                (url1_contact->username) ? url1_contact->username : "*NULL*",
-                addrstr);
-         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                 strlen(addrstr)+1);
-         strcpy(urlmap[i].masq_url->host, addrstr);
-      }
-
-      /* remember the VIA for later use */
-//      osip_via_clone( ((osip_via_t*)(my_msg->vias->node->element)),
-//                      &urlmap[i].via);
-   } else { /* if new entry */
    /*
-    * Some phones (like BudgeTones *may* dynamically grab a SIP port
-    * so we might want to update the true_url and reg_url each time
-    * we get an REGISTER
+    * REGISTER
     */
-      /* Contact: field */
-      osip_uri_free(urlmap[i].true_url);
-      osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
-        	 &urlmap[i].true_url);
-      /* To: field */
-      osip_uri_free(urlmap[i].reg_url);
-      osip_uri_clone( my_msg->to->url, 
-        	 &urlmap[i].reg_url);
-   }
-   /* give some safety margin for the next update */
-   if (expires > 0) expires+=30;
+   if (expires > 0) {
+      /* Update registration. There are two possibilities:
+       * - already registered, then update the existing record
+       * - not registered, then create a new record
+       */
 
-   /* update registration timeout */
-   urlmap[i].expires=time_now+expires;
+      j=-1;
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) {
+	    if (j < 0) j=i; /* remember first hole */
+            continue;
+         }
+
+         url2_to=urlmap[i].reg_url;
+
+         /* check address-of-record ("public address" of user) */
+         if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
+            DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
+                   "slot=%i, exp=%li",
+	           (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   (url1_contact->host) ? url1_contact->host : "*NULL*",
+	           (url2_to->username) ? url2_to->username : "*NULL*",
+                   (url2_to->host) ? url2_to->host : "*NULL*",
+		   i, urlmap[i].expires-time_now);
+            break;
+         }
+      }
+
+      if ( (j < 0) && (i >= URLMAP_SIZE) ) {
+         /* oops, no free entries left... */
+         ERROR("URLMAP is full - registration failed");
+         return STS_FAILURE;
+      }
+
+      if (i >= URLMAP_SIZE) {
+         /* entry not existing, create new one */
+         i=j;
+
+         /* write entry */
+         urlmap[i].active=1;
+         /* Contact: field */
+         osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
+        	    &urlmap[i].true_url);
+         /* To: field */
+         osip_uri_clone( my_msg->to->url, 
+        	    &urlmap[i].reg_url);
+
+         DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                (url1_contact->host) ? url1_contact->host : "*NULL*",
+	        (urlmap[i].reg_url->username) ? urlmap[i].reg_url->username : "*NULL*",
+                (urlmap[i].reg_url->host) ? urlmap[i].reg_url->host : "*NULL*",
+                i);
+
+         /*
+          * try to figure out if we ought to do some masquerading
+          */
+         osip_uri_clone( my_msg->to->url, 
+        	         &urlmap[i].masq_url);
+
+         n=configuration.mask_host.used;
+         if (n != configuration.masked_host.used) {
+            ERROR("# of mask_host is not equal to # of masked_host in config!");
+            n=0;
+         }
+
+         DEBUG("%i entries in MASK config table", n);
+         for (j=0; j<n; j++) {
+            DEBUG("compare [%s] <-> [%s]",configuration.mask_host.string[j],
+                  my_msg->to->url->host);
+            if (strcmp(configuration.mask_host.string[j],
+                my_msg->to->url->host)==0)
+               break;
+         }
+         if (j<n) { 
+            /* we are masquerading this UA, replace the host part of the url */
+            DEBUGC(DBCLASS_REG,"masquerading UA %s@%s as %s@%s",
+                   (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   (url1_contact->host) ? url1_contact->host : "*NULL*",
+                   (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   configuration.masked_host.string[j]);
+            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                    strlen(configuration.masked_host.string[j])+1);
+            strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
+         }
+
+         /*
+          * for transparent proxying: force device to be masqueraded
+          * as with the outbound IP
+          */
+         if (force_lcl_masq) {
+            struct in_addr addr;
+            char *addrstr;
+            sts = get_ip_by_ifname(configuration.outbound_if,&addr);
+            addrstr = utils_inet_ntoa(addr);
+            DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
+                   (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   (url1_contact->host) ? url1_contact->host : "*NULL*",
+                   (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   addrstr);
+            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                    strlen(addrstr)+1);
+            strcpy(urlmap[i].masq_url->host, addrstr);
+         }
+
+      } else { /* if new entry */
+      /*
+       * Some phones (like BudgeTones *may* dynamically grab a SIP port
+       * so we might want to update the true_url and reg_url each time
+       * we get an REGISTER
+       */
+         /* Contact: field */
+         osip_uri_free(urlmap[i].true_url);
+         osip_uri_clone( ((osip_contact_t*)(my_msg->contacts->node->element))->url, 
+        	    &urlmap[i].true_url);
+         /* To: field */
+         osip_uri_free(urlmap[i].reg_url);
+         osip_uri_clone( my_msg->to->url, 
+        	    &urlmap[i].reg_url);
+      }
+      /* give some safety margin for the next update */
+      if (expires > 0) expires+=30;
+
+      /* update registration timeout */
+      urlmap[i].expires=time_now+expires;
+
+   /*
+    * un-REGISTER
+    */
+   } else { /* expires > 0 */
+      /*
+       * Remove registration
+       * Siproxd will ALWAYS remove ALL bindings for a given
+       * address-of-record
+       */
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+
+         url2_to=urlmap[i].reg_url;
+
+         if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
+            DEBUGC(DBCLASS_REG, "removing registration for %s@%s at slot=%i",
+	           (url2_to->username) ? url2_to->username : "*NULL*",
+                   (url2_to->host) ? url2_to->host : "*NULL*", i);
+            urlmap[i].expires=0;
+            break;
+         }
+      }
+   }
 
    return STS_SUCCESS;
 }
