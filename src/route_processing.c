@@ -251,7 +251,7 @@ int route_add_recordroute(sip_ticket_t *ticket){
          osip_uri_set_port(uri_of_proxy, osip_strdup(tmp));
 
          /* 'lr' parameter */
-         osip_uri_uparam_add(uri_of_proxy, "lr", NULL);
+         osip_uri_uparam_add(uri_of_proxy, osip_strdup("lr"), NULL);
 
          osip_record_route_set_url(r_route, uri_of_proxy);
 
