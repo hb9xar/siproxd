@@ -174,10 +174,13 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
    osip_header_t *expires_hdr;
    osip_uri_param_t *expires_param=NULL;
    
-   /* check for proxy authentication */
+   /*
+    * RFC 3261, Section 16.3 step 6
+    * Proxy Behavior - Request Validation - Proxy-Authorization
+    */
    sts = authenticate_proxy(my_msg);
    if (sts == STS_FAILURE) {
-   /* failed */
+      /* failed */
       WARN("proxy authentication failed for %s@%s",
            (my_msg->to->url->username)? my_msg->to->url->username : "*NULL*",
            my_msg->to->url->host);

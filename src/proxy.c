@@ -54,6 +54,28 @@ extern int sip_socket;				/* sending SIP datagrams */
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
+ *
+ * RFC3261
+ *    Section 16.3: Proxy Behavior - Request Validation
+ *    1. Reasonable Syntax
+ *    2. URI scheme
+ *    3. Max-Forwards
+ *    4. (Optional) Loop Detection
+ *    5. Proxy-Require
+ *    6. Proxy-Authorization
+ *
+ *    Section 16.6: Proxy Behavior - Request Forwarding
+ *    1.  Make a copy of the received request
+ *    2.  Update the Request-URI
+ *    3.  Update the Max-Forwards header field
+ *    4.  Optionally add a Record-route header field value
+ *    5.  Optionally add additional header fields
+ *    6.  Postprocess routing information
+ *    7.  Determine the next-hop address, port, and transport
+ *    8.  Add a Via header field value
+ *    9.  Add a Content-Length header field if necessary
+ *    10. Forward the new request
+ *    11. Set timer C
  */
 int proxy_request (osip_message_t *request) {
    int i;
@@ -69,18 +91,47 @@ int proxy_request (osip_message_t *request) {
 
    DEBUGC(DBCLASS_PROXY,"proxy_request");
 
-/* check for VIA loop, if yes, discard the request */
-   sts=check_vialoop(request);
-   if (sts == STS_TRUE) {
-      DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring request");
-      /* according to the SIP RFC we are supposed to return an 482 error */
-      return STS_FAILURE;
-   }
+   /*
+    * RFC 3261, Section 16.6 step 1
+    * Proxy Behavior - Request Forwarding - Make a copy
+    */
+   /* nothing to do here, copy is ready in 'request'*/
 
+   /*
+    * RFC 3261, Section 16.6 step 3
+    * Proxy Behavior - Request Forwarding - Max-Forwards
+    * (if Max-Forward header exists, decrement by one, if it does not
+    * exist, add a new one with value SHOULD be 70)
+    */
+   /* NOT IMPLEMENTED */
+
+   /*
+    * RFC 3261, Section 16.6 step 4
+    * Proxy Behavior - Request Forwarding - Add a Record-route header
+    */
+   /* NOT IMPLEMENTED (optional) */
+
+   /*
+    * RFC 3261, Section 16.6 step 5
+    * Proxy Behavior - Request Forwarding - Add Additional Header Fields
+    */
+   /* NOT IMPLEMENTED (optional) */
+
+   /*
+    * RFC 3261, Section 16.6 step 6
+    * Proxy Behavior - Request Forwarding - Postprocess routing information
+    */
+   /* NOT IMPLEMENTED */
+
+
+   /*
+    * RFC 3261, Section 16.4 
+    * Proxy Behavior - Route Information Preprocessing
+    * (process Record-Route header)
+    */
    /*
     * Check if I am listed at the topmost Route header (if any Route
     * header is existing at all). If so, remove it from the list.
-    * -> RFC3261 Section 16.4
     */
    if (request->routes && !osip_list_eol(request->routes, 0)) {
       struct in_addr addr1, addr2, addr3;
@@ -216,19 +267,20 @@ int proxy_request (osip_message_t *request) {
    * from an external host to the internal masqueraded host
    */
    case REQTYP_INCOMING:
-      sts = get_ip_by_host(urlmap[i].true_url->host, &sendto_addr);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
-                urlmap[i].true_url->host);
-         return STS_FAILURE;
-      }
-
-      /* rewrite request URI to point to the real host */
+      /*
+       * RFC 3261, Section 16.6 step 2
+       * Proxy Behavior - Request Forwarding - Request-URI
+       * (rewrite request URI to point to the real host)
+       */
       /* 'i' still holds the valid index into the URLMAP table */
       if (check_rewrite_rq_uri(request)==STS_TRUE) {
          proxy_rewrite_request_uri(request, i);
       }
 
+      /*
+       * RFC 3261, Section 16.6 step 8
+       * Proxy Behavior - Add a Via header field value
+       */
       /* add my Via header line (inbound interface)*/
       sts = sip_add_myvia(request, IF_INBOUND);
       if (sts == STS_FAILURE) {
@@ -259,12 +311,12 @@ int proxy_request (osip_message_t *request) {
    * from the internal masqueraded host to an external host
    */
    case  REQTYP_OUTGOING:
-      sts = get_ip_by_host(url->host, &sendto_addr);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
-                url->host);
-         return STS_FAILURE;
-      }
+      /*
+       * RFC 3261, Section 16.6 step 2
+       * Proxy Behavior - Request Forwarding - Request-URI
+       */
+      /* nothing to do for an outgoing request */
+
 
       /* if it is addressed to myself, then it must be some request
        * method that I as a proxy do not support. Reject */
@@ -289,6 +341,10 @@ int proxy_request (osip_message_t *request) {
       /* rewrite Contact header to represent the masqued address */
       sip_rewrite_contact(request, DIR_OUTGOING);
 
+      /*
+       * RFC 3261, Section 16.8
+       * Proxy Behavior - Add a Via header field value
+       */
       /* add my Via header line (outbound interface)*/
       sts = sip_add_myvia(request, IF_OUTBOUND);
       if (sts == STS_FAILURE) {
@@ -329,10 +385,12 @@ int proxy_request (osip_message_t *request) {
       return STS_FAILURE;
    }
 
-   /*
-    * check if we need to send to an outbound proxy
-    */
+  /*
+   * RFC 3261, Section 16.6 step 7
+   * Proxy Behavior - Determine Next-Hop Address
+   */
    if ((type == REQTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
+      /* I have an outbound proxy configured */
       sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
@@ -346,7 +404,14 @@ int proxy_request (osip_message_t *request) {
          port = 5060;
       }
    } else {
-      /* the host part already has been resolved above*/
+      /* get the destination from the SIP URI */
+      sts = get_ip_by_host(url->host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
+                url->host);
+         return STS_FAILURE;
+      }
+
       if (url->port) {
          port=atoi(url->port);
       } else {
@@ -354,6 +419,16 @@ int proxy_request (osip_message_t *request) {
       }
    }
 
+  /*
+   * RFC 3261, Section 16.6 step 9
+   * Proxy Behavior - Add a Content-Length header field if necessary
+   */
+  /* not necessary, already in message and we do not support TCP */
+
+  /*
+   * RFC 3261, Section 16.6 step 10
+   * Proxy Behavior - Forward the new request
+   */
    sts = osip_message_to_str(request, &buffer);
    if (sts != 0) {
       ERROR("proxy_request: osip_message_to_str failed");
@@ -362,6 +437,13 @@ int proxy_request (osip_message_t *request) {
 
    sipsock_send_udp(&sip_socket, sendto_addr, port, buffer, strlen(buffer), 1); 
    osip_free (buffer);
+
+  /*
+   * RFC 3261, Section 16.6 step 11
+   * Proxy Behavior - Set timer C
+   */
+  /* NOT IMPLEMENTED - does this really apply for stateless proxies? */
+
    return STS_SUCCESS;
 }
 
@@ -387,16 +469,11 @@ int proxy_response (osip_message_t *response) {
 
    DEBUGC(DBCLASS_PROXY,"proxy_response");
 
-
-   /* check for VIA loop, if yes, discard the request */
-   sts=check_vialoop(response);
-   if (sts == STS_TRUE) {
-      DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring response");
-      /* according to the SIP RFC we are supposed to return an 482 error */
-      return STS_FAILURE;
-   }
-
-   /* ALWAYS: remove my Via header line */
+   /*
+    * RFC 3261, Section 16.11
+    * Proxy Behavior - Remove my Via header field value
+    */
+   /* remove my Via header line */
    sts = sip_del_myvia(response);
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY,"not addressed to my VIA, ignoring response");
@@ -407,7 +484,6 @@ int proxy_response (osip_message_t *response) {
     * figure out if this is an request coming from the outside
     * world to one of our registered clients
     */
-
 
    /* Ahhrghh...... a response seems to have NO contact information... 
     * so let's take FROM instead...

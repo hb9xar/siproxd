@@ -256,15 +256,19 @@ int main (int argc, char *argv[])
       sts=security_check_raw(buff, i);
       if (sts != STS_SUCCESS) continue; /* there are no resources to free */
 
-      /* parse the received message */
+      /* init sip_msg */
       sts=osip_message_init(&my_msg);
       my_msg->message=NULL;
-
       if (sts != 0) {
          ERROR("osip_message_init() failed... this is not good");
 	 continue; /* skip, there are no resources to free */
       }
 
+      /*
+       * RFC 3261, Section 16.3 step 1
+       * Proxy Behavior - Request Validation - Reasonable Syntax
+       * (parse the received message)
+       */
       sts=osip_message_parse(my_msg, buff);
       if (sts != 0) {
          ERROR("osip_message_parse() failed... this is not good");
@@ -280,19 +284,56 @@ int main (int argc, char *argv[])
          goto end_loop; /* skip and free resources */
       }
 
+      /*
+       * RFC 3261, Section 16.3 step 2
+       * Proxy Behavior - Request Validation - URI scheme
+       * (check request URI and refuse with 416 if not understood)
+       */
+      /* NOT IMPLEMENTED */
+
+      /*
+       * RFC 3261, Section 16.3 step 3
+       * Proxy Behavior - Request Validation - Max-Forwards check
+       * (check Max-Forward header and refuse with 483 if too many hops)
+       */
+      /* NOT IMPLEMENTED */
+
+      /*
+       * RFC 3261, Section 16.3 step 4
+       * Proxy Behavior - Request Validation - Loop Detection check
+       * (check for loop and return 482 if a loop is detected)
+       */
+      if (check_vialoop(my_msg) == STS_TRUE) {
+         DEBUGC(DBCLASS_PROXY,"via loop detected, ignoring request");
+         /* we should return 482, NOT IMPLEMENTED */
+         goto end_loop; /* skip and free resources */
+      }
+
+      /*
+       * RFC 3261, Section 16.3 step 5
+       * Proxy Behavior - Request Validation - Proxy-Require check
+       * (check Proxy-Require header and return 420 if unsupported option)
+       */
+      /* NOT IMPLEMENTED */
+
+      /*
+       * RFC 3261, Section 16.5
+       * Proxy Behavior - Determining Request Targets
+       */
+      /* NOT IMPLEMENTED */
+
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
 	     (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",
              (MSG_IS_REQUEST(my_msg) ?
                 ((my_msg->sip_method)? my_msg->sip_method : "NULL") :
                 ((my_msg->reason_phrase) ? my_msg->reason_phrase : "NULL")));
               
-
       /*
-      * if an REQ REGISTER, check if it is directed to myself,
-      * or am I just the outbound proxy but no registrar.
-      * - If I'm the registrar, register & generate answer
-      * - If I'm just the outbound proxy, register, rewrite & forward
-      */
+       * if an REQ REGISTER, check if it is directed to myself,
+       * or am I just the outbound proxy but no registrar.
+       * - If I'm the registrar, register & generate answer
+       * - If I'm just the outbound proxy, register, rewrite & forward
+       */
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_REG) {
             osip_uri_t *url;

@@ -1,5 +1,7 @@
 0.5.2
 =====
+   29-Jan-2004:	- new doc/RFC3261_compliance.txt and comments in the
+		  code that refer to the RFC.
    28-Jan-2004:	- don't die on INVITE requests that include no Contact
                   header - which is legal. (patch by Robert Högberg)
 		- RTP proxy: don't try to forward empty RTP packets
