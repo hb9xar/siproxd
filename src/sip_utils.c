@@ -128,12 +128,10 @@ int check_vialoop (sip_ticket_t *ticket) {
    From that point of view, siproxd *should* not try to
    check against it's local IF addresses if they are private.
    this then of course again can lead to a endless loop...
-   -> Use a fixed unique part of branch parameter to identify that it
-   is MY via
-   
-   can we use something like a Tag in via headers?? (a veriy likely
-   to-be-unique ID)
 
+   -> Might use a fixed unique part of branch parameter to identify
+   that it is MY via
+   
 */
    osip_message_t *my_msg=ticket->sipmsg;
    int sts;

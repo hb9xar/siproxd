@@ -1,5 +1,8 @@
 0.5.8
 =====
+  05-Sep-2004:  - Cross-provider calls (e.g. sipphone <-> FWD, with dial
+                  prefixes) did not work properly
+  04-Sep-2004:  - more on Route Headers
   27-Aug-2004:  - preliminary (and reduced) support for Route Headers
   26-Aug-2004:  - more DEBUG output
   22-Aug-2004:  - fix: secure_enviroment - set proper EGID (by Daniel Mueller)

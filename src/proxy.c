@@ -158,34 +158,36 @@ int proxy_request (sip_ticket_t *ticket) {
     * is the telegram directed to an internally registered host?
     * -> it must be an INCOMING request
     */
-   if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
-      if (urlmap[i].active == 0) continue;
-      /* RFC3261:
-       * To contains a display name (Bob) and a SIP or SIPS URI
-       * (sip:bob@biloxi.com) towards which the request was originally
-       * directed.  Display names are described in RFC 2822 [3].
-       */
+   if (type == 0) {
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+         /* RFC3261:
+          * 'To' contains a display name (Bob) and a SIP or SIPS URI
+          * (sip:bob@biloxi.com) towards which the request was originally
+          * directed.  Display names are described in RFC 2822 [3].
+          */
 
-      /* So this means, that we must check the SIP URI supplied with the
-       * INVITE method, as this points to the real wanted target.
-       * Q: does there exist a situation where the SIP URI itself does
-       *    point to "somewhere" but the To: points to the correct UA?
-       * So for now, we just look at both of them (SIP URI and To: header)
-       */
+         /* So this means, that we must check the SIP URI supplied with the
+          * INVITE method, as this points to the real wanted target.
+          * Q: does there exist a situation where the SIP URI itself does
+          *    point to "somewhere" but the To: points to the correct UA?
+          * So for now, we just look at both of them (SIP URI and To: header)
+          */
 
-      /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
-      if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
-          (!MSG_IS_REGISTER(request) &&
-           (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
-         type=REQTYP_INCOMING;
-	 break;
-      }
-      /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
-      if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
-          (!MSG_IS_REGISTER(request) &&
-           (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
-         type=REQTYP_INCOMING;
-	 break;
+         /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
+         if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
+             (!MSG_IS_REGISTER(request) &&
+              (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
+            type=REQTYP_INCOMING;
+	    break;
+         }
+         /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
+         if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+             (!MSG_IS_REGISTER(request) &&
+              (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
+            type=REQTYP_INCOMING;
+	    break;
+         }
       }
    }
 #endif
@@ -402,11 +404,19 @@ int proxy_request (sip_ticket_t *ticket) {
     * include my own as well. The local UA will probably send its answer
     * to the topmost Route Header (8.1.2 of RFC3261)
     */
-   if ((type == REQTYP_INCOMING) &&
-       (request->record_routes) &&
+   if ((request->record_routes) &&
        (!osip_list_eol(request->record_routes, 0))) {
-      DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
-      route_add_recordroute(ticket);
+      if (type == REQTYP_INCOMING) {
+         DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+         route_add_recordroute(ticket);
+      } else {
+         /*
+          * outgoing packets must not have a record route header, as
+          * these likely will contain private IP addresses.
+          */
+         DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
+         route_purge_recordroute(ticket);
+      }
    }
 
    /*
@@ -657,15 +667,73 @@ int proxy_response (sip_ticket_t *ticket) {
     * is the telegram directed to an internal registered host?
     * -> it must be an INCOMING response
     */
-   if (type == 0) for (i=0; i<URLMAP_SIZE; i++) {
-      if (urlmap[i].active == 0) continue;
-      /* incoming response ('from' == 'masq') || ('from' == 'reg') */
-      if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
-          (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
-         type=RESTYP_INCOMING;
-	 break;
+   if (type == 0) {
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+         /* incoming response ('from' == 'masq') || ('from' == 'reg') */
+         if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
+             (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
+            type=RESTYP_INCOMING;
+	    break;
+         }
       }
    }
+/* &&&& Open Issue &&&&
+   it has been seen with corss-provider calls that the FROM may be 'garbled'
+   (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
+   How can we deal with this? Should I take into consideration the 'Via'
+   headers? This is the only clue I have, pointing to the *real* UA.
+   Maybe I should put in a 'siproxd' ftag value to recognize it a header
+   put in by myself
+*/
+   if ((type == 0) && (!osip_list_eol(response->vias, 0))) {
+      osip_via_t *via;
+      struct in_addr addr_via, addr_myself;
+      int port_via, port_ua;
+
+      /* get the via address */
+      via = (osip_via_t *) osip_list_get (response->vias, 0);
+      DEBUGC(DBCLASS_PROXY, "proxy_response: check via [%s] for "
+             "registered UA",via->host);
+      sts=get_ip_by_host(via->host, &addr_via);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_DNS, "proxy_response: cannot resolve VIA [%s]",
+                via->host);
+      } else {
+
+         for (i=0; i<URLMAP_SIZE; i++) {
+            if (urlmap[i].active == 0) continue;
+            /* incoming response (1st via in list points to a registered UA) */
+            sts=get_ip_by_host(urlmap[i].true_url->host, &addr_myself);
+            if (sts == STS_FAILURE) {
+               DEBUGC(DBCLASS_DNS, "proxy_response: cannot resolve "
+                      "true_url [%s]", via->host);
+               continue;
+            }
+
+            port_via=0;
+            if (via->port) port_via=atoi(via->port);
+            if (port_via <= 0) port_via=SIP_PORT;
+
+            port_ua=0;
+            if (urlmap[i].true_url->port)
+               port_ua=atoi(urlmap[i].true_url->port);
+            if (port_ua <= 0) port_ua=SIP_PORT;
+
+            DEBUGC(DBCLASS_BABBLE, "proxy_response: checking for registered "
+                   "host [%s:%i] <-> [%s:%i]",
+                   urlmap[i].true_url->host, port_ua,
+                   via->host, port_via);
+
+            if ((memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
+                (port_via == port_ua)) {
+               type=RESTYP_INCOMING;
+	       break;
+            }
+         }
+      }
+   }
+    
 #endif
    ticket->direction=type;
 
@@ -773,11 +841,19 @@ int proxy_response (sip_ticket_t *ticket) {
     * include my own as well. The local UA will probably send its answer
     * to the topmost Route Header (8.1.2 of RFC3261)
     */
-   if ((type == RESTYP_INCOMING) &&
-       (response->record_routes) &&
+   if ((response->record_routes) &&
        (!osip_list_eol(response->record_routes, 0))) {
-      DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
-      route_add_recordroute(ticket);
+      if (type == RESTYP_INCOMING) {
+         DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+         route_add_recordroute(ticket);
+      } else {
+         /*
+          * outgoing packets must not have a record route header, as
+          * these likely will contain private IP addresses.
+          */
+         DEBUGC(DBCLASS_PROXY,"Purging Record-Routes (outgoing packet)");
+         route_purge_recordroute(ticket);
+      }
    }
 
    /*

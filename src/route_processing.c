@@ -71,7 +71,7 @@ int route_preprocess(sip_ticket_t *ticket){
     * header is existing at all). If so, remove it from the list and
     * rewrite the request URI to point to the now topmost Route.
     */
-   if (mymsg->routes && !osip_list_eol(mymsg->routes, 0)) {
+   if (mymsg->routes && (osip_list_size(mymsg->routes)>0)) {
       last=osip_list_size(mymsg->routes)-1;
       /*
        * I have seen that some (all?) UAs do set a Route: header
@@ -90,6 +90,9 @@ int route_preprocess(sip_ticket_t *ticket){
          DEBUGC(DBCLASS_PROXY, "route_preprocess: checking Route "
                 "header[%i]", i);
          route = (osip_route_t *) osip_list_get(mymsg->routes, i);
+         if (route == NULL) continue;
+         if (route->url == NULL) continue;
+         if (route->url->host == NULL) continue;
 
          sts = get_ip_by_host(route->url->host, &addr1);
          if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
@@ -255,12 +258,35 @@ int route_add_recordroute(sip_ticket_t *ticket){
          /* insert before all other record-route */
          osip_list_add (mymsg->record_routes, r_route, 0);
       } else {
-          osip_record_route_free (r_route);
-          osip_free (r_route);
+          osip_record_route_free(r_route);
       } /* if url_init */
    } /* if record route init */
 
 
+   return STS_SUCCESS;
+}
+
+
+/*
+ * PROXY_PURGE_RECORDROUTE
+ *
+ * Purge all Record-route headers
+ * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int route_purge_recordroute(sip_ticket_t *ticket){
+   osip_message_t *mymsg=ticket->sipmsg;
+   osip_record_route_t *r_route=NULL;
+
+   if (mymsg->record_routes && !osip_list_eol(mymsg->record_routes, 0)) {
+      while (!osip_list_eol(mymsg->record_routes, 0)) {
+      r_route = (osip_record_route_t *) osip_list_get(mymsg->record_routes, 0);
+      osip_list_remove(mymsg->record_routes, 0);
+      osip_record_route_free(r_route);
+      /* mymsg->record_routes will be freed by osip_message_free() */
+      }
+   }
    return STS_SUCCESS;
 }
 
@@ -287,7 +313,6 @@ int route_determine_nexthop(sip_ticket_t *ticket,
    * the SIP URI to point to the destination of the route (NOT IMPLEMENTED)
    */
    if (mymsg->routes && !osip_list_eol(mymsg->routes, 0)) {
-      route = (osip_route_t *) osip_list_get(mymsg->routes, 0);
 
       /* get the destination from the Route Header */
       route = (osip_route_t *) osip_list_get(mymsg->routes, 0);

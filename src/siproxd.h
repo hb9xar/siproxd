@@ -133,6 +133,7 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 /* route_preprocessing.c */
 int route_preprocess(sip_ticket_t *ticket);				/*X*/
 int route_add_recordroute(sip_ticket_t *ticket);			/*X*/
+int route_purge_recordroute(sip_ticket_t *ticket);			/*X*/
 int route_postprocess(sip_ticket_t *ticket);				/*X*/
 int route_determine_nexthop(sip_ticket_t *ticket,
                             struct in_addr *dest, int *port);		/*X*/
