@@ -1015,21 +1015,27 @@ if (configuration.debuglevel)
    /* figure out what address to use for RTP masquerading */
    if (MSG_IS_REQUEST(mymsg)) {
       if (direction == DIR_INCOMING) {
-         map_addr = inside_addr;
+         memcpy(&map_addr, &inside_addr, sizeof (map_addr));
          rtp_direction = DIR_OUTGOING;
       } else {
-         map_addr = outside_addr;
+         memcpy(&map_addr, &outside_addr, sizeof (map_addr));
          rtp_direction = DIR_INCOMING;
       }
    } else /* MSG_IS_REPONSE(mymsg) */ {
       if (direction == DIR_INCOMING) {
-         map_addr = inside_addr;
+         memcpy(&map_addr, &inside_addr, sizeof (map_addr));
          rtp_direction = DIR_OUTGOING;
       } else {
-         map_addr = outside_addr;
+         memcpy(&map_addr, &outside_addr, sizeof (map_addr));
          rtp_direction = DIR_INCOMING;
       }
    }
+
+   DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: SIP[%s %s] RTP[%s %s]",
+          MSG_IS_REQUEST(mymsg)? "RQ" : "RS",
+          (direction==DIR_INCOMING)? "IN" : "OUT",
+          (rtp_direction==DIR_INCOMING)? "IN" : "OUT",
+          utils_inet_ntoa(map_addr));
 
 
    /*
