@@ -8,17 +8,20 @@ Q: What softphone work with siproxd?
 
 A: The goal is that every softphone (that is SIP compliant) should be
    able to work via siproxd. Tested and/or reported to work so far:
-   - linphone (0.9.0)
-   - kphone (1.0.2)
+   - linphone
+   - kphone
    - MSN Messenger
-   - Grandstream BudgeTone series (only with IPCHAINS based RTP proxy)
+   - Grandstream BudgeTone series
 ---------------------------------------------------------------------------
 Q: Siproxd's RTP proxying does only work for incoming RTP audio data.
    Shouldn't it also proxy outgoing RTP data?
 
-A: This is the correct behaviour. Incoming RTP traffic
-   is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
-   to be handled by the firewall (IP masquerading).
+A: Since version 0.5.1, siproxd DOES do full duplex RTP proxying.
+   This eliminates some problems with UAs that *insist* on symmetric
+   RTP traffic.
+#A: This is the correct behaviour. Incoming RTP traffic
+#   is handled by siproxd's RTP proxy. However, outgoing RTP traffic has
+#   to be handled by the firewall (IP masquerading).
 ---------------------------------------------------------------------------
 Q: How do I setup IP masquerading for the outgoing RTP traffic?
 
@@ -149,12 +152,6 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    Outgoing traffic must be handled (masqueraded) by the firewall itself
    (using ipchains or iptables rules).
 
-   Since version 0.3.6, siproxd also includes an IPCHAINs based RTP proxy/
-   forwarding. The principle is similar to above, but instead of receiving
-   and forwarding the UDP packets itself, siproxd just opens up an UDP 
-   masquerading tunnel for the incomming traffic and then the kernel will
-   do the rest of the work.
-
 ---------------------------------------------------------------------------
 Q: Does siproxd need to be installed on the same host as the
    firewall (ipchains/iptables) is running?
@@ -171,12 +168,14 @@ A: Yes. Siproxd needs to know the public IP address, as this address is
 Q: How do I configure siproxd to use ICPHAINS based UDP masquerading
    tunnels for proxying the incomming RTP traffic?
 
-A: Simple. In the config file set the configuration option
-   rtp_proxy_enable = 2. Siproxd *must* then be started by root, I
-   highly recommend to let siproxd drop privileges after startup
-   (user, chrootjail config options).
-   Note: The UDP port range for incomming RTP data still uses the same
-   range as configured in the config file.
+A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
+   Use the RTP relay instead.
+#A: Simple. In the config file set the configuration option
+#   rtp_proxy_enable = 2. Siproxd *must* then be started by root, I
+#   highly recommend to let siproxd drop privileges after startup
+#   (user, chrootjail config options).
+#   Note: The UDP port range for incomming RTP data still uses the same
+#   range as configured in the config file.
    
 ---------------------------------------------------------------------------
 Q: How do I use siproxd as a pure outbound proxy, so I can register with my
@@ -191,19 +190,24 @@ Q: I have a Grandstream Budgetone-100 SIP phone. The SIP communication
    seems to work properly (I can register, make and receive calls) but
    I do not hear any audio. However, transmitting audio works.
 
-A: It has been observed that these SIP phone seems to be delicate there.
-   You should use the IPCHAINS based RTP proxy and your SIP phone must
-   be configured to use random ports. Connect with the web browser to
-   the phone and make sure the 'Use random port' option is enabled.
+A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
+   Use the RTP relay instead. Grandstream SIP phones are now working
+   properly with the RTP relay.
+#A: It has been observed that these SIP phone seems to be delicate there.
+#   You should use the IPCHAINS based RTP proxy and your SIP phone must
+#   be configured to use random ports. Connect with the web browser to
+#   the phone and make sure the 'Use random port' option is enabled.
 
 ---------------------------------------------------------------------------
 Q: I use Linux (kernel 2.4.x) with ipchains. However, siproxd
    always complains "ERROR:IPCHAINS support not built in", why?
 
-A: Siproxd IPCHAIN support works only with kernels 2.2.x. The
-   ipchains compatibility module for 2.4.x kernels lacks some features
-   that allow user space programs to control masquerading tunnels.
-   You  must use the RTP relay or IPTABLES based masquerading.
+A: Since version 0.5.2, IPCHAINS and IPTABLES are no longer supported.
+   Use the RTP relay instead.
+#A: Siproxd IPCHAIN support works only with kernels 2.2.x. The
+#   ipchains compatibility module for 2.4.x kernels lacks some features
+#   that allow user space programs to control masquerading tunnels.
+#   You  must use the RTP relay or IPTABLES based masquerading.
 
 ---------------------------------------------------------------------------
 Q: I  have two local UA (SIP phones) connected to siproxd. I can
@@ -211,9 +215,62 @@ Q: I  have two local UA (SIP phones) connected to siproxd. I can
    SIP phones in the internet. However, making a call between the
    two locally connected does not succeed, why?
 
-A: That is not a bug but a known limitation of siproxd. Currently it
-   can only manage calls from the local (inbound) network to the 
-   outside world (outbound network) and vice versa. Making calls
-   locally is not supported.
+A: Since Version 0.5.3 this is supported.
+#A: That is not a bug but a known limitation of siproxd. Currently it
+#   can only manage calls from the local (inbound) network to the 
+#   outside world (outbound network) and vice versa. Making calls
+#   locally is not supported.
 
 ---------------------------------------------------------------------------
+Q: When I'm experimenting with siproxd, sometimes it is not enough to
+   restart siproxd to get rid of old junk.
+
+A: Siproxd remenbers the registrations made by UAs in a seperate file.
+   Therefore, just restarting siproxd is not enough to get rid of them.
+   Of course eventually they will time out and be removed from the cache.
+   You also can delete the cache file manually.by default it is in
+   /tmp/siproxd_registrations.
+   - stop siproxd
+   - rm siproxd_registrations
+   - start siproxd
+
+---------------------------------------------------------------------------
+Q: I have problems getting MSN Messenger 5.0 to work (using FWD
+   as 3rd party registrar).
+
+A: First make sure that you have an SIP enabled MSN messenger, which
+   is a separate download from the non-SIP-enabled Messenger 5 at 
+   http://www.microsoft.com/windows/messenger.
+
+   For the configuration, the local IP address of siproxd as the server
+   and 266xxx@fwd.pulver.com as your address. When the authentication
+   dialog comes up you must use your FWD_NUMBER (266xxx) and your password.
+   Messenger misleads you into typing FWD_NUMBER@fwd.pulver.com which 
+   will fail...
+
+---------------------------------------------------------------------------
+Q: Can you give an example configuration for kphone and FWD?
+
+A:  
+   (FWD_NUMBER is your FWD account number)
+
+   File->Identity
+   --------------
+   Full Name: My Name
+   User part of SIP URL: FWD_NUMBER
+   Host Part of SIP URL: fwd.pulver.com
+   Outbound Proxy: 192.168.1.1		<<-- local IP of siproxd
+   Authentication Username: FWD_NUMBER
+   q-value:				<<-- empty
+
+   Preferences->SIP->Socket
+   ------------------------
+   Socket Protocol: UDP
+   Use STUN Server: No
+   Symmetric Signalling: No		(may also be 'Yes')
+   Symmetric Media: No			(may also be 'Yes')
+   STUN Server: 			<< n/a
+   Request Period for STUN Server	<< n/a
+   Media Min Port: 7070			<< depend of siproxd config
+   Media Max Port: 7080			   (RTP ports)
+
