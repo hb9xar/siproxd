@@ -121,7 +121,7 @@ int proxy_request (sip_t *request) {
 #endif
       /* outgoing request ('from' == 'masq') */
       if (compare_url(request->from->url, urlmap[i].masq_url)==0) {
-         type=REQTYP_INCOMMING;
+         type=REQTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	        request->from->url->username,
 		request->from->url->host);
