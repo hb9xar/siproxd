@@ -54,8 +54,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/siproxd
 
 %changelog
+* Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
+- always use /etc as sysconfdir
+
 * Sat Sep 21 2002 Thomas Ries <tries@gmx.net>
 - first RPM support
 
-* Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
-- always use /etc as sysconfdir
