@@ -643,6 +643,11 @@ int sip_del_myvia (osip_message_t *response) {
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
    via = osip_list_get (response->vias, 0);
    
+   if ( via == NULL ) {
+      ERROR("Got empty VIA list - is your UA configured properly?");
+      return STS_FAILURE;
+   }
+
    if ( is_via_local(via) == STS_FALSE ) {
       ERROR("I'm trying to delete a VIA but it's not mine! host=%s",via->host);
       return STS_FAILURE;
