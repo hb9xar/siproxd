@@ -52,83 +52,109 @@ extern struct siproxd_config configuration;	/* defined in siproxd.c */
 int route_preprocess(sip_ticket_t *ticket){
    osip_message_t *mymsg=ticket->sipmsg;
    int sts;
+   osip_uri_t *url;
+   int dest_port;
+   int last;
    struct in_addr addr1, addr2, addr3;
    osip_route_t *route;
-   int last;
-   int i, j;
-   /*
-   The proxy MUST inspect the Request-URI of the request.  If the
-   Request-URI of the request contains a value this proxy previously
-   placed into a Record-Route header field (see Section 16.6 item 4),
-   the proxy MUST replace the Request-URI in the request with the last
-   value from the Route header field, and remove that value from the
-   Route header field.  The proxy MUST then proceed as if it received
-   this modified request.
-   */
+   osip_uri_param_t *param=NULL;
+
+   if ((mymsg->routes==NULL) || (osip_list_size(mymsg->routes)<=0)) {
+      DEBUGC(DBCLASS_PROXY, "route_preprocess: no Route header present");
+      return STS_SUCCESS;
+   }
+
+   if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
+      ERROR("can't find inbound interface %s - configuration error?",
+            configuration.inbound_if);
+      return STS_FAILURE;
+   }
+   if (get_ip_by_ifname(configuration.outbound_if, &addr3)!= STS_SUCCESS) {
+      ERROR("can't find outbound interface %s - configuration error?",
+            configuration.outbound_if);
+      return STS_FAILURE;
+   }
 
    /*
-    * Check if I am listed at the topmost Route header (if any Route
-    * header is existing at all). If so, remove it from the list and
-    * rewrite the request URI to point to the now topmost Route.
+    * 16.4 Route Information Preprocessing:
+    * The proxy MUST inspect the Request-URI of the request.  If the
+    * Request-URI of the request contains a value this proxy previously
+    * placed into a Record-Route header field (see Section 16.6 item 4),
+    * the proxy MUST replace the Request-URI in the request with the last
+    * value from the Route header field, and remove that value from the
+    * Route header field.  The proxy MUST then proceed as if it received
+    * this modified request.
     */
-   if (mymsg->routes && (osip_list_size(mymsg->routes)>0)) {
-      last=osip_list_size(mymsg->routes)-1;
-      /*
-       * I have seen that some (all?) UAs do set a Route: header
-       * pointing to myself AT THE END OF THE LIST!
-       * I don't really understand why, reading the Routing parts
-       * of the RFC3261 did not help. All I know is, this last Route
-       * header must be removed, otherwise any remote Proxy/Server
-       * in the path will try to forward the packet to our private net.
-       *
-       * so the quick and dirty HACK is to check the topmost and
-       * the last Route entry if it belongs to me...
-       *
-       * Any proper explanation to this is heavily welcome
-       *
-       * &&&&
-       * 23Oct2004/xar
-       * Of course this was a stupid error of siproxd himself
-       * when adding Record-Route headers...
-       * - Request:  add Record-Route header as top element of list
-       * - Response: add Record-Route header as last element of list
-       * So this code should be cleaned up - and only examine the first
-       * entry in the Record-set.
-       */
-      for (j=0,i=last; j<2; j++, i=0) {
-         DEBUGC(DBCLASS_PROXY, "route_preprocess: checking Route "
-                "header[%i]", i);
-         route = (osip_route_t *) osip_list_get(mymsg->routes, i);
-         if (route == NULL) continue;
-         if (route->url == NULL) continue;
-         if (route->url->host == NULL) continue;
+   url = osip_message_get_uri(mymsg);
+   dest_port= (url->port)?atoi(url->port):SIP_PORT;
 
-         sts = get_ip_by_host(route->url->host, &addr1);
-         if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
-            ERROR("can't find inbound interface %s - configuration error?",
-                  configuration.inbound_if);
-            return STS_FAILURE;
-         }
-         if (get_ip_by_ifname(configuration.outbound_if, &addr3)!= STS_SUCCESS) {
-            ERROR("can't find outbound interface %s - configuration error?",
-                  configuration.outbound_if);
-            return STS_FAILURE;
+   if (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) {
+      if ((configuration.sip_listen_port == dest_port) &&
+          (url->username && (strcmp(url->username,"siproxd")==0)) &&
+          ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+           (memcmp(&addr1, &addr3, sizeof(addr1)) == 0))) {
+         /* Request URI points does to myself */
+         DEBUGC(DBCLASS_PROXY, "request URI [%s@%s:%i] points to myself",
+                (url->username)?url->username:"*NULL*",
+                (url->host)?url->host:"*NULL*",
+                (url->port)?atoi(url->port):SIP_PORT);
+         /* get last route in list */
+         last=osip_list_size(mymsg->routes)-1;
+         route = (osip_route_t *) osip_list_get(mymsg->routes, last);
+         DEBUGC(DBCLASS_PROXY, "moving last Route [%s@%s:%i] to URI",
+                (route->url->username)?route->url->username:"*NULL*",
+                (route->url->host)?route->url->host:"*NULL*",
+                (route->url->port)?atoi(route->url->port):SIP_PORT);
+
+         /* issue warning if the Route I'm going to fetch is NOT
+            a strict router (lr parameter not present) - something is fishy */
+         if (osip_uri_uparam_get_byname(route->url, "lr", &param) == 0) {
+            WARN("Fixup Strict Router: Route entry [%s@%s:%i] is not "
+                 "a strict Router!",
+                (route->url->username)?route->url->username:"*NULL*",
+                (route->url->host)?route->url->host:"*NULL*",
+                (route->url->port)?atoi(route->url->port):SIP_PORT);
          }
 
-         /* my own route header? */
-         if ((sts == STS_SUCCESS) &&
-             ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-              (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
-              (route->url->port ?
-                  configuration.sip_listen_port == atoi(route->url->port):
-                  configuration.sip_listen_port == SIP_PORT)) {
-            osip_list_remove(mymsg->routes, i);
-            osip_route_free(route);
-            /* request->routes will be freed by osip_message_free() */
-            DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
-         }
+         /* rewrite request URI */
+         osip_uri_free(url);
+         osip_uri_clone(route->url, &(mymsg->req_uri));
+
+         /* remove from list */
+         osip_list_remove(mymsg->routes, last);
+         osip_route_free(route);
+      }
+   } else {
+      WARN("cannot resolve host in Request URI [%s]", url->host);
+   }
+
+
+   /*
+    * 16.4 Route Information Preprocessing:
+    * If the first value in the Route header field indicates this proxy,
+    * the proxy MUST remove that value from the request.
+    */
+   DEBUGC(DBCLASS_PROXY, "route_preprocess: checking topmost "
+          "Route header");
+   route = (osip_route_t *) osip_list_get(mymsg->routes, 0);
+   if ((route != NULL) && (route->url != NULL) &&
+       (route->url->host != NULL)) {
+      sts = get_ip_by_host(route->url->host, &addr1);
+
+      /* my own route header? */
+      if ((sts == STS_SUCCESS) &&
+          ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+           (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
+           (route->url->port ?
+               configuration.sip_listen_port == atoi(route->url->port):
+               configuration.sip_listen_port == SIP_PORT)) {
+         osip_list_remove(mymsg->routes, 0);
+         osip_route_free(route);
+         /* request->routes will be freed by osip_message_free() */
+         DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
       }
    }
+
    return STS_SUCCESS;
 }
 
@@ -163,10 +189,6 @@ int route_postprocess(sip_ticket_t *ticket){
     *    into the Request-URI and remove that value from the Route
     *    header field.
     */
-/* we are not a real proxy - and from the outside we look like an UA.
-So we should not fiddle around with the Route headers.
-We should use the first Route header to send the packet to
-(RFC3261, section 8.1.2) */
 
    if (mymsg->routes && !osip_list_eol(mymsg->routes, 0)) {
 
@@ -289,7 +311,7 @@ int route_add_recordroute(sip_ticket_t *ticket){
 /*
  * PROXY_PURGE_RECORDROUTE
  *
- * Purge all Record-route headers
+ * Purge Record-Route headers pointing to myself.
  * 
  * RETURNS
  *	STS_SUCCESS on success
