@@ -831,7 +831,7 @@ int proxy_response (osip_message_t *response, struct sockaddr_in *from) {
 int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    osip_body_t *body;
    sdp_message_t  *sdp;
-   struct in_addr map_addr, msg_addr, outside_addr, inside_addr;
+   struct in_addr map_addr, addr_sess, addr_media, outside_addr, inside_addr;
    int sts;
    char *bodybuff;
    char clen[8]; /* content length: probably never more than 7 digits !*/
@@ -840,10 +840,15 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    sdp_connection_t *sdp_conn;
    sdp_media_t *sdp_med;
    int rtp_direction=0;
+   int have_c_session=0;
+   int have_c_media=0;
+
+   if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
    /*
     * get SDP structure
     */
+   have_c_session=0;
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
       if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
@@ -857,6 +862,8 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
          ERROR("rewrite_invitation_body: no body found in message");
          return STS_FAILURE;
       }
+   } else {
+      have_c_session=1;
    }
 
    sts = osip_body_to_str(body, &bodybuff);
@@ -886,14 +893,8 @@ if (configuration.debuglevel)
     * RTP proxy: get ready and start forwarding
     * start forwarding for each media stream ('m=' item in SIP message)
     */
-   sts = get_ip_by_host(sdp_message_c_addr_get(sdp,-1,0), &msg_addr);
-   if (sts == STS_FAILURE) {
-      DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: cannot resolve "
-             "m= (media) host [%s]", sdp_message_c_addr_get(sdp,-1,0));
-      sdp_message_free(sdp);
-      return STS_FAILURE;
-   }
 
+   /* get outbound address */
    sts = get_ip_by_ifname(configuration.outbound_if, &outside_addr);
    if (sts == STS_FAILURE) {
       ERROR("can't find outbound interface %s - configuration error?",
@@ -901,6 +902,8 @@ if (configuration.debuglevel)
       sdp_message_free(sdp);
       return STS_FAILURE;
    }
+
+   /* get inbound address */
    sts = get_ip_by_ifname(configuration.inbound_if, &inside_addr);
    if (sts == STS_FAILURE) {
       ERROR("can't find inbound interface %s - configuration error?",
@@ -928,84 +931,154 @@ if (configuration.debuglevel)
       }
    }
 
+
    /*
-    * rewrite c= address
-    *  !! an IP address of 0.0.0.0 means *MUTE*, don't rewrite such one
+    * first, check presence of a 'c=' item on session level
     */
-   sdp_conn = sdp_message_connection_get (sdp, -1, 0);
-   if (sdp_conn && sdp_conn->c_addr) {
-      if (strcmp(sdp_conn->c_addr, "0.0.0.0") != 0) {
-         /* have a valid address */
-         osip_free(sdp_conn->c_addr);
-         sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
-         sprintf(sdp_conn->c_addr, "%s", utils_inet_ntoa(map_addr));
+   if (sdp->c_connection==NULL || sdp->c_connection->c_addr==NULL) {
+      /*
+       * No 'c=' on session level, search on media level now
+       *
+       * According to RFC2327, ALL media description must
+       * include a 'c=' item now:
+       */
+      media_stream_no=0;
+      while (!sdp_message_endof_media(sdp, media_stream_no)) {
+         /* check if n'th media stream is present */
+         if (sdp_message_c_addr_get(sdp, media_stream_no, 0) == NULL) {
+            ERROR("SDP: have no 'c=' on session level and neither "
+                  "on media level (media=%i)",media_stream_no);
+            sdp_message_free(sdp);
+            return STS_FAILURE;
+         }
+         media_stream_no++;
+      } /* while */
+   }
+
+   /* Required 'c=' items ARE present */
+
+
+   /*
+    * rewrite 'c=' item on session level if present and not yet done.
+    * remember the original address in addr_sess
+    */
+   memset(&addr_sess, 0, sizeof(addr_sess));
+   if (have_c_session == 1){
+DEBUG("*0 session conn=%s",  sdp->c_connection->c_addr);
+      sts = get_ip_by_host(sdp->c_connection->c_addr, &addr_sess);
+      if (sts == STS_FAILURE) {
+         ERROR("SDP: cannot resolve session 'c=' host [%s]",
+               sdp->c_connection->c_addr);
+         sdp_message_free(sdp);
+         return STS_FAILURE;
+      }
+      /*
+       * Rewrite
+       * an IP address of 0.0.0.0 means *MUTE*, don't rewrite such
+       */
+      if (strcmp(sdp->c_connection->c_addr, "0.0.0.0") != 0) {
+         osip_free(sdp->c_connection->c_addr);
+         sdp->c_connection->c_addr=osip_malloc(HOSTNAME_SIZE);
+         sprintf(sdp->c_connection->c_addr, "%s", utils_inet_ntoa(map_addr));
+DEBUG("*0 rewritten: session conn=%s",  sdp->c_connection->c_addr);
       } else {
          /* 0.0.0.0 - don't rewrite */
-         DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: got a MUTE c= record");
+         DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                "got a MUTE c= record (on session level - legal?)");
       }
-   } else {
-      ERROR("got NULL c= address record - can't rewrite");
    }
+
+
     
    /*
-    * loop through all m= descritions,
+    * loop through all media descritions,
     * start RTP proxy and rewrite them
     */
-   if (configuration.rtp_proxy_enable == 1) {
-      for (media_stream_no=0;;media_stream_no++) {
-         /* check if n'th media stream is present */
-         if (sdp_message_m_port_get(sdp, media_stream_no) == NULL) break;
+   for (media_stream_no=0;;media_stream_no++) {
+      /* check if n'th media stream is present */
+      if (sdp_message_m_port_get(sdp, media_stream_no) == NULL) break;
 
-         /* start an RTP proxying stream */
-         if (sdp_message_m_port_get(sdp, media_stream_no)) {
-            msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
-
-            if (msg_port > 0) {
-               osip_uri_t *cont_url = NULL;
-               char *client_id=NULL;
-               /* try to get some additional UA specific unique ID.
-                * Try:
-                * 1) User part of Contact header
-                * 2) Host part of Contact header (will be different
-                *    between internal UA and external UA)
-                */
-               if (!osip_list_eol(mymsg->contacts, 0))
-                  cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
-               if (cont_url) {
-                  client_id=cont_url->username;
-                  if (client_id == NULL) client_id=cont_url->host;
-               }
-               
-
-               sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
-                                   client_id,
-                                   rtp_direction,
-                                   media_stream_no,
-                                   map_addr, &map_port,
-                                   msg_addr, msg_port);
-
-               if (sts == STS_SUCCESS) {
-                  /* and rewrite the port */
-                  sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
-                  if (sdp_med && sdp_med->m_port) {
-                     osip_free(sdp_med->m_port);
-                     sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
-                     sprintf(sdp_med->m_port, "%i", map_port);
-                     DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                            "m= rewrote port to [%i]",map_port);
-                  } else {
-                     ERROR("rewriting port in m= failed sdp_med=%p, "
-                           "m_number_of_port=%p", sdp_med, sdp_med->m_port);
-                  }
-               } /* sts == success */
-            } /* if msg_port > 0 */
+      /*
+       * check if a 'c=' item is present in this media description,
+       * if so -> rewrite it
+       */
+DEBUG("*0 msn=%i",  media_stream_no);
+      memset(&addr_media, 0, sizeof(addr_media));
+      have_c_media=0;
+      sdp_conn=sdp_message_connection_get(sdp, media_stream_no, 0);
+      if (sdp_conn && sdp_conn->c_addr) {
+DEBUG("*1 msn=%i, host=%s",  media_stream_no, sdp_conn->c_addr);
+         if (strcmp(sdp_conn->c_addr, "0.0.0.0") != 0) {
+            sts = get_ip_by_host(sdp_conn->c_addr, &addr_media);
+            have_c_media=1;
+            /* have a valid address */
+            osip_free(sdp_conn->c_addr);
+            sdp_conn->c_addr=osip_malloc(HOSTNAME_SIZE);
+            sprintf(sdp_conn->c_addr, "%s", utils_inet_ntoa(map_addr));
          } else {
-            /* no port defined - skip entry */
-            WARN("no port defined in m=(media) stream_no=%i", media_stream_no);
-            continue;
+            /* 0.0.0.0 - don't rewrite */
+            DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: got a "
+                   "MUTE c= record (media level)");
          }
-      } /* for media_stream_no */
-   } /* if rtp_proxy_enable */
+      }
+
+      /* start an RTP proxying stream */
+      if (sdp_message_m_port_get(sdp, media_stream_no)) {
+         msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
+
+         if (msg_port > 0) {
+            osip_uri_t *cont_url = NULL;
+            char *client_id=NULL;
+            /* try to get some additional UA specific unique ID.
+             * Try:
+             * 1) User part of Contact header
+             * 2) Host part of Contact header (will be different
+             *    between internal UA and external UA)
+             */
+            if (!osip_list_eol(mymsg->contacts, 0))
+               cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
+            if (cont_url) {
+               client_id=cont_url->username;
+               if (client_id == NULL) client_id=cont_url->host;
+            }
+
+
+            /*
+             * do we have a 'c=' item on media level?
+             * if not, use the same as on session level
+             */
+            if (have_c_media == 0) {
+               memcpy(&addr_media, &addr_sess, sizeof(addr_sess));
+            }
+
+            sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
+                                client_id,
+                                rtp_direction,
+                                media_stream_no,
+                                map_addr, &map_port,
+                                addr_media, msg_port);
+
+            if (sts == STS_SUCCESS) {
+               /* and rewrite the port */
+               sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
+               if (sdp_med && sdp_med->m_port) {
+                  osip_free(sdp_med->m_port);
+                  sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
+                  sprintf(sdp_med->m_port, "%i", map_port);
+                  DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
+                         "m= rewrote port to [%i]",map_port);
+               } else {
+                  ERROR("rewriting port in m= failed sdp_med=%p, "
+                        "m_number_of_port=%p", sdp_med, sdp_med->m_port);
+               }
+            } /* sts == success */
+         } /* if msg_port > 0 */
+      } else {
+         /* no port defined - skip entry */
+         WARN("no port defined in m=(media) stream_no=%i", media_stream_no);
+         continue;
+      }
+   } /* for media_stream_no */
 
    /* remove old body */
    sts = osip_list_remove(mymsg->bodies, 0);

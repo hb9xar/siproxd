@@ -1,5 +1,7 @@
 0.5.5
 =====
+  26-Mar-2004:  - SDP rewrite: properly handle 'c=' items in session
+                  *and* media part of SDP data.
   22-Mar-2004:  - deal with wildcard Contact header for unREGISTER
                 - enhanced security tests to survive the PROTOS test
   21-Mar-2004:  - added ./autogen.sh
