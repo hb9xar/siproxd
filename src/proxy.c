@@ -38,9 +38,8 @@
 static char const ident[]="$Id$";
 
 /* configuration storage */
-extern struct siproxd_config configuration;
+extern struct siproxd_config configuration;	/* defined in siproxd.c */
 
-extern int errno;
 extern struct urlmap_s urlmap[];		/* URL mapping table     */
 extern struct lcl_if_s local_addresses;
 

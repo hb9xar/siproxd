@@ -42,6 +42,9 @@ static char const ident[]="$Id$";
 /* configuration storage */
 extern struct siproxd_config configuration;
 
+/* Global File instance on pw file */
+extern FILE *siproxd_passwordfile;
+
 /* local protorypes */
 static char *auth_generate_nonce(void);
 static int auth_check(osip_proxy_authorization_t *proxy_auth);
@@ -248,7 +251,6 @@ static char *auth_getpwd(char *username) {
       char password[PASSWORD_SIZE];
    } auth_cache_t;
 
-   FILE *pwdfile;
    char buff[128];
    int i;
    static auth_cache_t *auth_cache=NULL;
@@ -258,14 +260,16 @@ static char *auth_getpwd(char *username) {
 
    if (auth_cache==NULL) {
       DEBUGC(DBCLASS_AUTH,"initialize password cache");
-      pwdfile=fopen(configuration.proxy_auth_pwfile,"r");
+
       /* config file not found or unable to open for read */
-      if (pwdfile==NULL) {
+      if (siproxd_passwordfile==NULL) {
          ERROR ("could not open password file: %s", strerror(errno));
          return NULL;
       }
       
-      while (fgets(buff,sizeof(buff),pwdfile) != NULL) {
+      rewind(siproxd_passwordfile);
+
+      while (fgets(buff,sizeof(buff),siproxd_passwordfile) != NULL) {
          /* life insurance */
          buff[sizeof(buff)-1]='\0';
 
@@ -301,8 +305,6 @@ static char *auth_getpwd(char *username) {
          /* if I got username & passwd, make it valid and increment counter */
          if (i == 2) auth_cache_count++;
       }
-
-      fclose(pwdfile);
 
    } /* initialize cache */
 

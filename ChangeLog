@@ -1,5 +1,8 @@
 0.5.8
 =====
+  06-Jul-2004:  - patch from Dan Weber: Open the password file for SIP
+		  accounts at startup, so we still have access after
+                  chroot()ing. PID filename can be given at command-line.
   27-Jun-2004:  - fix: in some configurations incoming requests could
                   be sent to a wrong port number.
 

@@ -43,14 +43,18 @@ static char const ident[]="$Id$";
 /* configuration storage */
 struct siproxd_config configuration;
 
+/* Global File instance on pw file */
+FILE *siproxd_passwordfile;
+
 /* -h help option text */
 static const char str_helpmsg[] =
 PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2004 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
-"       --help              (-h) help\n"
-"       --debug <pattern>   (-d) set debug-pattern\n"
-"       --config <cfgfile>  (-c) use the specified config file\n"
+"       --help               (-h) help\n"
+"       --debug <pattern>    (-d) set debug-pattern\n"
+"       --config <cfgfile>   (-c) use the specified config file\n"
+"       --pid-file <pidfile> (-p) create pid file <pidfile>\n"
 "";
 
 
@@ -75,13 +79,13 @@ int main (int argc, char *argv[])
    char buff [BUFFER_SIZE];
    sip_ticket_t ticket;
 
-   extern char *optarg;
+   extern char *optarg;		/* Defined in libc getopt and unistd.h */
    int ch1;
    
    char configfile[64]="siproxd";	/* basename of configfile */
    int  config_search=1;		/* search the config file */
    int  cmdline_debuglevel=0;
-
+   char *pidfilename=NULL;
    struct sigaction act;
 
    log_set_stdout(1);
@@ -112,6 +116,16 @@ int main (int argc, char *argv[])
    log_set_pattern(configuration.debuglevel);      
 
 /*
+ * open a the pwfile instance, so we still have access after
+ * we possibly have chroot()ed to somewhere.
+ */
+   if (configuration.proxy_auth_pwfile) {
+      siproxd_passwordfile = fopen(configuration.proxy_auth_pwfile, "r");
+   } else {
+      siproxd_passwordfile = NULL;
+   }
+
+/*
  * parse command line
  */
 {
@@ -121,13 +135,14 @@ int main (int argc, char *argv[])
       {"help", no_argument, NULL, 'h'},
       {"config", required_argument, NULL, 'c'},
       {"debug", required_argument, NULL, 'd'},
+      {"pid-file", required_argument, NULL,'p'},
       {0,0,0,0}
    };
 
-    while ((ch1 = getopt_long(argc, argv, "hc:d:n",
+    while ((ch1 = getopt_long(argc, argv, "hc:d:p:",
                   long_options, &option_index)) != -1) {
 #else	/* ! HAVE_GETOPT_LONG */
-    while ((ch1 = getopt(argc, argv, "hc:d:n:")) != -1) {
+    while ((ch1 = getopt(argc, argv, "hc:d:p:")) != -1) {
 #endif
       switch (ch1) {
       case 'h':	/* help */
@@ -138,8 +153,9 @@ int main (int argc, char *argv[])
 
       case 'c':	/* load config file */
          DEBUGC(DBCLASS_CONFIG,"option: config file=%s",optarg);
-         strncpy(configfile,optarg,sizeof(configfile)-1);
-	 configfile[sizeof(configfile)]='\0';
+         i=sizeof(configfile)-1;
+         strncpy(configfile,optarg,i-1);
+	 configfile[i]='\0';
 	 config_search=0;
 	 break; 
 
@@ -147,6 +163,10 @@ int main (int argc, char *argv[])
          DEBUGC(DBCLASS_CONFIG,"option: set debug level: %s",optarg);
 	 cmdline_debuglevel=atoi(optarg);
          log_set_pattern(cmdline_debuglevel);
+	 break;
+
+      case 'p':
+	 pidfilename = optarg;
 	 break;
 
       default:
@@ -187,12 +207,13 @@ int main (int argc, char *argv[])
    }
 
    /* write PID file of main thread */
-   if (configuration.pid_file) {
+   if (pidfilename == NULL) pidfilename = configuration.pid_file;
+   if (pidfilename) {
       FILE *pidfile;
-      DEBUGC(DBCLASS_CONFIG,"creating PID file [%s]", configuration.pid_file);
+      DEBUGC(DBCLASS_CONFIG,"creating PID file [%s]", pidfilename);
       sts=unlink(configuration.pid_file);
       if ((sts==0) ||(errno == ENOENT)) {
-         if ((pidfile=fopen(configuration.pid_file, "w"))) {
+         if ((pidfile=fopen(pidfilename, "w"))) {
             fprintf(pidfile,"%i\n",(int)getpid());
             fclose(pidfile);
          } else {
@@ -473,9 +494,9 @@ int main (int argc, char *argv[])
    INFO("properly terminating siproxd");
 
    /* remove PID file */
-   if (configuration.pid_file) {
-      DEBUGC(DBCLASS_CONFIG,"deleting PID file [%s]", configuration.pid_file);
-      sts=unlink(configuration.pid_file);
+   if (pidfilename) {
+      DEBUGC(DBCLASS_CONFIG,"deleting PID file [%s]", pidfilename);
+      sts=unlink(pidfilename);
       if (sts != 0) {
          WARN("couldn't delete old PID file: %s", strerror(errno));
       }

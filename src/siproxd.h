@@ -104,8 +104,8 @@ typedef struct {
 /*				function returns STS_* status values     vvv */
 
 /* sock.c */
-int sipsock_listen (void);						/*X*/
-int sipsock_wait();
+int sipsock_listen(void);						/*X*/
+int sipsock_wait(void);
 int sipsock_read(void *buf, size_t bufsize,
                  struct sockaddr_in *from, int *protocol);
 int sipsock_send(struct in_addr addr, int port,	int protocol,			/*X*/
@@ -232,4 +232,6 @@ int fwapi_stop_rtp(int rtp_direction,
 #define DIR_OUTGOING	2
 
 /* various */
+#ifndef satoi
 #define satoi atoi  /* used in libosips MSG_TEST_CODE macro ... */
+#endif
