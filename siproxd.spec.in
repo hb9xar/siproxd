@@ -3,7 +3,7 @@
 %define release		1
 %define serial		1
 %define prefix		%{_prefix}
-%define sysconfdir	%{_sysconfdir}
+%define sysconfdir	/etc
 
 Name:		%{name}
 Summary:	A SIP masquerading proxy with RTP support
@@ -17,8 +17,8 @@ URL: 		http://siproxd.sourceforge.net/
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-root
 Docdir: 	%{_docdir}
 
-Requires:	libosip2 >= 1.99.0
-BuildRequires:	libosip2 >= 1.99.0
+Requires:	libosip2 >= 2.0.2
+BuildRequires:	libosip2 >= 2.0.2
 
 Vendor:		Thomas Ries
 
@@ -56,3 +56,6 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Sat Sep 21 2002 Thomas Ries <tries@gmx.net>
 - first RPM support
+
+* Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
+- always use /etc as sysconfdir

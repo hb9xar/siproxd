@@ -1,5 +1,6 @@
 0.3.5
 =====
+ 30-Aug-2003:   - released 0.3.5
  20-Aug-2003:   - security tests: responses may have empty SIP URI
                   don't fail there.
                 - increase size of call_id for RTP proxy table and

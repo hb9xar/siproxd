@@ -34,22 +34,9 @@ TODOs, in random order:
 
 - support for "full duplex" RTP proxying
 
-- symmetric RTP proxying
-  This seems to be a more complex issue. It looks like some 
-  SIP phone only do work properly with symmetric RTP data flow:
-  Phone A UDP-Port X <-> Phone B UDP-Port Y
-  
-  The following then seems to produce just "silence" (no RX of audio):
-  Phone A UDP-Port X  -> Phone B UDP-Port Y
-  Phone A UDP-Port X <-  Phone B UDP-Port Z
-  Unfortunately this is the scenario resulting from siproxd's
-  the RTP proxy...
-  
-  This we might overcome by introducing a full-duplex RTP proxy that
-  takes care of this.
-  An other idea might be to not proxy at all, but inject/open an
-  UDP masquerading tunnel in the firewall (there exist a C call interface
-  for doing such things). This would be easier I think - but is then Linux
-  specific and depends of the kernel (ipchains / iptables, ...)
+- optional: instead of using the RTP proxy, open up UDP masquerading
+  tunnels in the firewall and let the kernel do the work.
+  Anyway, there seems to be an issue with some hardphones (BudgeTone-100)
+  that do not work with the RTP proxy (no audio reception)
 
 - maybe STUN support

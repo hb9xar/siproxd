@@ -1,4 +1,4 @@
-Release Notes for siproxd-0.3.4
+Release Notes for siproxd-0.3.5
 ===============================
 
  - Fli4l OPT_SIP (still experimental) available, check
@@ -42,7 +42,6 @@ Currently tested on:
 Reported to build on:
 - OpenBSD 2.9
 
-
 Reported interoperability (tested with softphones):
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
@@ -52,16 +51,24 @@ Known bugs:
  - does not yet work with Grandstream BudgeTone phones,
    but I'm working on this.
 
+   If you port siproxd to a new platform or do other kinds of changes
+   or bugfixes that might be of general interest, please drop me a
+   line. Also if you intend to include siproxd into a distribution
+   I'd be happy to get a short notice.
+
+
 -----
-md5sum for siproxd-0.3.4.tar.gz: 	
-md5sum for siproxd-0.3.4-1rh60.i386.rpm:
-md5sum for siproxd-0.3.4-1rh72.i386.rpm:
-md5sum for siproxd-0.3.4-1.src.rpm:	
+md5sum for siproxd-0.3.5.tar.gz: 	
+md5sum for siproxd-0.3.5-1rh60.i386.rpm:
+md5sum for siproxd-0.3.5-1rh72.i386.rpm:
+md5sum for siproxd-0.3.5-1.src.rpm:	
 
-GnuPG signature for siproxd-0.3.4.tar.gz archive:
+GnuPG signature for siproxd-0.3.5.tar.gz archive:
 
 
+GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
+-      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
+-      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
+VoIP:  sip:17476691342@proxy01.sipphone.com
 
-GnuPG Public Key is available on wwwkeys.pgp.net
-pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries@gmx.net)
-Key fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
+
