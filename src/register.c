@@ -328,7 +328,7 @@ int register_response(osip_message_t *request, int flag) {
    }
 
    /* name resolution needed? */
-   if (inet_aton (via->host,&addr) == 0) {
+   if (utils_inet_aton(via->host,&addr) == 0) {
       /* yes, get IP address */
       sts = get_ip_by_host(via->host, &addr);
       if (sts == STS_FAILURE) {

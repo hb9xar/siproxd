@@ -1,5 +1,8 @@
 0.5.0
 =====
+  22-Nov-2003:	- utils.c: use gethostbyname_r() in favor of
+		  gethostbyname - if available (siproxd uses threads!)
+		- some small items & cleanup
   19-Nov-2003:	- Integrated a patch from Chris Ross:
 		  * have siproxd compile on Solaris and BSD/OS (more to come)
 		  * ./configure option --with-libosip-prefix

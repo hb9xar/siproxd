@@ -19,6 +19,7 @@ dnl     19-Sep-2003     tries   DMALLOC support
 dnl	 1-Nov-2003	tries	check for NETFILTER (IPTABLES)
 dnl	18-Nov-2003	tries	include sysconfdir to search for config
 dnl	19-Nov-2003	tries	changes to support Solaris & BSD/OS
+dnl	22-Nov-2003	tries	test for gethostbyname_r() & # of args
 dnl
 dnl
 dnl
@@ -87,12 +88,18 @@ done
 dnl
 dnl add
 dnl    --enable-dmalloc
-   AC_MSG_CHECKING("building with DMALLOC support")
+   AC_MSG_CHECKING(building with DMALLOC support)
    AC_ARG_ENABLE(dmalloc,
       [  --enable-dmalloc            build with DMALLOC support],
       CFLAGS="$CFLAGS -DDMALLOC ";LIBS="-ldmallocth $LIBS";
       AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
+
+dnl
+dnl general stuff
+dnl  _POSIX_THREAD_SAFE_FUNCTIONS needed by some platforms to make
+dnl	reentrant functions available (gethostbyname_r)
+CFLAGS="$CFLAGS -D_POSIX_THREAD_SAFE_FUNCTIONS"
 
 dnl
 dnl system specific stuff
@@ -304,7 +311,10 @@ dnl
 AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strerror)
-AC_CHECK_FUNCS(gethostbyname)
+
+AC_CHECK_FUNCS(gethostbyname gethostbyname_r)
+ACX_WHICH_GETHOSTBYNAME_R()
+
 AC_CHECK_FUNCS(getopt_long daemon syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
 AC_CHECK_FUNCS(socket bind select read send sendto)

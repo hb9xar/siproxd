@@ -205,7 +205,7 @@ void log_dump_buffer(int class, char *file, int line,
       for (j=0;(j<16) && (i+j)<length ;j++) {
          sprintf(tmp,"%2.2x ",(unsigned char)buffer[i+j]);
          strcat(tmplin1, tmp);
-         sprintf(tmp, "%c",(isprint(buffer[i+j]))? buffer[i+j]: '.');
+         sprintf(tmp, "%c",(isprint((int)buffer[i+j]))? buffer[i+j]: '.');
          strcat(tmplin2, tmp);
       }
       fprintf(stderr, "  %-47.47s %-16.16s\n",tmplin1, tmplin2);

@@ -65,6 +65,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    int i, j;
    time_t t;
    struct hostent *hostentry;
+   int error;
    static struct {
       time_t timestamp;
       struct in_addr addr;
@@ -113,7 +114,50 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    }
    
    /* did not find it in cache, so I have to resolve it */
+
+   /* need to deal with reentrant versions of gethostbyname_r()
+    * as we may use threads... */
+#if defined(HAVE_GETHOSTBYNAME_R)
+   {
+   struct hostent result_buffer;
+   char tmp[GETHOSTBYNAME_BUFLEN];
+
+   /* gethostbyname_r() with 3 arguments (e.g. osf/1) */
+   #if defined(HAVE_FUNC_GETHOSTBYNAME_R_3)
+   gethostbyname_r(hostname,		/* the FQDN */
+		   &result_buffer,	/* the result buffer */ 
+		   &hostentry
+		   );
+   if (hostentry == NULL) my_error = h_errno;
+
+   /* gethostbyname_r() with 5 arguments (e.g. solaris, linux libc5) */
+   #elif defined(HAVE_FUNC_GETHOSTBYNAME_R_5)
+   hostentry = gethostbyname_r(hostname,        /* the FQDN */
+			       &result_buffer,  /* the result buffer */
+			       tmp,
+			       GETHOSTBYNAME_BUFLEN - 1,
+			       &error);
+
+   /* gethostbyname_r() with 6 arguments (e.g. linux glibc) */
+   #elif defined(HAVE_FUNC_GETHOSTBYNAME_R_6)
+   gethostbyname_r(hostname,        /* the FQDN */
+		   &result_buffer,  /* the result buffer */
+		   tmp,
+		   GETHOSTBYNAME_BUFLEN - 1,
+		   &hostentry,
+		   &error);
+   #else
+      #error "gethostbyname_s() with 3, 5 or 6 arguments supported only"
+   #endif   
+   }
+#elif defined(HAVE_GETHOSTBYNAME)
+   #warning "did not find reentrant version of gethostbyname_r()"
+   #warning "depending of your OS this may or may not work"
    hostentry=gethostbyname(hostname);
+   if (hostentry == NULL) error = h_errno;
+#else
+   #error "need gethostbyname() or gethostbyname_r()"
+#endif
 
    if (hostentry==NULL) {
       if (h_errno == HOST_NOT_FOUND) {

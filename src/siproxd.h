@@ -167,6 +167,12 @@ struct siproxd_config {
 #define USERNAME_SIZE	64	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	64	/* max string length of a password (auth) */
 
+				/* scratch buffer for gethostbyname_r() */
+#if defined(PR_NETDB_BUF_SIZE)
+   #define GETHOSTBYNAME_BUFLEN PR_NETDB_BUF_SIZE 
+#else
+   #define GETHOSTBYNAME_BUFLEN 1024
+#endif
 
 #define ACCESSCTL_SIP	1	/* for access control - SIP allowed	*/
 #define ACCESSCTL_REG	2	/* --"--              - registr. allowed */

@@ -29,7 +29,7 @@ TODOs, in random order:
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 
-- support IPTABLES for RTP proxying
+- support IPTABLES for RTP proxying -> use libiptc
 
 - rtpproxy_masq:
   RACE CONDITIONS! A slot may be timed out, even if the actual

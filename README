@@ -60,8 +60,11 @@ PROBLEM REPORTING
 If you encounter problems/crashes and ask for support, please include
 as much information as possible. Very helpful is a debug log that
 has been recorded at the time of the misbehaviour.
+Also include the exact versions of the siproxd package and libosip2
+that you are using. You should also include your siproxd.conf.
+ 
 
-The easiest way to do this:
+The easiest way to generate a debug log is:
 1) make sure siproxd is not started as daemon.
    -> 'daemonize = 0' in the config file.
 2) start siproxd:
