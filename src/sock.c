@@ -165,8 +165,9 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
-         ERROR("sendto() [%s:%i] call failed: %s", utils_inet_ntoa(addr),
-               port, strerror(errno));
+         ERROR("sendto() [%s:%i size=%i] call failed: %s",
+               utils_inet_ntoa(addr),
+               port, size, strerror(errno));
          return STS_FAILURE;
       }
       DEBUGC(DBCLASS_BABBLE,"sendto() [%s:%i] call failed: %s",

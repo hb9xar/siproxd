@@ -2,6 +2,9 @@
 =====
    28-Jan-2004:	- don't die on INVITE requests that include no Contact
                   header - which is legal. (patch by Robert Högberg)
+		- RTP proxy: don't try to forward empty RTP packets
+		- renamed some variables of rtp_proxytable_t to make
+                  better sense (changed meaning in fullduplex RTP proxy)
    27-Jan-2004:	- added doc/KNOWN_BUGS
 		- better branch parameter calculation (via header),
                   now honors RFC3261 for stateless proxies (section 16.11)

@@ -28,10 +28,10 @@ typedef struct {
    char callid_host[CALLIDHOST_SIZE];           /*  --"--  */
    int direction;                               /* Direction of RTP stream */
    int media_stream_no;
-   struct in_addr outbound_ipaddr;              /* lcl outbound IP */
-   int outboundport;                            /* lcl allocd outbound port */
-   struct in_addr inbound_client_ipaddr;        /* lcl inbound UA IP */
-   int inbound_client_port;                     /* lcl inbound UA port */
+   struct in_addr local_ipaddr;                 /* local IP */
+   int local_port;                              /* local allocated port */
+   struct in_addr remote_ipaddr;                /* remote IP */
+   int remote_port;                             /* remote port */
    time_t timestamp;                            /* last 'stream alive' TS */
 } rtp_proxytable_t;
 
@@ -41,8 +41,8 @@ typedef struct {
 int  rtp_relay_init(void);
 int  rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
                           int media_stream_no,
-		          struct in_addr outbound_ipaddr, int *outboundport,
-                          struct in_addr lcl_client_ipaddr, int lcl_clientport);
+		          struct in_addr local_ipaddr, int *local_port,
+                          struct in_addr remote_ipaddr, int remote_port);
 int  rtp_relay_stop_fwd (osip_call_id_t *callid, int direction, int nolock);
 
 
@@ -52,8 +52,8 @@ int  rtp_relay_stop_fwd (osip_call_id_t *callid, int direction, int nolock);
 int  rtp_masq_init(void);
 int  rtp_masq_start_fwd (osip_call_id_t *callid, int direction,
                           int media_stream_no,
-		          struct in_addr outbound_ipaddr, int *outboundport,
-                          struct in_addr lcl_client_ipaddr, int lcl_clientport);
+		          struct in_addr local_ipaddr, int *local_port,
+                          struct in_addr remote_ipaddr, int remote_port);
 int  rtp_masq_stop_fwd (osip_call_id_t *callid, int direction);
 
 /*

@@ -113,7 +113,6 @@ static void *rtpproxy_main(void *arg) {
    int i, sts;
    int num_fd;
    osip_call_id_t callid;
-//&&&&   static int rtp_socket=0;
    static char rtp_buff[RTP_BUFFER_SIZE];
    int count;
 
@@ -157,46 +156,58 @@ static void *rtpproxy_main(void *arg) {
             count=read(rtp_proxytable[i].rtp_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
             if (count<0) {
-               WARN("read() returned error [%s]",strerror(errno));
-            }
-
-//&&&&	    /* write to dest via socket rtp__socket */
-//&&&&            sts = sipsock_send_udp(&rtp_socket,
-//&&&&	                  rtp_proxytable[i].inbound_client_ipaddr,
-//&&&&			  rtp_proxytable[i].inbound_client_port,
-//&&&&			  rtp_buff, count, 0); /* don't dump it */
-           if (rtp_proxytable[i].rtp_tx_sock == 0)
-           {
-              int j;
-              osip_call_id_t callid;
-              int direction = rtp_proxytable[i].direction;
-              int media_stream_no = rtp_proxytable[i].media_stream_no;
-
-              callid.number = rtp_proxytable[i].callid_number;
-              callid.host = rtp_proxytable[i].callid_host;
-
-              for (j=0;(j<RTPPROXY_SIZE);j++) {
-                 osip_call_id_t cid;
-
-                 cid.number = rtp_proxytable[j].callid_number;
-                 cid.host = rtp_proxytable[j].callid_host;
-
-                 if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
-                      (direction != rtp_proxytable[j].direction) &&
-                      (media_stream_no == rtp_proxytable[j].media_stream_no) &&
-                      (compare_callid(&callid, &cid) == STS_SUCCESS) ) {
-                    rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
-                    break;
-                 }
-              }
+               int j;
+               WARN("read() [fd=%i, %s:%i] returned error [%s]",
+               rtp_proxytable[i].rtp_rx_sock,
+               utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
+               rtp_proxytable[i].local_port, strerror(errno));
+               for (j=0; j<RTPPROXY_SIZE;j++) {
+                  DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i",
+                  rtp_proxytable[j].rtp_tx_sock,
+                  rtp_proxytable[j].callid_number,
+                  rtp_proxytable[j].callid_host,
+                  rtp_proxytable[j].direction);
+               }
            }
-           if (rtp_proxytable[i].rtp_tx_sock != 0) {
-               /* write to dest via socket rtp_tx_sock */
-               sts = sipsock_send_udp(&rtp_proxytable[i].rtp_tx_sock,
-                                      rtp_proxytable[i].inbound_client_ipaddr,
-                                      rtp_proxytable[i].inbound_client_port,
-                                      rtp_buff, count, 0); /* don't dump it */
-           }
+
+            /*
+             * forwarding an RTP packet only makes sense if we really
+             * have got some data in it (count > 0)
+             */
+            if (count > 0) {
+               if (rtp_proxytable[i].rtp_tx_sock == 0) {
+                  int j;
+                  osip_call_id_t callid;
+                  int direction = rtp_proxytable[i].direction;
+                  int media_stream_no = rtp_proxytable[i].media_stream_no;
+
+                  callid.number = rtp_proxytable[i].callid_number;
+                  callid.host = rtp_proxytable[i].callid_host;
+
+                  for (j=0;(j<RTPPROXY_SIZE);j++) {
+                     osip_call_id_t cid;
+
+                     cid.number = rtp_proxytable[j].callid_number;
+                     cid.host = rtp_proxytable[j].callid_host;
+
+                     if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
+                          (direction != rtp_proxytable[j].direction) &&
+                          (media_stream_no == rtp_proxytable[j].media_stream_no) &&
+                          (compare_callid(&callid, &cid) == STS_SUCCESS) ) {
+                        rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
+                        break;
+                     }
+                  }
+               } /* rtp_tx_sock == 0 */
+
+               if (rtp_proxytable[i].rtp_tx_sock != 0) {
+                   /* write to dest via socket rtp_tx_sock */
+                   sts = sipsock_send_udp(&rtp_proxytable[i].rtp_tx_sock,
+                                          rtp_proxytable[i].remote_ipaddr,
+                                          rtp_proxytable[i].remote_port,
+                                          rtp_buff, count, 0); /* don't dump it */
+               }
+            } /* count > 0 */
 
             /* update timestamp of last usage */
             rtp_proxytable[i].timestamp=t;
@@ -249,9 +260,9 @@ static void *rtpproxy_main(void *arg) {
  *	STS_FAILURE on error
  */
 int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
-                         int media_stream_no, struct in_addr outbound_ipaddr,
-                         int *outboundport, struct in_addr lcl_client_ipaddr,
-                         int lcl_clientport) {
+                         int media_stream_no, struct in_addr local_ipaddr,
+                         int *local_port, struct in_addr remote_ipaddr,
+                         int remote_port) {
    int i, j;
    int sock, port;
    int freeidx;
@@ -319,17 +330,17 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
           * for a given media stream
           * (seen with KPhone during HOLD/unHOLD)
           */
-         if (rtp_proxytable[i].inbound_client_port != lcl_clientport) {
+         if (rtp_proxytable[i].remote_port != remote_port) {
             DEBUGC(DBCLASS_RTP,"RTP port number changed %i -> %i",
-                   rtp_proxytable[i].inbound_client_port, lcl_clientport);
-            rtp_proxytable[i].inbound_client_port = lcl_clientport;
+                   rtp_proxytable[i].remote_port, remote_port);
+            rtp_proxytable[i].remote_port = remote_port;
          }
          /* return the already known port number */
          DEBUGC(DBCLASS_RTP,"RTP stream already active (port=%i, "
-                "id=%s, #=%i)", rtp_proxytable[i].outboundport,
+                "id=%s, #=%i)", rtp_proxytable[i].local_port,
                 rtp_proxytable[i].callid_number,
                 rtp_proxytable[i].media_stream_no);
-	 *outboundport=rtp_proxytable[i].outboundport;
+	 *local_port=rtp_proxytable[i].local_port;
 	 sts = STS_SUCCESS;
 	 goto unlock_and_exit;
       }
@@ -359,21 +370,21 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
 	 random start offset 
 	 - for i=x to (p1-p0)+x; p=p0+mod(x,p1-p0) */
 
-   /* find a local outbound port number to use and bind to it*/
+   /* find a local outbound port number to use and bind to it */
    sock=0;
    port=0;
    for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i+=2) {
       for (j=0; j<RTPPROXY_SIZE; j++) {
          /* outbound port already in use */
-         if ((memcmp(&rtp_proxytable[j].outbound_ipaddr,
-	             &outbound_ipaddr, sizeof(struct in_addr))== 0) &&
-	     (rtp_proxytable[j].outboundport == i) ) break;
+         if ((memcmp(&rtp_proxytable[j].local_ipaddr,
+	             &local_ipaddr, sizeof(struct in_addr))== 0) &&
+	     (rtp_proxytable[j].local_port == i) ) break;
       }
 
       /* port is available, try to allocate */
       if (j == RTPPROXY_SIZE) {
          port=i;
-         sock=sockbind(outbound_ipaddr, port, 0);
+         sock=sockbind(local_ipaddr, port, 0);
          /* if success break, else try further on */
          if (sock) break;
       }
@@ -406,15 +417,15 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, int direction,
 
    rtp_proxytable[freeidx].direction = direction;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
-   memcpy(&rtp_proxytable[freeidx].outbound_ipaddr,
-          &outbound_ipaddr, sizeof(struct in_addr));
-   rtp_proxytable[freeidx].outboundport=port;
-   memcpy(&rtp_proxytable[freeidx].inbound_client_ipaddr,
-          &lcl_client_ipaddr, sizeof(struct in_addr));
-   rtp_proxytable[freeidx].inbound_client_port=lcl_clientport;
+   memcpy(&rtp_proxytable[freeidx].local_ipaddr,
+          &local_ipaddr, sizeof(struct in_addr));
+   rtp_proxytable[freeidx].local_port=port;
+   memcpy(&rtp_proxytable[freeidx].remote_ipaddr,
+          &remote_ipaddr, sizeof(struct in_addr));
+   rtp_proxytable[freeidx].remote_port=remote_port;
    time(&rtp_proxytable[freeidx].timestamp);
 
-   *outboundport=port;
+   *local_port=port;
 
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();

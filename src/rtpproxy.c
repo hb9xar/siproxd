@@ -66,16 +66,16 @@ int rtpproxy_init( void ) {
  */
 int rtp_start_fwd (osip_call_id_t *callid, int direction,
                    int media_stream_no,
-		   struct in_addr outbound_ipaddr, int *outboundport,
-                   struct in_addr lcl_client_ipaddr, int lcl_clientport) {
+		   struct in_addr local_ipaddr, int *local_port,
+                   struct in_addr remote_ipaddr, int remote_port) {
   int sts=STS_FAILURE;
 
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
       sts = rtp_relay_start_fwd (callid, direction, media_stream_no,
-                                  outbound_ipaddr, outboundport,
-                                  lcl_client_ipaddr, lcl_clientport);
+                                  local_ipaddr, local_port,
+                                  remote_ipaddr, remote_port);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value",
             configuration.rtp_proxy_enable);
