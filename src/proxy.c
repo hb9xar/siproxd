@@ -60,7 +60,7 @@ int proxy_request (sip_t *request) {
    int sts;
    int type;
    struct in_addr addr;
-   contact_t *contact;
+//   contact_t *contact; /* contact header issue */
    url_t *url;
    int port;
    char *buffer;
@@ -77,12 +77,25 @@ int proxy_request (sip_t *request) {
       return 1;
    }
 
+#if 0 /* Contact Header Issue */
    /* figure out if this is an request comming from the outside
     * world to one of our registered clients ('to' == 'masq' URL)
     * or if this is a request sent by on e of our registered clients
     * ('from' == 'true' URL) 
     */
    msg_getcontact(request,0,&contact);
+
+   /* seen with linphone-0.9.1pre1 w/ user-agent: oSIP/Linphone-0.8.0
+      no contact header in reequest */
+   if (contact==NULL) {
+      ERROR("Contact header is missing!");
+      /* THIS IS SEVERE - I HAVE NO WAY TO FIGURE OUT WHO THE
+         REAL CLIENT IS BEHIND THIS PACKET...
+         what can I do here?  */
+      return 1;
+   }
+#endif
+   
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -96,9 +109,19 @@ int proxy_request (sip_t *request) {
 	 break;
       }
 
+#if 0 /* Contact Header Issue */
       /* outgoing request ('contact' == 'true') */
       if (compare_url(contact->url, urlmap[i].true_url)==0) {
          type=REQTYP_OUTGOING;
+         DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
+	        request->from->url->username,
+		request->from->url->host);
+	 break;
+      }
+#endif
+      /* outgoing request ('from' == 'masq') */
+      if (compare_url(request->from->url, urlmap[i].masq_url)==0) {
+         type=REQTYP_INCOMMING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	        request->from->url->username,
 		request->from->url->host);
