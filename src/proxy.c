@@ -826,7 +826,7 @@ int proxy_response (sip_ticket_t *ticket) {
       sip_rewrite_contact(ticket, DIR_OUTGOING);
 
       /*
-       * If an 200 OK or 183 Trying, answer to an INVITE request,
+       * If an 2xx OK or 1xx response, answer to an INVITE request,
        * rewrite body
        *
        * In case of a negative answer, stop RTP stream
@@ -976,8 +976,8 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
       if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
-          (MSG_TEST_CODE(mymsg, 183))) {
-         /* 183 Trying *MAY* contain SDP data */
+          (MSG_IS_STATUS_1XX(mymsg))) {
+         /* 1xx responses *MAY* contain SDP data */
          DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
                 "no body found in message");
          return STS_SUCCESS;
