@@ -79,9 +79,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.5.tar.gz: 	
+md5sum for siproxd-0.5.5.tar.gz: 	13e97e55d4bb6180b87777f6e8645c0b
 
 GnuPG signature for siproxd-0.5.5.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBAeSFjCfzBioe83JQRAoS0AKCLle8NfEG2tsohIejpQuflNfgW8wCbB2z/
+edt4Q+mdcAl2nTZAg1gwZdY=
+=nCOP
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
