@@ -1,8 +1,9 @@
 0.5.2
 =====
+   27-Jan-2004:	- added doc/KNOWN_BUGS
    22-Jan-2004:	- ./configure option: --enable-static to build
 		  a completely statically linked executable
-                - REGISTER takes honors the expires parameter
+                - REGISTER honors the expires parameter
                   of the contact header
                 - Contact header of REGISTER response must be
                   rewritten back to the local (true) URL

@@ -21,7 +21,7 @@
 
 EXTRA_DIST = 	siproxd.conf.example \
 		siproxd_passwd.cfg \
-                FAQ \
+                FAQ KNOWN_BUGS \
                 FLI4L_HOWTO.txt
 
 
