@@ -234,12 +234,12 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       /* INVITE */
       if (MSG_IS_INVITE(request)) {
          if (cont_url) {
-            INFO("%s Call from: %s:%s",
+            INFO("%s Call from: %s@%s",
                  (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
                  cont_url->username ? cont_url->username:"*NULL*",
                  cont_url->host ? cont_url->host : "*NULL*");
          } else {
-            INFO("%s Call (w/o contact header) from: %s:%s",
+            INFO("%s Call (w/o contact header) from: %s@%s",
                  (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
 	         request->from->url->username ? 
                     request->from->url->username:"*NULL*",
@@ -249,11 +249,11 @@ int proxy_request (osip_message_t *request, struct sockaddr_in *from) {
       /* BYE / CANCEL */
       } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          if (cont_url) {
-            INFO("Ending Call from: %s:%s",
+            INFO("Ending Call from: %s@%s",
                  cont_url->username ? cont_url->username:"*NULL*",
                  cont_url->host ? cont_url->host : "*NULL*");
          } else {
-            INFO("Ending Call (w/o contact header) from: %s:%s",
+            INFO("Ending Call (w/o contact header) from: %s@%s",
 	         request->from->url->username ? 
                     request->from->url->username:"*NULL*",
 	         request->from->url->host ? 
