@@ -190,6 +190,23 @@ int main (int argc, char *argv[])
       INFO("daemonized, pid=%i", getpid());
    }
 
+   /* write PID file of main thread */
+   if (configuration.pid_file) {
+      FILE *pidfile;
+      DEBUGC(DBCLASS_CONFIG,"creating PID file [%s]", configuration.pid_file);
+      sts=unlink(configuration.pid_file);
+      if ((sts==0) ||(errno == ENOENT)) {
+         if ((pidfile=fopen(configuration.pid_file, "w"))) {
+            fprintf(pidfile,"%i\n",getpid());
+            fclose(pidfile);
+         } else {
+            WARN("couldn't create new PID file: %s", strerror(errno));
+         }
+      } else {
+         WARN("couldn't delete old PID file: %s", strerror(errno));
+      }
+   }
+
    /* initialize the RTP proxy */
    sts=rtpproxy_init();
    if (sts != STS_SUCCESS) {
@@ -441,9 +458,20 @@ int main (int argc, char *argv[])
    } /* while TRUE */
    exit_prg:
 
+   /* dump current knwon SIP registrations */
    register_shut();
    INFO("properly terminating siproxd");
 
+   /* remove PID file */
+   if (configuration.pid_file) {
+      DEBUGC(DBCLASS_CONFIG,"deleting PID file [%s]", configuration.pid_file);
+      sts=unlink(configuration.pid_file);
+      if (sts != 0) {
+         WARN("couldn't delete old PID file: %s", strerror(errno));
+      }
+   }
+
+   /* END */
    return 0;
 } /* main */
 

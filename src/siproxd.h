@@ -151,6 +151,7 @@ struct siproxd_config {
    int  outbound_proxy_port;
    char *registrationfile;
    int  log_calls;
+   char *pid_file;
 };
 
 

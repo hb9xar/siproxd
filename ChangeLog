@@ -1,5 +1,6 @@
 0.5.5
 =====
+   2-Apr-2004:  - PID file
   31-Mar-2004:  - accessctl.c: text correction in ERROR output
   30-Mar-2004:  - Again '*' Contact header in unREGISTER
                 - new: tools/extract_sip.pl 

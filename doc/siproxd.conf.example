@@ -80,6 +80,12 @@ user = nobody
 registration_file = /var/lib/siproxd/siproxd_registrations
 
 ######################################################################
+# PID file:
+#   Where to create the PID file.
+#   This file holds the PID of the main thread of siproxd.
+pid_file = /var/run/siproxd/siproxd.pid
+
+######################################################################
 # global switch to control the RTP proxy behaviour
 #       0 - RTP proxy disabled
 #       1 - RTP proxy (UDP relay of siproxd)

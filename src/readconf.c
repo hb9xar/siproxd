@@ -169,6 +169,7 @@ static int parse_config (FILE *configfile) {
       { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
       { "registration_file",   TYP_STRING ,&configuration.registrationfile },
       { "log_calls",           TYP_INT4,   &configuration.log_calls },
+      { "pid_file",            TYP_STRING ,&configuration.pid_file },
       {0, 0, 0}
    };
 
