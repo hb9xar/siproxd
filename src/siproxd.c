@@ -404,14 +404,14 @@ int main (int argc, char *argv[])
             dest_port= (url->port)?atoi(url->port):SIP_PORT;
 
             if ( (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) &&
-                 (configuration.sip_listen_port == dest_port) &&
                  (get_ip_by_ifname(configuration.inbound_if,&addr2) ==
                   STS_SUCCESS) &&
                  (get_ip_by_ifname(configuration.outbound_if,&addr3) ==
                   STS_SUCCESS)) {
 
-               if ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-                   (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) {
+               if ((configuration.sip_listen_port == dest_port) &&
+                   ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+                    (memcmp(&addr1, &addr3, sizeof(addr1)) == 0))) {
                   /* I'm the registrar, send response myself */
                   sts = register_client(&ticket, 0);
                   sts = register_response(&ticket, sts);
