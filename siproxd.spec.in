@@ -37,24 +37,37 @@ an IP masquerading firewall or router.
 %setup -q
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --sysconfdir=%{sysconfdir}
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} \
+                                    --sysconfdir=%{sysconfdir}
 make
 
 %install
-make prefix=$RPM_BUILD_ROOT%{prefix} PIXDESTDIR=$RPM_BUILD_ROOT sysconfdir=$RPM_BUILD_ROOT%{sysconfdir} install
-
+make prefix=$RPM_BUILD_ROOT%{prefix} \
+     sysconfdir=$RPM_BUILD_ROOT%{sysconfdir} \
+     install
+mv %{sysconfdir}/siproxd.conf.example %{sysconfdir}/siproxd.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-
 %files
 %defattr(-, root, root)
-%doc COPYING README AUTHORS INSTALL NEWS ChangeLog
+%doc COPYING README AUTHORS INSTALL NEWS ChangeLog doc/FAQ doc/FLI4L_HOWTO.txt
 %{_bindir}/siproxd
+%config %{sysconfdir}/siproxd.conf
+%config %{sysconfdir}/siproxd_passwd.cfg
+
+%post
+echo "Edit the config file %{sysconfigdir}/siproxd.conf!"
+
 
 %changelog
 * Sat Aug 30 2003 Thomas Ries <tries@gmx.net>
+- added config files and some more doc files
+- rename sample config file and remind uder to edit it.
+- minor cleanup
+
+* Sat Oct 24 2003 Thomas Ries <tries@gmx.net>
 - always use /etc as sysconfdir
 
 * Sat Sep 21 2002 Thomas Ries <tries@gmx.net>

@@ -30,3 +30,5 @@ TODOs, in random order:
   (defined by IFNAME)
 
 - siproxd may use an outbound proxy of its own (chaining feature)
+
+- support IPTABLES for RTP proxying
