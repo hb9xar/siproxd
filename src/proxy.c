@@ -84,9 +84,6 @@ int proxy_request (sip_ticket_t *ticket) {
    osip_message_t *request;
    struct sockaddr_in *from;
 
-#define REQTYP_INCOMING		1
-#define REQTYP_OUTGOING		2
-
    DEBUGC(DBCLASS_PROXY,"proxy_request");
 
    if (ticket==NULL) {
@@ -102,55 +99,7 @@ int proxy_request (sip_ticket_t *ticket) {
     * Proxy Behavior - Route Information Preprocessing
     * (process Route header)
     */
-/*
-   The proxy MUST inspect the Request-URI of the request.  If the
-   Request-URI of the request contains a value this proxy previously
-   placed into a Record-Route header field (see Section 16.6 item 4),
-   the proxy MUST replace the Request-URI in the request with the last
-   value from the Route header field, and remove that value from the
-   Route header field.  The proxy MUST then proceed as if it received
-   this modified request.
-
-   NOT IMPLEMENTED*/
-
-
-   /*
-    * Check if I am listed at the topmost Route header (if any Route
-    * header is existing at all). If so, remove it from the list and
-    * rewrite the request URI to point to the now topmost Route.
-    */
-   if (request->routes && !osip_list_eol(request->routes, 0)) {
-      struct in_addr addr1, addr2, addr3;
-      osip_route_t *route;
-      
-      route = (osip_route_t *) osip_list_get(request->routes, 0);
-      
-      sts = get_ip_by_host(route->url->host, &addr1);
-      if (get_ip_by_ifname(configuration.inbound_if, &addr2) != STS_SUCCESS) {
-         ERROR("can't find inbound interface %s - configuration error?",
-               configuration.inbound_if);
-         return STS_FAILURE;
-      }
-      if (get_ip_by_ifname(configuration.outbound_if, &addr3)!= STS_SUCCESS) {
-         ERROR("can't find outbound interface %s - configuration error?",
-               configuration.outbound_if);
-         return STS_FAILURE;
-      }
-
-      /* my own route header? */
-      if ((sts == STS_SUCCESS) &&
-          ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-           (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
-           (route->url->port ?
-               configuration.sip_listen_port == atoi(route->url->port):
-               configuration.sip_listen_port == SIP_PORT)) {
-         osip_list_remove(request->routes, 0);
-         osip_route_free(route);
-         /* request->routes will be freed by osip_message_free() */
-         DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
-      }
-   }
-      
+   route_preprocess(ticket);
 
    /*
     * figure out whether this is an incoming or outgoing request
@@ -240,7 +189,7 @@ int proxy_request (sip_ticket_t *ticket) {
       }
    }
 #endif
-
+   ticket->direction=type;
 
    /*
     * logging of passing calls
@@ -446,63 +395,19 @@ int proxy_request (sip_ticket_t *ticket) {
 #if 0
 /* NOT IMPLEMENTED - this requires proper implementation of
    the Route headers first. */
-   {
-   struct in_addr addr;
-   osip_record_route_t *r_route;
-   osip_uri_t *uri_of_proxy;
-
-   /*
-    * get the IP address of the interface where I'm going to
-    * send out this request
-    */
-   switch (type) {
-   case REQTYP_INCOMING:
-      if (get_ip_by_ifname(configuration.inbound_if, &addr) != STS_SUCCESS) {
-         ERROR("can't find inbound interface %s - configuration error?",
-               configuration.inbound_if);
-         return STS_FAILURE;
-      }
-      break;
-   case REQTYP_OUTGOING:
-      if (get_ip_by_ifname(configuration.outbound_if, &addr) != STS_SUCCESS) {
-         ERROR("can't find outbound interface %s - configuration error?",
-               configuration.outbound_if);
-         return STS_FAILURE;
-      }
-      break;
-   default:
-      ERROR("Oops, never should end up here (type=%i)", type);
-      return STS_FAILURE;
-   }
-
-   sts = osip_record_route_init(&r_route);
-   if (sts == 0) {
-      sts = osip_uri_init(&uri_of_proxy);
-      if (sts == 0) {
-         char tmp[8];
-
-         /* host name / IP */
-         osip_uri_set_host(uri_of_proxy, osip_strdup(utils_inet_ntoa(addr)));
-
-         /* port number */
-         sprintf(tmp, "%i", configuration.sip_listen_port);
-         osip_uri_set_port(uri_of_proxy, osip_strdup(tmp));
-
-         /* 'lr' parameter */
-         osip_uri_uparam_add(uri_of_proxy, "lr", NULL);
-
-         osip_record_route_set_url(r_route, uri_of_proxy);
-
-         /* insert before all other record-route */
-         osip_list_add (request->record_routes, r_route, 0);
-      } else {
-          osip_record_route_free (r_route);
-          osip_free (r_route);
-      } /* if url_init */
-   } /* if record route init */
-
-   }
+   route_add_recordroute(ticket);
 #endif
+   /*
+    * for incoming requests that DO include a Record-Route header,
+    * include my own as well. The local UA will probably send its answer
+    * to the topmost Route Header (8.1.2 of RFC3261)
+    */
+   if ((type == REQTYP_INCOMING) &&
+       (request->record_routes) &&
+       (!osip_list_eol(request->record_routes, 0))) {
+      DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+      route_add_recordroute(ticket);
+   }
 
    /*
     * RFC 3261, Section 16.6 step 5
@@ -528,45 +433,15 @@ int proxy_request (sip_ticket_t *ticket) {
     *    header field.
     */
 #if 0
-/* we are not a real proxy - and from the outside we look like an UA.
-So we should not fiddle around with the Route headers.
-We should use the first Route header to send the packet to
-(RFC3261, section 8.1.2) */
-   if (request->routes && !osip_list_eol(request->routes, 0)) {
-      osip_route_t *route=NULL;
-      osip_uri_param_t *param=NULL;
-
-      route = (osip_route_t *) osip_list_get(request->routes, 0);
-      if (route->url) {
-         /* check for non existing lr parameter */
-         if (osip_uri_uparam_get_byname(route->url, "lr", &param) != 0) {
-            osip_route_t *new_route=NULL;
-            url=osip_message_get_uri(request);
-
-            /* push Request URI into Route header list at the last position */
-            osip_route_init(&new_route);
-            osip_uri_clone(url, &new_route->url);
-            osip_list_add(request->routes, new_route, -1);
-            
-
-            /* rewrite request URI to now topmost Route header */
-            DEBUGC(DBCLASS_PROXY, "Route header w/o 'lr': rewriting request "
-                   "URI from %s to %s", url->host, route->url->host);
-            osip_uri_free(url);
-            url=NULL;
-            osip_uri_clone(route->url, &url);
-            /* remove first Route header from list & free */
-            osip_list_remove(request->routes, 0);
-            osip_route_free(route);
-            route = NULL;
-         }
-      }
-   }
+   route_postprocess(ticket);
 #endif
 
    /*
     * RFC 3261, Section 16.6 step 7
     * Proxy Behavior - Determine Next-Hop Address
+    */
+   /*
+    * fixed outbound proxy defined ?
     */
    if ((type == REQTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
       /* I have an outbound proxy configured */
@@ -584,31 +459,22 @@ We should use the first Route header to send the packet to
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
              configuration.outbound_proxy_host, port);
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
    } else if ((type == REQTYP_OUTGOING) && 
               (request->routes && !osip_list_eol(request->routes, 0))) {
-      /* get the destination from the Route Header */
-      osip_route_t *route=NULL;
-      route = (osip_route_t *) osip_list_get(request->routes, 0);
-      if (route==NULL || route->url==NULL || route->url->host==NULL) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: got broken Route header "
-                "- discarding packet");
-         return STS_FAILURE;
-      }
-
-      sts = get_ip_by_host(route->url->host, &sendto_addr);
+      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
       if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve Route URI [%s]",
-                route->url->host);
+         DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
          return STS_FAILURE;
-      }
-
-      if (route->url->port) {
-         port=atoi(route->url->port);
-      } else {
-         port=SIP_PORT;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
-             route->url->host, port);
+             utils_inet_ntoa(sendto_addr), port);
+   /*
+    * destination from SIP URI
+    */
    } else {
       /* get the destination from the SIP URI */
       sts = get_ip_by_host(url->host, &sendto_addr);
@@ -680,6 +546,20 @@ We should use the first Route header to send the packet to
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
+ * RFC3261
+ *    Section 16.7: Proxy Behavior - Response Processing
+ *    1.  Find the appropriate response context
+ *    2.  Update timer C for provisional responses
+ *    3.  Remove the topmost Via
+ *    4.  Add the response to the response context
+ *    5.  Check to see if this response should be forwarded immediately
+ *    6.  When necessary, choose the best final response from the
+ *        response context
+ *    7.  Aggregate authorization header field values if necessary
+ *    8.  Optionally rewrite Record-Route header field values
+ *    9.  Forward the response
+ *    10. Generate any necessary CANCEL requests 
+ *
  */
 int proxy_response (sip_ticket_t *ticket) {
    int i;
@@ -692,9 +572,6 @@ int proxy_response (sip_ticket_t *ticket) {
    osip_message_t *response;
    struct sockaddr_in *from;
 
-#define RESTYP_INCOMING		1
-#define RESTYP_OUTGOING		2
-
    DEBUGC(DBCLASS_PROXY,"proxy_response");
 
    if (ticket==NULL) {
@@ -706,8 +583,8 @@ int proxy_response (sip_ticket_t *ticket) {
    from=&ticket->from;
 
    /*
-    * RFC 3261, Section 16.11
-    * Proxy Behavior - Remove my Via header field value
+    * RFC 3261, Section 16.7 step 3
+    * Proxy Behavior - Response Processing - Remove my Via header field value
     */
    /* remove my Via header line */
    sts = sip_del_myvia(ticket);
@@ -765,10 +642,10 @@ int proxy_response (sip_ticket_t *ticket) {
       if (urlmap[i].active == 0) continue;
 
       if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve host [%s]",
+         DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve host [%s]",
              urlmap[i].true_url);
       } else {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: reghost:%s ip:%s",
+         DEBUGC(DBCLASS_PROXY, "proxy_response: reghost:%s ip:%s",
                 urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
          if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
             type=RESTYP_OUTGOING;
@@ -790,7 +667,7 @@ int proxy_response (sip_ticket_t *ticket) {
       }
    }
 #endif
-
+   ticket->direction=type;
 
 /*
  * ok, we got a response that we are allowed to process.
@@ -854,7 +731,7 @@ int proxy_response (sip_ticket_t *ticket) {
           (osip_strncasecmp(ua_hdr->hvalue,"grandstream", 11)==0) &&
           (MSG_IS_RESPONSE_FOR(response,"SUBSCRIBE")) &&
           (MSG_TEST_CODE(response, 202))) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: Grandstream hack 202->404");
+         DEBUGC(DBCLASS_PROXY, "proxy_response: Grandstream hack 202->404");
          response->status_code=404;
       }
 }
@@ -892,13 +769,25 @@ int proxy_response (sip_ticket_t *ticket) {
    }
 
    /*
+    * for incoming requests that DO include a Record-Route header,
+    * include my own as well. The local UA will probably send its answer
+    * to the topmost Route Header (8.1.2 of RFC3261)
+    */
+   if ((type == RESTYP_INCOMING) &&
+       (response->record_routes) &&
+       (!osip_list_eol(response->record_routes, 0))) {
+      DEBUGC(DBCLASS_PROXY,"Adding my Record-Route");
+      route_add_recordroute(ticket);
+   }
+
+   /*
     * check if we need to send to an outbound proxy
     */
    if ((type == RESTYP_OUTGOING) && (configuration.outbound_proxy_host)) {
       /* have an outbound proxy - use it to send the packet */
       sts = get_ip_by_host(configuration.outbound_proxy_host, &sendto_addr);
       if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve outbound "
+         DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve outbound "
                 " proxy host [%s]", configuration.outbound_proxy_host);
          return STS_FAILURE;
       }
@@ -908,6 +797,19 @@ int proxy_response (sip_ticket_t *ticket) {
       } else {
          port = SIP_PORT;
       }
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
+   } else if ((type == RESTYP_OUTGOING) && 
+              (response->routes && !osip_list_eol(response->routes, 0))) {
+      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
+         return STS_FAILURE;
+      }
+      DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
    } else {
       /* get target address and port from VIA header */
       via = (osip_via_t *) osip_list_get (response->vias, 0);

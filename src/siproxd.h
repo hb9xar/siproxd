@@ -93,6 +93,11 @@ typedef struct {
 #define PROTO_UDP  1
 #define PROTO_TCP  2
    int protocol;		/* received by protocol */
+#define REQTYP_INCOMING		1
+#define REQTYP_OUTGOING		2
+#define RESTYP_INCOMING		3
+#define RESTYP_OUTGOING		4
+   int direction;		/* direction as determined by proxy */
 } sip_ticket_t;
 
 
@@ -123,7 +128,14 @@ int  register_response(sip_ticket_t *ticket, int flag);			/*X*/
 int proxy_request (sip_ticket_t *ticket);				/*X*/
 int proxy_response (sip_ticket_t *ticket);				/*X*/
 int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
-int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);	/*X*/
+int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
+
+/* route_preprocessing.c */
+int route_preprocess(sip_ticket_t *ticket);				/*X*/
+int route_add_recordroute(sip_ticket_t *ticket);			/*X*/
+int route_postprocess(sip_ticket_t *ticket);				/*X*/
+int route_determine_nexthop(sip_ticket_t *ticket,
+                            struct in_addr *dest, int *port);		/*X*/
 
 /* utils.c */
 int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/

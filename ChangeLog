@@ -1,5 +1,6 @@
 0.5.8
 =====
+  27-Aug-2004:  - preliminary (and reduced) support for Route Headers
   26-Aug-2004:  - more DEBUG output
   22-Aug-2004:  - fix: secure_enviroment - set proper EGID (by Daniel Mueller)
   19-Aug-2004:  - fix: don't crash on missing Contact header during registration
