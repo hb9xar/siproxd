@@ -255,7 +255,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
     */
    if (expires > 0) {
       /*
-       * First make sure, we have a prober Contact header:
+       * First make sure, we have a proper Contact header:
        *  - url
        *  - url -> hostname
        *
@@ -367,54 +367,56 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                                     strlen(configuration.masked_host.string[j])+1);
             strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
          }
-
-         /*
-          * for transparent proxying: force device to be masqueraded
-          * as with the outbound IP
-          */
-         if (force_lcl_masq) {
-            struct in_addr addr;
-            char *addrstr;
-
-            if (get_interface_ip(IF_OUTBOUND, &addr) != STS_SUCCESS) {
-               return STS_FAILURE;
-            }
-
-            /* host part */
-            addrstr = utils_inet_ntoa(addr);
-            DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
-                   (url1_contact->username) ? url1_contact->username : "*NULL*",
-                   (url1_contact->host) ? url1_contact->host : "*NULL*",
-                   (url1_contact->username) ? url1_contact->username : "*NULL*",
-                   addrstr);
-            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                             strlen(addrstr)+1);
-            strcpy(urlmap[i].masq_url->host, addrstr);
-
-            /* port number if required */
-            if (configuration.sip_listen_port != SIP_PORT) {
-               urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
-               sprintf(urlmap[i].masq_url->port, "%i",
-                       configuration.sip_listen_port);
-            }
-         }
-
       } else { /* if new entry */
-      /*
-       * Some phones (like BudgeTones *may* dynamically grab a SIP port
-       * so we might want to update the true_url and reg_url each time
-       * we get an REGISTER
-       */
-         /* Contact: field */
+         /* This is an existing entry */
+         /*
+          * Some phones (like BudgeTones *may* dynamically grab a SIP port
+          * so we might want to update the true_url and reg_url each time
+          * we get an REGISTER
+          */
+
+         /* Contact: field (true_url) */
          osip_uri_free(urlmap[i].true_url);
          osip_uri_clone( ((osip_contact_t*)
                          (ticket->sipmsg->contacts->node->element))->url, 
-        	         &urlmap[i].true_url);
-         /* To: field */
+                         &urlmap[i].true_url);
+         /* To: field (reg_url) */
          osip_uri_free(urlmap[i].reg_url);
          osip_uri_clone( ticket->sipmsg->to->url, 
-        	    &urlmap[i].reg_url);
+                         &urlmap[i].reg_url);
       }
+
+      /*
+       * for proxying: force device to be masqueraded
+       * as with the outbound IP (masq_url)
+       */
+      if (force_lcl_masq) {
+         struct in_addr addr;
+         char *addrstr;
+
+         if (get_interface_ip(IF_OUTBOUND, &addr) != STS_SUCCESS) {
+            return STS_FAILURE;
+         }
+
+         /* host part */
+         addrstr = utils_inet_ntoa(addr);
+         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                (url1_contact->host) ? url1_contact->host : "*NULL*",
+                (url1_contact->username) ? url1_contact->username : "*NULL*",
+                addrstr);
+         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                          strlen(addrstr)+1);
+         strcpy(urlmap[i].masq_url->host, addrstr);
+
+         /* port number if required */
+         if (configuration.sip_listen_port != SIP_PORT) {
+            urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
+            sprintf(urlmap[i].masq_url->port, "%i",
+                    configuration.sip_listen_port);
+         }
+      }
+
       /* give some safety margin for the next update */
       if (expires > 0) expires+=30;
 
