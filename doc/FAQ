@@ -43,7 +43,7 @@ A: Scenario
    --------
 
    private IP address range             :          Internet
-   10.0.0.x                             :          (publich IP address range)
+   10.0.0.x                             :          (public IP address range)
                                 	:
                                 	:  foo.bar.org		xxx.org
    +-------------+	       +--------------+ 	     +-------------+
@@ -144,7 +144,7 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    (no data received) for a specified time.
    
    The above only applies for reception of data FROM the outbound
-   interface (usually a publich IP).
+   interface (usually a public IP).
    
    Outgoing traffic must be handled (masqueraded) by the firewall itself
    (using ipchains or iptables rules).

@@ -25,7 +25,7 @@ Vendor:		Thomas Ries
 Packager:       Thomas Ries <tries@gmx.net>
 
 %description
-Siprox is an proxy/masquerading daemon for the SIP protocol.
+Siproxd is an proxy/masquerading daemon for the SIP protocol.
 It handles registrations of SIP clients on a private IP network
 and performs rewriting of the SIP message bodies to make SIP
 connections possible via an masquerading firewall.

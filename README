@@ -1,12 +1,12 @@
 
 
-Be warned, this (and all the other) documentantation is far from
+Be warned, this (and all the other) documentation is far from
 complete. This is still considered an alpha release.
 
 
 OVERVIEW
 ========
-Siprox is an proxy/masquerading daemon for the SIP protocol.
+Siproxd is an proxy/masquerading daemon for the SIP protocol.
 It handles registrations of SIP clients on a private IP network
 and performs rewriting of the SIP message bodies to make SIP
 connections possible via an masquerading firewall.
@@ -25,7 +25,7 @@ PREREQUISITES
 - OS of either:
   * Linux (preferred kernel 2.2.x or 2.4.x)
   * FreeBSD
-  * Solaris (porting is beeing worked on but you may try it)
+  * Solaris (porting is being worked on but you may try it)
   
 - libosip2 package (http://www.fsf.org/software/osip/)
 
@@ -44,11 +44,11 @@ HOW TO GET STARTED
 
 - edit /usr/etc/siproxd.conf according to your situation
   At least configure  'if_inbound' and 'if_outbound'. The must represent
-  the interface names (eg. on Linux: ppp0, eth1) for the inbound
+  the interface names (e.g. on Linux: ppp0, eth1) for the inbound
   and outbound interface.
-  ** The use of 'host_inbound' and 'host_outbound' is deprecheated!
+  ** The use of 'host_inbound' and 'host_outbound' is deprecated!
      'host_inbound' is the firewalls IP address of your private network,
-     'host_outbound' is the  publich IP address or hostname of the
+     'host_outbound' is the  public IP address or hostname of the
      firewall. (If you have dynamic IP addresses, then you might want
      to use a hostname here and use a dynamic DNS service like [1])
 
@@ -56,7 +56,7 @@ HOW TO GET STARTED
 - edit /usr/etc/siproxd_passwd.cfg if you enable client authentication
   in siproxd.conf
 
-- start siproxd (siproxd does *not* require root privilegdes)
+- start siproxd (siproxd does *not* require root privileges)
   $ siproxd
 
 
@@ -65,7 +65,7 @@ PROBLEM REPORTING
 =================
 If you encounter problems/crashes and ask for support, please include
 as much information as possible. Very helpful is a debug log that
-has been recorded at the time of the misbehaviour.
+has been recorded at the time of the misbehavior.
 Also include the exact versions of the siproxd package and libosip2
 that you are using. You should also include your siproxd.conf.
  
@@ -106,7 +106,7 @@ in private IP ranges. Therefore it will rewrite SIP messages to allow a
 softphone to communicate to a counterpart that is located in the Internet.
 There usually will be a masquerading firewall in between to 'hide' the
 private IP range (either via NAT - network address translation or 
-masuerading). Check the scenario drawn below.
+masquerading). Check the scenario drawn below.
 
 
 
@@ -136,7 +136,7 @@ Scenario
    running on the firewall host (10.0.0.1) as sip:johndoe@foo.bar.org
 
  - foo.bar.org is the domain name corresponding to the public IP address
-   of the firewall (eg use some dynamic DNS service [1])
+   of the firewall (e.g. use some dynamic DNS service [1])
 
 IPCHAINS:
  Firewall rules for incoming traffic:
@@ -197,7 +197,7 @@ Please feel free to contact the author to:
 and visit the website at http://siproxd.sourceforge.net/
 
 
-There is a siproxd mailinglist available on sourceforge.
+There is a siproxd mailing list available on sourceforge.
 
 Thomas Ries  (tries@gmx.net)
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
