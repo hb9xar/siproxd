@@ -109,8 +109,7 @@ int register_client(sip_t *my_msg) {
       url2_to=urlmap[i].masq_url;
       url2_contact=urlmap[i].true_url;
 
-      if ( (strcmp(url1_to->username,      url2_to->username     )==0) &&
-           (strcmp(url1_to->host,          url2_to->host         )==0) &&
+      if ( (compare_url(url1_to, url2_to)==0) &&
            (strcmp(url1_contact->username, url2_contact->username)==0) &&
            (strcmp(url1_contact->host,     url2_contact->host    )==0) ) {
          DEBUGC(DBCLASS_REG, "found entry for %s@%s at slot=%i, exp=%li",

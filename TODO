@@ -1,8 +1,6 @@
 TODOs, in anarchistic order:
 ============================
 
-- support for configuration file!
-
 
 - 2.2.x kernels:
   make use of the portfw.so (ipmasqadm package) to create forwarding
@@ -12,3 +10,6 @@ TODOs, in anarchistic order:
 - Is there a possibility to open up an masquerading tunnel by
   a userspace program on the firewall?
 
+- logging via syslog if running in daemon mode
+
+- get_ip_by_host: reduce DNS timeouts

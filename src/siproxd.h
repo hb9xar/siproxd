@@ -45,6 +45,7 @@ sip_t * msg_make_template_reply (sip_t * request, int code);
 int check_vialoop (sip_t *my_msg);
 int is_via_local (via_t *via);
 int get_ip_by_host(char *hostname, struct in_addr *addr);
+int compare_url(url_t *url1, url_t *url2);
 
 /* config.c */
 int read_config(char *name, int search);
@@ -77,20 +78,23 @@ struct siproxd_config {
 /*
  * some constant definitions
  */
-#define URLMAP_SIZE	128	// size of URL mapping table
-#define BUFFER_SIZE	1024	// input buffer for read from socket
-#define URL_STRING_SIZE	128	//
-
 #define SIP_PORT	5060
 
+#define URLMAP_SIZE	128	// size of URL mapping table
+#define BUFFER_SIZE	1024	// input buffer for read from socket
+#define URL_STRING_SIZE	128	// max size of an URL/URI string
+#define STATUSCODE_SIZE 5	// size of string representation of status
+#define DNS_CACHE_SIZE  32	// number of entries in internal DNS cache
+#define DNS_MAX_AGE	60	// maximum age of an cache entry (sec)
+#define HOSTNAME_SIZE	32	// max string length of a hostname
+
 /*
- * optionasl hacks
+ * optional hacks
  */
-#define EXP1 1	/* HACK linphone0.9.0pre4 */
+#define HACK1	/* linphone-0.9.0pre4: broken RQ URI hack */
 /* 14-Aug-2002 TR
    Linphone puts in the proxies hostname in the request URI when
    OUTBOUND proxy is activated. But ONLY the hostname. Username and
-   Port (!!!) are kept from the SIP address givven by the user.
-   This is a BUG in my eyes. Linphone must send the datagrap to
-   the Proxy, but have the final receiver in the request URI !
+   Port (!!!) are kept from the SIP address given by the user.
+   This issue is fixed in linphone-0.9.1pre1
 */

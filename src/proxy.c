@@ -79,16 +79,9 @@ int proxy_request (sip_t *request) {
    type = 0;
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
-/*&&&& comparison of hosts should be based on IP addresses
-       as it looks (at least RQ URI)...*/
 
-/*&&&& make this comparison into a subroutine - it is used a LOT !
-       also make the HOST comparison more flexible (name<->IP) */
       /* incomming request ('to' == 'masq') */
-      if ((strcmp(request->to->url->username,
-                  urlmap[i].masq_url->username)==0) &&
-          (strcmp(request->to->url->host,
-	          urlmap[i].masq_url->host)==0)) {
+      if (compare_url(request->to->url, urlmap[i].masq_url)==0) {
          type=REQTYP_INCOMMING;
          DEBUGC(DBCLASS_PROXY,"incomming request from %s@%s from outbound",
 	        request->from->url->username,
@@ -97,10 +90,7 @@ int proxy_request (sip_t *request) {
       }
 
       /* outgoing request ('contact' == 'true') */
-      if ((strcmp(contact->url->username,
-                  urlmap[i].true_url->username)==0) &&
-          (strcmp(contact->url->host,
-	          urlmap[i].true_url->host)==0)) {
+      if (compare_url(contact->url, urlmap[i].true_url)==0) {
          type=REQTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing request from %s@%s from inbound",
 	        request->from->url->username,
@@ -120,7 +110,8 @@ int proxy_request (sip_t *request) {
    case REQTYP_INCOMMING:
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
-      /* THIS IS UGLY!!! I dont like it &&&&&&*/
+
+      /* THIS IS UGLY!!! I dont like it */
       DEBUGC(DBCLASS_PROXY,"rewriting incomming Request URI");
       url=msg_geturi(request);
       free(url->host);url->host=NULL;
@@ -160,19 +151,13 @@ int proxy_request (sip_t *request) {
 /* get target address from request URL */
    url=msg_geturi(request);
 
-#if EXP1
-/* &&&& linphone 0.9.0pre4
+#ifdef HACK1
+/* linphone-0.9.0pre4
    take To address and place it into URI (at least the host part)
-   Linphone 0.9.0pre4 puts the proxy host in the request URI
+   Linphone-0.9.0pre4 puts the proxy host in the request URI
    if OUTBOUNT proxy is activated!
-
    This is only a hack to recreate the proper final request URI.
-   see linphone, osipdialog.c line 1172
-    if (call_leg->peer == NULL)
-       url_2char (call_leg->to->url, &tmp);
-    else
-       url_2char (call_leg->peer->url, &tmp);
-       url_parse (sipmsg->strtline->rquri, tmp);   <<<<----
+   This issue has been fixed in 0.9.1pre1
 */
 {
    header_t *header_ua;
@@ -259,10 +244,7 @@ int proxy_response (sip_t *response) {
 
 
       /* incomming response ('from' == 'masq') */
-      if ((strcmp(response->from->url->username,
-                  urlmap[i].masq_url->username)==0) &&
-          (strcmp(response->from->url->host,
-	          urlmap[i].masq_url->host)==0)) {
+      if (compare_url(response->from->url, urlmap[i].masq_url)==0) {
          type=RESTYP_INCOMMING;
          DEBUGC(DBCLASS_PROXY,"incomming response for %s@%s from outbound",
 	        response->from->url->username,
@@ -271,10 +253,7 @@ int proxy_response (sip_t *response) {
       }
 
       /* outgoing response ('to' == 'masq') */
-      if ((strcmp(response->to->url->username,
-                  urlmap[i].masq_url->username)==0) &&
-          (strcmp(response->to->url->host,
-	          urlmap[i].masq_url->host)==0)) {
+      if (compare_url(response->to->url, urlmap[i].masq_url)==0) {
          type=RESTYP_OUTGOING;
          DEBUGC(DBCLASS_PROXY,"outgoing response for %s@%s from inbound",
 	        response->from->url->username,
