@@ -28,7 +28,7 @@ System Settings
       Password: <authorization password>
 1)    Domain/Realm: <host part of SIP URI>
       SIP Proxy: <inbound IP address of siproxd>
-      Out Bound Porxy: <inbound IP address of siproxd>
+      Out Bound Proxy: <inbound IP address of siproxd>
       Use Out Bound Proxy: Always
       Send Internal IP: Default
       Register: Always
