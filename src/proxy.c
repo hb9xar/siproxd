@@ -144,6 +144,11 @@ int proxy_request (sip_t *request) {
    */
    case REQTYP_INCOMING:
       sts = get_ip_by_host(urlmap[i].true_url->host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
+                url->host);
+         return STS_FAILURE;
+      }
 
       /* rewrite request URI to point to the real host */
       /* i still holds the valid index into the URLMAP table */
@@ -152,9 +157,10 @@ int proxy_request (sip_t *request) {
       }
 
       /* add my Via header line (inbound interface)*/
-      sts = proxy_add_myvia(request, 1);
+      sts = sip_add_myvia(request, IF_INBOUND);
       if (sts == STS_FAILURE) {
-         WARN("adding my inbound via failed!");
+         ERROR("adding my inbound via failed!");
+         return STS_FAILURE;
       }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
@@ -171,7 +177,14 @@ int proxy_request (sip_t *request) {
    case REQTYP_OUTGOING:
       /* get destination address */
       url=msg_geturi(request);
+
       sts = get_ip_by_host(url->host, &sendto_addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
+                url->host);
+         return STS_FAILURE;
+      }
+
       /* if it is addressed to myself, then it must be some request
        * method that I as a proxy do not support. Reject */
       if (is_sipuri_local(request) == STS_TRUE) {
@@ -182,11 +195,10 @@ int proxy_request (sip_t *request) {
 	    url->username? url->username : "*NULL*",
 	    url->host? url->host : "*NULL*");
 
-         proxy_gen_response(request, 403 /*forbidden*/);
+         sip_gen_response(request, 403 /*forbidden*/);
 
          return STS_FAILURE;
       }
-
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
@@ -219,7 +231,7 @@ int proxy_request (sip_t *request) {
       }
 
       /* add my Via header line (outbound interface)*/
-      sts = proxy_add_myvia(request, 0);
+      sts = sip_add_myvia(request, IF_OUTBOUND);
       if (sts == STS_FAILURE) {
          ERROR("adding my outbound via failed!");
       }
@@ -233,8 +245,8 @@ int proxy_request (sip_t *request) {
    
    default:
       url=msg_geturi(request);
-      DEBUGC(DBCLASS_PROXY,"proxy_request: refused to proxy");
-      WARN("request [%s] from/to unregistered UA (RQ: %s@%s -> %s@%s)",
+      DEBUGC(DBCLASS_PROXY, "request [%s] from/to unregistered UA "
+           "(RQ: %s@%s -> %s@%s)",
            request->strtline->sipmethod? request->strtline->sipmethod:"*NULL*",
 	   request->from->url->username? request->from->url->username:"*NULL*",
 	   request->from->url->host? request->from->url->host : "*NULL*",
@@ -242,12 +254,18 @@ int proxy_request (sip_t *request) {
 	   url->host? url->host : "*NULL*");
 
 /*
- * if we end up here, we deal with a request that we have
- * no proxy entry - so it must be ment to be for the proxy itself.
- * As we only deal with REGISTER requests, we will anser this one
- * with FORBIDDEN
+ * we may end up here for two reasons:
+ *  1) An incomming request (from outbound) that is directed to
+ *     an unknown (not registered) local UA
+ *  2) an outgoing request from a local UA that is not registered.
+ *
+ * Case 1) we should probably answer with "404 Not Found",
+ * case 2) more likely a "403 Forbidden"
+ * 
+ * How about "408 Request Timeout" ?
+ *
  */
-      proxy_gen_response(request, 403 /*forbidden*/);
+      sip_gen_response(request, 408 /* Request Timeout */);
 
       return STS_FAILURE;
    }
@@ -304,7 +322,7 @@ int proxy_response (sip_t *response) {
    }
 
    /* ALWAYS: remove my Via header line */
-   sts = proxy_del_myvia(response);
+   sts = sip_del_myvia(response);
    if (sts == STS_FAILURE) {
       DEBUGC(DBCLASS_PROXY,"not addressed to my VIA, ignoring response");
       return STS_FAILURE;
@@ -394,8 +412,7 @@ int proxy_response (sip_t *response) {
       break;
    
    default:
-      DEBUGC(DBCLASS_PROXY,"proxy_response: refused to proxy");
-      WARN("response from/to unregistered UA (%s@%s)",
+      DEBUGC(DBCLASS_PROXY, "response from/to unregistered UA (%s@%s)",
 	   response->from->url->username? response->from->url->username:"*NULL*",
 	   response->from->url->host? response->from->url->host : "*NULL*");
       return STS_FAILURE;
@@ -409,6 +426,11 @@ int proxy_response (sip_t *response) {
    }
 
    sts = get_ip_by_host(via->host, &addr);
+   if (sts == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve via [%s]",
+             via->host);
+      return STS_FAILURE;
+   }
 
    sts = msg_2char(response, &buffer);
    if (sts != 0) {
@@ -425,147 +447,6 @@ int proxy_response (sip_t *response) {
 
    sipsock_send_udp(&sip_socket, addr, port, buffer, strlen(buffer), 1); 
    free (buffer);
-   return STS_SUCCESS;
-}
-
-
-/*
- * PROXY_GEN_RESPONSE
- *
- * send an proxy generated response back to the client.
- * Only errors are reported from the proxy itself.
- *  code =  SIP result code to deliver
- *
- * RETURNS
- *	STS_SUCCESS on success
- *	STS_FAILURE on error
- */
-int proxy_gen_response(sip_t *request, int code) {
-   sip_t *response;
-   int sts;
-   via_t *via;
-   int port;
-   char *buffer;
-   struct in_addr addr;
-
-   /* create the response template */
-   if ((response=msg_make_template_reply(request, code))==NULL) {
-      ERROR("proxy_response: error in msg_make_template_reply");
-      return STS_FAILURE;
-   }
-
-   /* we must check if first via has x.x.x.x address. If not, we must resolve it */
-   msg_getvia (response, 0, &via);
-   if (via == NULL)
-   {
-      ERROR("proxy_response: Cannot send response - no via field");
-      return STS_FAILURE;
-   }
-
-
-/* name resolution */
-   if (inet_aton (via->host,&addr) == 0)
-   {
-      /* need name resolution */
-      DEBUGC(DBCLASS_DNS,"resolving name:%s",via->host);
-      sts = get_ip_by_host(via->host, &addr);
-   }   
-
-DEBUGC(DBCLASS_PROXY,"response=%p",response);
-   sts = msg_2char(response, &buffer);
-   if (sts != 0) {
-      ERROR("proxy_response: msg_2char failed");
-      return STS_FAILURE;
-   }
-
-
-   if (via->port) {
-      port=atoi(via->port);
-   } else {
-      port=SIP_PORT;
-   }
-
-   /* send to destination */
-   sipsock_send_udp(&sip_socket, addr, port,
-                    buffer, strlen(buffer), 1);
-
-   /* free the resources */
-   msg_free(response);
-   free(response);
-   free (buffer);
-   return STS_SUCCESS;
-}
-
-
-/*
- * PROXY_ADD_MYVIA
- *
- * interface == 0 -> outbound interface, else inbound interface
- *
- * RETURNS
- *	STS_SUCCESS on success
- *	STS_FAILURE on error
- */
-int proxy_add_myvia (sip_t *request, int interface) {
-   struct in_addr addr;
-   char tmp[URL_STRING_SIZE];
-   via_t *via;
-   int sts;
-
-   if (interface == 0) {
-      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
-      if (sts == STS_FAILURE) {
-         ERROR("can't find outbound interface %s - configuration error?",
-               configuration.outbound_if);
-         return STS_FAILURE;
-      }
-   } else {
-      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
-      if (sts == STS_FAILURE) {
-         ERROR("can't find inbound interface %s - configuration error?",
-               configuration.inbound_if);
-         return STS_FAILURE;
-      }
-   }
-
-   sprintf(tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
-           configuration.sip_listen_port);
-   DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
-
-   sts = via_init(&via);
-   if (sts!=0) return STS_FAILURE; /* allocation failed */
-
-   sts = via_parse(via, tmp);
-   if (sts!=0) return STS_FAILURE;
-
-   list_add(request->vias,via,0);
-
-   return STS_SUCCESS;
-}
-
-
-/*
- * PROXY_DEL_MYVIA
- *
- * RETURNS
- *	STS_SUCCESS on success
- *	STS_FAILURE on error
- */
-int proxy_del_myvia (sip_t *response) {
-   via_t *via;
-   int sts;
-
-   DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
-   via = list_get (response->vias, 0);
-   
-   if ( is_via_local(via) == STS_FALSE ) {
-      ERROR("I'm trying to delete a VIA but it's not mine! host=%s",via->host);
-      return STS_FAILURE;
-   }
-
-   sts = list_remove(response->vias, 0);
-   via_free (via);
-   free(via);
    return STS_SUCCESS;
 }
 
@@ -619,6 +500,12 @@ int proxy_rewrite_invitation_body(sip_t *mymsg){
     * start forwarding for each media stream ('m=' item in SIP message)
     */
    sts = get_ip_by_host(sdp_c_addr_get(sdp,-1,0), &lcl_clnt_addr);
+   if (sts == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: cannot resolve "
+             "m= (media) host [%s]", sdp_c_addr_get(sdp,-1,0));
+      return STS_FAILURE;
+   }
+
    sts = get_ip_by_ifname(configuration.outbound_if, &outb_addr);
    if (sts == STS_FAILURE) {
       ERROR("can't find outbound interface %s - configuration error?",

@@ -1,19 +1,18 @@
 TODOs, in random order:
 =======================
 
-- kphone 3.1: authentication w/ siproxd (libosip 0.8.8, 0.9.0, libosip2)
-  does not work (parse error in libosip)
+- TERM handler
 
-- libosip >0.8.8, libosip2: failure in msg_setproxy_authenticate
+- /var/run PID file
+
+- check via loop and private IP addresses
+  can comment be used to store a unique ID in there?
+
+- multiple inbound interfaces - do I need to be aware of inbound at all?
 
 - Documentation (yeah, yeah...)
 
 - support for proxy chaining - UPNP support?
-
-- feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
-  (defined by IFNAME)
-
-- multiple inbound interfaces
 
 - general security issues
 - security tests for received SIP messages (function securitycheck)
@@ -27,3 +26,6 @@ TODOs, in random order:
 - via loop detection: send 482 error code
 
 - support Record-Route header
+
+- feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
+  (defined by IFNAME)

@@ -129,6 +129,10 @@ int main (int argc, char *argv[])
 /*
  * Init stuff
  */
+
+   /* cancel RTP thread at exit */
+   atexit(rtpproxy_kill);
+
    /* read the config file */
    if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
 
@@ -225,7 +229,10 @@ int main (int argc, char *argv[])
 	     (my_msg->strtline->sipmethod)?
               my_msg->strtline->sipmethod : "NULL") ;
 
-      /* if RQ REGISTER, just register and send an answer */
+      /*
+      * if RQ REGISTER, just register
+      * and send an answer
+      */
       if (MSG_IS_REGISTER(my_msg) && MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_REG) {
             sts = register_client(my_msg);
@@ -235,9 +242,24 @@ int main (int argc, char *argv[])
 	         inet_ntoa(from.sin_addr));
 	 }
 
-      /* MSG is a request, add current via entry,
+      /*
+       * check if outbound interface is UP.
+       * If not, send back error to UA and
+       * skip any proxying attempt
+       */
+      } else if (get_ip_by_ifname(configuration.outbound_if,NULL) !=
+                 STS_SUCCESS) {
+         DEBUGC(DBCLASS_SIP, "got a %s to proxy, but outbound interface "
+                "is down", (MSG_IS_REQUEST(my_msg))? "REQ" : "RES");
+
+         if (MSG_IS_REQUEST(my_msg))
+            sip_gen_response(my_msg, 408 /*request timeout*/);
+      
+      /*
+       * MSG is a request, add current via entry,
        * do a lookup in the URLMAP table and
-       * send to the final destination */
+       * send to the final destination
+       */
       } else if (MSG_IS_REQUEST(my_msg)) {
          if (access & ACCESSCTL_SIP) {
             sts = proxy_request(my_msg);
@@ -246,8 +268,10 @@ int main (int argc, char *argv[])
 	            inet_ntoa(from.sin_addr));
 	 }
 
-      /* MSG is a response, remove current via and
-       * send to next via in chain */
+      /*
+       * MSG is a response, remove current via and
+       * send to the next VIA in chain
+       */
       } else if (MSG_IS_RESPONSE(my_msg)) {
          if (access & ACCESSCTL_SIP) {
             sts = proxy_response(my_msg);
@@ -256,7 +280,9 @@ int main (int argc, char *argv[])
 	            inet_ntoa(from.sin_addr));
 	 }
 	 
-      /* unsupported message */
+      /*
+       * unsupported message
+       */
       } else {
          ERROR("received unsupported SIP type %s %s",
 	       (MSG_IS_REQUEST(my_msg))? "REQ" : "RES",

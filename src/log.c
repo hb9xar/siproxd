@@ -104,11 +104,13 @@ void log_error(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec, file, line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-   } else {
+}
+// always log INFO, WARN, ERROR to syslog
+//   } else {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
-   }
+//   }
 
    va_end(ap);
    fflush(stderr);
@@ -133,11 +135,13 @@ void log_warn(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-   } else {
+}
+// always log INFO, WARN, ERROR to syslog
+//   } else {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
-   }
+//   }
    
    va_end(ap);
    fflush(stderr);
@@ -162,11 +166,13 @@ void log_info(char *file, int line, const char *format, ...) {
                       tim->tm_min, tim->tm_sec,file,line);
       vfprintf(stderr, format, ap);
       fprintf(stderr,"\n");
-   } else {
+}
+// always log INFO, WARN, ERROR to syslog
+//   } else {
       /* running as daemon - log via SYSLOG facility */
       vsnprintf(string, sizeof(string), format, ap);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
-   }
+//   }
    
    va_end(ap);
    fflush(stderr);

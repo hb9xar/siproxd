@@ -26,7 +26,7 @@ int sipsock_wait(void);
 int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from);
 int sipsock_send_udp(int *sock, struct in_addr addr, int port,		/*X*/
                      char *buffer, int size, int allowdump);
-int sockbind(struct in_addr ipaddr, int localport);
+int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
 void register_init(void);
@@ -37,9 +37,6 @@ int register_response(sip_t *request, int flag);			/*X*/
 /* proxy.c */
 int proxy_request (sip_t *request);					/*X*/
 int proxy_response (sip_t *response);					/*X*/
-int proxy_gen_response(sip_t *request, int code);			/*X*/
-int proxy_add_myvia (sip_t *request, int interface);			/*X*/
-int proxy_del_myvia (sip_t *response);					/*X*/
 int proxy_rewrite_invitation_body(sip_t *mymsg);			/*X*/
 int proxy_rewrite_request_uri(sip_t *mymsg, int idx);			/*X*/
 
@@ -55,16 +52,22 @@ int  is_via_local (via_t *via);						/*X*/
 int  compare_url(url_t *url1, url_t *url2);				/*X*/
 int  is_sipuri_local (sip_t *sip);					/*X*/
 int  check_rewrite_rq_uri (sip_t *sip);					/*X*/
+int  sip_gen_response(sip_t *request, int code);			/*X*/
+#define IF_OUTBOUND 0
+#define IF_INBOUND  1
+int  sip_add_myvia (sip_t *request, int interface);			/*X*/
+int  sip_del_myvia (sip_t *response);					/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
 
 /* rtpproxy.c */
-int rtpproxy_init( void );						/*X*/
-int rtp_start_fwd (call_id_t *callid, int media_stream_no,		/*X*/
-		   struct in_addr outbound_ipaddr, int *outboundport,
-                   struct in_addr lcl_client_ipaddr, int lcl_clientport);
-int rtp_stop_fwd (call_id_t *callid, int nolock);			/*X*/
+int  rtpproxy_init( void );						/*X*/
+int  rtp_start_fwd (call_id_t *callid, int media_stream_no,		/*X*/
+		    struct in_addr outbound_ipaddr, int *outboundport,
+                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
+int  rtp_stop_fwd (call_id_t *callid, int nolock);			/*X*/
+void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
 int accesslist_check(struct sockaddr_in from);
@@ -144,6 +147,9 @@ struct siproxd_config {
 #define STATUSCODE_SIZE 5	/* size of string representation of status */
 #define DNS_CACHE_SIZE  32	/* number of entries in internal DNS cache */
 #define DNS_MAX_AGE	60	/* maximum age of an cache entry (sec)	*/
+#define IFADR_CACHE_SIZE 32	/* number of entries in internal IFADR cache */
+#define IFADR_MAX_AGE	5	/* max. age of the IF address cache (sec) */
+#define IFNAME_SIZE	16	/* max string length of a interface name */
 #define HOSTNAME_SIZE	64	/* max string length of a hostname	*/
 #define USERNAME_SIZE	64	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	64	/* max string length of a password (auth) */

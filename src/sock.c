@@ -61,8 +61,8 @@ int sipsock_listen (void) {
    struct in_addr ipaddr;
 
    memset(&ipaddr, 0, sizeof(struct in_addr));
-   listen_socket=sockbind(ipaddr, configuration.sip_listen_port);
-   if (listen_socket==0) return STS_FAILURE; /* failure*/
+   listen_socket=sockbind(ipaddr, configuration.sip_listen_port, 1);
+   if (listen_socket == 0) return STS_FAILURE; /* failure*/
 
    INFO("listening on port %i", configuration.sip_listen_port);
    DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
@@ -127,7 +127,7 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    /* first time: allocate a socket for sending */
    if (*sock == 0) {
       *sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (*sock == 0) {
+      if (*sock < 0) {
          ERROR("socket() call failed:%s",strerror(errno));
 	 return STS_FAILURE;
       }
@@ -154,7 +154,8 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
-         ERROR("sendto() call failed: %s",strerror(errno));
+         ERROR("sendto() [%s] call failed: %s",inet_ntoa(addr),
+               strerror(errno));
          return STS_FAILURE;
       }
      DEBUGC(DBCLASS_BABBLE,"sendto() call failed:%s",strerror(errno));
@@ -168,27 +169,28 @@ int sipsock_send_udp(int *sock, struct in_addr addr, int port,
 /*
  * generic routine to allocate and bind a socket to a specified
  * local address and port (UDP)
+ * errflg !=0 log errors, ==0 don't
  *
  * RETURNS socket number on success, zero on failure
  */
-int sockbind(struct in_addr ipaddr, int localport) {
+int sockbind(struct in_addr ipaddr, int localport, int errflg) {
    struct sockaddr_in my_addr;
    int sts;
    int sock;
 
    my_addr.sin_family = AF_INET;
    memcpy(&my_addr.sin_addr.s_addr, &ipaddr, sizeof(struct in_addr));
-   my_addr.sin_port= htons(localport);
+   my_addr.sin_port = htons(localport);
 
    sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-   if (sock == 0) {
+   if (sock < 0) {
       ERROR("socket() call failed:%s",strerror(errno));
       return 0;
    }
 
    sts=bind(sock, (struct sockaddr *)&my_addr, sizeof(my_addr));
    if (sts != 0) {
-      ERROR("bind failed:%s",strerror(errno));
+      if (errflg) ERROR("bind failed:%s",strerror(errno));
       close(sock);
       return 0;
    }

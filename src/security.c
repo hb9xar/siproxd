@@ -37,6 +37,10 @@
 #include "log.h"
 
 
+static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
+			  BUILDSTR " $";
+
+
 /*
  * do security and integrity checks on the received packet
  * (raw buffer)

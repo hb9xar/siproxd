@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -39,6 +40,10 @@
 
 #include "siproxd.h"
 #include "log.h"
+
+static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
+			  BUILDSTR " $";
+
 
 /* configuration storage */
 extern struct siproxd_config configuration;
@@ -64,7 +69,7 @@ struct {
 
 
 /* thread id of RTP proxy */
-pthread_t rtpproxy_tid;
+pthread_t rtpproxy_tid=0;
 
 /* master fd_set */
 fd_set master_fdset;
@@ -165,7 +170,7 @@ void *rtpproxy_main(void *arg) {
 
 	    num_fd--;
          }
-      }
+      } /* for i */
 
 
       /* age and clean rtp_proxytable */
@@ -177,8 +182,9 @@ void *rtpproxy_main(void *arg) {
                /* time one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
-               DEBUGC(DBCLASS_RTP,"RTP stream %s@%s (idx=%i) has expired",
-	              callid.number, callid.host, i);
+               DEBUGC(DBCLASS_RTP,"RTP stream sock=%i %s@%s (idx=%i) "
+                      "has expired", rtp_proxytable[i].sock,
+                      callid.number, callid.host, i);
 	       rtp_stop_fwd(&callid, 1); /* don't lock the mutex, as we own
 	       				    the lock already here */
 	    }
@@ -305,7 +311,7 @@ int rtp_start_fwd (call_id_t *callid, int media_stream_no,
       /* port is available, try to allocate */
       if (j == RTPPROXY_SIZE) {
          port=i;
-         sock=sockbind(outbound_ipaddr, port);
+         sock=sockbind(outbound_ipaddr, port, 0);
          /* if success break, else try further on */
          if (sock) break;
       }
@@ -384,8 +390,8 @@ unlock_and_exit:
  *	STS_FAILURE on error
  */
 int rtp_stop_fwd (call_id_t *callid, int nolock) {
-   int i;
-   int sts=STS_SUCCESS;
+   int i, sts;
+   int retsts=STS_SUCCESS;
    int got_match=0;
 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
@@ -426,7 +432,20 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
 	 (strcmp(rtp_proxytable[i].callid_host, callid->host)==0) ) {
 
          /* match: close socket and clean slot in rtp_proxytable */
-         close(rtp_proxytable[i].sock);
+         sts = close(rtp_proxytable[i].sock);
+         if (sts < 0) {
+            ERROR("Error in close(%i): %s\n", rtp_proxytable[i].sock,
+                  strerror(errno));
+         }
+
+	 DEBUGC(DBCLASS_RTP,"closing socket %i for RTP stream "
+                "%s:%s == %s:%s  (idx=%i) sts=%i",
+	        rtp_proxytable[i].sock,
+	        rtp_proxytable[i].callid_number,
+	        rtp_proxytable[i].callid_host,
+	        callid->number,
+	        callid->host,
+	        i, sts);
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
       }
@@ -437,7 +456,7 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
    if (!got_match) {
       DEBUGC(DBCLASS_RTP,"rtp_stop_fwd: can't find active stream for %s@%s",
              callid->number, callid->host);
-      sts = STS_FAILURE;
+      retsts = STS_FAILURE;
       goto unlock_and_exit;
    }
 
@@ -460,7 +479,7 @@ unlock_and_exit:
    }
    #undef return
 
-   return sts;
+   return retsts;
 }
 
 
@@ -487,3 +506,21 @@ int rtp_recreate_fdset(void) {
    return STS_SUCCESS;
 }
 
+
+/*
+ * kills the rtp_proxy thread
+ *
+ * RETURNS
+ *	-
+ */
+void rtpproxy_kill( void ) {
+   void *thread_status;
+
+   if (rtpproxy_tid) {
+      pthread_cancel(rtpproxy_tid);
+      pthread_join(rtpproxy_tid, &thread_status);
+   }
+
+   DEBUGC(DBCLASS_RTP,"killed RTP proxy thread");
+   return;
+}

@@ -68,7 +68,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    static struct {
       time_t timestamp;
       struct in_addr addr;
-      char hostname[HOSTNAME_SIZE];
+      char hostname[HOSTNAME_SIZE+1];
    } dns_cache[DNS_CACHE_SIZE];
    static int cache_initialized=0;
 
@@ -116,11 +116,22 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    hostentry=gethostbyname(hostname);
 
    if (hostentry==NULL) {
+      if (h_errno == HOST_NOT_FOUND) {
+         /* this is actually not really an error */
 #ifdef HAVE_HSTRERROR
-      ERROR("gethostbyname(%s) failed: %s",hostname,hstrerror(h_errno));
+         DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: %s",
+                hostname, hstrerror(h_errno));
 #else
-      ERROR("gethostbyname(%s) failed: h_errno=%i",hostname,h_errno);
+         DEBUGC(DBCLASS_DNS, "gethostbyname(%s) failed: h_errno=%i",
+                hostname, h_errno);
 #endif
+      } else {
+#ifdef HAVE_HSTRERROR
+         ERROR("gethostbyname(%s) failed: %s",hostname, hstrerror(h_errno));
+#else
+         ERROR("gethostbyname(%s) failed: h_errno=%i",hostname, h_errno);
+#endif
+      }
       return STS_FAILURE;
    }
 
@@ -129,9 +140,8 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
           hostname, inet_ntoa(*addr));
 
    /*
-    * remember the result in the cache
+    * find an empty slot in the cache
     */
-   /* find an empty slot */
    j=0;
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') break;
@@ -144,7 +154,9 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    /* if no empty slot found, take oldest one */
    if (i >= DNS_CACHE_SIZE) i=j;
 
-   /* store in cache */
+   /*
+    * store the result in the cache
+    */
    DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", i);
    memset(&dns_cache[i], 0, sizeof(dns_cache[0]));
    strncpy(dns_cache[i].hostname, hostname, HOSTNAME_SIZE);
@@ -216,11 +228,24 @@ void secure_enviroment (void) {
 /*
  * get_ip_by_ifname:
  * fetches own IP address by its interface name
+ *
+ * STS_SUCCESS on returning a valid IP and interface is UP
+ * STS_FAILURE if interface is DOWN or other problem
  */
 int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    struct ifreq ifr;
    struct sockaddr_in *sin = (struct sockaddr_in *)&ifr.ifr_addr;
    int sockfd;
+   int i, j;
+   int ifflags, isup;
+   time_t t;
+   static struct {
+      time_t timestamp;
+      struct in_addr ifaddr;	/* IP */
+      int isup;			/* interface is UP */
+      char ifname[IFNAME_SIZE+1];
+   } ifaddr_cache[IFADR_CACHE_SIZE];
+   static int cache_initialized=0;
 
    if (ifname == NULL) {
       WARN("get_ip_by_ifname: got NULL ifname passed - please check config"
@@ -228,6 +253,40 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
       return STS_FAILURE;
    }
 
+   /* first time: initialize ifaddr cache */
+   if (cache_initialized == 0) {
+      DEBUGC(DBCLASS_DNS, "initializing ifaddr cache (%i entries)", 
+             IFADR_CACHE_SIZE);
+      memset(ifaddr_cache, 0, sizeof(ifaddr_cache));
+      cache_initialized=1;
+   }
+
+   time(&t);
+   /* clean expired entries */
+   for (i=0; i<IFADR_CACHE_SIZE; i++) {
+      if (ifaddr_cache[i].ifname[0]=='\0') continue;
+      if ( (ifaddr_cache[i].timestamp+IFADR_MAX_AGE) < t ) {
+         DEBUGC(DBCLASS_DNS, "cleaning ifaddr cache (entry %i)", i);
+         memset (&ifaddr_cache[i], 0, sizeof(ifaddr_cache[0]));
+      }
+   }
+
+   /*
+    * search requested entry in cache
+    */
+   for (i=0; i<IFADR_CACHE_SIZE; i++) {
+      if (ifaddr_cache[i].ifname[0]=='\0') continue;
+      if (strcmp(ifname, ifaddr_cache[i].ifname) == 0) { /* match */
+         if (retaddr) memcpy(retaddr, &ifaddr_cache[i].ifaddr,
+                             sizeof(struct in_addr));
+         DEBUGC(DBCLASS_DNS, "ifaddr lookup - from cache: %s -> %s %s",
+	        ifname, inet_ntoa(ifaddr_cache[i].ifaddr),
+                (ifaddr_cache[i].isup)? "UP":"DOWN");
+         return (ifaddr_cache[i].isup)? STS_SUCCESS: STS_FAILURE;
+      } /* if */
+   } /* for i */
+
+   /* not found in cache, go and get it */
    bzero(&ifr, sizeof(ifr));
 
    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -238,18 +297,57 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    strcpy(ifr.ifr_name, ifname);
    sin->sin_family = AF_INET;
 
+   /* get interface flags */
+   if(ioctl(sockfd, SIOCGIFFLAGS, &ifr) != 0) {
+      ERROR("Error in ioctl SIOCGIFFLAGS: %s\n",strerror(errno));
+      close(sockfd);
+      return STS_FAILURE;
+   } 
+   ifflags=ifr.ifr_flags;
+
+   /* get address */
    if(ioctl(sockfd, SIOCGIFADDR, &ifr) != 0) {
-      ERROR("Error in ioctl: %s\n",strerror(errno));
+      ERROR("Error in ioctl SIOCGIFADDR: %s\n",strerror(errno));
       close(sockfd);
       return STS_FAILURE;
    } 
 
-   DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: interface %s has IP: %s",
-          ifname, inet_ntoa(sin->sin_addr));
+   if (ifflags & IFF_UP) isup=1;
+   else isup=0;
+
+   DEBUGC(DBCLASS_DNS, "get_ip_by_ifname: if %s has IP:%s (flags=%x) %s",
+          ifname, inet_ntoa(sin->sin_addr), ifflags,
+          (isup)? "UP":"DOWN");
+
+   /*
+    *find an empty slot in the cache
+    */
+   j=0;
+   for (i=0; i<IFADR_CACHE_SIZE; i++) {
+      if (ifaddr_cache[i].ifname[0]=='\0') break;
+      if (ifaddr_cache[i].timestamp < t) {
+         /* remember oldest entry */
+         t=ifaddr_cache[i].timestamp;
+	 j=i;
+      }
+   }
+   /* if no empty slot found, take oldest one */
+   if (i >= IFADR_CACHE_SIZE) i=j;
+
+   /*
+    * store the result in the cache
+    */
+   DEBUGC(DBCLASS_DNS, "ifname lookup - store into cache, entry %i)", i);
+   memset(&ifaddr_cache[i], 0, sizeof(ifaddr_cache[0]));
+   strncpy(ifaddr_cache[i].ifname, ifname, IFNAME_SIZE);
+   ifaddr_cache[i].timestamp=t;
+   memcpy(&ifaddr_cache[i].ifaddr, &sin->sin_addr, sizeof(sin->sin_addr));
+   ifaddr_cache[i].isup=isup;
+
    if (retaddr) memcpy(retaddr, &sin->sin_addr, sizeof(sin->sin_addr));
 
    close(sockfd);
-   return STS_SUCCESS;
+   return (isup)? STS_SUCCESS : STS_FAILURE;
 }
 
 

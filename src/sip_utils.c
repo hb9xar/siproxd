@@ -54,6 +54,7 @@ static char const ident[]="$Id: " __FILE__ ": " PACKAGE "-" VERSION "-"\
 extern struct siproxd_config configuration;
 
 extern int h_errno;
+extern int sip_socket;				/* sending SIP datagrams */
 
 
 /*
@@ -174,7 +175,12 @@ int is_via_local (via_t *via) {
    DEBUGC(DBCLASS_BABBLE,"via name %s",via->host);
    if (inet_aton(via->host,&addr_via) == 0) {
       /* need name resolution */
-      get_ip_by_host(via->host, &addr_via);
+      sts=get_ip_by_host(via->host, &addr_via);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_DNS, "is_via_local: cannot resolve VIA [%s]",
+                via->host);
+         return STS_FAILURE;
+      }
    }   
 
    found=0;
@@ -233,14 +239,26 @@ int compare_url(url_t *url1, url_t *url2) {
    }
 
    /* get the IP addresses from the (possible) hostnames */
-   get_ip_by_host(url1->host, &addr1);
-   get_ip_by_host(url2->host, &addr2);
+   sts=get_ip_by_host(url1->host, &addr1);
+   if (sts == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
+             url1->host);
+      return STS_FAILURE;
+   }
+
+   sts=get_ip_by_host(url2->host, &addr2);
+   if (sts == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
+             url2->host);
+      return STS_FAILURE;
+   }
 
    /* Broken(?) MSN messenger - does not supply a user name part.
       So we simply compare the host part then */
    if ((url1->username == NULL) || (url2->username == NULL)) {
-      WARN("compare_url: NULL username pointer: MSN messenger is known to "
-           "trigger this one!");
+// let's be nice to Billy boy and don't complain evey time ;-)
+//      WARN("compare_url: NULL username pointer: MSN messenger is known to "
+//           "trigger this one!");
       DEBUGC(DBCLASS_DNS, "comparing broken urls (no user): "
             "%s[%s] -> %s[%s]",
             url1->host, inet_ntoa(addr1), url2->host, inet_ntoa(addr2));
@@ -399,6 +417,151 @@ int check_rewrite_rq_uri (sip_t *sip) {
    WARN("check_rewrite_rq_uri: didn't get a hit of the method [%s]",
         sip->strtline->sipmethod);
    return STS_FALSE;
+}
+
+
+/*
+ * PROXY_GEN_RESPONSE
+ *
+ * send an proxy generated response back to the client.
+ * Only errors are reported from the proxy itself.
+ *  code =  SIP result code to deliver
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+int sip_gen_response(sip_t *request, int code) {
+   sip_t *response;
+   int sts;
+   via_t *via;
+   int port;
+   char *buffer;
+   struct in_addr addr;
+
+   /* create the response template */
+   if ((response=msg_make_template_reply(request, code))==NULL) {
+      ERROR("proxy_response: error in msg_make_template_reply");
+      return STS_FAILURE;
+   }
+
+   /* we must check if first via has x.x.x.x address. If not, we must resolve it */
+   msg_getvia (response, 0, &via);
+   if (via == NULL)
+   {
+      ERROR("proxy_response: Cannot send response - no via field");
+      return STS_FAILURE;
+   }
+
+
+   /* name resolution */
+   if (inet_aton(via->host, &addr) == 0)
+   {
+      /* need name resolution */
+      DEBUGC(DBCLASS_DNS,"resolving name:%s",via->host);
+      sts = get_ip_by_host(via->host, &addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "sip_gen_response: cannot resolve via [%s]",
+                via->host);
+         return STS_FAILURE;
+      }
+   }   
+
+   sts = msg_2char(response, &buffer);
+   if (sts != 0) {
+      ERROR("proxy_response: msg_2char failed");
+      return STS_FAILURE;
+   }
+
+
+   if (via->port) {
+      port=atoi(via->port);
+   } else {
+      port=SIP_PORT;
+   }
+
+   /* send to destination */
+   sipsock_send_udp(&sip_socket, addr, port,
+                    buffer, strlen(buffer), 1);
+
+   /* free the resources */
+   msg_free(response);
+   free(response);
+   free (buffer);
+   return STS_SUCCESS;
+}
+
+
+/*
+ * PROXY_ADD_MYVIA
+ *
+ * interface == IF_OUTBOUND, IF_INBOUND
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+int sip_add_myvia (sip_t *request, int interface) {
+   struct in_addr addr;
+   char tmp[URL_STRING_SIZE];
+   via_t *via;
+   int sts;
+
+   if (interface == IF_OUTBOUND) {
+      sts = get_ip_by_ifname(configuration.outbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         ERROR("can't find outbound interface %s - configuration error?",
+               configuration.outbound_if);
+         return STS_FAILURE;
+      }
+   } else {
+      sts = get_ip_by_ifname(configuration.inbound_if, &addr);
+      if (sts == STS_FAILURE) {
+         ERROR("can't find inbound interface %s - configuration error?",
+               configuration.inbound_if);
+         return STS_FAILURE;
+      }
+   }
+
+   sprintf(tmp, "SIP/2.0/UDP %s:%i", inet_ntoa(addr),
+           configuration.sip_listen_port);
+   DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
+
+   sts = via_init(&via);
+   if (sts!=0) return STS_FAILURE; /* allocation failed */
+
+   sts = via_parse(via, tmp);
+   if (sts!=0) return STS_FAILURE;
+
+   list_add(request->vias,via,0);
+
+   return STS_SUCCESS;
+}
+
+
+/*
+ * PROXY_DEL_MYVIA
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+int sip_del_myvia (sip_t *response) {
+   via_t *via;
+   int sts;
+
+   DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
+   via = list_get (response->vias, 0);
+   
+   if ( is_via_local(via) == STS_FALSE ) {
+      ERROR("I'm trying to delete a VIA but it's not mine! host=%s",via->host);
+      return STS_FAILURE;
+   }
+
+   sts = list_remove(response->vias, 0);
+   via_free (via);
+   free(via);
+   return STS_SUCCESS;
 }
 
 

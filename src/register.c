@@ -112,15 +112,19 @@ int register_client(sip_t *my_msg) {
       expires=600;
       msg_setexpires(my_msg, "600");
    }
-   DEBUGC(DBCLASS_REG,"expires:%i seconds",expires);
 
+   url1_to=my_msg->to->url;
+   url1_contact=((contact_t*)(my_msg->contacts->node->element))->url;
+
+   DEBUGC(DBCLASS_REG,"register: %s@%s expires=%i seconds",
+          (url1_contact->username) ? url1_contact->username : "*NULL*",
+          (url1_contact->host) ? url1_contact->host : "*NULL*",
+          expires);
 
 /* Update registration. There are two possibilities:
  * - already registered, then update the existing record
  * - not registered, then create a new record
  */
-   url1_to=my_msg->to->url;
-   url1_contact=((contact_t*)(my_msg->contacts->node->element))->url;
 
    j=-1;
    for (i=0; i<URLMAP_SIZE; i++) {
@@ -134,9 +138,12 @@ int register_client(sip_t *my_msg) {
 
       if ( (compare_url(url1_to, url2_to)==STS_SUCCESS) &&
            (compare_url(url1_contact, url2_contact)==STS_SUCCESS) ) {
-         DEBUGC(DBCLASS_REG, "found entry for %s@%s at slot=%i, exp=%li",
+         DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
+                "slot=%i, exp=%li",
 	        (url1_contact->username) ? url1_contact->username : "*NULL*",
                 (url1_contact->host) ? url1_contact->host : "*NULL*",
+	        (url2_to->username) ? url2_to->username : "*NULL*",
+                (url2_to->host) ? url2_to->host : "*NULL*",
 		i, urlmap[i].expires-time_now);
          break;
       }
@@ -151,10 +158,6 @@ int register_client(sip_t *my_msg) {
    if (i >= URLMAP_SIZE) {
       /* entry not existing, create new one */
       i=j;
-      DEBUGC(DBCLASS_REG,"create new entry for %s@%s at slot=%i",
-             (url1_contact->username) ? url1_contact->username : "*NULL*",
-             (url1_contact->host) ? url1_contact->host : "*NULL*",
-             i);
 
       /* write entry */
       urlmap[i].active=1;
@@ -162,6 +165,13 @@ int register_client(sip_t *my_msg) {
         	 &urlmap[i].true_url);	/* Contact: field */
       url_clone( my_msg->to->url, 
         	 &urlmap[i].reg_url);	/* To: field */
+
+      DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
+             (url1_contact->username) ? url1_contact->username : "*NULL*",
+             (url1_contact->host) ? url1_contact->host : "*NULL*",
+	     (urlmap[i].reg_url->username) ? urlmap[i].reg_url->username : "*NULL*",
+             (urlmap[i].reg_url->host) ? urlmap[i].reg_url->host : "*NULL*",
+             i);
 
       /*
        * try to figure out if we ought to do some masquerading
@@ -197,10 +207,10 @@ int register_client(sip_t *my_msg) {
 
       via_clone( ((via_t*)(my_msg->vias->node->element)),
                  &urlmap[i].via);	/* via field */
-   }
+   } /* if new entry */
 
    /* give some safety margin for the next update */
-   if (expires >0) expires+=30;
+   if (expires > 0) expires+=30;
 
    /* update registration timeout */
    urlmap[i].expires=time_now+expires;
@@ -304,6 +314,11 @@ int register_response(sip_t *request, int flag) {
    if (inet_aton (via->host,&addr) == 0) {
       /* yes, get IP address */
       sts = get_ip_by_host(via->host, &addr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_REG, "register_response: cannot resolve VIA [%s]",
+                via->host);
+         return STS_FAILURE;
+      }
    }   
 
    sts = msg_2char(response, &buffer);

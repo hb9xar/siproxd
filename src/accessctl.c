@@ -118,7 +118,7 @@ int accesslist_check (struct sockaddr_in from) {
  *	STS_FAILURE for no match
  */
 int process_aclist (char *aclist, struct sockaddr_in from) {
-   int i;
+   int i, sts;
    int lastentry;
    char *p1, *p2;
    char address[32]; /* dotted decimal IP - max 15 chars*/
@@ -161,7 +161,13 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
 /*
  * check for a match
  */
-      get_ip_by_host(address, &inaddr);
+      sts=get_ip_by_host(address, &inaddr);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_ACCESS, "process_aclist: cannot resolve address [%s]",
+                address);
+         return STS_FAILURE;
+      }
+
       bitmask=~(0xffffffff>>atoi(mask));
 
       DEBUGC(DBCLASS_ACCESS,"[%i] (%p) <-> (%p)", i,

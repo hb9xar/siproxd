@@ -1,9 +1,25 @@
+0.3.2
+=====
+ 1-Apr-2003:	- should now be able to deal with an outbound interface
+                  that is "temporary" DOWN (dial up internet access)
+                  if outbounf IF is down, send back a response to
+                  inbound UAs "408 Request Timeout".
+                - always log to syslog, also when running in foreground
+                - changed some WARNINGS into DEBUG statements
+                - re-arranged some code
+                - rtpproxy: prepared for proper thread termination on exit
+                - introduced short term caching for get_ip_by_ifname
+                - fixed in check for socket() return status
+30-May-2003:	- always log ERROR, WARNING and INFO to syslog (also
+                  of not running as daemon)
+                - minor corrections on ERROR printouts
+
 0.3.1
 =====
 - 29-May-2003:	- released 0.3.1
 		- fix in configure.in for statically linking to libosip
 		- fix in rewriting SIP messages, figure out proper
-                   destination if *not* rewriting the SIP URI
+		  destination if *not* rewriting the SIP URI
 		- another NULL pointer related crash (no UA header present)
 
 0.3.0
@@ -11,10 +27,10 @@
 - 29-May-2003:	- released 0.3.0
 		- supports libosip2 (automatically detect osip1/osip2)
 		- redone authentication - now should work with libosip2
-                  libosip0.8.8 has a bug (fails in parse_msg)
+		  libosip0.8.8 has a bug (fails in parse_msg)
 - 28-May-2003:	- changes in rewriting SIP messages - not everything
 		  is blindly rewritten now (e.g. SUBSCRIBE is NOT)
-                - fixed resource leak (sockets) in get_ip_by_ifname
+		- fixed resource leak (sockets) in get_ip_by_ifname
 - 26-Mar-2003:	- Bugfix: some potential NULL pointers passed to atoi()
 		  of optional fields in SIP message could lead to crash
 - 23-Mar-2003:	- send 403 FORBIDDEN response to requests addressed
