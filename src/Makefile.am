@@ -19,7 +19,7 @@
 #
 
 
-CFLAGS =@CFLAGS@ -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
+AM_CFLAGS = -Wall -DBUILDSTR=\"`cat .buildno`\" -D_GNU_SOURCE
 
 sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
