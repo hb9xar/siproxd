@@ -1,6 +1,7 @@
-0.4.0a
-======
-  12-Oct-2003:	- Local registration was simply broken. Fixed.
+0.4.1
+=====
+  12-Oct-2003:	- released 0.4.1
+  12-Oct-2003:	- Local registration of UAs was simply broken. Fixed.
 
 0.4.0
 =====

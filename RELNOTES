@@ -1,5 +1,5 @@
-Release Notes for siproxd-0.4.0
-================================
+Release Notes for siproxd-0.4.1
+===============================
 
  - May be used as an pure Outbound proxy (registration of local UAs
    to a 3rd party registrar)
@@ -62,15 +62,15 @@ Known bugs:
 
 
 -----
-md5sum for siproxd-0.4.0.tar.gz: 	3cbf1ac50f122142ce8529e09d2f8796
+md5sum for siproxd-0.4.1.tar.gz: 	af7d0e56eefabfbd24c5338460cd6f95
 
-GnuPG signature for siproxd-0.4.0.tar.gz archive:
+GnuPG signature for siproxd-0.4.1.tar.gz archive:
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.1 (GNU/Linux)
 
-iD8DBQA/h86xCfzBioe83JQRAtVCAJ4nRI/gTWZBDGtRjJn4hIIaH0tf0ACfZiT0
-X5xlKUBA2O5x2RnKTwt6n6o=
-=LXMi
+iD8DBQA/iSoPCfzBioe83JQRAhEcAKCmMxXgiPEce7g6vVYr//OWx7mZRACeM4h3
+Vh1INpiRnFUFA3BATgbG4fg=
+=fuMJ
 -----END PGP SIGNATURE-----
 
 
