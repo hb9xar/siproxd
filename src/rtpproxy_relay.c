@@ -528,9 +528,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    /* find a local port number to use and bind to it */
    sock=0;
    port=0;
-//   for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i+=2) {
 
-DEBUGC(DBCLASS_RTP,"*****a prev_used_port=%i",prev_used_port);
    if ((prev_used_port < configuration.rtp_port_low) ||
        (prev_used_port > configuration.rtp_port_high)) {
       prev_used_port = configuration.rtp_port_high;
@@ -541,7 +539,6 @@ DEBUGC(DBCLASS_RTP,"*****a prev_used_port=%i",prev_used_port);
         i2 < (num_ports + prev_used_port - configuration.rtp_port_low + 1);
         i2 += 2) {
       i = (i2%num_ports) + configuration.rtp_port_low;
-DEBUGC(DBCLASS_RTP,"***** i=%i, i2=%i",i,i2);
       for (j=0; j<RTPPROXY_SIZE; j++) {
          /* check if port already in use */
          if ((memcmp(&rtp_proxytable[j].local_ipaddr,
@@ -558,7 +555,6 @@ DEBUGC(DBCLASS_RTP,"***** i=%i, i2=%i",i,i2);
       }
    } /* for i */
    prev_used_port = port;
-DEBUGC(DBCLASS_RTP,"*****z prev_used_port=%i",prev_used_port);
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: addr=%s, port=%i, sock=%i "
           "freeidx=%i", utils_inet_ntoa(local_ipaddr), port, sock, freeidx);
