@@ -443,6 +443,11 @@ int proxy_request (sip_ticket_t *ticket) {
     * RFC 3261, Section 16.6 step 7
     * Proxy Behavior - Determine Next-Hop Address
     */
+/*&&&& priority probably should be:
+ * 1) Route header
+ * 2) fixed outbound proxy
+ * 3) SIP URI
+ */
    /*
     * fixed outbound proxy defined ?
     */
@@ -744,15 +749,24 @@ int proxy_response (sip_ticket_t *ticket) {
 
       /*
        * Response for INVITE - deal with RTP data in body and
-       *                       start RTP proxy stream(s)
+       *                       start RTP proxy stream(s). In case
+       *                       of a negative answer, stop RTP stream
        */
-      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
-          ((MSG_TEST_CODE(response, 200)) || 
-           (MSG_TEST_CODE(response, 183)))) {
-         if (configuration.rtp_proxy_enable == 1) {
-            sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
+      if (MSG_IS_RESPONSE_FOR(response,"INVITE")) {
+         /* positive response, start RTP stream */
+         if ((MSG_IS_STATUS_1XX(response)) || 
+              (MSG_IS_STATUS_2XX(response))) {
+            if (configuration.rtp_proxy_enable == 1) {
+               sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
+            }
+         /* negative - stop a possibly started RTP stream */
+         } else if ((MSG_IS_STATUS_4XX(response))  ||
+                     (MSG_IS_STATUS_5XX(response)) ||
+                     (MSG_IS_STATUS_6XX(response))) {
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING);
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING);
          }
-      }
+      } /* if INVITE */
 
       /*
        * Response for REGISTER - special handling of Contact header
@@ -811,14 +825,26 @@ int proxy_response (sip_ticket_t *ticket) {
       /* rewrite Contact header to represent the masqued address */
       sip_rewrite_contact(ticket, DIR_OUTGOING);
 
-      /* If an 200 OK or 183 Trying answer to an INVITE request,
-       * rewrite body */
-      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) &&
-          ((MSG_TEST_CODE(response, 200)) || 
-           (MSG_TEST_CODE(response, 183)))) {
-         /* This is an outgoing response, therefore an outgoing stream */
-         sts = proxy_rewrite_invitation_body(response, DIR_OUTGOING);
-      }
+      /*
+       * If an 200 OK or 183 Trying, answer to an INVITE request,
+       * rewrite body
+       *
+       * In case of a negative answer, stop RTP stream
+       */
+      if (MSG_IS_RESPONSE_FOR(response,"INVITE")) {
+         /* positive response, start RTP stream */
+         if ((MSG_IS_STATUS_1XX(response)) || 
+              (MSG_IS_STATUS_2XX(response))) {
+            /* This is an outgoing response, therefore an outgoing stream */
+            sts = proxy_rewrite_invitation_body(response, DIR_OUTGOING);
+         /* megative - stop a possibly started RTP stream */
+         } else if ((MSG_IS_STATUS_4XX(response))  ||
+                     (MSG_IS_STATUS_5XX(response)) ||
+                     (MSG_IS_STATUS_6XX(response))) {
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING);
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING);
+         }
+      } /* if INVITE */
 
       break;
    
@@ -846,6 +872,14 @@ int proxy_response (sip_ticket_t *ticket) {
        route_purge_recordroute(ticket);
     }
 
+   /*
+    * Determine Next-Hop Address
+    */
+/*&&&& priority probably should be:
+ * 1) Route header
+ * 2) fixed outbound proxy
+ * 3) SIP URI
+ */
    /*
     * check if we need to send to an outbound proxy
     */

@@ -1,5 +1,7 @@
 0.5.9
 =====
+  31-Oct-2004:  - fix: A negative response to an INVITE shall stop
+                  initiated RTP streams
   24-Oct-2004:  - Default Expires timeout is now configurable.
   23-Oct-2004:  - fix: route_processing.c - when adding my record-route header,
                   the 'lr' parameter was not dynamically allocated memory
