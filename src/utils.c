@@ -422,7 +422,12 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 #if defined(_BSD)
          len=((struct sockaddr *)&ifr->ifr_addr)->sa_len;
 #else
-         len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+      /*
+       * Linux: fixed size. SA_LEN only works on 2.2.x kernels (RH6)
+       * seems to have disapeared on 2.4 (RH7)
+       * len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+       */
+      len=sizeof(struct ifreq);
 #endif
          af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
          i+=len+IFNAMSIZ;
@@ -442,7 +447,12 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 #if defined(_BSD)
       len=((struct sockaddr *)&ifr->ifr_addr)->sa_len;
 #else
-      len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+      /*
+       * Linux: fixed size. SA_LEN only works on 2.2.x kernels (RH6)
+       * seems to have disapeared on 2.4 (RH7)
+       * len=SA_LEN((struct sockaddr *)&ifr->ifr_addr);
+       */
+      len=sizeof(struct ifreq);
 #endif
       af=((struct sockaddr *)&ifr->ifr_addr)->sa_family;
       i+=len+IFNAMSIZ;
