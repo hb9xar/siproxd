@@ -86,7 +86,10 @@ int sipsock_wait(void) {
    FD_ZERO(&fdset);
    FD_SET (listen_socket, &fdset);
    sts=select (listen_socket+1, &fdset, NULL, NULL, &timeout);
-
+#ifdef MOREDEBUG /*&&&&*/
+if (sts<0) {WARN("select() returned error [%s]",strerror(errno));}
+#endif
+ 
    return sts;
 }
 
@@ -103,6 +106,9 @@ int sipsock_read(void *buf, size_t bufsize, struct sockaddr_in *from) {
    fromlen=sizeof(struct sockaddr_in);
    count=recvfrom(listen_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
+#ifdef MOREDEBUG /*&&&&*/
+if (count<0) {WARN("recvfrom() returned error [%s]",strerror(errno));}
+#endif
 
    DEBUGC(DBCLASS_NET,"received UDP packet from %s, count=%i",
           inet_ntoa(from->sin_addr), count);

@@ -1,6 +1,7 @@
 0.3.3
 =====
  23-Apr-2003:	- FAQ updates: RTP internals
+		- more debug and error testing (MOREDEBUG)
   6-Apr-2003:	- build options for FLI4L builds (libc5 & uClibc)
 
 0.3.2

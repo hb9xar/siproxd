@@ -19,7 +19,10 @@
 #
 
 
-EXTRA_DIST = siproxd.conf.example siproxd_passwd.cfg FAQ
+EXTRA_DIST = 	siproxd.conf.example \
+		siproxd_passwd.cfg \
+                FAQ \
+                FLI4L_HOWTO.txt
 
 
 install-data-local:

@@ -165,7 +165,7 @@ int proxy_request (sip_t *request) {
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("stopping RTP proxy stream for: %s@%s",
      msg_getcall_id(request)->number, msg_getcall_id(request)->host);
 #endif

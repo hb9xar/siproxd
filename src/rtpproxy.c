@@ -141,6 +141,9 @@ void *rtpproxy_main(void *arg) {
       tv.tv_usec = 0;
 
       num_fd=select(fd_max+1, &fdset, NULL, NULL, &tv);
+#ifdef MOREDEBUG /*&&&&*/
+if (num_fd<0) {WARN("select() returned error [%s]",strerror(errno));}
+#endif
       time(&t);
 
       if (configuration.rtp_proxy_enable) {
@@ -159,6 +162,9 @@ void *rtpproxy_main(void *arg) {
 
 	    /* read from sock rtp_proxytable[i].sock*/
             count=read(rtp_proxytable[i].sock, rtp_buff, RTP_BUFFER_SIZE);
+#ifdef MOREDEBUG /*&&&&*/
+if (read<0) {WARN("read() returned error [%s]",strerror(errno));}
+#endif
 
 	    /* write to dest via socket rtp_inbound*/
             sipsock_send_udp(&rtp_socket,
@@ -182,7 +188,7 @@ void *rtpproxy_main(void *arg) {
                /* time one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("RTP stream sock=%i %s@%s (idx=%i) "
        "has expired", rtp_proxytable[i].sock,
        callid.number, callid.host, i);
@@ -239,7 +245,7 @@ int rtp_start_fwd (call_id_t *callid, int media_stream_no,
       return STS_FAILURE;
    }
 
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("starting RTP proxy stream for: %s@%s #=%i",
      callid->number, callid->host, media_stream_no);
 #endif
@@ -410,7 +416,7 @@ int rtp_stop_fwd (call_id_t *callid, int nolock) {
       return STS_FAILURE;
    }
 
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("stopping RTP proxy stream for: %s@%s",
      callid->number, callid->host);
 #endif

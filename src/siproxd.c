@@ -161,17 +161,17 @@ int main (int argc, char *argv[])
 #endif
       log_set_tosyslog(1);
    }
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("daemonizing done (pid=%i)", getpid());
 #endif
 
    /* initialize the RTP proxy thread */
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("b4 rtpproxy_init");
 #endif
    atexit(rtpproxy_kill);  /* cancel RTP thread at exit */
    rtpproxy_init();
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("rtpproxy_init done");
 #endif
 
@@ -188,7 +188,7 @@ INFO("rtpproxy_init done");
       ERROR("unable to bind to SIP listening socket - aborting"); 
       exit(1);
    }
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 INFO("sipsock_listen done");
 #endif
 
@@ -214,7 +214,7 @@ INFO("sipsock_listen done");
 
       i=sipsock_read(&buff, sizeof(buff), &from);
 
-#ifdef MODEDEBUG /*&&&&*/
+#ifdef MOREDEBUG /*&&&&*/
 {char tmp[32];
 strncpy(tmp, buff, 30);
 tmp[30]='\0';
