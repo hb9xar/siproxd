@@ -233,6 +233,15 @@ void secure_enviroment (void) {
        * change root directory into chroot jail
        */
       if (configuration.chrootjail) {
+         /* !!!
+          * Before chrooting I must at leat once trigger the resolver
+          * as it loads some dynamic libraries. Once chrootet
+          * these libraries will *not* be found and gethostbyname()
+          * calls will simply fail (return NULL pointer and h_errno=0).
+          * Took me a while to figure THIS one out
+          */
+         struct in_addr dummy;
+         get_ip_by_host("foobar", &dummy);
          DEBUGC(DBCLASS_CONFIG,"chrooting to %s",
                 configuration.chrootjail);
          sts = chroot(configuration.chrootjail);

@@ -1,5 +1,8 @@
 0.5.0
 =====
+  23-Nov-2003:	- got the gethostbyname() failure problem solved.
+		  (the resolver needs a shared lib that was tried
+		  to load AFTER chrooting...)
   22-Nov-2003:	- utils.c: use gethostbyname_r() in favor of
 		  gethostbyname - if available (siproxd uses threads!)
 		- some small items & cleanup
