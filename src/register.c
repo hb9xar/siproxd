@@ -366,7 +366,6 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          if (force_lcl_masq) {
             struct in_addr addr;
             char *addrstr;
-            char *portstr;
 
             if (get_ip_by_ifname(configuration.outbound_if, &addr) !=
                 STS_SUCCESS) {
@@ -389,7 +388,8 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
             /* port number if required */
             if (configuration.sip_listen_port != SIP_PORT) {
                urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
-               sprintf(portstr, "%i", configuration.sip_listen_port);
+               sprintf(urlmap[i].masq_url->port, "%i",
+                       configuration.sip_listen_port);
             }
          }
 
