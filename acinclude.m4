@@ -1,3 +1,10 @@
+dnl
+dnl	History
+dnl	-------
+dnl	before time		a lot happend before start of history
+dnl	13-Sep-2002	tries	test for libosip2 finctions (number of args)
+dnl
+dnl
 dnl --------------------------------------------------------------------
 dnl @synopsis ACX_PTHREAD([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 dnl
@@ -224,6 +231,7 @@ fi
 
 ])dnl ACX_PTHREAD
 
+dnl --------------------------------------------------------------------
 dnl @synopsis ACX_WHICH_GETHOSTBYNAME_R
 dnl
 dnl Provides a test to determine the correct 
@@ -294,4 +302,70 @@ fi
 AC_MSG_RESULT($acx_which_gethostname_r)
 
 ])dnl ACX_WHICH_GETHOSTBYNAME_R
+
+dnl --------------------------------------------------------------------
+dnl @synopsis ACX_WHICH_LIBOSIP
+dnl
+dnl Provides a test to determine the correct 
+dnl way to call libosip2
+dnl
+dnl defines HAVE_FUNC_OSIP_MESSAGE_PARSE_3
+dnl
+nl
+AC_DEFUN([ACX_WHICH_LIBOSIP], [
+
+dnl -----------------------------------
+AC_CHECK_FUNC(osip_message_parse, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_parse)
+  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
+        int sts;sts=osip_message_parse ( NULL, NULL, 0);
+  ],acx_which_osip_message_parse=three, acx_which_osip_message_parse=two)
+], )
+if test $acx_which_osip_message_parse = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_PARSE_3,,
+            [osip_message_parse takes 3 arguments])
+fi
+AC_MSG_RESULT($acx_which_osip_message_parse)
+
+dnl -----------------------------------
+AC_CHECK_FUNC(osip_message_to_str, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_to_str)
+  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
+        int sts;sts=osip_message_to_str( NULL, NULL, NULL);
+  ],acx_which_osip_message_to_str=three, acx_which_osip_message_to_str=two)
+], )
+if test $acx_which_osip_message_to_str = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_TO_STR_3,,
+            [osip_message_to_str takes 3 arguments])
+fi
+AC_MSG_RESULT($acx_which_osip_message_to_str)
+
+
+dnl -----------------------------------
+AC_CHECK_FUNC(osip_body_to_str, [
+  AC_MSG_CHECKING(how many arguments takes osip_body_to_str)
+  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
+        int sts;sts=osip_body_to_str( NULL, NULL, NULL);
+  ],acx_which_osip_body_to_str=three, acx_which_osip_body_to_str=two)
+], )
+if test $acx_which_osip_body_to_str = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_BODY_TO_STR_3,,
+            [osip_body_to_str takes 3 arguments])
+fi
+AC_MSG_RESULT($acx_which_osip_body_to_str)
+
+dnl -----------------------------------
+AC_CHECK_FUNC(osip_message_set_body, [
+  AC_MSG_CHECKING(how many arguments takes osip_message_set_body)
+  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
+        int sts;sts=osip_message_set_body( NULL, NULL, NULL);
+  ],acx_which_osip_message_set_body=three, acx_which_osip_message_set_body=two)
+], )
+if test $acx_which_osip_message_set_body = three; then
+  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3,,
+            [osip_message_set_body takes 3 arguments])
+fi
+AC_MSG_RESULT($acx_which_osip_message_set_body)
+
+])dnl ACX_WHICH_LIBOSIP
 

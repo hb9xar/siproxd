@@ -176,7 +176,7 @@ int make_default_config(void);						/*X*/
 int  rtpproxy_init( void );						/*X*/
 int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
                     int direction, int media_stream_no,
-		    struct in_addr outbound_ipaddr, int *outboundport,
+                    struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport);
 int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
 void rtpproxy_kill( void );						/*X*/
@@ -200,6 +200,12 @@ int fwapi_start_rtp(int rtp_direction,
 int fwapi_stop_rtp(int rtp_direction,
                    struct in_addr local_ipaddr, int local_port,
                    struct in_addr remote_ipaddr, int remote_port);
+
+/* sip_layer.c */
+int sip_message_parse(osip_message_t * sip, const char *buf);
+int sip_message_to_str(osip_message_t * sip, char **dest);
+int sip_body_to_str(const osip_body_t * body, char **dest);
+int sip_message_set_body(osip_message_t * sip, const char *buf);
 
 
 /*

@@ -32,6 +32,7 @@ dnl				2.1.x has no pthread support, link -static
 dnl				2.2.x has (maybe) pthread support
 dnl	08-Jan-2005	tries	FreeBSD: check for libgnugetopt before using it
 dnl				Cygwin build support
+dnl	13-Feb-2005	tries	check for # of args on libosip2 functions
 dnl
 dnl
 
@@ -45,11 +46,12 @@ dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
 SPD_MINOR_VERSION=5
-SPD_MICRO_VERSION=10
+SPD_MICRO_VERSION=11
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
 dnl *********************************************************************
+
 
 dnl
 dnl Initialize automake stuff
@@ -58,6 +60,7 @@ AC_CONFIG_AUX_DIR(scripts)
 AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(siproxd, $SPD_VERSION)
+
 
 dnl
 dnl Checks for needed programs.
@@ -68,6 +71,7 @@ AC_PROG_CPP
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
+
 
 dnl
 dnl add
@@ -96,6 +100,7 @@ for each in $extra_libs; do
    LIBS="$LIBS -L$each";
 done
 
+
 dnl
 dnl add
 dnl    --enable-static
@@ -104,6 +109,7 @@ dnl    --enable-static
       [  --enable-static             build statically linked executable],
       LDFLAGS="$LDFLAGS -static";
       AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
+
 
 dnl
 dnl add
@@ -218,7 +224,7 @@ elif test "x$build_fli4l_21_uclibc" = "xyes"; then
    dnl FLI4l 2.1.x uClibc: build all static
    LDFLAGS="$LDFLAGS -static";
 elif test "x$build_fli4l_22_uclibc" = "xyes"; then
-   dnl FLI4l 2.2.x uClibc: make libosip and libpthread static
+   dnl FLI4l 2.2.x uClibc: make libosip
    build_static_libosip="yes"
 fi
 
@@ -271,6 +277,7 @@ AC_SUBST(libosip_prefix_dir)
 AC_MSG_CHECKING("libosip prefix")
 AC_MSG_RESULT($libosip_prefix_dir)
 
+
 dnl
 dnl Check for libosip
 dnl
@@ -310,6 +317,9 @@ else
    fi
 fi
 
+dnl which version of libosip2?
+ACX_WHICH_LIBOSIP()
+
 
 dnl
 dnl add
@@ -330,6 +340,7 @@ AC_CHECK_HEADERS(sys/time.h errno.h)
 AC_CHECK_HEADERS(stdarg.h varargs.h)
 AC_CHECK_HEADERS(pwd.h getopt.h sys/socket.h netdb.h)
 
+
 dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl
@@ -337,6 +348,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
+
 
 dnl
 dnl check for typedef socklen (not available on SUSE 5.3 for example)
@@ -352,10 +364,10 @@ AC_CHECK_TYPE(socklen_t,
     [#endif]]
 )
 
+
 dnl
 dnl Checks for library functions.
 dnl
-
 
 AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
@@ -384,7 +396,6 @@ AC_CHECK_FUNCS(pthread_setschedparam sched_get_priority_min)
 AC_CHECK_FUNCS(sched_get_priority_max)
 
 
-
 dnl
 dnl sysconfdir
 dnl
@@ -397,11 +408,16 @@ done
 AC_DEFINE_UNQUOTED(SIPROXDCONFPATH,"$SIPROXDCONFPATH",
                   [will search for config file here])
 
+
+dnl
+dnl Finish...
+dnl
 LIBS="$LIBS $FWLIBS"
 
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
+
 
 dnl
 dnl Generate output files

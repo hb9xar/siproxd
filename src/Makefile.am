@@ -27,7 +27,7 @@ AM_CFLAGS = -Wall -D_GNU_SOURCE \
 #
 sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
-		  sip_utils.c log.c readconf.c rtpproxy.c \
+		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
                   rtpproxy_relay.c accessctl.c route_processing.c \
 		  security.c auth.c fwapi.c
 
