@@ -105,6 +105,9 @@
 /* Define if you have the <linux/ip_masq.h> header file.  */
 #undef HAVE_LINUX_IP_MASQ_H
 
+/* Define if you have the <linux/netfilter.h> header file.  */
+#undef HAVE_LINUX_NETFILTER_H
+
 /* Define if you have the <pwd.h> header file.  */
 #undef HAVE_PWD_H
 

@@ -16,6 +16,7 @@ dnl	31-Jul-2003	tries	changed to support OSIP2 only
 dnl	 1-Sep-2003	tries	check for IPCHAINS
 dnl      5-Sep-2003     tries   test for pthreads before libosip stuff
 dnl     19-Sep-2003     tries   DMALLOC support
+dnl	 1-Nov-2003	tries	check for NETFILTER (IPTABLES)
 dnl
 dnl
 dnl
@@ -99,6 +100,7 @@ case "$target" in
     AC_MSG_RESULT("Linux")
     AC_DEFINE(_LINUX,,[building on Linux platform])
     AC_CHECK_HEADERS(linux/ip_masq.h)
+    AC_CHECK_HEADERS(linux/netfilter.h)
     ;;
   *-*-freebsd*)
     AC_MSG_RESULT("FreeBSD")
