@@ -250,6 +250,8 @@ void secure_enviroment (void) {
           * Took me a while to figure THIS one out
           */
          struct in_addr dummy;
+         DEBUGC(DBCLASS_DNS, "Initializing DNS, the following DNS "
+                             "failure is normal, don't worry");
          get_ip_by_host("foobar", &dummy);
          DEBUGC(DBCLASS_CONFIG,"chrooting to %s",
                 configuration.chrootjail);

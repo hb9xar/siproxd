@@ -505,12 +505,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
 	 random start offset 
 	 - for i=x to (p1-p0)+x; p=p0+mod(x,p1-p0) */
 
-   /* find a local outbound port number to use and bind to it */
+   /* find a local port number to use and bind to it */
    sock=0;
    port=0;
    for (i=configuration.rtp_port_low; i<=configuration.rtp_port_high; i+=2) {
       for (j=0; j<RTPPROXY_SIZE; j++) {
-         /* outbound port already in use */
+         /* check if port already in use */
          if ((memcmp(&rtp_proxytable[j].local_ipaddr,
 	             &local_ipaddr, sizeof(struct in_addr))== 0) &&
 	     (rtp_proxytable[j].local_port == i) ) break;
