@@ -127,7 +127,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 		   &result_buffer,	/* the result buffer */ 
 		   &hostentry
 		   );
-   if (hostentry == NULL) my_error = h_errno;
+   if (hostentry == NULL) error = h_errno;
 
    /* gethostbyname_r() with 5 arguments (e.g. solaris, linux libc5) */
    #elif defined(HAVE_FUNC_GETHOSTBYNAME_R_5)

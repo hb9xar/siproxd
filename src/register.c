@@ -233,7 +233,7 @@ int register_client(osip_message_t *my_msg, int force_lcl_masq) {
       expires=atoi(expires_hdr->hvalue);
    } else {
       /* it seems, the expires field is not present everywhere... */
-      WARN("no 'expires' header found - set time to 600 sec");
+      DEBUGC(DBCLASS_REG,"no 'expires' header found - set time to 600 sec");
       expires=600;
       osip_message_set_expires(my_msg, "600");
    }
