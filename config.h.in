@@ -48,6 +48,9 @@
 /* Define if you have the getuid function.  */
 #undef HAVE_GETUID
 
+/* Define if you have the hstrerror function.  */
+#undef HAVE_HSTRERROR
+
 /* Define if you have the read function.  */
 #undef HAVE_READ
 
@@ -150,4 +153,7 @@
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
+
+/* typedef socklen_t available */
+#undef socklen_t
 

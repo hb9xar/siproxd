@@ -134,7 +134,7 @@ static char *auth_generate_nonce() {
 
 /* yeah, I know... should be a better algorithm */   
    sprintf(nonce, "%8.8lx%8.8lx%8.8x%8.8x",
-           tv.tv_sec, tv.tv_usec, rand(), rand() );
+           (long)tv.tv_sec, (long)tv.tv_usec, rand(), rand() );
 
    DEBUGC(DBCLASS_AUTH,"created nonce=\"%s\"",nonce);
    return nonce;

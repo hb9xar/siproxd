@@ -3,6 +3,10 @@ TODOs, in random order:
 
 - Documentation (yeah, yeah...)
 
+- support for proxy chaining
+
+- change host comparison to IP address level (resolve name, then compare addr)
+
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)
 

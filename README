@@ -25,7 +25,11 @@ REQUIREMENTS
 - libosip-0.8.8		(http://www.fsf.org/software/osip/)
 - pthreads		(should be part of any Linux distribution)
 
-Up to now, siporxd only has been tested under an i386 Redhat Linux 6.0.
+Up to now, siporxd only has been tested under:
+- Redhat Linux 6.0
+- Redhat Linux 7.2
+- SUSE 5.3 (libc5)
+
 However, it should build and run under newer versions (feedback is welcome).
 
 
@@ -34,6 +38,10 @@ HOW TO GET STARTED
 ==================
 
 - ./configure
+
+  For Flifl: use ./configure --enable-almost-static
+  This will build siproxd statically linked against libosib, pthreads and
+  dynamically against libc.
 
 - make
 

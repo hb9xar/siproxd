@@ -50,6 +50,9 @@ void log_error(char *file, int line, const char *format, ...);
 #define WARN(F...) log_warn(__FILE__, __LINE__,F)
 void log_warn(char *file, int line, const char *format, ...);
 
+#define INFO(F...) log_info(__FILE__, __LINE__,F)
+void log_info(char *file, int line, const char *format, ...);
+
 /* tobedone: dump a buffer */
 #define DUMP_BUFFER(C,F,L) log_dump_buffer(C,__FILE__, __LINE__,F,L)
 void log_dump_buffer(int class, char *file, int line,

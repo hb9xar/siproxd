@@ -60,6 +60,7 @@ int sipsock_listen (void) {
    listen_socket=sockbind(ipaddr, configuration.sip_listen_port);
    if (listen_socket==0) return STS_FAILURE; /* failure*/
 
+   INFO("listening on port %i", configuration.sip_listen_port);
    DEBUGC(DBCLASS_NET,"bound listen socket %i",listen_socket);
    return STS_SUCCESS;
 }

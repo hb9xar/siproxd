@@ -174,6 +174,7 @@ int main (int argc, char *argv[])
    }
 
 
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" started");
 /*
  * Main loop
  */

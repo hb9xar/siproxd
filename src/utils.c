@@ -241,7 +241,11 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    hostentry=gethostbyname(hostname);
 
    if (hostentry==NULL) {
+#ifdef HAVE_HSTRERROR
       ERROR("gethostbyname(%s) failed: %s",hostname,hstrerror(h_errno));
+#else
+      ERROR("gethostbyname(%s) failed: h_errno=%i",hostname,h_errno);
+#endif
       return STS_FAILURE;
    }
 

@@ -248,7 +248,14 @@ static int parse_config (FILE *configfile) {
 
             break;
 	 }
-      }
-   }
+      } // for configoptions
+
+      /*
+       * complain if we hit a unknown keyword
+       */
+       if (configoptions[k].keyword == NULL) {
+	  ERROR("unknown keyword in config file, line:\"%s\"",buff);
+       }
+   } // while
    return STS_SUCCESS;
 }
