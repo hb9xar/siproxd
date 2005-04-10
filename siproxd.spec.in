@@ -64,6 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %doc COPYING README AUTHORS INSTALL NEWS ChangeLog doc/FAQ doc/FLI4L_HOWTO.txt
+%doc doc/html/* doc/pdf/*
 %attr(0755,root,root) %{_sbindir}/siproxd
 %config %{sysconfdir}/siproxd.conf
 %config %{sysconfdir}/siproxd_passwd.cfg

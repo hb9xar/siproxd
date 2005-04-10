@@ -33,6 +33,7 @@ dnl				2.2.x has (maybe) pthread support
 dnl	08-Jan-2005	tries	FreeBSD: check for libgnugetopt before using it
 dnl				Cygwin build support
 dnl	13-Feb-2005	tries	check for # of args on libosip2 functions
+dnl	10-Apr-2005	tries	check for docbook
 dnl
 dnl
 
@@ -71,7 +72,10 @@ AC_PROG_CPP
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
-
+AC_CHECK_PROG(docbook2pdf,docbook2pdf,yes,)
+AM_CONDITIONAL(have_docbook2pdf,test "$docbook2pdf" = "yes")
+AC_CHECK_PROG(docbook2html,docbook2html,yes,)
+AM_CONDITIONAL(have_docbook2html,test "$docbook2html" = "yes")
 
 dnl
 dnl add

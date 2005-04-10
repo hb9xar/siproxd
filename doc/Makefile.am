@@ -18,16 +18,46 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 #
 
+SUBDIRS = 
 
 EXTRA_DIST = 	siproxd.conf.example \
 		siproxd_passwd.cfg \
-                FAQ KNOWN_BUGS \
-                FLI4L_HOWTO.txt \
-                RFC3261_compliance.txt \
-                sample_cfg_budgetone.txt \
-                sample_cfg_x-lite.txt
+		FAQ KNOWN_BUGS \
+		FLI4L_HOWTO.txt \
+		RFC3261_compliance.txt \
+		sample_cfg_budgetone.txt \
+		sample_cfg_x-lite.txt \
+		siproxd_guide.sgml
+#
+# docbook stuff
+#
+all-local: local_dirs docbook_html docbook_pdf
 
+local_dirs:
+	mkdir -p html
+	mkdir -p pdf
 
+docbook_html: siproxd_guide.sgml
+if have_docbook2html
+	if [ html/siproxd_guide.html -ot siproxd_guide.sgml ]; then \
+	  docbook2html -o html/ siproxd_guide.sgml; \
+	fi
+endif
+
+docbook_pdf: siproxd_guide.sgml
+if have_docbook2pdf
+	if [ pdf/siproxd_guide.pdf -ot siproxd_guide.sgml ]; then \
+	  docbook2pdf -o pdf/ siproxd_guide.sgml; \
+	fi
+endif
+
+clean-local:
+	rm -rf html/*
+	rm -rf pdf/*
+
+#
+# install local data
+#
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	$(INSTALL_DATA) $(srcdir)/siproxd.conf.example	$(DESTDIR)$(sysconfdir)/

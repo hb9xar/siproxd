@@ -68,7 +68,7 @@ int sip_body_to_str(const osip_body_t * body, char **dest, int *len) {
    return sts;
 #else 
    int sts;
-   sts = osip_body_to_str(body, &dest);
+   sts = osip_body_to_str(body, dest);
    *len = strlen(*dest);
    return sts;
 #endif
