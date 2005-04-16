@@ -29,7 +29,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef	HAVE_GETOPT_H
+#ifdef  HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 
@@ -51,7 +51,7 @@ static const char str_helpmsg[] =
 PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2005 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
-#ifdef	HAVE_GETOPT_LONG
+#ifdef  HAVE_GETOPT_LONG
 "       -h, --help                 help\n"
 "       -d, --debug <pattern>      set debug-pattern\n"
 "       -c, --config <cfgfile>     use the specified config file\n"
@@ -87,11 +87,11 @@ int main (int argc, char *argv[])
    char buff [BUFFER_SIZE];
    sip_ticket_t ticket;
 
-   extern char *optarg;		/* Defined in libc getopt and unistd.h */
+   extern char *optarg;         /* Defined in libc getopt and unistd.h */
    int ch1;
    
-   char configfile[64]="siproxd";	/* basename of configfile */
-   int  config_search=1;		/* search the config file */
+   char configfile[64]="siproxd";       /* basename of configfile */
+   int  config_search=1;                /* search the config file */
    int  cmdline_debuglevel=0;
    char *pidfilename=NULL;
    struct sigaction act;
@@ -120,7 +120,7 @@ int main (int argc, char *argv[])
  */
    make_default_config();
 
-   log_set_pattern(configuration.debuglevel);      
+   log_set_pattern(configuration.debuglevel);
 
 /*
  * open a the pwfile instance, so we still have access after
@@ -136,7 +136,7 @@ int main (int argc, char *argv[])
  * parse command line
  */
 {
-#ifdef	HAVE_GETOPT_LONG
+#ifdef  HAVE_GETOPT_LONG
    int option_index = 0;
    static struct option long_options[] = {
       {"help", no_argument, NULL, 'h'},
@@ -148,37 +148,37 @@ int main (int argc, char *argv[])
 
     while ((ch1 = getopt_long(argc, argv, "hc:d:p:",
                   long_options, &option_index)) != -1) {
-#else	/* ! HAVE_GETOPT_LONG */
+#else   /* ! HAVE_GETOPT_LONG */
     while ((ch1 = getopt(argc, argv, "hc:d:p:")) != -1) {
 #endif
       switch (ch1) {
-      case 'h':	/* help */
+      case 'h': /* help */
          DEBUGC(DBCLASS_CONFIG,"option: help");
          fprintf(stderr,str_helpmsg);
          exit(0);
-	 break;
+         break;
 
-      case 'c':	/* load config file */
+      case 'c': /* load config file */
          DEBUGC(DBCLASS_CONFIG,"option: config file=%s",optarg);
          i=sizeof(configfile)-1;
          strncpy(configfile,optarg,i-1);
-	 configfile[i]='\0';
-	 config_search=0;
-	 break; 
+         configfile[i]='\0';
+         config_search=0;
+         break; 
 
-      case 'd':	/* set debug level */
+      case 'd': /* set debug level */
          DEBUGC(DBCLASS_CONFIG,"option: set debug level: %s",optarg);
-	 cmdline_debuglevel=atoi(optarg);
+         cmdline_debuglevel=atoi(optarg);
          log_set_pattern(cmdline_debuglevel);
-	 break;
+         break;
 
       case 'p':
-	 pidfilename = optarg;
-	 break;
+         pidfilename = optarg;
+         break;
 
       default:
          DEBUGC(DBCLASS_CONFIG,"no command line options");
-	 break; 
+         break; 
       }
    }
 }
@@ -315,7 +315,7 @@ int main (int argc, char *argv[])
       ticket.sipmsg->message=NULL;
       if (sts != 0) {
          ERROR("osip_message_init() failed... this is not good");
-	 continue; /* skip, there are no resources to free */
+         continue; /* skip, there are no resources to free */
       }
 
       /*
@@ -400,7 +400,7 @@ int main (int argc, char *argv[])
       /* NOT IMPLEMENTED */
 
       DEBUGC(DBCLASS_SIP,"received SIP type %s:%s",
-	     (MSG_IS_REQUEST(ticket.sipmsg))? "REQ" : "RES",
+             (MSG_IS_REQUEST(ticket.sipmsg))? "REQ" : "RES",
              (MSG_IS_REQUEST(ticket.sipmsg) ?
                 ((ticket.sipmsg->sip_method)?
                    ticket.sipmsg->sip_method : "NULL") :
@@ -445,10 +445,10 @@ int main (int argc, char *argv[])
                   sip_gen_response(&ticket, 408 /*request timeout*/);
                }
             }
-	 } else {
+         } else {
             WARN("non-authorized registration attempt from %s",
-	         utils_inet_ntoa(ticket.from.sin_addr));
-	 }
+                 utils_inet_ntoa(ticket.from.sin_addr));
+         }
 
       /*
        * check if outbound interface is UP.
@@ -471,10 +471,10 @@ int main (int argc, char *argv[])
       } else if (MSG_IS_REQUEST(ticket.sipmsg)) {
          if (access & ACCESSCTL_SIP) {
             sts = proxy_request(&ticket);
-	 } else {
+         } else {
             INFO("non-authorized request received from %s",
-	         utils_inet_ntoa(ticket.from.sin_addr));
-	 }
+                 utils_inet_ntoa(ticket.from.sin_addr));
+         }
 
       /*
        * MSG is a response, remove current via and
@@ -483,18 +483,18 @@ int main (int argc, char *argv[])
       } else if (MSG_IS_RESPONSE(ticket.sipmsg)) {
          if (access & ACCESSCTL_SIP) {
             sts = proxy_response(&ticket);
-	 } else {
+         } else {
             INFO("non-authorized response received from %s",
-	         utils_inet_ntoa(ticket.from.sin_addr));
-	 }
-	 
+                 utils_inet_ntoa(ticket.from.sin_addr));
+         }
+         
       /*
        * unsupported message
        */
       } else {
          ERROR("received unsupported SIP type %s %s",
-	       (MSG_IS_REQUEST(ticket.sipmsg))? "REQ" : "RES",
-	       ticket.sipmsg->sip_method);
+               (MSG_IS_REQUEST(ticket.sipmsg))? "REQ" : "RES",
+               ticket.sipmsg->sip_method);
       }
 
 
@@ -507,8 +507,8 @@ int main (int argc, char *argv[])
    } /* while TRUE */
    exit_prg:
 
-   /* dump current known SIP registrations */
-   register_shut();
+   /* save current known SIP registrations */
+   register_save();
    INFO("properly terminating siproxd");
 
    /* remove PID file */

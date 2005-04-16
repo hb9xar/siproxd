@@ -40,9 +40,15 @@ static char const ident[]="$Id$";
 /* configuration storage */
 extern struct siproxd_config configuration;
 
-struct urlmap_s urlmap[URLMAP_SIZE];		/* URL mapping table     */
+/* URL mapping table     */
+struct urlmap_s urlmap[URLMAP_SIZE];
+
+/* time of last save     */
+static time_t last_save=0;
 
 extern int errno;
+
+
 /*
  * initialize the URL mapping table
  */
@@ -73,7 +79,7 @@ void register_init(void) {
                osip_uri_init(&urlmap[i].masq_url);
                osip_uri_init(&urlmap[i].reg_url);
 
-	       #define R(X) {\
+               #define R(X) {\
                fgets(buff, sizeof(buff), stream);\
                buff[sizeof(buff)-1]='\0';\
                if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
@@ -104,6 +110,8 @@ void register_init(void) {
          fclose(stream);
       }
    }
+   /* initialize save-timer */
+   time(&last_save);
    return;
 }
 
@@ -111,7 +119,7 @@ void register_init(void) {
 /*
  * shut down the URL mapping table
  */
-void register_shut(void) {
+void register_save(void) {
    int i;
    FILE *stream;
 
@@ -290,7 +298,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
       j=-1;
       for (i=0; i<URLMAP_SIZE; i++) {
          if (urlmap[i].active == 0) {
-	    if (j < 0) j=i; /* remember first hole */
+            if (j < 0) j=i; /* remember first hole */
             continue;
          }
 
@@ -300,11 +308,11 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
             DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
                    "slot=%i, exp=%li",
-	           (url1_contact->username) ? url1_contact->username : "*NULL*",
+                   (url1_contact->username) ? url1_contact->username : "*NULL*",
                    (url1_contact->host) ? url1_contact->host : "*NULL*",
-	           (url2_to->username) ? url2_to->username : "*NULL*",
+                   (url2_to->username) ? url2_to->username : "*NULL*",
                    (url2_to->host) ? url2_to->host : "*NULL*",
-		   i, urlmap[i].expires-time_now);
+                   i, urlmap[i].expires-time_now);
             break;
          }
       }
@@ -324,15 +332,15 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          /* Contact: field */
          osip_uri_clone( ((osip_contact_t*)
                          (ticket->sipmsg->contacts->node->element))->url, 
-        	         &urlmap[i].true_url);
+                         &urlmap[i].true_url);
          /* To: field */
          osip_uri_clone( ticket->sipmsg->to->url, 
-        	    &urlmap[i].reg_url);
+                    &urlmap[i].reg_url);
 
          DEBUGC(DBCLASS_REG,"create new entry for %s@%s <-> %s@%s at slot=%i",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
                 (url1_contact->host) ? url1_contact->host : "*NULL*",
-	        (urlmap[i].reg_url->username) ? urlmap[i].reg_url->username : "*NULL*",
+                (urlmap[i].reg_url->username) ? urlmap[i].reg_url->username : "*NULL*",
                 (urlmap[i].reg_url->host) ? urlmap[i].reg_url->host : "*NULL*",
                 i);
 
@@ -340,7 +348,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
           * try to figure out if we ought to do some masquerading
           */
          osip_uri_clone( ticket->sipmsg->to->url, 
-        	         &urlmap[i].masq_url);
+                         &urlmap[i].masq_url);
 
          n=configuration.mask_host.used;
          if (n != configuration.masked_host.used) {
@@ -439,7 +447,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
 
          if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
             DEBUGC(DBCLASS_REG, "removing registration for %s@%s at slot=%i",
-	           (url2_to->username) ? url2_to->username : "*NULL*",
+                   (url2_to->username) ? url2_to->username : "*NULL*",
                    (url2_to->host) ? url2_to->host : "*NULL*", i);
             urlmap[i].expires=0;
             break;
@@ -455,23 +463,32 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
 /*
  * cyclically called to do the aging of the URL mapping table entries
  * and throw out expired entries.
+ * Also we do the cyclic saving here - if required.
  */
 void register_agemap(void) {
    int i;
    time_t t;
    
+   /* expire old entries */
    time(&t);
    DEBUGC(DBCLASS_BABBLE,"sip_agemap, t=%i",(int)t);
    for (i=0; i<URLMAP_SIZE; i++) {
       if ((urlmap[i].active == 1) && (urlmap[i].expires < t)) {
-	 DEBUGC(DBCLASS_REG,"cleaned entry:%i %s@%s", i,
-	        urlmap[i].masq_url->username,  urlmap[i].masq_url->host);
+         DEBUGC(DBCLASS_REG,"cleaned entry:%i %s@%s", i,
+                urlmap[i].masq_url->username,  urlmap[i].masq_url->host);
          urlmap[i].active=0;
          osip_uri_free(urlmap[i].true_url);
          osip_uri_free(urlmap[i].masq_url);
          osip_uri_free(urlmap[i].reg_url);
-//	 osip_via_free(urlmap[i].via);
       }
+   }
+
+   /* auto-save of registration table */
+   if ((configuration.autosave_registrations > 0) &&
+       ((last_save + configuration.autosave_registrations) < t)) {
+      DEBUGC(DBCLASS_REG,"auto-saving registration table");
+      register_save();
+      last_save = t;
    }
    return;
 }
@@ -484,8 +501,8 @@ void register_agemap(void) {
  *  flag = STS_NEED_AUTH  -> proxy authentication needed (407)
  *
  * RETURNS
- *	STS_SUCCESS on success
- *	STS_FAILURE on error
+ *      STS_SUCCESS on success
+ *      STS_FAILURE on error
  */
 int register_response(sip_ticket_t *ticket, int flag) {
    osip_message_t *response;
@@ -501,16 +518,16 @@ int register_response(sip_ticket_t *ticket, int flag) {
    /* ok -> 200, fail -> 503 */
    switch (flag) {
    case STS_SUCCESS:
-      code = 200;	/* OK */
+      code = 200;       /* OK */
       break;
    case STS_FAILURE:
-      code = 503;	/* failed */
+      code = 503;       /* failed */
       break;
    case STS_NEED_AUTH:
-      code = 407;	/* proxy authentication needed */
+      code = 407;       /* proxy authentication needed */
       break;
    default:
-      code = 503;	/* failed */
+      code = 503;       /* failed */
       break;
    }
 

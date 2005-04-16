@@ -1,5 +1,6 @@
 0.5.11
 ======
+  15-Apr-2005:  - feature: auto-save registration table during operation
   10-Apr-2005:  - started DocBook documentation
    3-Apr-2005:  - fix: changing public IP address
   27-Mar-2005:  - feature: siproxd "in front of" a NAT router should work

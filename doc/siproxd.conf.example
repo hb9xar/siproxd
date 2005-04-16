@@ -91,6 +91,11 @@ user = nobody
 registration_file = /var/lib/siproxd/siproxd_registrations
 
 ######################################################################
+# Automatically save current registrations every 'n' seconds
+#
+autosave_registrations = 300
+
+######################################################################
 # PID file:
 #   Where to create the PID file.
 #   This file holds the PID of the main thread of siproxd.
@@ -108,7 +113,7 @@ rtp_proxy_enable = 1
 ######################################################################
 # Port range to allocate listen ports from for incoming RTP traffic
 #    This should be a range that is not blocked by the firewall
-#    
+#
 rtp_port_low  = 7070
 rtp_port_high = 7079
 
@@ -126,7 +131,7 @@ rtp_timeout = 300
 #    If a REGISTER request does not contain an Expires header
 #    or expires= parameter in the Contact header, this number of
 #    seconds will be used - and reported back to the UA in the answer.
-#    
+#
 default_expires = 600
 
 ######################################################################

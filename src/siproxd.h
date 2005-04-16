@@ -87,6 +87,7 @@ struct siproxd_config {
    int  log_calls;
    char *pid_file;
    int  default_expires;
+   int  autosave_registrations;
 };
 
 /*
@@ -125,7 +126,7 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
 void register_init(void);
-void register_shut(void);
+void register_save(void);
 int  register_client(sip_ticket_t *ticket, int force_lcl_masq);		/*X*/
 void register_agemap(void);
 int  register_response(sip_ticket_t *ticket, int flag);			/*X*/
