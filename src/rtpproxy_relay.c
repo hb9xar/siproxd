@@ -395,6 +395,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    int sock, port;
    int freeidx;
    int sts=STS_SUCCESS;
+   int tos;
    osip_call_id_t cid;
    
 
@@ -564,6 +565,35 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
       ERROR("rtp_relay_start_fwd: no RTP port available or bind() failed");
       sts = STS_FAILURE;
       goto unlock_and_exit;
+   }
+
+   /* set DSCP value, need to be ROOT */
+   if (configuration.rtp_dscp) {
+      int uid,euid;
+      uid=getuid();
+      euid=geteuid();
+      DEBUGC(DBCLASS_RTP,"uid=%i, euid=%i", uid, euid);
+      if (uid != euid) seteuid(0);
+      if (geteuid()==0) {
+         /* now I'm root */
+         if (!(configuration.rtp_dscp & ~0x3f)) {
+            tos = (configuration.rtp_dscp << 2) & 0xff;
+            if(setsockopt(sock, SOL_IP, IP_TOS, &tos, sizeof(tos))) {
+               ERROR("rtp_relay_start_fwd: setsockopt() failed while "
+                     "setting DSCP value: ", strerror(errno));
+            }
+         } else {
+            ERROR("rtp_relay_start_fwd: Invalid DSCP value %d",
+                  configuration.rtp_dscp);
+            configuration.rtp_dscp = 0; /* inhibit further attempts */
+         }
+      } else {
+         /* could not get root */
+         WARN("siproxd not started as root - cannot set DSCP value");
+         configuration.rtp_dscp = 0; /* inhibit further attempts */
+      }
+      /* drop privileges */
+      if (uid != euid) seteuid(euid);
    }
 
    /* write entry into rtp_proxytable slot (freeidx) */

@@ -155,6 +155,7 @@ static int parse_config (FILE *configfile) {
       { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
       { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
       { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
+      { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp },
       { "user",                TYP_STRING, &configuration.user },
       { "chrootjail",          TYP_STRING, &configuration.chrootjail },
       { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },

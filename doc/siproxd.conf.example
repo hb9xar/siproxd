@@ -123,8 +123,24 @@ rtp_port_high = 7079
 #    and proxying for it will be stopped.
 #    Be aware that this timeout also applies to streams that are
 #    in HOLD.
-#    
+#
 rtp_timeout = 300
+
+######################################################################
+# DSCP value for sent RTP packets
+#    The Differentiated Service Code Point is a selector for
+#    router's per-hop behaviours.
+#    RFC2598 defined a "expedited forwarding" service. This service
+#    is designed to allow ISPs to offer a service with attributes
+#    similar to a "leased line". This service offers the ULTIMATE IN LOW
+#    LOSS, LOW LATENCY AND LOW JITTER by ensuring that there is always
+#    sufficent room in output queues for the contracted expedited forwarding
+#    traffic.
+#    The Expedited Forwarding service has a DSCP of 46.
+#    Putting a 0 here means that siproxd does NOT set the DSCP field.
+#    Siproxd must be started as root for this to work.
+#
+rtp_dscp = 46
 
 ######################################################################
 # Default Expiration timeout for Registrations

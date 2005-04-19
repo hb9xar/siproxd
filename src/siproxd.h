@@ -67,6 +67,7 @@ struct siproxd_config {
    int rtp_port_low;
    int rtp_port_high;
    int rtp_timeout;
+   int rtp_dscp;
    int rtp_proxy_enable;
    char *user;
    char *chrootjail;
