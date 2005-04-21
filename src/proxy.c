@@ -270,15 +270,12 @@ int proxy_request (sip_ticket_t *ticket) {
 
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
-         /* First, rewrite the body */
-         if (configuration.rtp_proxy_enable == 1) {
-            sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
-         }
+         /* Rewrite the body */
+         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
 
-         /*
-          * Note: Incoming requests have no need to rewrite Contact
-          * header - as we are not masquerading something there
-          */
+      } else if (MSG_IS_ACK(request)) {
+         /* Rewrite the body */
+         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
 
       }
       break;
@@ -323,6 +320,8 @@ int proxy_request (sip_ticket_t *ticket) {
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
+         sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
+      } else if (MSG_IS_ACK(request)) {
          sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
       }
 
@@ -956,6 +955,7 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
     */
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
+#if 0
       if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
           (MSG_IS_STATUS_1XX(mymsg))) {
          /* 1xx responses *MAY* contain SDP data */
@@ -967,6 +967,11 @@ int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
          ERROR("rewrite_invitation_body: no body found in message");
          return STS_FAILURE;
       }
+#else
+      DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
+                            "no body found in message");
+      return STS_SUCCESS;
+#endif
    }
 
    sts = sip_body_to_str(body, &bodybuff, &bodybuflen);
