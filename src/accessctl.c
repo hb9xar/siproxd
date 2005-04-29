@@ -118,6 +118,7 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
    char *p1, *p2;
    char address[32]; /* dotted decimal IP - max 15 chars*/
    char mask[8];     /* mask - max 2 digits */
+   int  mask_int;
    struct in_addr inaddr;
    unsigned int bitmask;
 
@@ -163,7 +164,8 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
          return STS_FAILURE;
       }
 
-      bitmask=~(0xffffffff>>atoi(mask));
+      mask_int=atoi(mask);
+      bitmask= (mask_int)? (0xffffffff<<(32-mask_int)) : 0;
 
       DEBUGC(DBCLASS_ACCESS,"[%i] (%p) <-> (%p)", i,
                             ntohl(inaddr.s_addr) & bitmask,

@@ -1,5 +1,6 @@
 0.5.11
 ======
+  29-Apr-2005:  - fix: access lists with /32 did not work
   21-Apr-2005:  - fix: ACK may contain SDP body, process it
   19-Apr-2005:  - feature: DSCP value for RTP packets defineable (by Nick
                   Vermeer, Internet Express)
