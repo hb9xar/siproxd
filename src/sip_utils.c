@@ -586,6 +586,7 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    osip_via_t *via;
    int sts;
    char branch_id[VIA_BRANCH_SIZE];
+   char *myaddr;
 
    if (get_interface_ip(interface, &addr) != STS_SUCCESS) {
       return STS_FAILURE;
@@ -593,8 +594,11 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
 
    sts = sip_calculate_branch_id(ticket, branch_id);
 
-   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s;", utils_inet_ntoa(addr),
-           configuration.sip_listen_port, branch_id);
+   myaddr=utils_inet_ntoa(addr);
+   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s",
+           myaddr, configuration.sip_listen_port,
+           branch_id);
+
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
    sts = osip_via_init(&via);
