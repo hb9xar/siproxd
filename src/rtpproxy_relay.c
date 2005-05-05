@@ -42,6 +42,10 @@
 #include "rtpproxy.h"
 #include "log.h"
 
+#if !defined(SOL_IP)
+#define SOL_IP IPPROTO_IP
+#endif
+
 static char const ident[]="$Id$";
 
 /* configuration storage */

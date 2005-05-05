@@ -10,14 +10,16 @@ Make the release:
 - verify building on the supported plattforms (SF compile farm)
   - FreeBSD
   - OpenBSD
-  - SunOS
+  - SunOS (Sparc)
   - Mac OS
+  - Linux 64bit
 - $ make dist
 - calculate MD5 checksum & GPG
 - update RELNOTES
 - check in outstanding changes
 - create CVS tag (e.g. $ cvs rtag rel_0_5_7 siproxd)
 - publish on SF.net
+- publish on freshmeat.net
 
 Open new working release:
 - change version number in configure.in
