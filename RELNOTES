@@ -1,9 +1,7 @@
-Release Notes for siproxd-0.5.11
-===============================
+Release Notes for siproxd-0.5.12
+================================
 
-Major changes since 0.5.10:
-   Now compiles with libosip2-2.2.0 (changes in libpsip API).
-   Siproxd does now support running "in front of" a NAT router.
+Major changes since 0.5.11:
    
 
 General Overview:
@@ -90,16 +88,9 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.11.tar.gz: 	a614f60683f9ea9423573bc5d646c525
+md5sum for siproxd-0.5.11.tar.gz: 	
 
 GnuPG signature for siproxd-0.5.11.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.3 (GNU/Linux)
-
-iD8DBQBCefjFCfzBioe83JQRAqlWAJ445zjydGuq7xhyGI7xWSMfRPtWPQCeLko6
-sFWFypbcui0Q2t6Ar5svy9I=
-=wLHB
------END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
