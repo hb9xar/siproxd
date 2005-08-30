@@ -8,10 +8,11 @@ Q: What softphone work with siproxd?
 
 A: The goal is that every softphone (that is SIP compliant) should be
    able to work via siproxd. Tested and/or reported to work so far:
-   - linphone
-   - kphone
+   - linphone (http://www.linphone.org)
+   - kphone   (http://http://www.wirlab.net/kphone/)
    - MSN Messenger
    - Grandstream BudgeTone series
+   - X-Lite   (http://www.xten.com)
 ---------------------------------------------------------------------------
 Q: Is it possible from a remote computer to call the inbound computer?
 
