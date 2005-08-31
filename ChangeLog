@@ -1,5 +1,6 @@
 0.5.12
 ======
+  14-Jul-2005:  - allocate only even port numbers for RTP traffic
 
 0.5.11
 ======

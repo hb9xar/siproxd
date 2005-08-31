@@ -451,6 +451,8 @@ int proxy_request (sip_ticket_t *ticket) {
    /*
     * fixed or domain outbound proxy defined ?
     */
+// let's try with Route header first
+#if 0
    if ((type == REQTYP_OUTGOING) &&
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
@@ -468,6 +470,25 @@ int proxy_request (sip_ticket_t *ticket) {
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
+#else
+   if ((type == REQTYP_OUTGOING) && 
+              (request->routes && !osip_list_eol(request->routes, 0))) {
+      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
+         return STS_FAILURE;
+      }
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
+   } else if ((type == REQTYP_OUTGOING) &&
+       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
+      DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
+#endif
    /*
     * destination from SIP URI
     */
@@ -872,6 +893,8 @@ int proxy_response (sip_ticket_t *ticket) {
    /*
     * check if we need to send to an outbound proxy
     */
+// let's try with Route header first
+#if 0
    if ((type == RESTYP_OUTGOING) &&
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
@@ -889,6 +912,25 @@ int proxy_response (sip_ticket_t *ticket) {
       }
       DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
+#else
+   if ((type == RESTYP_OUTGOING) && 
+              (response->routes && !osip_list_eol(response->routes, 0))) {
+      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
+         return STS_FAILURE;
+      }
+      DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
+   } else if ((type == RESTYP_OUTGOING) &&
+       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
+      DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
+             utils_inet_ntoa(sendto_addr), port);
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
+#endif
    } else {
       /* get target address and port from VIA header */
       via = (osip_via_t *) osip_list_get (response->vias, 0);

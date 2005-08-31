@@ -34,6 +34,7 @@ dnl	08-Jan-2005	tries	FreeBSD: check for libgnugetopt before using it
 dnl				Cygwin build support
 dnl	13-Feb-2005	tries	check for # of args on libosip2 functions
 dnl	10-Apr-2005	tries	check for docbook
+dnl	18-Apr-2005	tries	added libresolv
 dnl
 dnl
 
@@ -367,6 +368,12 @@ AC_CHECK_TYPE(socklen_t,
     [#include <netdb.h>]
     [#endif]]
 )
+
+
+dnl
+dnl Checks for libraries
+dnl
+    AC_CHECK_LIB(resolv,res_query,)
 
 
 dnl

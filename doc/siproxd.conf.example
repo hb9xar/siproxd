@@ -115,7 +115,7 @@ rtp_proxy_enable = 1
 #    This should be a range that is not blocked by the firewall
 #
 rtp_port_low  = 7070
-rtp_port_high = 7079
+rtp_port_high = 7089
 
 ######################################################################
 # Timeout for RTP streams

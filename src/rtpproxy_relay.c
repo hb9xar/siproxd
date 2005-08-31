@@ -542,8 +542,13 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    num_ports = configuration.rtp_port_high - configuration.rtp_port_low + 1;
    for (i2 = (prev_used_port - configuration.rtp_port_low + 1);
         i2 < (num_ports + prev_used_port - configuration.rtp_port_low + 1);
-        i2 += 2) {
+        i2++) {
       i = (i2%num_ports) + configuration.rtp_port_low;
+DEBUGC(DBCLASS_RTP,"&&&& I=%i, i2=%i",i,i2);
+
+      /* only allow even port numbers */
+      if ((i % 2) != 0) continue;
+
       for (j=0; j<RTPPROXY_SIZE; j++) {
          /* check if port already in use */
          if ((memcmp(&rtp_proxytable[j].local_ipaddr,

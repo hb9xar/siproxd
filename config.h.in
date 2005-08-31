@@ -87,6 +87,9 @@
 /* Define to 1 if you have the `osipparser2' library (-losipparser2). */
 #undef HAVE_LIBOSIPPARSER2
 
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
 /* Define to 1 if you have the `listen' function. */
 #undef HAVE_LISTEN
 
