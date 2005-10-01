@@ -191,8 +191,8 @@ int  security_check_raw(char *sip_buffer, int size);			/*X*/
 int  security_check_sip(sip_ticket_t *ticket);				/*X*/
 
 /* auth.c */
-int  authenticate_proxy(sip_ticket_t *ticket);				/*X*/
-int  auth_include_authrq(sip_ticket_t *ticket);				/*X*/
+int  authenticate_proxy(osip_message_t *sipmsg);			/*X*/
+int  auth_include_authrq(osip_message_t *sipmsg);			/*X*/
 void CvtHex(char *hash, char *hashstring);
 
 /* fwapi.c */

@@ -189,7 +189,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
        * RFC 3261, Section 16.3 step 6
        * Proxy Behavior - Request Validation - Proxy-Authorization
        */
-      sts = authenticate_proxy(ticket);
+      sts = authenticate_proxy(ticket->sipmsg);
       if (sts == STS_FAILURE) {
          /* failed */
          WARN("proxy authentication failed for %s@%s",
@@ -223,6 +223,31 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    time(&time_now);
 
    DEBUGC(DBCLASS_BABBLE,"sip_register:");
+
+   /*
+    * First make sure, we have a proper Contact header:
+    *  - url
+    *  - url -> hostname
+    *
+    * Libosip parses an:
+    * "Contact: *"
+    * the following way (Note: Display name!! and URL is NULL)
+    * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
+    * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
+    */
+   if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
+       ticket->sipmsg->contacts->node->element) {
+      url1_contact=((osip_contact_t*)
+                   (ticket->sipmsg->contacts->node->element))->url;
+   }
+
+   if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
+      /* Don't have required Contact fields.
+         This may be a Registration query. We should simply forward
+         this request to its destination. */
+      ERROR("empty Contact header - seems to be a registration query");
+      return STS_SUCCESS;
+   }
 
    /* evaluate Expires Header field */
    osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
@@ -262,28 +287,6 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
     * REGISTER
     */
    if (expires > 0) {
-      /*
-       * First make sure, we have a proper Contact header:
-       *  - url
-       *  - url -> hostname
-       *
-       * Libosip parses an:
-       * "Contact: *"
-       * the following way (Note: Display name!! and URL is NULL)
-       * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
-       * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
-       */
-      if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
-          ticket->sipmsg->contacts->node->element) {
-         url1_contact=((osip_contact_t*)
-                      (ticket->sipmsg->contacts->node->element))->url;
-      }
-      if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
-         /* Don't have required Contact fields */
-         ERROR("tried registration with empty Contact header");
-         return STS_FAILURE;
-      }
-         
       DEBUGC(DBCLASS_REG,"register: %s@%s expires=%i seconds",
           (url1_contact->username) ? url1_contact->username : "*NULL*",
           (url1_contact->host) ? url1_contact->host : "*NULL*",
@@ -546,7 +549,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
    /* if we send back an proxy authentication needed, 
       include the Proxy-Authenticate field */
    if (code == 407) {
-      auth_include_authrq(ticket);
+      auth_include_authrq(response);
    }
 
    /* get the IP address from existing VIA header */

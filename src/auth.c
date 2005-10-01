@@ -58,7 +58,7 @@ static char *auth_getpwd(char *username);
  *	STS_FAILURE : authentication failed
  *	STS_NEEDAUTH: authentication needed
  */
-int authenticate_proxy(sip_ticket_t *ticket) {
+int authenticate_proxy(osip_message_t *sipmsg) {
    osip_proxy_authorization_t *proxy_auth=NULL;
    
    /* required by config? */
@@ -67,7 +67,7 @@ int authenticate_proxy(sip_ticket_t *ticket) {
    }
    
    /* supplied by UA? */
-   osip_message_get_proxy_authorization(ticket->sipmsg, 0, &proxy_auth);
+   osip_message_get_proxy_authorization(sipmsg, 0, &proxy_auth);
    if (proxy_auth == NULL) {
       DEBUGC(DBCLASS_AUTH,"proxy-auth required, not supplied by UA");
       return STS_NEED_AUTH;
@@ -91,7 +91,7 @@ int authenticate_proxy(sip_ticket_t *ticket) {
  *	STS_SUCCESS
  *	STS_FAILURE
  */
-int auth_include_authrq(sip_ticket_t *ticket) {
+int auth_include_authrq(osip_message_t *sipmsg) {
    osip_proxy_authenticate_t *p_auth;
    char *realm=NULL;
 
@@ -112,7 +112,7 @@ int auth_include_authrq(sip_ticket_t *ticket) {
       return STS_FAILURE;
    }
 
-   osip_list_add (ticket->sipmsg->proxy_authenticates, p_auth, -1);
+   osip_list_add (sipmsg->proxy_authenticates, p_auth, -1);
 
    DEBUGC(DBCLASS_AUTH,"added authentication header");
 

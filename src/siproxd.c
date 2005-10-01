@@ -123,16 +123,6 @@ int main (int argc, char *argv[])
    log_set_pattern(configuration.debuglevel);
 
 /*
- * open a the pwfile instance, so we still have access after
- * we possibly have chroot()ed to somewhere.
- */
-   if (configuration.proxy_auth_pwfile) {
-      siproxd_passwordfile = fopen(configuration.proxy_auth_pwfile, "r");
-   } else {
-      siproxd_passwordfile = NULL;
-   }
-
-/*
  * parse command line
  */
 {
@@ -195,6 +185,16 @@ int main (int argc, char *argv[])
       value and not what is in the config file */
    if (cmdline_debuglevel != 0) {
       configuration.debuglevel=cmdline_debuglevel;
+   }
+
+/*
+ * open a the pwfile instance, so we still have access after
+ * we possibly have chroot()ed to somewhere.
+ */
+   if (configuration.proxy_auth_pwfile) {
+      siproxd_passwordfile = fopen(configuration.proxy_auth_pwfile, "r");
+   } else {
+      siproxd_passwordfile = NULL;
    }
 
    /* set debug level as desired */

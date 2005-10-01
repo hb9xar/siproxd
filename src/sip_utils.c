@@ -673,11 +673,6 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
    /* found a mapping entry */
    if (i<URLMAP_SIZE) {
       char *tmp;
-      DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-             (contact->url->username)? contact->url->username : "*NULL*",
-             (contact->url->host)? contact->url->host : "*NULL*",
-             urlmap[i].masq_url->username, urlmap[i].masq_url->host);
-
       /* remove old entry */
       osip_list_remove(sip_msg->contacts,0);
       osip_contact_to_str(contact, &tmp);
@@ -691,9 +686,18 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
       if (direction == DIR_OUTGOING) {
          /* outgoing, use masqueraded url */
          osip_uri_clone(urlmap[i].masq_url, &contact->url);
+         DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+                (contact->url->username)? contact->url->username : "*NULL*",
+                (contact->url->host)? contact->url->host : "*NULL*",
+                urlmap[i].masq_url->username, urlmap[i].masq_url->host);
       } else {
          /* incoming, use true url */
          osip_uri_clone(urlmap[i].true_url, &contact->url);
+         DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+                (contact->url->username)? contact->url->username : "*NULL*",
+                (contact->url->host)? contact->url->host : "*NULL*",
+                urlmap[i].true_url->username, urlmap[i].true_url->host);
+
       }
 
       osip_list_add(sip_msg->contacts,contact,-1);
