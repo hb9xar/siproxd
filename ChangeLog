@@ -5,6 +5,7 @@
                 - [1278591] Proxy-Authenticate header not included in response
                 - process empty Contact header (means "query registrations")
                   (only supported for registrations at a remote server)
+                - handle multiple Contact headers (e.g. in REGISTER response)
 
 0.5.11
 ======

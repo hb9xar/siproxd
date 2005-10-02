@@ -655,55 +655,68 @@ int sip_del_myvia (sip_ticket_t *ticket) {
 int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
    osip_message_t *sip_msg=ticket->sipmsg;
    osip_contact_t *contact;
-   int i;
+   int i, j;
+   int replaced=0;
 
    if (sip_msg == NULL) return STS_FAILURE;
 
+   /* at least one contact header present? */
    osip_message_get_contact(sip_msg, 0, &contact);
    if (contact == NULL) return STS_FAILURE;
 
-   for (i=0;i<URLMAP_SIZE;i++){
-      if (urlmap[i].active == 0) continue;
-      if ((direction == DIR_OUTGOING) &&
-          (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)) break;
-      if ((direction == DIR_INCOMING) &&
-          (compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
-   }
+   /* loop for all existing contact headers in message */
+   for (j=0; contact != NULL; j++) {
+      osip_message_get_contact(sip_msg, j, &contact);
+      if (contact == NULL) break;
 
-   /* found a mapping entry */
-   if (i<URLMAP_SIZE) {
-      char *tmp;
-      /* remove old entry */
-      osip_list_remove(sip_msg->contacts,0);
-      osip_contact_to_str(contact, &tmp);
-      osip_contact_free(contact);
-
-      /* clone the url from urlmap*/
-      osip_contact_init(&contact);
-      osip_contact_parse(contact,tmp);
-      osip_free(tmp);
-      osip_uri_free(contact->url);
-      if (direction == DIR_OUTGOING) {
-         /* outgoing, use masqueraded url */
-         osip_uri_clone(urlmap[i].masq_url, &contact->url);
-         DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-                (contact->url->username)? contact->url->username : "*NULL*",
-                (contact->url->host)? contact->url->host : "*NULL*",
-                urlmap[i].masq_url->username, urlmap[i].masq_url->host);
-      } else {
-         /* incoming, use true url */
-         osip_uri_clone(urlmap[i].true_url, &contact->url);
-         DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
-                (contact->url->username)? contact->url->username : "*NULL*",
-                (contact->url->host)? contact->url->host : "*NULL*",
-                urlmap[i].true_url->username, urlmap[i].true_url->host);
-
+      /* search for an entry */
+      for (i=0;i<URLMAP_SIZE;i++){
+         if (urlmap[i].active == 0) continue;
+         if ((direction == DIR_OUTGOING) &&
+             (compare_url(contact->url, urlmap[i].true_url)==STS_SUCCESS)) break;
+         if ((direction == DIR_INCOMING) &&
+             (compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
       }
 
-      osip_list_add(sip_msg->contacts,contact,-1);
-   } else {
+      /* found a mapping entry */
+      if (i<URLMAP_SIZE) {
+         char *tmp;
+         /* remove old entry */
+         osip_list_remove(sip_msg->contacts,j);
+         osip_contact_to_str(contact, &tmp);
+         osip_contact_free(contact);
+
+         /* clone the url from urlmap*/
+         osip_contact_init(&contact);
+         osip_contact_parse(contact,tmp);
+         osip_free(tmp);
+         osip_uri_free(contact->url);
+         if (direction == DIR_OUTGOING) {
+            /* outgoing, use masqueraded url */
+            osip_uri_clone(urlmap[i].masq_url, &contact->url);
+            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+                   (contact->url->username)? contact->url->username : "*NULL*",
+                   (contact->url->host)? contact->url->host : "*NULL*",
+                   urlmap[i].masq_url->username, urlmap[i].masq_url->host);
+         } else {
+            /* incoming, use true url */
+            osip_uri_clone(urlmap[i].true_url, &contact->url);
+            DEBUGC(DBCLASS_PROXY, "rewrote Contact header %s@%s -> %s@%s",
+                   (contact->url->username)? contact->url->username : "*NULL*",
+                   (contact->url->host)? contact->url->host : "*NULL*",
+                   urlmap[i].true_url->username, urlmap[i].true_url->host);
+         }
+
+         osip_list_add(sip_msg->contacts,contact,j);
+         replaced=1;
+      }
+
+   }
+
+   if (replaced == 0) {
+      DEBUGC(DBCLASS_PROXY, "no Contact header rewritten");
       return STS_FAILURE;
-   } 
+   }
 
    return STS_SUCCESS;
 }
