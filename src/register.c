@@ -175,6 +175,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    int i, j, n, sts;
    int expires;
    time_t time_now;
+   osip_contact_t *contact;
    osip_uri_t *url1_to, *url1_contact=NULL;
    osip_uri_t *url2_to;
    osip_header_t *expires_hdr;
@@ -235,19 +236,28 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
     * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
     * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
     */
-   if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
+/*
+   if (ticket->sipmsg->contacts && 
+       (ticket->sipmsg->contacts->nb_elt != 0) &&
+       ticket->sipmsg->contacts->node &&
        ticket->sipmsg->contacts->node->element) {
       url1_contact=((osip_contact_t*)
                    (ticket->sipmsg->contacts->node->element))->url;
    }
-
-   if ((url1_contact == NULL) || (url1_contact->host == NULL)) {
+*/
+   osip_message_get_contact(ticket->sipmsg, 0, &contact);
+   if ((contact == NULL) ||
+       (contact->url == NULL) ||
+       (contact->url->host == NULL)) {
       /* Don't have required Contact fields.
          This may be a Registration query. We should simply forward
          this request to its destination. */
-      ERROR("empty Contact header - seems to be a registration query");
+      DEBUGC(DBCLASS_REG, "empty Contact header - "
+             "seems to be a registration query");
       return STS_SUCCESS;
    }
+
+   url1_contact=contact->url;
 
    /* evaluate Expires Header field */
    osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
