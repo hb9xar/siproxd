@@ -271,11 +271,11 @@ int proxy_request (sip_ticket_t *ticket) {
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
          /* Rewrite the body */
-         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
+         sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
 
       } else if (MSG_IS_ACK(request)) {
          /* Rewrite the body */
-         sts = proxy_rewrite_invitation_body(request, DIR_INCOMING);
+         sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
 
       }
       break;
@@ -320,9 +320,9 @@ int proxy_request (sip_ticket_t *ticket) {
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
-         sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
+         sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
       } else if (MSG_IS_ACK(request)) {
-         sts = proxy_rewrite_invitation_body(request, DIR_OUTGOING);
+         sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
       }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
@@ -767,7 +767,7 @@ int proxy_response (sip_ticket_t *ticket) {
          if ((MSG_IS_STATUS_1XX(response)) || 
               (MSG_IS_STATUS_2XX(response))) {
             if (configuration.rtp_proxy_enable == 1) {
-               sts = proxy_rewrite_invitation_body(response, DIR_INCOMING);
+               sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
             }
          /* negative - stop a possibly started RTP stream */
          } else if ((MSG_IS_STATUS_4XX(response))  ||
@@ -849,7 +849,7 @@ int proxy_response (sip_ticket_t *ticket) {
          if ((MSG_IS_STATUS_1XX(response)) || 
               (MSG_IS_STATUS_2XX(response))) {
             /* This is an outgoing response, therefore an outgoing stream */
-            sts = proxy_rewrite_invitation_body(response, DIR_OUTGOING);
+            sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
          /* megative - stop a possibly started RTP stream */
          } else if ((MSG_IS_STATUS_4XX(response))  ||
                      (MSG_IS_STATUS_5XX(response)) ||
@@ -978,7 +978,8 @@ int proxy_response (sip_ticket_t *ticket) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int proxy_rewrite_invitation_body(osip_message_t *mymsg, int direction){
+int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
+   osip_message_t *mymsg=ticket->sipmsg;
    osip_body_t *body;
    sdp_message_t  *sdp;
    struct in_addr map_addr, addr_sess, addr_media, outside_addr, inside_addr;
@@ -1204,6 +1205,8 @@ if (configuration.debuglevel)
              * 1) User part of Contact header
              * 2) Host part of Contact header (will be different
              *    between internal UA and external UA)
+             * 3) IP address of sender (also different between
+             *    internal and external UA)
              */
             if (!osip_list_eol(mymsg->contacts, 0))
                cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
@@ -1211,7 +1214,14 @@ if (configuration.debuglevel)
                client_id=cont_url->username;
                if (client_id == NULL) client_id=cont_url->host;
             }
-
+            if (client_id == NULL) {
+               static char from_string[HOSTNAME_SIZE];
+               char *tmp;
+               tmp=utils_inet_ntoa(ticket->from.sin_addr);
+               strncpy(from_string, tmp, HOSTNAME_SIZE-1);
+               from_string[HOSTNAME_SIZE-1]='\0';
+               client_id=tmp;
+            }
 
             /*
              * do we have a 'c=' item on media level?

@@ -544,7 +544,6 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
         i2 < (num_ports + prev_used_port - configuration.rtp_port_low + 1);
         i2++) {
       i = (i2%num_ports) + configuration.rtp_port_low;
-DEBUGC(DBCLASS_RTP,"&&&& I=%i, i2=%i",i,i2);
 
       /* only allow even port numbers */
       if ((i % 2) != 0) continue;

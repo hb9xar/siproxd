@@ -136,7 +136,7 @@ int  register_set_expire(sip_ticket_t *ticket);				/*X*/
 /* proxy.c */
 int proxy_request (sip_ticket_t *ticket);				/*X*/
 int proxy_response (sip_ticket_t *ticket);				/*X*/
-int proxy_rewrite_invitation_body(osip_message_t *m, int direction);    /*X*/
+int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction); /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 
 /* route_preprocessing.c */
