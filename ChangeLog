@@ -3,6 +3,7 @@
    9-Oct-2005:  - Expiration timeout is now taken from the REGISTER response
                 - fix: no audio with some UAs that do not include a
                   Contact header in ACK messages (which is compliant).
+                - static build works again
    1-Oct-2005:  - [1278537] Read proxy_auth_pwfile after config file is read
                 - [1278591] Proxy-Authenticate header not included in response
                 - process empty Contact header (means "query registrations")

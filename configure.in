@@ -35,6 +35,7 @@ dnl				Cygwin build support
 dnl	13-Feb-2005	tries	check for # of args on libosip2 functions
 dnl	10-Apr-2005	tries	check for docbook
 dnl	18-Apr-2005	tries	added libresolv
+dnl	 9-Oct-2005	tries	libresolv is now included in static build
 dnl
 dnl
 
@@ -372,8 +373,10 @@ AC_CHECK_TYPE(socklen_t,
 
 dnl
 dnl Checks for libraries
+dnl Note: the __res_query symbol is to catch the lib when building "static"
 dnl
     AC_CHECK_LIB(resolv,res_query,)
+    AC_CHECK_LIB(resolv,__res_query,)
 
 
 dnl
