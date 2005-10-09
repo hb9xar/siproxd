@@ -120,7 +120,7 @@ void log_tcp_listen(void) {
    }
 
    if (setsockopt(debug_listen_fd, SOL_SOCKET, SO_REUSEADDR, &on , sizeof(on)) < 0) {
-      ERROR("socket returned error [%i:%s]",errno, strerror(errno));
+      ERROR("setsockopt returned error [%i:%s]",errno, strerror(errno));
       return;
    }
 

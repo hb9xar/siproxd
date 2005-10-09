@@ -193,7 +193,7 @@ int sipsock_send(struct in_addr addr, int port, int protocol,
  */
 int sockbind(struct in_addr ipaddr, int localport, int errflg) {
    struct sockaddr_in my_addr;
-   int sts;
+   int sts, on=1;
    int sock;
    int flags;
 
@@ -205,8 +205,13 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
 
    sock=socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
    if (sock < 0) {
-      ERROR("socket() call failed: %s",strerror(errno));
+      ERROR("socket call failed: %s",strerror(errno));
       return 0;
+   }
+
+   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on , sizeof(on)) < 0) {
+      ERROR("setsockopt returned error [%i:%s]",errno, strerror(errno));
+      return;
    }
 
    sts=bind(sock, (struct sockaddr *)&my_addr, sizeof(my_addr));
