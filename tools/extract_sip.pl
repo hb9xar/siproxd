@@ -17,7 +17,9 @@ while (<>) {
    chomp;
 
    # cut out the hex digits and store them into an array
-   my @hex=split(/ /, substr($_, 2, 47));
+   my $line=$_;
+   $line =~ s/^ *//;
+   my @hex=split(/ /, substr($line, 0, 50));
 
    for (my $i=0; $i<16; $i++) {
       # write HEX byte as character
