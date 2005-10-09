@@ -1,11 +1,12 @@
 0.5.12
 ======
-  14-Jul-2005:  - allocate only even port numbers for RTP traffic
+   9-Oct-2005:  - Expiration timeout is now taken from the REGISTER response
    1-Oct-2005:  - [1278537] Read proxy_auth_pwfile after config file is read
                 - [1278591] Proxy-Authenticate header not included in response
                 - process empty Contact header (means "query registrations")
                   (only supported for registrations at a remote server)
                 - handle multiple Contact headers (e.g. in REGISTER response)
+  14-Jul-2005:  - allocate only even port numbers for RTP traffic
 
 0.5.11
 ======

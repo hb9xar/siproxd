@@ -601,3 +601,72 @@ int register_response(sip_ticket_t *ticket, int flag) {
    return STS_SUCCESS;
 }
 
+
+/*
+ * set expiration timeout from a SIP response
+ *
+ * RETURNS
+ *      STS_SUCCESS on success
+ *      STS_FAILURE on error
+ */
+int register_set_expire(sip_ticket_t *ticket) {
+   int i, j;
+   int expires=-1;
+   osip_contact_t *contact;
+   time_t time_now;
+   osip_header_t *expires_hdr=NULL;
+   osip_uri_param_t *expires_param=NULL;
+
+   if (ticket->direction != RESTYP_INCOMING) {
+      WARN("register_set_expire called with != incoming response");
+      return STS_FAILURE;
+   }
+
+   time(&time_now);
+
+   DEBUGC(DBCLASS_REG,"REGISTER response, looking for 'Expire' information");
+
+   /* evaluate Expires Header field */
+   osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
+
+   /* loop for all existing contact headers in message */
+   for (j=0; contact != NULL; j++) {
+      osip_message_get_contact(ticket->sipmsg, j, &contact);
+
+     /*
+      * look for an Contact expires parameter - in case of REGISTER
+      * these two are equal. The Contact expires has higher priority!
+      */
+      if (contact==NULL) continue;
+
+      osip_contact_param_get_byname(contact, EXPIRES, &expires_param);
+
+      if (expires_param && expires_param->gvalue) {
+         /* get expires from contact Header */
+         expires=atoi(expires_param->gvalue);
+      } else if (expires_hdr && expires_hdr->hvalue) {
+         /* get expires from expires Header */
+         expires=atoi(expires_hdr->hvalue);
+      }
+
+      if (expires > 0) {
+
+         /* search for an entry */
+         for (i=0;i<URLMAP_SIZE;i++){
+            if (urlmap[i].active == 0) continue;
+            if ((compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
+         }
+
+         /* found a mapping entry */
+         if (i<URLMAP_SIZE) {
+            /* update registration timeout */
+            DEBUGC(DBCLASS_REG,"changing registration timeout to %i"
+                               " entry [%i]", expires, i);
+            urlmap[i].expires=time_now+expires;
+         } else {
+         DEBUGC(DBCLASS_REG,"no urlmap entry found");
+         }
+      }
+   } /* for j */
+   return STS_SUCCESS;
+}

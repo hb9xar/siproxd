@@ -786,7 +786,10 @@ int proxy_response (sip_ticket_t *ticket) {
           * REGISTER returns *my* Contact header information.
           * Rewrite Contact header back to represent the true address.
           * Other responses do return the Contact header of the sender.
+          * also change the expiration timeout to the value returned by the
+          * server.
           */
+         sts = register_set_expire(ticket);
          sip_rewrite_contact(ticket, DIR_INCOMING);
       }
 

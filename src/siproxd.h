@@ -131,6 +131,7 @@ void register_save(void);
 int  register_client(sip_ticket_t *ticket, int force_lcl_masq);		/*X*/
 void register_agemap(void);
 int  register_response(sip_ticket_t *ticket, int flag);			/*X*/
+int  register_set_expire(sip_ticket_t *ticket);				/*X*/
 
 /* proxy.c */
 int proxy_request (sip_ticket_t *ticket);				/*X*/

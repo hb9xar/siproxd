@@ -406,9 +406,9 @@ int main (int argc, char *argv[])
                    ticket.sipmsg->sip_method : "NULL") :
                 ((ticket.sipmsg->reason_phrase) ? 
                    ticket.sipmsg->reason_phrase : "NULL")));
-              
+
       /*
-       * if an REQ REGISTER, check if it is directed to myself,
+       * if a REQ REGISTER, check if it is directed to myself,
        * or am I just the outbound proxy but no registrar.
        * - If I'm the registrar, register & generate answer
        * - If I'm just the outbound proxy, register, rewrite & forward
@@ -441,9 +441,7 @@ int main (int argc, char *argv[])
                   sts = proxy_request(&ticket);
                }
             } else {
-               if (MSG_IS_REQUEST(ticket.sipmsg)) {
-                  sip_gen_response(&ticket, 408 /*request timeout*/);
-               }
+               sip_gen_response(&ticket, 408 /*request timeout*/);
             }
          } else {
             WARN("non-authorized registration attempt from %s",
