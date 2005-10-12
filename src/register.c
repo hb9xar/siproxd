@@ -612,7 +612,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
 int register_set_expire(sip_ticket_t *ticket) {
    int i, j;
    int expires=-1;
-   osip_contact_t *contact;
+   osip_contact_t *contact=NULL;
    time_t time_now;
    osip_header_t *expires_hdr=NULL;
    osip_uri_param_t *expires_param=NULL;
@@ -630,6 +630,7 @@ int register_set_expire(sip_ticket_t *ticket) {
    osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
 
    /* loop for all existing contact headers in message */
+   osip_message_get_contact(ticket->sipmsg, 0, &contact);
    for (j=0; contact != NULL; j++) {
       osip_message_get_contact(ticket->sipmsg, j, &contact);
 
@@ -649,6 +650,8 @@ int register_set_expire(sip_ticket_t *ticket) {
          expires=atoi(expires_hdr->hvalue);
       }
 
+      DEBUGC(DBCLASS_REG,"Expires=%i, expires_param=%p, expires_hdr=%p",
+             expires, expires_param, expires_hdr);
       if (expires > 0) {
 
          /* search for an entry */
@@ -664,7 +667,7 @@ int register_set_expire(sip_ticket_t *ticket) {
                                " entry [%i]", expires, i);
             urlmap[i].expires=time_now+expires;
          } else {
-         DEBUGC(DBCLASS_REG,"no urlmap entry found");
+            DEBUGC(DBCLASS_REG,"no urlmap entry found");
          }
       }
    } /* for j */
