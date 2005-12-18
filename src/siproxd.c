@@ -261,9 +261,9 @@ int main (int argc, char *argv[])
 
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" "UNAME" started");
 
-/*
+/*****************************
  * Main loop
- */
+ *****************************/
    while (!exit_program) {
 
       DEBUGC(DBCLASS_BABBLE,"going into sipsock_wait\n");
@@ -289,28 +289,37 @@ int main (int argc, char *argv[])
          if (exit_program) goto exit_prg;
       }
 
-      /* got input, process */
+      /*
+       * got input, process
+       */
       DEBUGC(DBCLASS_BABBLE,"back from sipsock_wait");
+      ticket.direction=0;
 
       buflen=sipsock_read(&buff, sizeof(buff)-1, &ticket.from,
                            &ticket.protocol);
       buff[buflen]='\0';
 
-      /* evaluate the access lists (IP based filter)*/
+      /*
+       * evaluate the access lists (IP based filter)
+       */
       access=accesslist_check(ticket.from);
       if (access == 0) {
          DEBUGC(DBCLASS_ACCESS,"access for this packet was denied");
          continue; /* there are no resources to free */
       }
 
-      /* integrity checks */
+      /*
+       * integrity checks
+       */
       sts=security_check_raw(buff, buflen);
       if (sts != STS_SUCCESS) {
          DEBUGC(DBCLASS_SIP,"security check (raw) failed");
          continue; /* there are no resources to free */
       }
 
-      /* init sip_msg */
+      /*
+       * init sip_msg
+       */
       sts=osip_message_init(&ticket.sipmsg);
       ticket.sipmsg->message=NULL;
       if (sts != 0) {
@@ -330,7 +339,9 @@ int main (int argc, char *argv[])
          goto end_loop; /* skip and free resources */
       }
 
-      /* integrity checks - parsed buffer*/
+      /*
+       * integrity checks - parsed buffer
+       */
       sts=security_check_sip(&ticket);
       if (sts != STS_SUCCESS) {
          ERROR("security_check_sip() failed... this is not good");
@@ -351,21 +362,20 @@ int main (int argc, char *argv[])
        * (check Max-Forwards header and refuse with 483 if too many hops)
        */
       {
-      osip_header_t *max_forwards;
-      int forwards_count = DEFAULT_MAXFWD;
+         osip_header_t *max_forwards;
+         int forwards_count = DEFAULT_MAXFWD;
 
-      osip_message_get_max_forwards(ticket.sipmsg, 0, &max_forwards);
-      if (max_forwards && max_forwards->hvalue) {
-         forwards_count = atoi(max_forwards->hvalue);
-      }
+         osip_message_get_max_forwards(ticket.sipmsg, 0, &max_forwards);
+         if (max_forwards && max_forwards->hvalue) {
+            forwards_count = atoi(max_forwards->hvalue);
+         }
 
-      DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);
-      if (forwards_count <= 0) {
-         DEBUGC(DBCLASS_SIP, "Forward count reached 0 -> 483 response");
-         sip_gen_response(&ticket, 483 /*Too many hops*/);
-         goto end_loop; /* skip and free resources */
-      }
-
+         DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);
+         if (forwards_count <= 0) {
+            DEBUGC(DBCLASS_SIP, "Forward count reached 0 -> 483 response");
+            sip_gen_response(&ticket, 483 /*Too many hops*/);
+            goto end_loop; /* skip and free resources */
+         }
       }
 
       /*
@@ -407,6 +417,25 @@ int main (int argc, char *argv[])
                 ((ticket.sipmsg->reason_phrase) ? 
                    ticket.sipmsg->reason_phrase : "NULL")));
 
+      /*********************************
+       * The message did pass all the
+       * tests above and is now ready
+       * to be proxied.
+       * Before we do so, we apply some
+       * additional preprocessing
+       *********************************/
+
+/*&&& coming soon: short dial strings*/
+
+
+      /*********************************
+       * finally proxy the message.
+       * This includes the masquerading
+       * of the local UA and starting/
+       * stopping the RTP proxy for this
+       * call
+       *********************************/
+
       /*
        * if a REQ REGISTER, check if it is directed to myself,
        * or am I just the outbound proxy but no registrar.
@@ -438,7 +467,9 @@ int main (int argc, char *argv[])
                   DEBUGC(DBCLASS_SIP,"proxying REGISTER request to:%s",
                          url->host);
                   sts = register_client(&ticket, 1);
-                  sts = proxy_request(&ticket);
+                  if (sts == STS_SUCCESS) {
+                     sts = proxy_request(&ticket);
+                  }
                }
             } else {
                sip_gen_response(&ticket, 408 /*request timeout*/);
@@ -495,7 +526,10 @@ int main (int argc, char *argv[])
                ticket.sipmsg->sip_method);
       }
 
-
+      /*********************************
+       * Done with proxying. Message
+       * has been sent to its destination.
+       *********************************/
 /*
  * free the SIP message buffers
  */

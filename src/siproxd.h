@@ -170,6 +170,7 @@ int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);		/*X*/
 int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
                              int *port);				/*X*/
+int  sip_find_direction(sip_ticket_t *ticket, int *urlidx);		/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/
@@ -258,6 +259,7 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 #define STS_FAILURE	1	/* FAILURE				*/
 #define STS_FALSE	1	/* FALSE				*/
 #define STS_NEED_AUTH	1001	/* need authentication			*/
+#define STS_RESP_SENT	2001	/* response is already sent		*/
 
 /* symbolic direction of data */
 #define DIR_INCOMING	1

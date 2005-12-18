@@ -668,6 +668,7 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
    for (j=0; contact != NULL; j++) {
       osip_message_get_contact(sip_msg, j, &contact);
       if (contact == NULL) break;
+      if (contact->url == NULL) continue;
 
       /* search for an entry */
       for (i=0;i<URLMAP_SIZE;i++){
@@ -966,6 +967,173 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
    return STS_FAILURE; /* no proxy */
 }
 
+
+/*
+ * SIP_IS_OUTGOING
+ *
+ * Figures out if this is an outgoing or incoming request/response.
+ * The direction is stored in the ticket->direction property.
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE if unable to determine
+ */
+int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
+   int type;
+   int i, sts;
+   struct sockaddr_in *from;
+   osip_message_t *request;
+   osip_message_t *response;
+
+   from=&ticket->from;
+   request=ticket->sipmsg;
+   response=ticket->sipmsg;
+   type = 0;
+
+   ticket->direction = 0;
+
+   /*
+    * did I receive the telegram from a REGISTERED host?
+    * -> it must be an OUTGOING request
+    */
+   for (i=0; i<URLMAP_SIZE; i++) {
+      struct in_addr tmp_addr;
+
+      if (urlmap[i].active == 0) continue;
+      if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
+         DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
+             urlmap[i].true_url);
+      } else {
+         DEBUGC(DBCLASS_SIP, "sip_find_direction: reghost:%s ip:%s",
+                urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
+         if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
+            if (MSG_IS_REQUEST(ticket->sipmsg)) {
+               type=REQTYP_OUTGOING;
+            } else {
+               type=RESTYP_OUTGOING;
+            }
+            break;
+         }
+      }
+   }
+
+   /*
+    * is the telegram directed to an internally registered host?
+    * -> it must be an INCOMING request
+    */
+   if (type == 0) {
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+         /* RFC3261:
+          * 'To' contains a display name (Bob) and a SIP or SIPS URI
+          * (sip:bob@biloxi.com) towards which the request was originally
+          * directed.  Display names are described in RFC 2822 [3].
+          */
+
+         /* So this means, that we must check the SIP URI supplied with the
+          * INVITE method, as this points to the real wanted target.
+          * Q: does there exist a situation where the SIP URI itself does
+          *    point to "somewhere" but the To: points to the correct UA?
+          * So for now, we just look at both of them (SIP URI and To: header)
+          */
+
+         if (MSG_IS_REQUEST(ticket->sipmsg)) {
+            /* REQUEST */
+            /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
+            if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
+                (!MSG_IS_REGISTER(request) &&
+                 (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
+               type=REQTYP_INCOMING;
+               break;
+            }
+            /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
+            if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+                (!MSG_IS_REGISTER(request) &&
+                 (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
+               type=REQTYP_INCOMING;
+               break;
+            }
+         } else { 
+            /* RESPONSE */
+            /* incoming response ('from' == 'masq') || ('from' == 'reg') */
+            if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
+                (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
+               type=RESTYP_INCOMING;
+               break;
+            }
+         } /* is request */
+      } /* for i */
+   } /* if type == 0 */
+
+
+   if (MSG_IS_RESPONSE(ticket->sipmsg)) {
+      /* &&&& Open Issue &&&&
+         it has been seen with cross-provider calls that the FROM may be 'garbled'
+         (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
+         How can we deal with this? Should I take into consideration the 'Via'
+         headers? This is the only clue I have, pointing to the *real* UA.
+         Maybe I should put in a 'siproxd' ftag value to recognize it as a header
+         inserted by myself
+      */
+      if ((type == 0) && (!osip_list_eol(response->vias, 0))) {
+         osip_via_t *via;
+         struct in_addr addr_via, addr_myself;
+         int port_via, port_ua;
+
+         /* get the via address */
+         via = (osip_via_t *) osip_list_get (response->vias, 0);
+         DEBUGC(DBCLASS_SIP, "sip_find_direction: check via [%s] for "
+                "registered UA",via->host);
+         sts=get_ip_by_host(via->host, &addr_via);
+         if (sts == STS_FAILURE) {
+            DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve VIA [%s]",
+                   via->host);
+         } else {
+
+            for (i=0; i<URLMAP_SIZE; i++) {
+               if (urlmap[i].active == 0) continue;
+               /* incoming response (1st via in list points to a registered UA) */
+               sts=get_ip_by_host(urlmap[i].true_url->host, &addr_myself);
+               if (sts == STS_FAILURE) {
+                  DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve "
+                         "true_url [%s]", via->host);
+                  continue;
+               }
+
+               port_via=0;
+               if (via->port) port_via=atoi(via->port);
+               if (port_via <= 0) port_via=SIP_PORT;
+
+               port_ua=0;
+               if (urlmap[i].true_url->port)
+                  port_ua=atoi(urlmap[i].true_url->port);
+               if (port_ua <= 0) port_ua=SIP_PORT;
+
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: checking for registered "
+                      "host [%s:%i] <-> [%s:%i]",
+                      urlmap[i].true_url->host, port_ua,
+                      via->host, port_via);
+
+               if ((memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
+                   (port_via == port_ua)) {
+                  type=RESTYP_INCOMING;
+                  break;
+               }
+            } /* for i */
+         }
+      } /* if type == 0 */
+   } /* is response */
+
+   if (type == 0) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: unable to determine "
+                          "direction of SIP packet");
+      return STS_FAILURE;
+   }
+
+   ticket->direction=type;
+   if (urlidx) *urlidx=i;
+   return STS_SUCCESS;
+}
 
 
 

@@ -211,7 +211,7 @@ int sockbind(struct in_addr ipaddr, int localport, int errflg) {
 
    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on , sizeof(on)) < 0) {
       ERROR("setsockopt returned error [%i:%s]",errno, strerror(errno));
-      return;
+      return 0;
    }
 
    sts=bind(sock, (struct sockaddr *)&my_addr, sizeof(my_addr));

@@ -236,24 +236,29 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
     * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
     * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
     */
-/*
-   if (ticket->sipmsg->contacts && 
-       (ticket->sipmsg->contacts->nb_elt != 0) &&
-       ticket->sipmsg->contacts->node &&
-       ticket->sipmsg->contacts->node->element) {
-      url1_contact=((osip_contact_t*)
-                   (ticket->sipmsg->contacts->node->element))->url;
-   }
-*/
+
    osip_message_get_contact(ticket->sipmsg, 0, &contact);
    if ((contact == NULL) ||
        (contact->url == NULL) ||
        (contact->url->host == NULL)) {
       /* Don't have required Contact fields.
-         This may be a Registration query. We should simply forward
-         this request to its destination. */
+         This may be a Registration query or unregistering all registered
+         records for this UA. We should simply forward this request to its
+         destination. However, if this is an unregistration from a client
+         that is not registered (Grandstream "unregister at startup" option)
+         -> How do I handle this one?
+         Right now we do a direction lookup and if this fails we generate
+         an OK message by ourself (fake) */
       DEBUGC(DBCLASS_REG, "empty Contact header - "
              "seems to be a registration query");
+      sts = sip_find_direction(ticket, NULL);
+      if (sts != STS_SUCCESS) {
+         /* answer the request myself. Most likely this is an UNREGISTER
+          * request when the client just booted */
+         sts = register_response(ticket, STS_SUCCESS);
+         return STS_RESP_SENT;
+      }
+
       return STS_SUCCESS;
    }
 
@@ -603,7 +608,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
 
 
 /*
- * set expiration timeout from a SIP response
+ * set expiration timeout as received with SIP response
  *
  * RETURNS
  *      STS_SUCCESS on success
@@ -630,8 +635,7 @@ int register_set_expire(sip_ticket_t *ticket) {
    osip_message_get_expires(ticket->sipmsg, 0, &expires_hdr);
 
    /* loop for all existing contact headers in message */
-   osip_message_get_contact(ticket->sipmsg, 0, &contact);
-   for (j=0; contact != NULL; j++) {
+   for (j=0; (contact != NULL) || (j==0); j++) {
       osip_message_get_contact(ticket->sipmsg, j, &contact);
 
      /*
