@@ -303,12 +303,12 @@ rtp_proxy_enable = 1
       <para>Port range (UDP) that siproxd will use for incoming
         and outgoing RTP traffic. A firewall must be configured
         to allow traffic from and to these ports (UDP only). By
-        default the range 7070 up to (and including) 7079 is used.
-        This allows up to 5 simultaneous calls (2 ports per call).
+        default the range 7070 up to (and including) 7089 is used.
+        This allows up to 10 simultaneous calls (2 ports per call).
         If you need more simultaneous calls, increase the range.</para>
 <screen>
 rtp_port_low  = 7070
-rtp_port_high = 7079
+rtp_port_high = 7089
 </screen>
 
       <para>Timeout for an RTP stream. If for the specified number
@@ -596,17 +596,17 @@ private IP address range             :          Internet
 <screen>
 # allow incoming SIP and RTP traffic
 iptables -A INPUT -m udp -p udp -i ppp0 --dport 5060      -j ACCEPT
-iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7080 -j ACCEPT
+iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7089 -j ACCEPT
 </screen>
       <para>Firewall configuration (ipchains):</para>
 <screen>
 # allow incoming SIP and RTP traffic
 ipchains -A input --proto udp --dport 5060      -j ACCEPT
-ipchains -A input --proto udp --dport 7070:7079 -j ACCEPT
+ipchains -A input --proto udp --dport 7070:7089 -j ACCEPT
 </screen>
       <para>The first line will allow incoming SIP traffic. The
         second line will allow incoming RTP traffic on the ports
-        7070 - 7079 (the default port range used by siproxd for
+        7070 - 7089 (the default port range used by siproxd for
         incoming RTP traffic).</para>
     </sect1>
 
@@ -645,7 +645,7 @@ registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
 rtp_proxy_enable = 1
 rtp_port_low  = 7070
-rtp_port_high = 7079
+rtp_port_high = 7089
 rtp_timeout = 300
 default_expires = 600
 debug_level = 0
@@ -655,7 +655,7 @@ debug_port = 0
 <screen>
 # allow incoming SIP and RTP traffic
 iptables -A INPUT -m udp -p udp -i ppp0 --dport 5060      -j ACCEPT
-iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7080 -j ACCEPT
+iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7089 -j ACCEPT
 </screen>
       <para>Phone configuration (only the relevant items are listed):</para>
 <screen>
@@ -727,7 +727,7 @@ registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
 rtp_proxy_enable = 1
 rtp_port_low  = 7070
-rtp_port_high = 7079
+rtp_port_high = 7089
 rtp_timeout = 300
 default_expires = 600
 debug_level = 0
@@ -736,7 +736,7 @@ debug_port = 0
       <para>NAT router configuration:</para>
 <screen>
 forward all incoming traffic on 5060/udp to 10.0.0.2
-forward all incoming traffic from 7070/udp - 7079/udp to 10.0.0.2
+forward all incoming traffic from 7070/udp - 7089/udp to 10.0.0.2
 </screen>
       <para>Phone configuration:</para>
 <screen>
@@ -817,7 +817,7 @@ iptables -t nat -A PREROUTING -m udp -p udp -i eth0 \
                               --destination-port 5060     -j REDIRECT
 # allow incoming SIP and RTP traffic
 iptables -A INPUT -m udp -p udp -i ppp0 --dport 5060      -j ACCEPT
-iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7080 -j ACCEPT
+iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7089 -j ACCEPT
 </screen>
     </sect1>
 
@@ -862,7 +862,7 @@ registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
 rtp_proxy_enable = 1
 rtp_port_low  = 7070
-rtp_port_high = 7079
+rtp_port_high = 7089
 rtp_timeout = 300
 default_expires = 600
 debug_level = 0
