@@ -36,6 +36,7 @@
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
+#include "plugins.h"
 #include "log.h"
 
 static char const ident[]="$Id$";
@@ -424,8 +425,8 @@ int main (int argc, char *argv[])
        * Before we do so, we apply some
        * additional preprocessing
        *********************************/
-
-/*&&& coming soon: short dial strings*/
+      /* Dial shortcuts */
+      if (configuration.pi_shortdial) plugin_shortdial(&ticket);
 
 
       /*********************************

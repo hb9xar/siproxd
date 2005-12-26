@@ -89,6 +89,9 @@ struct siproxd_config {
    char *pid_file;
    int  default_expires;
    int  autosave_registrations;
+   int  pi_shortdial;
+   char *pi_shortdial_akey;
+   stringa_t pi_shortdial_entry;
 };
 
 /*

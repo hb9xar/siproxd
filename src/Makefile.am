@@ -28,8 +28,9 @@ AM_CFLAGS = -Wall -D_GNU_SOURCE \
 sbin_PROGRAMS = siproxd
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
-                  rtpproxy_relay.c accessctl.c route_processing.c \
-		  security.c auth.c fwapi.c resolve.c
+		  rtpproxy_relay.c accessctl.c route_processing.c \
+		  security.c auth.c fwapi.c resolve.c \
+		  plugin_shortdial.c
 
 #
 # an example for a custom firewall control module
@@ -40,7 +41,7 @@ libcustom_fw_module_a_SOURCES = custom_fw_module.c
 
 
 noinst_HEADERS = log.h rewrite_rules.h siproxd.h digcalc.h rtpproxy.h \
-		 fwapi.h
+		 fwapi.h plugins.h
 
 EXTRA_DIST = .buildno
 

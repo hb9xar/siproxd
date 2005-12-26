@@ -34,6 +34,7 @@
 #define DBCLASS_RTP	0x00000200	/* RTP proxy			     */
 #define DBCLASS_ACCESS	0x00000400	/* Access list evaluation	     */
 #define DBCLASS_AUTH	0x00000800	/* Authentication		     */
+#define DBCLASS_PLUGIN	0x00001000	/* Plugins			     */
 #define DBCLASS_ALL	0xffffffff	/* All	classes			     */
 
 
