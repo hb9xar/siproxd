@@ -244,7 +244,7 @@ debug_port = 0
 #
 # Quick Dial (Short Dial)
 # ability to define quick dial numbers that can be accessed by
-# dialing "*nn" from a local phone. 'nn' corresponse to the entry number
+# dialing "*nn" from a local phone. 'nn' corresponds to the entry number
 # (pi_shortdial_entry) below. The '*' character can be chosen freely
 # (pi_shortdial_akey).
 # Note: To call a real number like "*1234" you would have to dial "**1234"
@@ -254,5 +254,5 @@ pi_shortdial_akey = *
 #
 # *01 sipphone echo test
 pi_shortdial_entry = 17474743246
-# *02 sipcall welcome message
+# *02 sipphone welcome message
 pi_shortdial_entry = 17474745000
