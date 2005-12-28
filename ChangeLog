@@ -1,5 +1,6 @@
 0.5.12
 ======
+  28-Dec-2005:  - Call logging: display FROM & TO for calls.
   26-Dec-2005:  - Added a short-dial feature ("pi_shortdial_*" config options)
   18-Dec-2005:  - Grandstream "unregister at startup" works now
    9-Oct-2005:  - Expiration timeout is now taken from the REGISTER response

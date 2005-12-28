@@ -111,38 +111,47 @@ int proxy_request (sip_ticket_t *ticket) {
     * logging of passing calls
     */
    if (configuration.log_calls) {
-      osip_uri_t *cont_url = NULL;
-      if (!osip_list_eol(request->contacts, 0))
-         cont_url = ((osip_contact_t*)(request->contacts->node->element))->url;
-      
+      osip_uri_t *from_url = NULL;
+      osip_uri_t *to_url   = NULL;
+      char *to_username =NULL;
+      char *to_host = NULL;
+      char *from_username =NULL;
+      char *from_host = NULL;
+
+      /* From: 1st preference is contact header, then use From field */
+      if (!osip_list_eol(request->contacts, 0)) {
+         from_url = ((osip_contact_t*)(request->contacts->node->element))->url;
+      } else {
+         from_url = request->from->url;
+      }
+
+      to_url = request->to->url;
+
+      if (to_url) {
+         to_username = to_url->username;
+         to_host = to_url->host;
+      }
+
+      if (from_url) {
+         from_username = from_url->username;
+         from_host = from_url->host;
+      }
+
       /* INVITE */
       if (MSG_IS_INVITE(request)) {
-         if (cont_url) {
-            INFO("%s Call from: %s@%s",
-                 (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
-                 cont_url->username ? cont_url->username:"*NULL*",
-                 cont_url->host ? cont_url->host : "*NULL*");
-         } else {
-            INFO("%s Call (w/o contact header) from: %s@%s",
-                 (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
-	         request->from->url->username ? 
-                    request->from->url->username:"*NULL*",
-	         request->from->url->host ? 
-                    request->from->url->host : "*NULL*");
-         }
+         INFO("%s Call: %s@%s -> %s@%s",
+              (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
+              from_username ? from_username: "*NULL*",
+              from_host     ? from_host    : "*NULL*",
+              to_username   ? to_username  : "*NULL*",
+              to_host       ? to_host      : "*NULL*");
       /* BYE / CANCEL */
       } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         if (cont_url) {
-            INFO("Ending Call from: %s@%s",
-                 cont_url->username ? cont_url->username:"*NULL*",
-                 cont_url->host ? cont_url->host : "*NULL*");
-         } else {
-            INFO("Ending Call (w/o contact header) from: %s@%s",
-	         request->from->url->username ? 
-                    request->from->url->username:"*NULL*",
-	         request->from->url->host ? 
-                    request->from->url->host : "*NULL*");
-         }
+         INFO("Ending Call: %s@%s -> %s@%s",
+              from_username ? from_username: "*NULL*",
+              from_host     ? from_host    : "*NULL*",
+              to_username   ? to_username  : "*NULL*",
+              to_host       ? to_host      : "*NULL*");
       }
    } /* log_calls */
 
