@@ -84,6 +84,14 @@ osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
    osip_to_clone (request->to, &response->to);
    osip_from_clone (request->from, &response->from);
 
+   /* if 3xx, also include 1st contact header */
+   if ((code>=300) && (code<400)) {
+      osip_contact_t *req_contact = NULL;
+      osip_contact_t *res_contact = NULL;
+      osip_message_get_contact(request, 0, &req_contact);
+      osip_contact_clone (req_contact, &res_contact);
+      osip_list_add(response->contacts,res_contact,0);
+   }
 
    /* via headers */
    pos = 0;

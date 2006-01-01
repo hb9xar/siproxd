@@ -256,7 +256,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          /* answer the request myself. Most likely this is an UNREGISTER
           * request when the client just booted */
          sts = register_response(ticket, STS_SUCCESS);
-         return STS_RESP_SENT;
+         return STS_SIP_SENT;
       }
 
       return STS_SUCCESS;

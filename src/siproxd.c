@@ -426,7 +426,10 @@ int main (int argc, char *argv[])
        * additional preprocessing
        *********************************/
       /* Dial shortcuts */
-      if (configuration.pi_shortdial) plugin_shortdial(&ticket);
+      if (configuration.pi_shortdial) {
+         sts = plugin_shortdial(&ticket);
+         if (sts == STS_SIP_SENT) goto end_loop;
+      }
 
 
       /*********************************

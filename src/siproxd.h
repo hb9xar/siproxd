@@ -262,7 +262,7 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 #define STS_FAILURE	1	/* FAILURE				*/
 #define STS_FALSE	1	/* FALSE				*/
 #define STS_NEED_AUTH	1001	/* need authentication			*/
-#define STS_RESP_SENT	2001	/* response is already sent		*/
+#define STS_SIP_SENT	2001	/* SIP packet is already sent		*/
 
 /* symbolic direction of data */
 #define DIR_INCOMING	1

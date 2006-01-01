@@ -110,6 +110,7 @@ int proxy_request (sip_ticket_t *ticket) {
    /*
     * logging of passing calls
     */
+/*&&&& this should be moved to its own loggin plugin */
    if (configuration.log_calls) {
       osip_uri_t *from_url = NULL;
       osip_uri_t *to_url   = NULL;
@@ -117,12 +118,13 @@ int proxy_request (sip_ticket_t *ticket) {
       char *to_host = NULL;
       char *from_username =NULL;
       char *from_host = NULL;
+      char *call_type = NULL;
 
-      /* From: 1st preference is contact header, then use From field */
-      if (!osip_list_eol(request->contacts, 0)) {
-         from_url = ((osip_contact_t*)(request->contacts->node->element))->url;
-      } else {
+      /* From: 1st preference is From header, then try contact header */
+      if (request->from->url) {
          from_url = request->from->url;
+      } else {
+         from_url = (osip_uri_t *)osip_list_get(request->contacts, 0);
       }
 
       to_url = request->to->url;
@@ -139,20 +141,24 @@ int proxy_request (sip_ticket_t *ticket) {
 
       /* INVITE */
       if (MSG_IS_INVITE(request)) {
-         INFO("%s Call: %s@%s -> %s@%s",
-              (type==REQTYP_INCOMING) ? "Incoming":"Outgoing",
-              from_username ? from_username: "*NULL*",
-              from_host     ? from_host    : "*NULL*",
-              to_username   ? to_username  : "*NULL*",
-              to_host       ? to_host      : "*NULL*");
+         if (type==REQTYP_INCOMING) call_type="Incoming";
+         else call_type="Outgoing";
       /* BYE / CANCEL */
+      } else if (MSG_IS_ACK(request)) {
+         call_type="ACK";
       } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         INFO("Ending Call: %s@%s -> %s@%s",
+         call_type="Ending";
+      }
+
+      if (call_type) {
+         INFO("%s Call: %s@%s -> %s@%s",
+              call_type,
               from_username ? from_username: "*NULL*",
               from_host     ? from_host    : "*NULL*",
               to_username   ? to_username  : "*NULL*",
               to_host       ? to_host      : "*NULL*");
       }
+
    } /* log_calls */
 
 

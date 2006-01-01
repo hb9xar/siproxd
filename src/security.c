@@ -97,7 +97,23 @@ int security_check_raw(char *sip_buffer, int size) {
          DEBUGC(DBCLASS_SIP,"security_check_raw: found only one space");
          return STS_FAILURE;
    }
-    
+
+   /* libosip2 can be put into an endless loop by trying to parse:
+      ---BUFFER DUMP follows---
+        49 4e 56 49 54 45 20 20 53 49 50 2f 32 2e 30 0d INVITE  SIP/2.0.
+        0a 56 69 61 3a 20 53 49 50 2f 32 2e 30 2f 55 44 .Via: SIP/2.0/UD
+   Note, this is an INVITE with no valid SIP URI (INVITE  SIP/2.0)
+   */
+   /* clumsy... */
+   if (size >20) {
+   if      (strncmp(sip_buffer, "INVITE  SIP/2.0",  15)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "ACK  SIP/2.0",     12)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "BYE  SIP/2.0",     12)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "CANCEL  SIP/2.0",  15)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "REGISTER  SIP/2.0",17)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "OPTIONS  SIP/2.0", 16)==0) return STS_FAILURE;
+   else if (strncmp(sip_buffer, "INFO  SIP/2.0",    13)==0) return STS_FAILURE;
+   }
 
    /* TODO: still way to go here ... */
    return STS_SUCCESS;
