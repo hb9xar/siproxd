@@ -222,8 +222,11 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 #define DEFAULT_MAXFWD	70	/* default Max-Forward count */
 #define DEFAULT_EXPIRES	3600	/* default Expires timeout */
 
-#define URLMAP_SIZE	32	/* number of URL mapping table entries	*/
-#define RTPPROXY_SIZE	64	/* number of rtp proxy entries		*/
+#define URLMAP_SIZE	64	/* number of URL mapping table entries	*/
+				/* this limits the number of clients!	*/
+
+#define RTPPROXY_SIZE	128	/* number of rtp proxy entries		*/
+				/* this limits the number of calls!	*/
 
 #define BUFFER_SIZE	8196	/* input buffer for read from socket	*/
 #define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/
@@ -234,10 +237,10 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
 #define IFADR_CACHE_SIZE 32	/* number of entries in internal IFADR cache */
 #define IFADR_MAX_AGE	5	/* max. age of the IF address cache (sec) */
 #define IFNAME_SIZE	16	/* max string length of a interface name */
-#define HOSTNAME_SIZE	64	/* max string length of a hostname	*/
-#define USERNAME_SIZE	64	/* max string length of a username (auth) */
-#define PASSWORD_SIZE	64	/* max string length of a password (auth) */
-#define VIA_BRANCH_SIZE 64	/* max string length for via branch param */
+#define HOSTNAME_SIZE	128	/* max string length of a hostname	*/
+#define USERNAME_SIZE	128	/* max string length of a username (auth) */
+#define PASSWORD_SIZE	128	/* max string length of a password (auth) */
+#define VIA_BRANCH_SIZE 128	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
 #if defined(PR_NETDB_BUF_SIZE)
    #define GETHOSTBYNAME_BUFLEN PR_NETDB_BUF_SIZE 
