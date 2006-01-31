@@ -21,7 +21,7 @@
 /* $Id$ */
 
 #define CALLIDNUM_SIZE	256
-#define CALLIDHOST_SIZE	32
+#define CALLIDHOST_SIZE	128
 #define CLIENT_ID_SIZE	128
 typedef struct {
    int rtp_rx_sock;				/* rx socket (0 -> free slot)*/

@@ -420,21 +420,21 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
     * the constants CALLIDNUM_SIZE and/or CALLIDHOST_SIZE.
     */
    if (callid->number && strlen(callid->number) > CALLIDNUM_SIZE) {
-      ERROR("rtp_relay_start_fwd: received callid number "
+      ERROR("rtp_relay_start_fwd: received callid number [%s] "
             "has too many characters (%i, max=%i)",
-            strlen(callid->number),CALLIDNUM_SIZE);
+            callid->number, strlen(callid->number),CALLIDNUM_SIZE);
       return STS_FAILURE;
    }
    if (callid->host && strlen(callid->host) > CALLIDHOST_SIZE) {
-      ERROR("rtp_relay_start_fwd: received callid host "
+      ERROR("rtp_relay_start_fwd: received callid host [%s] "
             "has too many characters (%i, max=%i)",
-            strlen(callid->host),CALLIDHOST_SIZE);
+            callid->host, strlen(callid->host),CALLIDHOST_SIZE);
       return STS_FAILURE;
    }
    if (client_id && strlen(client_id) > CLIENT_ID_SIZE) {
-      ERROR("rtp_relay_start_fwd: client ID has too many characters "
+      ERROR("rtp_relay_start_fwd: client ID [%s] has too many characters "
             "(%i, max=%i) (maybe you need to increase CLIENT_ID_SIZE",
-            strlen(client_id),CLIENT_ID_SIZE);
+            client_id, strlen(client_id),CLIENT_ID_SIZE);
       return STS_FAILURE;
    }
 
