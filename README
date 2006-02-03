@@ -93,7 +93,7 @@ via network:
   1) edit configuration file:
      -> 'daemonize = 1' have siproxd started as daemon
      -> 'silence_log' should be set to 1
-     -> 'debug_pattern = -1'
+     -> 'debug_level = -1'
      -> 'debug_port = 5050' (or any other TCP port you like)
   2) have siproxd started the usual way
   3) connect from a remote machine and write into a file:
