@@ -1122,6 +1122,8 @@ if (configuration.debuglevel)
  *	STS_SUCCESS on success
  */
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
+   char *scheme;
+   char *username;
    char *host;
    char *port;
    osip_uri_t *url;
@@ -1133,6 +1135,30 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
 
    DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
    url=osip_message_get_uri(mymsg);
+
+   /* set the true scheme */
+   if (url->scheme) osip_free(url->scheme);url->scheme=NULL;
+   if (urlmap[idx].true_url->scheme) {
+      DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: scheme=%s",
+             urlmap[idx].true_url->scheme);
+      scheme = (char *)malloc(strlen(urlmap[idx].true_url->scheme)+1);
+      memcpy(scheme, urlmap[idx].true_url->scheme,
+             strlen(urlmap[idx].true_url->scheme));
+      scheme[strlen(urlmap[idx].true_url->scheme)]='\0';
+      osip_uri_set_scheme(url, scheme);
+   }
+
+   /* set the true username */
+   if (url->username) osip_free(url->username);url->username=NULL;
+   if (urlmap[idx].true_url->username) {
+      DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: username=%s",
+             urlmap[idx].true_url->username);
+      username = (char*)malloc(strlen(urlmap[idx].true_url->scheme)+1);
+      memcpy(username, urlmap[idx].true_url->username,
+             strlen(urlmap[idx].true_url->username));
+      username[strlen(urlmap[idx].true_url->username)]='\0';
+      osip_uri_set_username(url, username);
+   }
 
    /* set the true host */
    if (url->host) osip_free(url->host);url->host=NULL;

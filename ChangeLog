@@ -1,5 +1,6 @@
 0.5.12
 ======
+   3-Feb-2006:  - rewrite complete incoming request URI
   31-Jan-2006:  - CALLIDHOST_SIZE to 128: support longer hostnames
    1-Jan-2006:  - short-dial: use "302 Moved" to point to target
   28-Dec-2005:  - Call logging: display FROM & TO for calls.
