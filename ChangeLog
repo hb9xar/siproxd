@@ -1,5 +1,9 @@
 0.5.12
 ======
+   8-Feb-2006:  - replaced some malloc() by osip_malloc(),
+                  (hopefully) fixed a sporadic crash in sdp_message_parse()
+   6-Feb-2006:  - RTP timeouts on some PBX systems that include an video 
+                  stream, but the called UA has no video capability.
    3-Feb-2006:  - rewrite complete incoming request URI
   31-Jan-2006:  - CALLIDHOST_SIZE to 128: support longer hostnames
    1-Jan-2006:  - short-dial: use "302 Moved" to point to target

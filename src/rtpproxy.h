@@ -46,4 +46,5 @@ int  rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
                           int rtp_direction, int media_stream_no,
 		          struct in_addr local_ipaddr, int *local_port,
                           struct in_addr remote_ipaddr, int remote_port);
-int  rtp_relay_stop_fwd (osip_call_id_t *callid, int rtp_direction, int nolock);
+int  rtp_relay_stop_fwd (osip_call_id_t *callid, int rtp_direction,
+                         int media_stream_no, int nolock);

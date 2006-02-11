@@ -334,7 +334,7 @@ static void *rtpproxy_main(void *arg) {
                     /* don't lock the mutex, as we own the lock */
                     callid.number=rtp_proxytable[i].callid_number;
                     callid.host=rtp_proxytable[i].callid_host;
-                    rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, 1);
+                    rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, -1, 1);
                      }
                   }
                }
@@ -356,13 +356,20 @@ static void *rtpproxy_main(void *arg) {
                /* this one has expired, clean it up */
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
+               INFO("RTP stream %s@%s (media=%i) has expired",
+                    callid.number, callid.host,
+                    rtp_proxytable[i].media_stream_no);
                DEBUGC(DBCLASS_RTP,"RTP stream rx_sock=%i tx_sock=%i "
                       "%s@%s (idx=%i) has expired",
                       rtp_proxytable[i].rtp_rx_sock,
                       rtp_proxytable[i].rtp_tx_sock,
                       callid.number, callid.host, i);
-               /* don't lock the mutex, as we own the lock already here */
-               rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction, 1);
+               /* Don't lock the mutex, as we own the lock already here */
+               /* Only stop the stream we caught is timeout and not everything.
+                * This may be a multiple stream conversation (audio/video) and
+                * just one (unused?) has timed out. Seen with VoIPEX PBX! */
+               rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction,
+                                  rtp_proxytable[i].media_stream_no, 1);
 	    }
 	 }
       } /* if (t>...) */
@@ -419,21 +426,21 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
     * so if this test fails maybe it's just necessary to increase
     * the constants CALLIDNUM_SIZE and/or CALLIDHOST_SIZE.
     */
-   if (callid->number && strlen(callid->number) > CALLIDNUM_SIZE) {
+   if (callid->number && (strlen(callid->number) >= CALLIDNUM_SIZE)) {
       ERROR("rtp_relay_start_fwd: received callid number [%s] "
             "has too many characters (%i, max=%i)",
             callid->number, strlen(callid->number),CALLIDNUM_SIZE);
       return STS_FAILURE;
    }
-   if (callid->host && strlen(callid->host) > CALLIDHOST_SIZE) {
+   if (callid->host && (strlen(callid->host) >= CALLIDHOST_SIZE)) {
       ERROR("rtp_relay_start_fwd: received callid host [%s] "
             "has too many characters (%i, max=%i)",
             callid->host, strlen(callid->host),CALLIDHOST_SIZE);
       return STS_FAILURE;
    }
-   if (client_id && strlen(client_id) > CLIENT_ID_SIZE) {
+   if (client_id && (strlen(client_id) >= CLIENT_ID_SIZE)) {
       ERROR("rtp_relay_start_fwd: client ID [%s] has too many characters "
-            "(%i, max=%i) (maybe you need to increase CLIENT_ID_SIZE",
+            "(%i, max=%i)",
             client_id, strlen(client_id),CLIENT_ID_SIZE);
       return STS_FAILURE;
    }
@@ -663,12 +670,16 @@ unlock_and_exit:
 /*
  * stop a rtp stream on the proxy
  *
+ * if media_stream_no == -1, all media streams will be stopped,
+ * otherwise only the specified one.
+ *
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
 int rtp_relay_stop_fwd (osip_call_id_t *callid,
-                        int rtp_direction, int nolock) {
+                        int rtp_direction,
+                        int media_stream_no, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
@@ -713,14 +724,18 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
    /*
     * find the proper entry in rtp_proxytable
     * we need to loop the whole table, as there might be multiple
-    * media strema active for the same callid (audio + video stream)
+    * media streams active for the same callid (audio + video stream)
+    * if media_stream_no == -1, all streams are stoppen, otherwise
+    * if media_stream_no > 0 only the specified stream is stopped.
     */
    for (i=0; i<RTPPROXY_SIZE; i++) {
       cid.number = rtp_proxytable[i].callid_number;
       cid.host   = rtp_proxytable[i].callid_host;
       if (rtp_proxytable[i].rtp_rx_sock &&
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
-         (rtp_proxytable[i].direction == rtp_direction)) {
+         (rtp_proxytable[i].direction == rtp_direction) &&
+         ((media_stream_no < 0) ||
+          (media_stream_no == rtp_proxytable[i].media_stream_no))) {
          sts = close(rtp_proxytable[i].rtp_rx_sock);
 	 DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",
@@ -817,7 +832,8 @@ void rtpproxy_kill( void ) {
       if (rtp_proxytable[i].rtp_rx_sock != 0) {
          cid.number = rtp_proxytable[i].callid_number;
          cid.host   = rtp_proxytable[i].callid_host;
-         sts = rtp_relay_stop_fwd(&cid, rtp_proxytable[i].direction, 0);
+         sts = rtp_relay_stop_fwd(&cid, rtp_proxytable[i].direction,
+                                  rtp_proxytable[i].media_stream_no, 0);
       }
    }
    

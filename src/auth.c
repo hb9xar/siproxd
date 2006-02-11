@@ -102,7 +102,7 @@ int auth_include_authrq(osip_message_t *sipmsg) {
 
    osip_proxy_authenticate_set_auth_type(p_auth, osip_strdup("Digest"));
    osip_proxy_authenticate_set_nonce(p_auth, osip_strdup(auth_generate_nonce()));
-   realm=malloc(strlen(configuration.proxy_auth_realm)+3); /* add 2x" and \0 */
+   realm=osip_malloc(strlen(configuration.proxy_auth_realm)+3); /* add 2x" and \0 */
    if (realm) {
       sprintf(realm,"\"%s\"",configuration.proxy_auth_realm);
       osip_proxy_authenticate_set_realm(p_auth, realm);

@@ -822,6 +822,10 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_body_to_str");
    }
+
+   DEBUGC(-1, "rewrite_invitation_body: payload %i bytes", bodybuflen);
+   DUMP_BUFFER(-1, bodybuff, bodybuflen);
+
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, bodybuff);
    if (sts != 0) {
@@ -1137,11 +1141,11 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    url=osip_message_get_uri(mymsg);
 
    /* set the true scheme */
-   if (url->scheme) osip_free(url->scheme);url->scheme=NULL;
+   if (url->scheme) {osip_free(url->scheme);url->scheme=NULL;}
    if (urlmap[idx].true_url->scheme) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: scheme=%s",
              urlmap[idx].true_url->scheme);
-      scheme = (char *)malloc(strlen(urlmap[idx].true_url->scheme)+1);
+      scheme = (char *)osip_malloc(strlen(urlmap[idx].true_url->scheme)+1);
       memcpy(scheme, urlmap[idx].true_url->scheme,
              strlen(urlmap[idx].true_url->scheme));
       scheme[strlen(urlmap[idx].true_url->scheme)]='\0';
@@ -1149,11 +1153,11 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    }
 
    /* set the true username */
-   if (url->username) osip_free(url->username);url->username=NULL;
+   if (url->username) {osip_free(url->username);url->username=NULL;}
    if (urlmap[idx].true_url->username) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: username=%s",
              urlmap[idx].true_url->username);
-      username = (char*)malloc(strlen(urlmap[idx].true_url->scheme)+1);
+      username = (char*)osip_malloc(strlen(urlmap[idx].true_url->username)+1);
       memcpy(username, urlmap[idx].true_url->username,
              strlen(urlmap[idx].true_url->username));
       username[strlen(urlmap[idx].true_url->username)]='\0';
@@ -1161,22 +1165,22 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    }
 
    /* set the true host */
-   if (url->host) osip_free(url->host);url->host=NULL;
+   if (url->host) {osip_free(url->host);url->host=NULL;}
    if (urlmap[idx].true_url->host) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: host=%s",
              urlmap[idx].true_url->host);
-      host = (char *)malloc(strlen(urlmap[idx].true_url->host)+1);
+      host = (char *)osip_malloc(strlen(urlmap[idx].true_url->host)+1);
       memcpy(host, urlmap[idx].true_url->host, strlen(urlmap[idx].true_url->host));
       host[strlen(urlmap[idx].true_url->host)]='\0';
       osip_uri_set_host(url, host);
    }
 
    /* set the true port */
-   if (url->port) osip_free(url->port);url->port=NULL;
+   if (url->port) {osip_free(url->port);url->port=NULL;}
    if (urlmap[idx].true_url->port) {
       DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: port=%s",
              urlmap[idx].true_url->port);
-      port = (char *)malloc(strlen(urlmap[idx].true_url->port)+1);
+      port = (char *)osip_malloc(strlen(urlmap[idx].true_url->port)+1);
       memcpy(port, urlmap[idx].true_url->port, strlen(urlmap[idx].true_url->port));
       port[strlen(urlmap[idx].true_url->port)]='\0';
       osip_uri_set_port(url, port);
