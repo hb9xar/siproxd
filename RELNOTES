@@ -2,7 +2,10 @@ Release Notes for siproxd-0.5.12
 ================================
 
 Major changes since 0.5.11:
-   
+   A "Short-Dial" feature is now available.
+   A number of bugfixes have been made. These include some issues
+   with Grandstream phones and the "unregister at startup" option,
+   as well as other issues with the expiration timeout.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -34,6 +37,7 @@ General Overview:
    need this 'feature'.
  - Provider specific outbound proxies can be configured
  - Can run "in front of" a NAT router.(in the local LAN segment)
+ - supports "Short-Dials"
 
 Requirements:
  - pthreads (Linux)
@@ -88,9 +92,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.11.tar.gz: 	
+md5sum for siproxd-0.5.12.tar.gz: 	2fa02bd6f83070593bfc2d383ce614fa
 
-GnuPG signature for siproxd-0.5.11.tar.gz archive:
+GnuPG signature for siproxd-0.5.12.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBEP57MCfzBioe83JQRAntEAJ93Q4ba+OYsKKsY863TodsRS56QqQCcDUmp
+qN8NJl/4atCZiyOs7CNn0hI=
+=REmU
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>

@@ -1,5 +1,6 @@
 0.5.12
 ======
+  14-Apr-2006:  - Released 0.5.12
    8-Feb-2006:  - replaced some malloc() by osip_malloc(),
                   (hopefully) fixed a sporadic crash in sdp_message_parse()
    6-Feb-2006:  - RTP timeouts on some PBX systems that include an video 
