@@ -1010,7 +1010,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
       if (urlmap[i].active == 0) continue;
       if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
-             urlmap[i].true_url);
+             urlmap[i].true_url->host);
       } else {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: reghost:%s ip:%s",
                 urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
