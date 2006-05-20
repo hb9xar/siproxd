@@ -48,7 +48,7 @@ int rtpproxy_init( void ) {
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
       sts = rtp_relay_init ();
    } else {
-      ERROR("CONFIG: rtp_proxy_enable has invalid value",
+      ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);
    }
 
@@ -76,7 +76,7 @@ int rtp_start_fwd (osip_call_id_t *callid, char *client_id,
                                  local_ipaddr, local_port,
                                  remote_ipaddr, remote_port);
    } else {
-      ERROR("CONFIG: rtp_proxy_enable has invalid value",
+      ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);
    }
 
@@ -99,7 +99,7 @@ int rtp_stop_fwd (osip_call_id_t *callid, int direction) {
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
       sts = rtp_relay_stop_fwd(callid, direction, -1, 0);
    } else {
-      ERROR("CONFIG: rtp_proxy_enable has invalid value",
+      ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);
    }
 

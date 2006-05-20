@@ -167,9 +167,9 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       mask_int=atoi(mask);
       bitmask= (mask_int)? (0xffffffff<<(32-mask_int)) : 0;
 
-      DEBUGC(DBCLASS_ACCESS,"[%i] (%p) <-> (%p)", i,
-                            ntohl(inaddr.s_addr) & bitmask,
-			    ntohl(from.sin_addr.s_addr) & bitmask);
+      DEBUGC(DBCLASS_ACCESS,"check match: entry=%i, filter=%lx, from=%lx", i,
+                            (long)ntohl(inaddr.s_addr) & bitmask,
+			    (long)ntohl(from.sin_addr.s_addr) & bitmask);
 
       if ( (ntohl(inaddr.s_addr) & bitmask) == 
            (ntohl(from.sin_addr.s_addr) & bitmask) ) return STS_SUCCESS;

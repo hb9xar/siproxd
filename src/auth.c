@@ -107,8 +107,8 @@ int auth_include_authrq(osip_message_t *sipmsg) {
       sprintf(realm,"\"%s\"",configuration.proxy_auth_realm);
       osip_proxy_authenticate_set_realm(p_auth, realm);
    } else {
-      ERROR("unable to malloc() %i bytes for authentication realm",
-            strlen(configuration.proxy_auth_realm)+3);
+      ERROR("unable to malloc() %ld bytes for authentication realm",
+            (long)strlen(configuration.proxy_auth_realm)+3);
       return STS_FAILURE;
    }
 

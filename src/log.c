@@ -210,7 +210,7 @@ void log_tcp_connect(void) {
 
 
 void log_debug(int class, char *file, int line, const char *format, ...) {
-   va_list ap;
+   va_list ap, ap_copy;
    time_t t;
    struct tm *tim;
    char string[128];
@@ -229,12 +229,16 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
       tim=localtime(&t);
       fprintf(stderr,"%2.2i:%2.2i:%2.2i %s:%i ", tim->tm_hour,
                       tim->tm_min, tim->tm_sec, file, line);
-      vfprintf(stderr, format, ap);
+      va_copy(ap_copy, ap);
+      vfprintf(stderr, format, ap_copy);
+      va_end(ap_copy);
       fprintf(stderr,"\n");
       fflush(stderr);
    } else if (silence_level < 1) {
       /* running as daemon - log via SYSLOG facility */
-      vsnprintf(string, sizeof(string), format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(string, sizeof(string), format, ap_copy);
+      va_end(ap_copy);
       syslog(LOG_USER|LOG_DEBUG, "%s:%i %s", file, line, string);
    }
    /*
@@ -247,7 +251,9 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
       snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i %s:%i ",
                        tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
       write(debug_fd, outbuf, strlen(outbuf));
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
+      va_end(ap_copy);
       write(debug_fd, outbuf, strlen(outbuf));
       snprintf(outbuf, sizeof(outbuf) ,"\n");
       write(debug_fd, outbuf, strlen(outbuf));
@@ -261,7 +267,7 @@ void log_debug(int class, char *file, int line, const char *format, ...) {
 
 
 void log_error(char *file, int line, const char *format, ...) {
-   va_list ap;
+   va_list ap, ap_copy;
    time_t t;
    struct tm *tim;
    char string[128];
@@ -279,13 +285,17 @@ void log_error(char *file, int line, const char *format, ...) {
       tim=localtime(&t);
       fprintf(stderr,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",tim->tm_hour,
                       tim->tm_min, tim->tm_sec, file, line);
-      vfprintf(stderr, format, ap);
+      va_copy(ap_copy, ap);
+      vfprintf(stderr, format, ap_copy);
+      va_end(ap_copy);
       fprintf(stderr,"\n");
       fflush(stderr);
    }
    if (silence_level < 4) {
       /* running as daemon - log via SYSLOG facility */
-      vsnprintf(string, sizeof(string), format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(string, sizeof(string), format, ap_copy);
+      va_end(ap_copy);
       syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
    }
    /*
@@ -298,7 +308,9 @@ void log_error(char *file, int line, const char *format, ...) {
       snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",
                        tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
       write(debug_fd, outbuf, strlen(outbuf));
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
+      va_end(ap_copy);
       write(debug_fd, outbuf, strlen(outbuf));
       snprintf(outbuf, sizeof(outbuf) ,"\n");
       write(debug_fd, outbuf, strlen(outbuf));
@@ -312,7 +324,7 @@ void log_error(char *file, int line, const char *format, ...) {
 
 
 void log_warn(char *file, int line, const char *format, ...) {
-   va_list ap;
+   va_list ap, ap_copy;
    time_t t;
    struct tm *tim;
    char string[128];
@@ -330,13 +342,17 @@ void log_warn(char *file, int line, const char *format, ...) {
       tim=localtime(&t);
       fprintf(stderr,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",tim->tm_hour,
                       tim->tm_min, tim->tm_sec,file,line);
-      vfprintf(stderr, format, ap);
+      va_copy(ap_copy, ap);
+      vfprintf(stderr, format, ap_copy);
+      va_end(ap_copy);
       fprintf(stderr,"\n");
       fflush(stderr);
    }
    if (silence_level < 3) {
       /* running as daemon - log via SYSLOG facility */
-      vsnprintf(string, sizeof(string), format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(string, sizeof(string), format, ap_copy);
+      va_end(ap_copy);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
    }
    /*
@@ -349,7 +365,9 @@ void log_warn(char *file, int line, const char *format, ...) {
       snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",
                        tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
       write(debug_fd, outbuf, strlen(outbuf));
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
+      va_end(ap_copy);
       write(debug_fd, outbuf, strlen(outbuf));
       snprintf(outbuf, sizeof(outbuf) ,"\n");
       write(debug_fd, outbuf, strlen(outbuf));
@@ -363,7 +381,7 @@ void log_warn(char *file, int line, const char *format, ...) {
 
 
 void log_info(char *file, int line, const char *format, ...) {
-   va_list ap;
+   va_list ap, ap_copy;
    time_t t;
    struct tm *tim;
    char string[128];
@@ -381,13 +399,17 @@ void log_info(char *file, int line, const char *format, ...) {
       tim=localtime(&t);
       fprintf(stderr,"%2.2i:%2.2i:%2.2i INFO:%s:%i ",tim->tm_hour,
                       tim->tm_min, tim->tm_sec,file,line);
-      vfprintf(stderr, format, ap);
+      va_copy(ap_copy, ap);
+      vfprintf(stderr, format, ap_copy);
+      va_end(ap_copy);
       fprintf(stderr,"\n");
       fflush(stderr);
    }
    if (silence_level < 2) {
       /* running as daemon - log via SYSLOG facility */
-      vsnprintf(string, sizeof(string), format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(string, sizeof(string), format, ap_copy);
+      va_end(ap_copy);
       syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
    }
    /*
@@ -400,7 +422,9 @@ void log_info(char *file, int line, const char *format, ...) {
       snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i INFO:%s:%i ",
                        tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
       write(debug_fd, outbuf, strlen(outbuf));
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap);
+      va_copy(ap_copy, ap);
+      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
+      va_end(ap_copy);
       write(debug_fd, outbuf, strlen(outbuf));
       snprintf(outbuf, sizeof(outbuf) ,"\n");
       write(debug_fd, outbuf, strlen(outbuf));

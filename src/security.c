@@ -42,10 +42,10 @@ static char const ident[]="$Id$";
  *	STS_SUCCESS if ok 
  * 	STS_FAILURE if the packed did not pass the checks
  */
-int security_check_raw(char *sip_buffer, int size) {
+int security_check_raw(char *sip_buffer, size_t size) {
    char *p1=NULL, *p2=NULL;
 
-   DEBUGC(DBCLASS_BABBLE,"security_check_raw: size=%i", size);
+   DEBUGC(DBCLASS_BABBLE,"security_check_raw: size=%ld", (long)size);
    /*
     * empiric: size must be >= 16 bytes
     *   2 byte <CR><LF> packets have been seen in the wild

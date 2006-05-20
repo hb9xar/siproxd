@@ -428,20 +428,20 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
     */
    if (callid->number && (strlen(callid->number) >= CALLIDNUM_SIZE)) {
       ERROR("rtp_relay_start_fwd: received callid number [%s] "
-            "has too many characters (%i, max=%i)",
-            callid->number, strlen(callid->number),CALLIDNUM_SIZE);
+            "has too many characters (%ld, max=%i)",
+            callid->number, (long)strlen(callid->number),CALLIDNUM_SIZE);
       return STS_FAILURE;
    }
    if (callid->host && (strlen(callid->host) >= CALLIDHOST_SIZE)) {
       ERROR("rtp_relay_start_fwd: received callid host [%s] "
-            "has too many characters (%i, max=%i)",
-            callid->host, strlen(callid->host),CALLIDHOST_SIZE);
+            "has too many characters (%ld, max=%i)",
+            callid->host, (long)strlen(callid->host),CALLIDHOST_SIZE);
       return STS_FAILURE;
    }
    if (client_id && (strlen(client_id) >= CLIENT_ID_SIZE)) {
       ERROR("rtp_relay_start_fwd: client ID [%s] has too many characters "
-            "(%i, max=%i)",
-            client_id, strlen(client_id),CLIENT_ID_SIZE);
+            "(%ld, max=%i)",
+            client_id, (long)strlen(client_id),CLIENT_ID_SIZE);
       return STS_FAILURE;
    }
 
@@ -595,7 +595,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
             tos = (configuration.rtp_dscp << 2) & 0xff;
             if(setsockopt(sock, SOL_IP, IP_TOS, &tos, sizeof(tos))) {
                ERROR("rtp_relay_start_fwd: setsockopt() failed while "
-                     "setting DSCP value: ", strerror(errno));
+                     "setting DSCP value: %s", strerror(errno));
             }
          } else {
             ERROR("rtp_relay_start_fwd: Invalid DSCP value %d",

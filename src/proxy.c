@@ -81,7 +81,7 @@ int proxy_request (sip_ticket_t *ticket) {
    osip_uri_t *url;
    int port;
    char *buffer;
-   int buflen;
+   size_t buflen;
    osip_message_t *request;
 
    DEBUGC(DBCLASS_PROXY,"proxy_request");
@@ -513,7 +513,7 @@ int proxy_response (sip_ticket_t *ticket) {
    osip_via_t *via;
    int port;
    char *buffer;
-   int buflen;
+   size_t buflen;
    osip_message_t *response;
 
    DEBUGC(DBCLASS_PROXY,"proxy_response");
@@ -782,8 +782,8 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
    sdp_message_t  *sdp;
    struct in_addr map_addr, addr_sess, addr_media, outside_addr, inside_addr;
    int sts;
-   char *bodybuff;
-   int bodybuflen;
+   char *buff;
+   size_t buflen;
    char clen[8]; /* content length: probably never more than 7 digits !*/
    int map_port, msg_port;
    int media_stream_no;
@@ -818,35 +818,35 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
 #endif
    }
 
-   sts = sip_body_to_str(body, &bodybuff, &bodybuflen);
+   sts = sip_body_to_str(body, &buff, &buflen);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_body_to_str");
    }
 
-   DEBUGC(-1, "rewrite_invitation_body: payload %i bytes", bodybuflen);
-   DUMP_BUFFER(-1, bodybuff, bodybuflen);
+   DEBUGC(-1, "rewrite_invitation_body: payload %ld bytes", (long)buflen);
+   DUMP_BUFFER(-1, buff, buflen);
 
    sts = sdp_message_init(&sdp);
-   sts = sdp_message_parse (sdp, bodybuff);
+   sts = sdp_message_parse (sdp, buff);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sdp_message_parse body");
-      DUMP_BUFFER(-1, bodybuff, bodybuflen);
-      osip_free(bodybuff);
+      DUMP_BUFFER(-1, buff, buflen);
+      osip_free(buff);
       sdp_message_free(sdp);
       return STS_FAILURE;
    }
-   osip_free(bodybuff);
+   osip_free(buff);
 
 
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
-   int tmplen;
+   size_t tmplen;
    sts = osip_message_get_body(mymsg, 0, &body);
    sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
-   DEBUG("Body before rewrite (clen=%s, strlen=%i):\n%s\n----",
-         tmp2, tmplen, tmp);
+   DEBUG("Body before rewrite (clen=%s, strlen=%ld):\n%s\n----",
+         tmp2, (long)tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
 }
@@ -1080,14 +1080,14 @@ if (configuration.debuglevel)
    osip_body_free(body);
 
    /* dump new body */
-   sdp_message_to_str(sdp, &bodybuff);
-   bodybuflen=strlen(bodybuff);
+   sdp_message_to_str(sdp, &buff);
+   buflen=strlen(buff);
 
    /* free sdp structure */
    sdp_message_free(sdp);
 
    /* include new body */
-   sip_message_set_body(mymsg, bodybuff, bodybuflen);
+   sip_message_set_body(mymsg, buff, buflen);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_message_set_body body");
    }
@@ -1095,21 +1095,21 @@ if (configuration.debuglevel)
    /* free content length resource and include new one*/
    osip_content_length_free(mymsg->content_length);
    mymsg->content_length=NULL;
-   sprintf(clen,"%i",bodybuflen);
+   sprintf(clen,"%ld",(long)buflen);
    sts = osip_message_set_content_length(mymsg, clen);
 
    /* free old body */
-   osip_free(bodybuff);
+   osip_free(buff);
 
 if (configuration.debuglevel)
 { /* just dump the buffer */
    char *tmp, *tmp2;
-   int tmplen;
+   size_t tmplen;
    sts = osip_message_get_body(mymsg, 0, &body);
    sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
-   DEBUG("Body after rewrite (clen=%s, strlen=%i):\n%s\n----",
-         tmp2, tmplen, tmp);
+   DEBUG("Body after rewrite (clen=%s, strlen=%ld):\n%s\n----",
+         tmp2, (long)tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
 }

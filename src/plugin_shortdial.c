@@ -21,18 +21,12 @@
 #include "config.h"
 
 #include <stdio.h>
-//#include <errno.h>
 #include <string.h>
-//#include <stdlib.h>
-//#include <unistd.h>
-//#include <signal.h>
 #include <netinet/in.h>
-//#include <arpa/inet.h>
 
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
-//#include "plugins.h"
 #include "log.h"
 
 static char const ident[]="$Id$";
@@ -79,7 +73,7 @@ int plugin_shortdial(sip_ticket_t *ticket) {
 
    /* requested number is not defined (out of range) */
    if (shortcut_no > configuration.pi_shortdial_entry.used) {
-      DEBUGC(DBCLASS_PLUGIN, "shortdial: shortcut %i > available shortcuts",
+      DEBUGC(DBCLASS_PLUGIN, "shortdial: shortcut %i > available shortcuts (%i)",
             shortcut_no, configuration.pi_shortdial_entry.used);
       return STS_SUCCESS;
    }
@@ -115,7 +109,8 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    osip_uri_t *to_url=ticket->sipmsg->to->url;
    char *to_user=to_url->username;
    char *new_to_user=NULL;
-   int  i, len;
+   int  i;
+   size_t len;
    osip_contact_t *contact = NULL;
 
    new_to_user=configuration.pi_shortdial_entry.string[shortcut_no-1];

@@ -46,20 +46,27 @@ void log_set_listen_port(int port);
 void log_tcp_listen(void);
 void log_tcp_connect(void);
 
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
+#  define GNUC_PRINTF(format_idx, arg_idx) \
+     __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#  define GNUC_PRINTF(format_idx, arg_idx)
+#endif
+
 #undef DEBUG
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)
 
 #define DEBUGC(C,F...) log_debug(C,__FILE__, __LINE__,F)
-void log_debug(int class, char *file, int line, const char *format, ...);
+void log_debug(int class, char *file, int line, const char *format, ...) GNUC_PRINTF(4, 5);
 
 #define ERROR(F...) log_error(__FILE__, __LINE__,F)
-void log_error(char *file, int line, const char *format, ...);
+void log_error(char *file, int line, const char *format, ...) GNUC_PRINTF(3, 4);
 
 #define WARN(F...) log_warn(__FILE__, __LINE__,F)
-void log_warn(char *file, int line, const char *format, ...);
+void log_warn(char *file, int line, const char *format, ...) GNUC_PRINTF(3, 4);
 
 #define INFO(F...) log_info(__FILE__, __LINE__,F)
-void log_info(char *file, int line, const char *format, ...);
+void log_info(char *file, int line, const char *format, ...) GNUC_PRINTF(3, 4);
 
 /* tobedone: dump a buffer */
 #define DUMP_BUFFER(C,F,L) log_dump_buffer(C,__FILE__, __LINE__,F,L)

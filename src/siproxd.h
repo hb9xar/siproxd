@@ -125,7 +125,7 @@ int sipsock_wait(void);
 int sipsock_read(void *buf, size_t bufsize,
                  struct sockaddr_in *from, int *protocol);
 int sipsock_send(struct in_addr addr, int port,	int protocol,			/*X*/
-                 char *buffer, int size);
+                 char *buffer, size_t size);
 int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
 /* register.c */
@@ -192,7 +192,7 @@ void rtpproxy_kill( void );						/*X*/
 int  accesslist_check(struct sockaddr_in from);
 
 /* security.c */
-int  security_check_raw(char *sip_buffer, int size);			/*X*/
+int  security_check_raw(char *sip_buffer, size_t size);			/*X*/
 int  security_check_sip(sip_ticket_t *ticket);				/*X*/
 
 /* auth.c */
@@ -209,10 +209,10 @@ int fwapi_stop_rtp(int rtp_direction,
                    struct in_addr remote_ipaddr, int remote_port);
 
 /* sip_layer.c */
-int sip_message_parse(osip_message_t * sip, const char *buf, int len);
-int sip_message_to_str(osip_message_t * sip, char **dest, int *len);
-int sip_body_to_str(const osip_body_t * body, char **dest, int *len);
-int sip_message_set_body(osip_message_t * sip, const char *buf, int len);
+int sip_message_parse(osip_message_t * sip,    const char *buf, size_t len);
+int sip_message_to_str(osip_message_t * sip,   char **dest,     size_t *len);
+int sip_body_to_str(const osip_body_t * body,  char **dest,     size_t *len);
+int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 
 
 /*

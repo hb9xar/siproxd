@@ -85,12 +85,12 @@ osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
    osip_from_clone (request->from, &response->from);
 
    /* if 3xx, also include 1st contact header */
-   if ((code>=300) && (code<400)) {
+   if ((code==200) || ((code>=300) && (code<400))) {
       osip_contact_t *req_contact = NULL;
       osip_contact_t *res_contact = NULL;
       osip_message_get_contact(request, 0, &req_contact);
-      osip_contact_clone (req_contact, &res_contact);
-      osip_list_add(response->contacts,res_contact,0);
+      if (req_contact) osip_contact_clone (req_contact, &res_contact);
+      if (res_contact) osip_list_add(response->contacts,res_contact,0);
    }
 
    /* via headers */
@@ -525,7 +525,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
    osip_via_t *via;
    int port;
    char *buffer;
-   int buflen;
+   size_t buflen;
    struct in_addr addr;
 
    /* create the response template */

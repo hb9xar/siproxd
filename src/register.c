@@ -54,7 +54,8 @@ extern int errno;
  */
 void register_init(void) {
    FILE *stream;
-   int sts, size, i;
+   int sts, i;
+   size_t len;
    char buff[128];
 
    memset(urlmap, 0, sizeof(urlmap));
@@ -85,8 +86,8 @@ void register_init(void) {
                if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
                if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
                if (strlen(buff) > 0) {\
-                  size = strlen(buff);\
-                  X    =(char*)malloc(size+1);\
+                  len  = strlen(buff);\
+                  X    =(char*)malloc(len+1);\
                   sts=sscanf(buff,"%s",X);\
                } else {\
                   X = NULL;\
@@ -529,7 +530,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
    osip_via_t *via;
    int port;
    char *buffer;
-   int buflen;
+   size_t buflen;
    struct in_addr addr;
    osip_header_t *expires_hdr;
 

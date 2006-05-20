@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
 {
    int sts;
    int i;
-   int buflen;
+   size_t buflen;
    int access;
    char buff [BUFFER_SIZE];
    sip_ticket_t ticket;

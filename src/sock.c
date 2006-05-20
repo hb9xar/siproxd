@@ -137,7 +137,7 @@ int sipsock_read(void *buf, size_t bufsize,
  *	STS_FAILURE on error
  */
 int sipsock_send(struct in_addr addr, int port, int protocol,
-                 char *buffer, int size) {
+                 char *buffer, size_t size) {
    struct sockaddr_in dst_addr;
    int sts;
 
@@ -170,9 +170,9 @@ int sipsock_send(struct in_addr addr, int port, int protocol,
    
    if (sts == -1) {
       if (errno != ECONNREFUSED) {
-         ERROR("sendto() [%s:%i size=%i] call failed: %s",
+         ERROR("sendto() [%s:%i size=%ld] call failed: %s",
                utils_inet_ntoa(addr),
-               port, size, strerror(errno));
+               port, (long)size, strerror(errno));
          return STS_FAILURE;
       }
       DEBUGC(DBCLASS_BABBLE,"sendto() [%s:%i] call failed: %s",

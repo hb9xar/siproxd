@@ -136,6 +136,7 @@ static int parse_config (FILE *configfile) {
    int i;
    int k;
    int num;
+   size_t len;
    char *tmpptr;
 
    struct cfgopts {
@@ -251,8 +252,8 @@ static int parse_config (FILE *configfile) {
                   */
 
 		 /* figure out the amount of space we need */
-	         num=strlen(ptr)+1; /* include terminating zero!*/
-                 tmpptr=(char*)malloc(num);
+	         len=strlen(ptr)+1; /* include terminating zero!*/
+                 tmpptr=(char*)malloc(len);
                  memcpy(configoptions[k].dest, &tmpptr, sizeof(tmpptr));
 	         num=sscanf(ptr,"%s",tmpptr);
                  DEBUGC(DBCLASS_BABBLE,"STRING=%s",
@@ -269,8 +270,8 @@ static int parse_config (FILE *configfile) {
                  int used=((stringa_t*)(configoptions[k].dest))->used;
 		 // do I hace space left?
                  if (used<=CFG_STRARR_SIZE){
-	            num=strlen(ptr)+1; /* include terminating zero!*/
-                    tmpptr=(char*)malloc(num);
+	            len=strlen(ptr)+1; /* include terminating zero!*/
+                    tmpptr=(char*)malloc(len);
 		    dst=&((stringa_t*)(configoptions[k].dest))->
                          string[used];
                     memcpy(dst, &tmpptr, sizeof(tmpptr));
