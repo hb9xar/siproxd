@@ -20,7 +20,12 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
 #include <arpa/nameser.h>
+#ifdef __APPLE__
+#include <arpa/nameser_compat.h>
+#endif
+
 #include <resolv.h>
 #include <string.h>
 
@@ -62,7 +67,7 @@ static int _resolve(char *name, int proto, int type,
    int class=C_ANY;
 
    // message buffer
-   char msg[PACKETSZ];
+   unsigned char msg[PACKETSZ];
    int msglen=PACKETSZ;
 
    // response header
@@ -73,7 +78,7 @@ static int _resolve(char *name, int proto, int type,
    int exp_dnlen=MAXDNAME;
 
    int i, j, co;
-   char *mptr, *xptr;
+   unsigned char *mptr, *xptr;
    unsigned short *usp,ty;
    unsigned int *uip;
 
