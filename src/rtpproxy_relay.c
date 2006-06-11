@@ -299,6 +299,7 @@ static void *rtpproxy_main(void *arg) {
                           (rtp_direction != rtp_proxytable[j].direction) &&
                           (strcmp(rtp_proxytable[j].client_id, client_id) != 0) ) {
                         rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
+                        rtp_proxytable[i].opposite_entry=j+1;
                         DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i) <-> entry %i (fd=%i)",
                                j, rtp_proxytable[j].rtp_rx_sock,
                                i, rtp_proxytable[i].rtp_rx_sock);
@@ -340,8 +341,13 @@ static void *rtpproxy_main(void *arg) {
                }
             } /* count > 0 */
 
-            /* update timestamp of last usage */
+            /* update timestamp of last usage for both (RX and TX) entries.
+             * This allows silence (no data) on one stream without breaking
+             * the connection after the RTP timeout */
             rtp_proxytable[i].timestamp=t;
+            if (rtp_proxytable[i].opposite_entry > 0) {
+               rtp_proxytable[rtp_proxytable[i].opposite_entry-1].timestamp=t;
+            }
          }
       } /* for i */
 

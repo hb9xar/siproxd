@@ -24,18 +24,19 @@
 #define CALLIDHOST_SIZE	128
 #define CLIENT_ID_SIZE	128
 typedef struct {
-   int rtp_rx_sock;				/* rx socket (0 -> free slot)*/
-   int rtp_tx_sock;				/* tx socket */
-   char callid_number[CALLIDNUM_SIZE];          /* call ID */
-   char callid_host[CALLIDHOST_SIZE];           /*  --"--  */
+   int  rtp_rx_sock;				/* rx socket (0 -> free slot)*/
+   int  rtp_tx_sock;				/* tx socket */
+   char callid_number[CALLIDNUM_SIZE];		/* call ID */
+   char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
    char client_id[CLIENT_ID_SIZE];
-   int direction;                               /* Direction of RTP stream */
-   int media_stream_no;
-   struct in_addr local_ipaddr;                 /* local IP */
-   int local_port;                              /* local allocated port */
-   struct in_addr remote_ipaddr;                /* remote IP */
-   int remote_port;                             /* remote port */
-   time_t timestamp;                            /* last 'stream alive' TS */
+   int  direction;				/* Direction of RTP stream */
+   int  media_stream_no;
+   struct in_addr local_ipaddr;			/* local IP */
+   int  local_port;				/* local allocated port */
+   struct in_addr remote_ipaddr;		/* remote IP */
+   int  remote_port;				/* remote port */
+   time_t timestamp;				/* last 'stream alive' TS */
+   int  opposite_entry;				/* 1 based!! index of opposite entry */
 } rtp_proxytable_t;
 
 /*
