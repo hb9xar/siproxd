@@ -1,3 +1,11 @@
+0.5.13
+======
+  20-May-2006:  - Fixed compiling issue when building on MacOS (Georg Schwarz)
+                - A number of correction in debugging code (James Henstridge)
+  26-Apr-2006:  - REGISTER response generated from siproxd includes
+                  a Contact header.
+                - some I64 architecture issues
+
 0.5.12
 ======
   14-Apr-2006:  - Released 0.5.12
