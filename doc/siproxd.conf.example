@@ -143,6 +143,13 @@ rtp_timeout = 300
 rtp_dscp = 46
 
 ######################################################################
+# Dejitter value
+#    in useconds
+#
+rtp_input_dejitter  = 300000
+rtp_output_dejitter = 300000
+
+######################################################################
 # Default Expiration timeout for Registrations
 #    If a REGISTER request does not contain an Expires header
 #    or expires= parameter in the Contact header, this number of

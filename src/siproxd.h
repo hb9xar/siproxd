@@ -69,6 +69,8 @@ struct siproxd_config {
    int rtp_timeout;
    int rtp_dscp;
    int rtp_proxy_enable;
+   int rtp_input_dejitter;
+   int rtp_output_dejitter;
    char *user;
    char *chrootjail;
    char *hosts_allow_reg;
@@ -184,7 +186,8 @@ int  rtpproxy_init( void );						/*X*/
 int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
                     int direction, int media_stream_no,
                     struct in_addr outbound_ipaddr, int *outboundport,
-                    struct in_addr lcl_client_ipaddr, int lcl_clientport);
+                    struct in_addr lcl_client_ipaddr, int lcl_clientport,
+                    int isrtp);
 int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
 void rtpproxy_kill( void );						/*X*/
 
@@ -222,11 +225,14 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define DEFAULT_MAXFWD	70	/* default Max-Forward count */
 #define DEFAULT_EXPIRES	3600	/* default Expires timeout */
 
-#define URLMAP_SIZE	64	/* number of URL mapping table entries	*/
+#define URLMAP_SIZE	128	/* number of URL mapping table entries	*/
 				/* this limits the number of clients!	*/
 
-#define RTPPROXY_SIZE	128	/* number of rtp proxy entries		*/
+#define RTPPROXY_SIZE	256	/* number of rtp proxy entries		*/
 				/* this limits the number of calls!	*/
+#define SOURCECACHE_SIZE 256	/* number of return addresses		*/
+#define DEJITTERLIMIT	1500000	/* max value for dejitter configuration */
+#define DEFAULT_DEJITTER 300000	/* default value for dejitter configuration */
 
 #define BUFFER_SIZE	8196	/* input buffer for read from socket	*/
 #define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/

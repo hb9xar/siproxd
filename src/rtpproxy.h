@@ -23,14 +23,33 @@
 #define CALLIDNUM_SIZE	256
 #define CALLIDHOST_SIZE	128
 #define CLIENT_ID_SIZE	128
+
+typedef struct {
+	struct timeval		starttime ;
+	int			calccount ;
+	int			dejitter ;
+	struct timeval		dejitter_tv ;
+	double			dejitter_d ;
+	int			time_code_a ;
+	double			recived_a ;		/* time in µsec sience epoch */
+	int			time_code_b ;
+	double			recived_b ;		/* time in µsec sience epoch */
+	int			time_code_c ;
+	double			recived_c ;		/* time in µsec sience epoch */
+
+} timecontrol_t ;
+
 typedef struct {
    int  rtp_rx_sock;				/* rx socket (0 -> free slot)*/
    int  rtp_tx_sock;				/* tx socket */
+   int rtp_con_rx_sock;				/* rx socket rtcp */
+   int rtp_con_tx_sock;				/* tx socket rtcp */
    char callid_number[CALLIDNUM_SIZE];		/* call ID */
    char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
    char client_id[CLIENT_ID_SIZE];
    int  direction;				/* Direction of RTP stream */
    int  media_stream_no;
+   timecontrol_t tc;
    struct in_addr local_ipaddr;			/* local IP */
    int  local_port;				/* local allocated port */
    struct in_addr remote_ipaddr;		/* remote IP */
@@ -45,7 +64,8 @@ typedef struct {
 int  rtp_relay_init(void);
 int  rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
                           int rtp_direction, int media_stream_no,
-		          struct in_addr local_ipaddr, int *local_port,
-                          struct in_addr remote_ipaddr, int remote_port);
+                          struct in_addr local_ipaddr, int *local_port,
+                          struct in_addr remote_ipaddr, int remote_port,
+                          int dejitter);
 int  rtp_relay_stop_fwd (osip_call_id_t *callid, int rtp_direction,
                          int media_stream_no, int nolock);

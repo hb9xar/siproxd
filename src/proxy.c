@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
@@ -791,6 +792,7 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
    sdp_media_t *sdp_med;
    int rtp_direction=0;
    int have_c_media=0;
+   int isrtp = 0 ;
 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
@@ -1000,6 +1002,28 @@ if (configuration.debuglevel)
          msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
 
          if (msg_port > 0) {
+
+            /* is this an RTP stream ? */
+            {
+            char *protocol = sdp_message_m_proto_get (sdp, media_stream_no);
+            if (protocol == NULL) {
+               DEBUGC(DBCLASS_PROXY, "no protocol definition found!");
+            } else {
+               char *check;
+               char *cmp;
+               isrtp = 1;
+               check = protocol ;
+               cmp = "RTP/" ;
+               while (*cmp && (isrtp = isrtp && *check) && 
+                      (isrtp = isrtp && (*cmp++ == toupper(*check++))) ) {} ;
+               if (isrtp) {
+                  DEBUGC(DBCLASS_PROXY, "found RTP protocol [%s]!", protocol);
+               } else {
+                  DEBUGC(DBCLASS_PROXY, "found non RTP protocol [%s]!", protocol);
+               }
+            }
+            }
+
             osip_uri_t *cont_url = NULL;
             char *client_id=NULL;
             /* try to get some additional UA specific unique ID.
@@ -1051,7 +1075,8 @@ if (configuration.debuglevel)
                                 rtp_direction,
                                 media_stream_no,
                                 map_addr, &map_port,
-                                addr_media, msg_port);
+                                addr_media, msg_port,
+                                isrtp);
 
             if (sts == STS_SUCCESS) {
                /* and rewrite the port */

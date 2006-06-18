@@ -157,6 +157,8 @@ static int parse_config (FILE *configfile) {
       { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
       { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
       { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp },
+      { "rtp_input_dejitter",  TYP_INT4,   &configuration.rtp_input_dejitter },
+      { "rtp_output_dejitter", TYP_INT4,   &configuration.rtp_output_dejitter },
       { "user",                TYP_STRING, &configuration.user },
       { "chrootjail",          TYP_STRING, &configuration.chrootjail },
       { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },
@@ -312,6 +314,8 @@ int make_default_config(void){
    memset (&configuration, 0, sizeof(configuration));
    configuration.sip_listen_port=SIP_PORT;
    configuration.default_expires=DEFAULT_EXPIRES;
+   configuration.rtp_input_dejitter=DEFAULT_DEJITTER;
+   configuration.rtp_output_dejitter=DEFAULT_DEJITTER;
 
    return STS_SUCCESS;
 }
