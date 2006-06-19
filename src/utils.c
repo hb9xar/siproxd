@@ -467,7 +467,14 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
  * utils_inet_ntoa:
  * implements an inet_ntoa()
  *
- * Returns pointer to a static character string.
+ * Returns pointer to a STATIC character string.
+ * NOte: BE AWARE OF THE STATIC NATURE of the string! Never pass it as
+ * calling argument to a function and use it immediately or strcpy()
+ * it into a buffer.
+ * !! Any subsequent call to this function will DESTROY the previous
+ * !! value - and may result in very strange effects like magically
+ * !! changing variable value (that has been passed to a function)
+ * Been there, seen that, so TAKE CARE!
  */
 char *utils_inet_ntoa(struct in_addr in) {
 #if defined(HAVE_INET_NTOP)

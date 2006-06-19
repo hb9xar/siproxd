@@ -1046,7 +1046,7 @@ if (configuration.debuglevel)
                tmp=utils_inet_ntoa(ticket->from.sin_addr);
                strncpy(from_string, tmp, HOSTNAME_SIZE-1);
                from_string[HOSTNAME_SIZE-1]='\0';
-               client_id=tmp;
+               client_id=from_string;
             }
 
             /*

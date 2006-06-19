@@ -246,7 +246,7 @@ static void *rtpproxy_main(void *arg) {
       current_tv = input_tv;
 
       /*
-       * Send delayed Packates
+       * Send delayed Packets
        */
       flushbuffers();
 
@@ -530,9 +530,9 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
 
 
          /* return the already known local port number */
-         DEBUGC(DBCLASS_RTP,"RTP stream already active (remaddr=%s, "
+         DEBUGC(DBCLASS_RTP,"RTP stream already active idx=%i (remaddr=%s, "
                 "remport=%i, lclport=%i, id=%s, #=%i)",
-                utils_inet_ntoa(remote_ipaddr),
+                i, utils_inet_ntoa(remote_ipaddr),
                 rtp_proxytable[i].remote_port,
                 rtp_proxytable[i].local_port,
                 rtp_proxytable[i].callid_number,
@@ -540,8 +540,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
          *local_port=rtp_proxytable[i].local_port;
          sts = STS_SUCCESS;
 	 goto unlock_and_exit;
-      }
-   }
+      } /* if already active */
+   } /* for */
 
 
    /*
@@ -617,7 +617,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    prev_used_port = port+1;
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: addr=%s, port=%i, sock=%i, "
-          "freeidx=%i, input data dejitter bufer=%i usec", 
+          "freeidx=%i, input data dejitter buffer=%i usec", 
           utils_inet_ntoa(local_ipaddr), port, sock, freeidx, dejitter);
 
    /* found an unused port? No -> RTP port pool fully allocated */
@@ -716,6 +716,15 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    if (!pthread_equal(rtpproxy_tid, pthread_self()))
       pthread_kill(rtpproxy_tid, SIGALRM);
 
+//&&&
+   DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: started RTP proxy "
+          "stream for: %s@%s[%s] (%s) #=%i idx=%i",
+          rtp_proxytable[freeidx].callid_number,
+          rtp_proxytable[freeidx].callid_host,
+          rtp_proxytable[freeidx].client_id,
+          ((rtp_proxytable[freeidx].direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
+          rtp_proxytable[freeidx].media_stream_no, freeidx);
+
 unlock_and_exit:
    /* unlock mutex */
    pthread_mutex_unlock(&rtp_proxytable_mutex);
@@ -749,9 +758,10 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd: stopping RTP proxy "
-          "stream for: %s@%s (%s)",
+          "stream for: %s@%s (%s) (nolock=%i)",
           callid->number, callid->host,
-          ((rtp_direction == DIR_INCOMING) ? "incoming" : "outgoing"));
+          ((rtp_direction == DIR_INCOMING) ? "incoming" : "outgoing"),
+          nolock);
 
    /*
     * lock mutex - only if not requested to skip the lock.
@@ -1031,13 +1041,13 @@ void send_top_of_que () {
              * we should then cancel this stream as well.*/
 
             WARN("stopping opposite stream");
-            /* don't lock the mutex, as we own the lock */
 
             callid.number=m->errret->callid_number;
             callid.host=m->errret->callid_host;
+            /* don't lock the mutex, as we own the lock */
             if (STS_SUCCESS != rtp_relay_stop_fwd(&callid, 
                                             m->errret->direction,
-                                            m->errret->media_stream_no, 0)) {
+                                            m->errret->media_stream_no, 1)) {
                ERROR("fatal error in delayed error close! [%s:%i size=%i]",
                      utils_inet_ntoa(m->errret->remote_ipaddr),
                      m->errret->remote_port, m->message_len);
