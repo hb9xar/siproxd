@@ -113,7 +113,7 @@ void add_time_values(const struct timeval *a, const struct timeval *b,
                      struct timeval *r);
 void sub_time_values(const struct timeval *a, const struct timeval *b,
                      struct timeval *r);
-int cmp_time_values(const struct timeval *a, const struct timeval *b);
+int  cmp_time_values(const struct timeval *a, const struct timeval *b);
 double make_double_time ( const struct timeval *tv);
 void send_top_of_que ();
 void delayedsendto(int s, const void *msg, size_t len, int flags,
@@ -121,10 +121,10 @@ void delayedsendto(int s, const void *msg, size_t len, int flags,
                    const struct timeval *tv, rtp_proxytable_t *errret);
 void cancelmessages (rtp_proxytable_t *dropentry);
 void flushbuffers();
-int delay_of_next_transmission(struct timeval *tv);
+int  delay_of_next_transmission(struct timeval *tv);
 void split_double_time ( double d, struct timeval *tv);
 void init_calculate_transmit_time (timecontrol_t *tc, int dejitter);
-int fetch_missalign_long_network_oder (char *where);
+int  fetch_missalign_long_network_oder (char *where);
 void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
                               const struct timeval *input_tv,
                               struct timeval *ttv);
@@ -342,6 +342,9 @@ static void *rtpproxy_main(void *arg) {
                if (rtp_proxytable[i].rtp_tx_sock != 0) {
                   struct sockaddr_in dst_addr;
                   struct timeval ttv;
+
+                  calculate_transmit_time (&rtp_buff,&(rtp_proxytable[i].tc),
+                                           &input_tv,&ttv) ;
 
                   /* write to dest via socket rtp_tx_sock */
                   dst_addr.sin_family = AF_INET;
