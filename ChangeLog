@@ -1,7 +1,6 @@
 0.5.13
 ======
-  18-Jun-2006:  - included RTCP support and a de-jitter feature
-                  (submitted by by Hans Carlos Hofmann)
+  20-Jun-2006:  - Released 0.5.13
   11-Jun-2006:  - RTP timeout handling: allow unidirectional data w/o 
                   terminating connection after timeout.
   20-May-2006:  - Fixed compiling issue when building on MacOS (Georg Schwarz)
