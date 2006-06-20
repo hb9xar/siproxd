@@ -42,7 +42,7 @@ int fwapi_start_rtp(int rtp_direction,
 
    sts=custom_fw_control(fwdata);
    if (sts != STS_SUCCESS) {
-      ERROR("Custom firewall module returned error [START, sts=%s]",sts);
+      ERROR("Custom firewall module returned error [START, sts=%i]",sts);
    }
 #endif
    return STS_SUCCESS;
@@ -63,7 +63,7 @@ int fwapi_stop_rtp(int rtp_direction,
 
    sts=custom_fw_control(fwdata);
    if (sts != STS_SUCCESS) {
-      ERROR("Custom firewall module returned error [STOP, sts=%s]",sts);
+      ERROR("Custom firewall module returned error [STOP, sts=%i]",sts);
    }
 #endif
    return STS_SUCCESS;
