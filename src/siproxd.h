@@ -232,7 +232,7 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 				/* this limits the number of calls!	*/
 #define SOURCECACHE_SIZE 256	/* number of return addresses		*/
 #define DEJITTERLIMIT	1500000	/* max value for dejitter configuration */
-#define DEFAULT_DEJITTER 300000	/* default value for dejitter configuration */
+#define DEFAULT_DEJITTER 100000	/* default value for dejitter configuration */
 
 #define BUFFER_SIZE	8196	/* input buffer for read from socket	*/
 #define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/
