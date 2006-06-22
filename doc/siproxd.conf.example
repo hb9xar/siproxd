@@ -88,6 +88,8 @@ user = nobody
 #   Where to store the current registrations.
 #   An empty value means we do not save registrations. Make sure that
 #   the specified directory path does exist!
+#   Note: If running in chroot jail, this path starts relative
+#         to the jail.
 registration_file = /var/lib/siproxd/siproxd_registrations
 
 ######################################################################
@@ -99,6 +101,8 @@ autosave_registrations = 300
 # PID file:
 #   Where to create the PID file.
 #   This file holds the PID of the main thread of siproxd.
+#   Note: If running in chroot jail, this path starts relative
+#         to the jail.
 pid_file = /var/run/siproxd/siproxd.pid
 
 ######################################################################
@@ -144,10 +148,11 @@ rtp_dscp = 46
 
 ######################################################################
 # Dejitter value
-#    in useconds
+#    Artificial delay to be used to de-jitter RTP data streams.
+#    This time is in microseconds.
 #
-rtp_input_dejitter  = 300000
-rtp_output_dejitter = 300000
+rtp_input_dejitter  = 100000
+rtp_output_dejitter = 100000
 
 ######################################################################
 # Default Expiration timeout for Registrations
@@ -162,6 +167,7 @@ default_expires = 600
 #    If proxy_auth_realm is defined (a string), clients will be forced
 #    to authenticate themselfes at the proxy (for registration only).
 #    To disable Authentication, simply comment out this line.
+#    Note: The proxy_auth_pwfile is independent of the chroot jail.
 #
 #proxy_auth_realm = Authentication_Realm
 #
