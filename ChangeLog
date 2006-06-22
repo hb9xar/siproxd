@@ -1,3 +1,8 @@
+0.6.0
+=====
+  18-Jun-2006:  - included RTCP support and a de-jitter feature
+                  (submitted by by Hans Carlos Hofmann)
+
 0.5.13
 ======
   20-Jun-2006:  - Released 0.5.13
