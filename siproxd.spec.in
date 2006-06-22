@@ -28,12 +28,15 @@ Vendor:		Thomas Ries
 Packager:       Thomas Ries <tries@gmx.net>
 
 %description
-Siproxd is an proxy/masquerading daemon for the SIP protocol.
+Siproxd is a proxy/masquerading daemon for SIP (Session Initiation
+Protocol), which is used in IP telephony.
 It handles registrations of SIP clients on a private IP network
 and performs rewriting of the SIP message bodies to make SIP
-connections possible via an masquerading firewall.
-It allows SIP clients (like kphone, linphone) to work behind
-an IP masquerading firewall or router.
+connections work via a masquerading firewall (NAT).
+It allows SIP software clients (like kphone, linphone) or SIP
+hardware clients (Voice over IP phones which are SIP-compatible,
+such as those from Cisco, Grandstream or Snom) to work behind
+an IP masquerading firewall or NAT router.
 
 
 %prep
