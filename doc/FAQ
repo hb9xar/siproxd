@@ -276,5 +276,28 @@ A: Very likely this will not work properly. Siproxd does masquerade User
    If you just want a proxy located in the public IP range you should not
    use siproxd, but get a real SIP proxy server instead.
 
+---------------------------------------------------------------------------
+Q: I can build siproxd, but when I try to start it it fails with
+   something like:
+   $ siproxd -h
+   siproxd: error while loading shared libraries: libosipparser2.so.3:
+   cannot open shared object file: No such file ordirectory
+
+A: Make sure you have correctly installed libosip2. If libosip2 is
+   installed somewhere else than the standard library paths, the
+   path MUST be included in the /etc/ld.so.conf file to tell the
+   dynamic linker where to search for libraries.
+   Try the following command:
+   $ /sbin/ldconfig -p|grep libosip
+   The output MUST be something like:
+
+   libosip2.so.3 (libc6) => /usr/lib/libosip2.so.3
+   libosip2.so (libc6) => /usr/lib/libosip2.so
+   libosipparser2.so.3 (libc6) => /usr/lib/libosipparser2.so.3
+   libosipparser2.so (libc6) => /usr/lib/libosipparser2.so
+
+   If not, libosip2 is not correctly installed.
+
+
 
 
