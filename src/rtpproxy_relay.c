@@ -1299,8 +1299,8 @@ void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
       if (calculatedtime2) {
          DEBUGC(DBCLASS_RTPBABL, "calculatedtime2 = %f", calculatedtime2);
       }
-      DEBUGC(DBCLASS_RTPBABL, "transmtime = %f (%f)", (calculatedtime) / 
-             160. * tc->recived_a) - packet_time_code / 160,
+      DEBUGC(DBCLASS_RTPBABL, "transmtime = %f (%f)", calculatedtime / 
+             (160. * tc->recived_a) - packet_time_code / 160,
              currenttime / (160. * tc->recived_a) - 
              packet_time_code / 160);
       DEBUGC(DBCLASS_RTPBABL, "synthetic latency = %f, %f, %f, %i, %i",
