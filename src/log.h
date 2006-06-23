@@ -35,7 +35,8 @@
 #define DBCLASS_ACCESS	0x00000400	/* Access list evaluation	     */
 #define DBCLASS_AUTH	0x00000800	/* Authentication		     */
 #define DBCLASS_PLUGIN	0x00001000	/* Plugins			     */
-#define DBCLASS_ALL	0xffffffff	/* All	classes			     */
+#define DBCLASS_RTPBABL	0x00002000	/* RTP babble			     */
+#define DBCLASS_ALL	0xffffffff	/* All classes			     */
 
 
 void log_set_pattern(int pattern);

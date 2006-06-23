@@ -1279,33 +1279,34 @@ void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
       calculatedtime = currenttime + 2.* tc->dejitter_d;
    }
 
-   if (tc->calccount % 100 == 0) {
-      DEBUGC(DBCLASS_RTP, "currenttime = %f", currenttime);
-      DEBUGC(DBCLASS_RTP, "packetcode  = %i", packet_time_code);
-      DEBUGC(DBCLASS_RTP, "timecodes %i, %i, %i",
-                          tc->time_code_a, tc->time_code_b, tc->time_code_c);
-      DEBUGC(DBCLASS_RTP, "measuredtimes %f usec, %f usec, %f usec",
-                          tc->recived_a, tc->recived_b, tc->recived_c);
-      DEBUGC(DBCLASS_RTP, "p2 - p1 = (%i,%f usec)",
-                          tc->time_code_b - tc->time_code_a,
-                          tc->recived_b - tc->recived_a);
+   /* every 500 counts show statistics */
+   if (tc->calccount % 500 == 0) {
+      DEBUGC(DBCLASS_RTPBABL, "currenttime = %f", currenttime);
+      DEBUGC(DBCLASS_RTPBABL, "packetcode  = %i", packet_time_code);
+      DEBUGC(DBCLASS_RTPBABL, "timecodes %i, %i, %i",
+             tc->time_code_a, tc->time_code_b, tc->time_code_c);
+      DEBUGC(DBCLASS_RTPBABL, "measuredtimes %f usec, %f usec, %f usec",
+             tc->recived_a, tc->recived_b, tc->recived_c);
+      DEBUGC(DBCLASS_RTPBABL, "p2 - p1 = (%i,%f usec)",
+             tc->time_code_b - tc->time_code_a,
+             tc->recived_b - tc->recived_a);
       if (tc->time_code_c) {
-         DEBUGC(DBCLASS_RTP, "p3 - p2 = (%i,%f usec)",
-                             tc->time_code_c - tc->time_code_b,
-                             tc->recived_c - tc->recived_b);
+         DEBUGC(DBCLASS_RTPBABL, "p3 - p2 = (%i,%f usec)",
+                tc->time_code_c - tc->time_code_b,
+                tc->recived_c - tc->recived_b);
       }
-      DEBUGC(DBCLASS_RTP, "calculatedtime = %f", calculatedtime);
+      DEBUGC(DBCLASS_RTPBABL, "calculatedtime = %f", calculatedtime);
       if (calculatedtime2) {
-         DEBUGC(DBCLASS_RTP, "calculatedtime2 = %f", calculatedtime2);
+         DEBUGC(DBCLASS_RTPBABL, "calculatedtime2 = %f", calculatedtime2);
       }
-      DEBUGC(DBCLASS_RTP, "transmtime = %f (%f)", (calculatedtime) / 
-                          (160. * tc->recived_a) - packet_time_code / 160,
-                          currenttime / (160. * tc->recived_a) - 
-                          packet_time_code / 160);
-      DEBUGC(DBCLASS_RTP, "synthetic latency = %f, %f, %f, %i, %i",
-                          calculatedtime-currenttime, calculatedtime,
-                          currenttime, packet_time_code, 
-                          packet_time_code / 160);
+      DEBUGC(DBCLASS_RTPBABL, "transmtime = %f (%f)", (calculatedtime) / 
+             160. * tc->recived_a) - packet_time_code / 160,
+             currenttime / (160. * tc->recived_a) - 
+             packet_time_code / 160);
+      DEBUGC(DBCLASS_RTPBABL, "synthetic latency = %f, %f, %f, %i, %i",
+             calculatedtime-currenttime, calculatedtime,
+             currenttime, packet_time_code, 
+             packet_time_code / 160);
    }
 
    split_double_time (calculatedtime,&output_r_tv);
