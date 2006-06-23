@@ -193,9 +193,11 @@ default_expires = 600
 #  DBCLASS_DNS     0x00000040	   // DNS stuff
 #  DBCLASS_NETTRAF 0x00000080	   // network traffic
 #  DBCLASS_CONFIG  0x00000100	   // configuration
-#  DBCLASS_RTP     0x00000200      // RTP proxy
-#  DBCLASS_ACCESS  0x00000400      // Access list evaluation
-#  DBCLASS_AUTH    0x00000800      // Authentication
+#  DBCLASS_RTP     0x00000200	   // RTP proxy
+#  DBCLASS_ACCESS  0x00000400	   // Access list evaluation
+#  DBCLASS_AUTH    0x00000800	   // Authentication
+#  DBCLASS_PLUGIN  0x00001000	   // Plugins
+#  DCLASS_RTPBABL  0x00002000	   // RTP babble
 #
 debug_level =      0x00000000
 

@@ -39,8 +39,8 @@
 #define DBCLASS_ALL	0xffffffff	/* All classes			     */
 
 
-void log_set_pattern(int pattern);
-int  log_get_pattern(void);
+void log_set_pattern(unsigned int pattern);
+unsigned int  log_get_pattern(void);
 void log_set_stderr(int tostdout);
 void log_set_silence(int level);
 void log_set_listen_port(int port);
@@ -58,7 +58,7 @@ void log_tcp_connect(void);
 #define DEBUG(F...) log_debug(1,__FILE__, __LINE__,F)
 
 #define DEBUGC(C,F...) log_debug(C,__FILE__, __LINE__,F)
-void log_debug(int class, char *file, int line, const char *format, ...) GNUC_PRINTF(4, 5);
+void log_debug(unsigned int class, char *file, int line, const char *format, ...) GNUC_PRINTF(4, 5);
 
 #define ERROR(F...) log_error(__FILE__, __LINE__,F)
 void log_error(char *file, int line, const char *format, ...) GNUC_PRINTF(3, 4);
@@ -71,5 +71,5 @@ void log_info(char *file, int line, const char *format, ...) GNUC_PRINTF(3, 4);
 
 /* tobedone: dump a buffer */
 #define DUMP_BUFFER(C,F,L) log_dump_buffer(C,__FILE__, __LINE__,F,L)
-void log_dump_buffer(int class, char *file, int line,
+void log_dump_buffer(unsigned int class, char *file, int line,
                      char *buffer, int length);

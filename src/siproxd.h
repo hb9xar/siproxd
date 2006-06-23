@@ -56,7 +56,7 @@ typedef struct {
  * configuration option table
  */
 struct siproxd_config {
-   int debuglevel;
+   unsigned int debuglevel;
    int debugport;
    char *inbound_if;
    char *outbound_if;

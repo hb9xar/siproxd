@@ -43,7 +43,7 @@ static char const ident[]="$Id$";
 
 /* module local variables */
 static int log_to_stderr=0;
-static int debug_pattern=0;
+static unsigned int debug_pattern=0;
 
 static int debug_listen_port=0;
 static int debug_listen_fd=0;
@@ -66,12 +66,12 @@ static int silence_level=1;
  */
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void log_set_pattern(int pattern) {
+void log_set_pattern(unsigned int pattern) {
    debug_pattern=pattern;
    return;
 }
 
-int  log_get_pattern(void) {
+unsigned int  log_get_pattern(void) {
    return debug_pattern;
 }
 
@@ -209,7 +209,7 @@ void log_tcp_connect(void) {
 */
 
 
-void log_debug(int class, char *file, int line, const char *format, ...) {
+void log_debug(unsigned int class, char *file, int line, const char *format, ...) {
    va_list ap, ap_copy;
    time_t t;
    struct tm *tim;
@@ -437,7 +437,7 @@ void log_info(char *file, int line, const char *format, ...) {
 }
 
 
-void log_dump_buffer(int class, char *file, int line,
+void log_dump_buffer(unsigned int class, char *file, int line,
                      char *buffer, int length) {
    int i, j;
    char tmp[8], tmplin1[80], tmplin2[80];
