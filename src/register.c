@@ -331,7 +331,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                    (url1_contact->host) ? url1_contact->host : "*NULL*",
                    (url2_to->username) ? url2_to->username : "*NULL*",
                    (url2_to->host) ? url2_to->host : "*NULL*",
-                   i, urlmap[i].expires-time_now);
+                   i, (long)urlmap[i].expires-time_now);
             break;
          }
       }

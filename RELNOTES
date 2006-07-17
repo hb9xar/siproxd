@@ -2,6 +2,8 @@ Release Notes for siproxd-0.5.13
 ================================
 
 Major changes since 0.5.12:
+   Several issues related to 64 bit architectures have been fixed
+   and several minor bugfixes.
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -52,7 +54,6 @@ Builds on:
 - FreeBSD:	FreeBSD 4.10-BETA
 - OpenBSD:	OpenBSD 3.4 GENERIC#18
 - SunOS:	SunOS 5.9
-- Mac OS X:	Darwin 6.8
 - Windows:	Cygwin environment
 
 Reported interoperability with softphones:
@@ -88,9 +89,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.5.13.tar.gz: 	
+md5sum for siproxd-0.5.13.tar.gz: 	af4126582e803ea6328f1e2d7e626479
 
 GnuPG signature for siproxd-0.5.13.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.3 (GNU/Linux)
+
+iD8DBQBEmDqoCfzBioe83JQRAu/nAJ9VBMoN6MdPJ1HrkgB5KfhemYS7YACfSX1k
+vkF3+HdJmK2bKeHxnAg4U8k=
+=w+Tt
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
