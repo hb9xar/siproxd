@@ -31,6 +31,12 @@
         <authorinitials>tries@users.sourceforge.net</authorinitials>
         <revremark>Initial version</revremark>
       </revision>
+      <revision>
+        <revnumber>0.2</revnumber>
+        <date>2006-07-28</date>
+        <authorinitials>tries@users.sourceforge.net</authorinitials>
+        <revremark>Comment on Asterisk Scenario</revremark>
+      </revision>
     </revhistory>
   </bookinfo>
   <toc></toc>
@@ -916,6 +922,9 @@ iptables -A INPUT -m udp -p udp -i ppp0 --dport 5060      -j ACCEPT
 iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7080 -j ACCEPT
 </screen>
       <para>Asterisk configuration (SIP related part):</para>
+      <para>Note: Very important are the fromuser and fromdomain
+        keywords in the client section. They are required to have
+        Asterisk send the correct From headers in SIP dialogs.</para>
 <screen>
 sip.conf:
 

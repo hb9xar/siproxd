@@ -128,9 +128,9 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
 Q: Does siproxd need to be installed on the same host as the
    firewall / NAT is running?
 
-A: Yes. Siproxd needs to know the public IP address, as this address is
-   included in the SIP signalling to establish a session. Also, siproxd
-   needs control on the allocation of UDP ports for sending/receiving
+A: Not necesarily. Siproxd needs to know the public IP address, as this
+   address is included in the SIP signalling to establish a session. Also,
+   siproxd needs control on the allocation of UDP ports for sending/receiving
    RTP data (some User Agents get into trouble/silence if the sending and
    receiving UDP port is not the same)
    
@@ -138,6 +138,11 @@ A: Yes. Siproxd needs to know the public IP address, as this address is
    requirement for the firewall rules is to allow port 5060 for incomming
    UDP datagrams (SIP) as well as the UDP port range for RTP data as
    specified in the config file (default 7070 - 7079).
+   
+   One mode of operation is to run siproxd on the NAT host, using
+   different if_inboude and if_outbound interfaces.
+   The other method is to ruin siproxd "in front of" the NAT firewall.
+   For configuration details see the documentation (host_outbound).
    
 ---------------------------------------------------------------------------
 Q: How do I configure siproxd to use ICPHAINS based UDP masquerading

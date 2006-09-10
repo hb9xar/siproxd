@@ -1,5 +1,6 @@
 0.6.0
 =====
+  19-Aug-2006:	- increased DNS cache
   18-Jun-2006:  - included RTCP support and a de-jitter feature
                   (submitted by by Hans Carlos Hofmann)
 
