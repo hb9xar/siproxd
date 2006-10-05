@@ -400,10 +400,6 @@ int route_determine_nexthop(sip_ticket_t *ticket,
       } else {
          *port=SIP_PORT;
       }
-
-      osip_list_remove(mymsg->routes, 0);
-      osip_route_free(route);
-      /* request->routes will be freed by osip_message_free() */
    }
 
    return STS_SUCCESS;
