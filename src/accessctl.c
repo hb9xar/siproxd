@@ -138,10 +138,8 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       memset(address,0,sizeof(address));
       memcpy(address,p1,p2-p1);
 
-
       /* mask */
-      p1=strchr(p2,',');
-      p1=p1+1;
+      p1=p2+1;
       p2=strchr(p1,',');
       if (!p2) { /* then this must be the last entry in the list */
          p2=strchr(p1,'\0');
