@@ -141,7 +141,7 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
 
       /* mask */
       p1=strchr(p2,',');
-      p1=p2+1;
+      p1=p1+1;
       p2=strchr(p1,',');
       if (!p2) { /* then this must be the last entry in the list */
          p2=strchr(p1,'\0');
@@ -165,6 +165,7 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       }
 
       mask_int=atoi(mask);
+      if ((mask_int < 0) || (mask_int > 32)) mask_int=32;
       bitmask= (mask_int)? (0xffffffff<<(32-mask_int)) : 0;
 
       DEBUGC(DBCLASS_ACCESS,"check match: entry=%i, filter=%lx, from=%lx", i,

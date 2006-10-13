@@ -40,7 +40,6 @@
 
 #include "siproxd.h"
 #include "digcalc.h"
-#include "rewrite_rules.h"
 #include "log.h"
 
 static char const ident[]="$Id$";
@@ -64,13 +63,6 @@ osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
    osip_message_t *response;
    int pos;
 
-   osip_message_init (&response);
-   response->message=NULL;
-   osip_message_set_version (response, osip_strdup ("SIP/2.0"));
-   osip_message_set_status_code (response, code);
-   osip_message_set_reason_phrase (response, 
-                                   osip_strdup(osip_message_get_reason (code)));
-
    if (request->to==NULL) {
       ERROR("msg_make_template_reply: empty To in request header");
       return NULL;
@@ -80,6 +72,18 @@ osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
       ERROR("msg_make_template_reply: empty From in request header");
       return NULL;
    }
+
+   osip_message_init (&response);
+   if (response == NULL) {
+      ERROR("msg_make_template_reply: osip_message_init() failed");
+      return NULL;
+   }
+   response->message=NULL;
+   osip_message_set_version (response, osip_strdup ("SIP/2.0"));
+   osip_message_set_status_code (response, code);
+   osip_message_set_reason_phrase (response, 
+                                   osip_strdup(osip_message_get_reason (code)));
+
 
    osip_to_clone (request->to, &response->to);
    osip_from_clone (request->from, &response->from);
@@ -213,8 +217,12 @@ int is_via_local (osip_via_t *via) {
       }
 
       /* check the extracted VIA against my own host addresses */
-      if (via->port) port=atoi(via->port);
-      else port=SIP_PORT;
+      if (via->port) {
+         port=atoi(via->port);
+         if ((port<=0) || (port>65535)) port=SIP_PORT;
+      } else {
+         port=SIP_PORT;
+      }
 
       if ( (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
            (port == configuration.sip_listen_port) ) {
@@ -356,7 +364,7 @@ int compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2) {
     */
    if (cid1->host && cid2->host) {
       /* have both hosts */
-      if (strcmp(cid1->host, cid2->host) != 0) goto mismatch;
+      if (strcasecmp(cid1->host, cid2->host) != 0) goto mismatch;
    } else {
       /* at least one host missing, make sure that both are empty */
       if ( (cid1->host && (cid1->host[0]!='\0')) ||
@@ -391,7 +399,7 @@ int is_sipuri_local (sip_ticket_t *ticket) {
    int found;
    struct in_addr addr_uri, addr_myself;
    int port;
-   int i;
+   int i, sts;
 
    if (sip==NULL) {
       ERROR("called is_sipuri_local with NULL sip");
@@ -409,7 +417,12 @@ int is_sipuri_local (sip_ticket_t *ticket) {
 
    if (utils_inet_aton(sip->req_uri->host, &addr_uri) == 0) {
       /* need name resolution */
-      get_ip_by_host(sip->req_uri->host, &addr_uri);
+      sts=get_ip_by_host(sip->req_uri->host, &addr_uri);
+      if (sts == STS_FAILURE) {
+         DEBUGC(DBCLASS_PROXY, "sip_gen_response: cannot resolve via [%s]",
+                sip->req_uri->host);
+         return STS_FALSE;
+      }
    }   
 
    found=0;
@@ -426,6 +439,7 @@ int is_sipuri_local (sip_ticket_t *ticket) {
       /* check the extracted HOST against my own host addresses */
       if (sip->req_uri->port) {
          port=atoi(sip->req_uri->port);
+         if ((port<=0) || (port>65535)) port=SIP_PORT;
       } else {
          port=SIP_PORT;
       }
@@ -440,71 +454,6 @@ int is_sipuri_local (sip_ticket_t *ticket) {
 
    DEBUGC(DBCLASS_DNS, "SIP URI is %slocal", found? "":"not ");
    return (found)? STS_TRUE : STS_FALSE;
-}
-
-
-/*
- * check if a given request (outbound -> inbound) shall its
- * request URI get rewritten based upon our UA knowledge
- *
- * RETURNS
- *	STS_TRUE if to be rewritten
- *	STS_FALSE otherwise
- */
-int check_rewrite_rq_uri (osip_message_t *sip) {
-   int i, j, sts;
-   int dflidx;
-   osip_header_t *ua_hdr;
-
-   /* get index of default entry */
-   dflidx=(sizeof(RQ_rewrite)/sizeof(RQ_rewrite[0])) - 1;
-
-   /* check fort existence of method */
-   if ((sip==NULL) ||
-       (sip->sip_method==NULL)) {
-      ERROR("check_rewrite_rq_uri: got NULL method");
-      return STS_FALSE;
-   }
-
-   /* extract UA string */
-   osip_message_get_user_agent (sip, 0, &ua_hdr);
-   if ((ua_hdr==NULL) || (ua_hdr->hvalue==NULL)) {
-      DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: NULL UA in Header, "
-             "using default");
-      i=dflidx;
-   } else {
-      /* loop through the knowledge base */
-      for (i=0; RQ_rewrite[i].UAstring; i++) {
-         if (strncmp(RQ_rewrite[i].UAstring, ua_hdr->hvalue,
-                    sizeof(RQ_rewrite[i].UAstring))==0) {
-            DEBUGC(DBCLASS_SIP, "got knowledge entry for [%s]",
-                   ua_hdr->hvalue);
-            break;
-         }
-      } /* for i */
-   } /* if ua_hdr */
-
-   for (j=0; RQ_method[j].name; j++) {
-      if (strncmp(RQ_method[j].name,
-                 sip->sip_method, RQ_method[j].size)==0) {
-         if (RQ_rewrite[i].action[j] >= 0) {
-            sts = (RQ_rewrite[i].action[j])? STS_TRUE: STS_FALSE;
-         } else {
-	    sts = (RQ_rewrite[dflidx].action[j])? STS_TRUE: STS_FALSE;
-         }
-         DEBUGC(DBCLASS_SIP, "check_rewrite_rq_uri: [%s:%s, i=%i, j=%i] "
-                "got action %s",
-                (sip && sip->sip_method) ?
-                  sip->sip_method : "*NULL*",
-                (ua_hdr && ua_hdr->hvalue)? ua_hdr->hvalue:"*NULL*",
-                 i, j, (sts==STS_TRUE)? "rewrite":"norewrite");
-         return sts;
-      }
-   } /* for j */
-
-   WARN("check_rewrite_rq_uri: didn't get a hit of the method [%s]",
-        sip->sip_method);
-   return STS_FALSE;
 }
 
 
@@ -539,6 +488,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
    if (via == NULL)
    {
       ERROR("sip_gen_response: Cannot send response - no via field");
+      osip_message_free(response);
       return STS_FAILURE;
    }
 
@@ -552,6 +502,7 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "sip_gen_response: cannot resolve via [%s]",
                 via->host);
+         osip_message_free(response);
          return STS_FAILURE;
       }
    }   
@@ -559,12 +510,14 @@ int sip_gen_response(sip_ticket_t *ticket, int code) {
    sts = sip_message_to_str(response, &buffer, &buflen);
    if (sts != 0) {
       ERROR("sip_gen_response: msg_2char failed");
+      osip_message_free(response);
       return STS_FAILURE;
    }
 
 
    if (via->port) {
       port=atoi(via->port);
+      if ((port<=0) || (port>65535)) port=SIP_PORT;
    } else {
       port=SIP_PORT;
    }
@@ -930,7 +883,7 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
        * first match wins
        */
       for (i=0; i<configuration.outbound_proxy_domain_name.used; i++) {
-         if (strcmp(configuration.outbound_proxy_domain_name.string[i],
+         if (strcasecmp(configuration.outbound_proxy_domain_name.string[i],
              domain)==0) {
             sts = get_ip_by_host(configuration.outbound_proxy_domain_host.string[i],
                                  addr);
@@ -941,7 +894,7 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
                return STS_FAILURE;
             }
             *port=atoi(configuration.outbound_proxy_domain_port.string[i]);
-            if (*port == 0) *port = SIP_PORT;
+            if ((*port<=0) || (*port>65535)) *port=SIP_PORT;
 
             return STS_SUCCESS;
 
@@ -1110,12 +1063,12 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 
                port_via=0;
                if (via->port) port_via=atoi(via->port);
-               if (port_via <= 0) port_via=SIP_PORT;
+               if ((port_via<=0) || (port_via>65535)) port_via=SIP_PORT;
 
                port_ua=0;
                if (urlmap[i].true_url->port)
                   port_ua=atoi(urlmap[i].true_url->port);
-               if (port_ua <= 0) port_ua=SIP_PORT;
+               if ((port_ua<=0) || (port_ua>65535)) port_ua=SIP_PORT;
 
                DEBUGC(DBCLASS_SIP, "sip_find_direction: checking for registered "
                       "host [%s:%i] <-> [%s:%i]",

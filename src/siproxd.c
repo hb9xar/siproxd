@@ -152,7 +152,7 @@ int main (int argc, char *argv[])
       case 'c': /* load config file */
          DEBUGC(DBCLASS_CONFIG,"option: config file=%s",optarg);
          i=sizeof(configfile)-1;
-         strncpy(configfile,optarg,i-1);
+         strncpy(configfile,optarg,i);
          configfile[i]='\0';
          config_search=0;
          break; 
@@ -369,6 +369,8 @@ int main (int argc, char *argv[])
          osip_message_get_max_forwards(ticket.sipmsg, 0, &max_forwards);
          if (max_forwards && max_forwards->hvalue) {
             forwards_count = atoi(max_forwards->hvalue);
+            if ((forwards_count<=0)||
+                (forwards_count>=LONG_MAX)) forwards_count=DEFAULT_MAXFWD;
          }
 
          DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);
@@ -455,6 +457,7 @@ int main (int argc, char *argv[])
 
             url = osip_message_get_uri(ticket.sipmsg);
             dest_port= (url->port)?atoi(url->port):SIP_PORT;
+            if ((dest_port <=0) || (dest_port >65535)) dest_port=SIP_PORT;
 
             if ( (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) &&
                  (get_interface_ip(IF_INBOUND,&addr2) == STS_SUCCESS) &&

@@ -198,7 +198,11 @@ static int auth_check(osip_proxy_authorization_t *proxy_auth) {
       password=configuration.proxy_auth_passwd;
    }
 
-   if (password == NULL) password="";
+   if (password == NULL) {
+      DEBUGC(DBCLASS_AUTH,"user [%s] not in password file!",
+             (Username)?Username:"*NULL*");
+      return STS_FAILURE;
+   }
 
    DEBUGC(DBCLASS_BABBLE," username=\"%s\"",Username  );
    DEBUGC(DBCLASS_BABBLE," realm   =\"%s\"",Realm     );
@@ -281,7 +285,7 @@ static char *auth_getpwd(char *username) {
 
 	 /* strip comments and line with only whitespaces */
 	 for (i=0;i<strlen(buff);i++) {
-            if ((buff[i] == ' ') && (buff[i] == '\t')) continue;
+            if ((buff[i] == ' ') || (buff[i] == '\t')) continue;
             if (buff[i] =='#') i=strlen(buff);
             break;
 	 }

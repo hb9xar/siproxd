@@ -31,6 +31,7 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  rtpproxy_relay.c accessctl.c route_processing.c \
 		  security.c auth.c fwapi.c resolve.c \
 		  plugin_shortdial.c
+#		  addrcache.c
 
 #
 # an example for a custom firewall control module
@@ -40,8 +41,8 @@ noinst_LIBRARIES = libcustom_fw_module.a
 libcustom_fw_module_a_SOURCES = custom_fw_module.c
 
 
-noinst_HEADERS = log.h rewrite_rules.h siproxd.h digcalc.h rtpproxy.h \
-		 fwapi.h plugins.h
+noinst_HEADERS = log.h siproxd.h digcalc.h rtpproxy.h \
+		 fwapi.h plugins.h addrcache.h
 
 EXTRA_DIST = .buildno
 

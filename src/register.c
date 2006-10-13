@@ -75,6 +75,7 @@ void register_init(void) {
          for (i=0;i < URLMAP_SIZE; i++) {
             fgets(buff, sizeof(buff), stream);
             sts=sscanf(buff, "***:%i:%i", &urlmap[i].active, &urlmap[i].expires);
+            if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
                osip_uri_init(&urlmap[i].true_url);
                osip_uri_init(&urlmap[i].masq_url);
@@ -89,6 +90,7 @@ void register_init(void) {
                   len  = strlen(buff);\
                   X    =(char*)malloc(len+1);\
                   sts=sscanf(buff,"%s",X);\
+                  if (sts == 0) break;\
                } else {\
                   X = NULL;\
                }\
@@ -109,6 +111,14 @@ void register_init(void) {
             }
          }
          fclose(stream);
+
+         /* check for premature abort of reading the registration file */
+         if (i < URLMAP_SIZE) {
+            /* clean up and delete it */
+            WARN("registration file corrupt, starting with empty table");
+            memset(urlmap, 0, sizeof(urlmap));
+            unlink(configuration.registrationfile);
+         }
       }
    }
    /* initialize save-timer */
@@ -282,9 +292,13 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    if (expires_param && expires_param->gvalue) {
       /* get expires from contact Header */
       expires=atoi(expires_param->gvalue);
+      if ((expires < 0) || (expires >= LONG_MAX))
+         expires=configuration.default_expires;
    } else if (expires_hdr && expires_hdr->hvalue) {
       /* get expires from expires Header */
       expires=atoi(expires_hdr->hvalue);
+      if ((expires < 0) || (expires >= LONG_MAX))
+         expires=configuration.default_expires;
    } else {
       char tmp[16];
       /* it seems, the expires field is not present everywhere... */
@@ -595,6 +609,7 @@ int register_response(sip_ticket_t *ticket, int flag) {
    /* send answer back */
    if (via->port) {
       port=atoi(via->port);
+      if ((port<=0) || (port>65535)) port=SIP_PORT;
    } else {
       port=configuration.sip_listen_port;
    }
@@ -650,9 +665,13 @@ int register_set_expire(sip_ticket_t *ticket) {
       if (expires_param && expires_param->gvalue) {
          /* get expires from contact Header */
          expires=atoi(expires_param->gvalue);
+         if ((expires < 0) || (expires >= LONG_MAX))
+            expires=configuration.default_expires;
       } else if (expires_hdr && expires_hdr->hvalue) {
          /* get expires from expires Header */
          expires=atoi(expires_hdr->hvalue);
+         if ((expires < 0) || (expires >= LONG_MAX))
+            expires=configuration.default_expires;
       }
 
       DEBUGC(DBCLASS_REG,"Expires=%i, expires_param=%p, expires_hdr=%p",

@@ -209,7 +209,7 @@ static int _resolve(char *name, int proto, int type,
                   priority = pr;
                   weight = we;
                   *port = po;
-                  strncpy(dname, tmpname, dnamelen-1);
+                  strncpy(dname, tmpname, dnamelen);
                   xptr+=j;
                }
             }

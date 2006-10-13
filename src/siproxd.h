@@ -23,7 +23,7 @@
 #ifdef DMALLOC
  #include <dmalloc.h>
 #endif
-
+#include <limits.h>
 
 /*
  * table to hold the client registrations
@@ -167,7 +167,6 @@ int  is_via_local (osip_via_t *via);					/*X*/
 int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
 int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
 int  is_sipuri_local (sip_ticket_t *ticket);				/*X*/
-int  check_rewrite_rq_uri (osip_message_t *sip);			/*X*/
 int  sip_gen_response(sip_ticket_t *ticket, int code);			/*X*/
 int  sip_add_myvia (sip_ticket_t *ticket, int interface);		/*X*/
 int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/

@@ -187,9 +187,8 @@ int proxy_request (sip_ticket_t *ticket) {
        * (rewrite request URI to point to the real host)
        */
       /* 'i' still holds the valid index into the URLMAP table */
-      if (check_rewrite_rq_uri(request) == STS_TRUE) {
-         proxy_rewrite_request_uri(request, i);
-      }
+      proxy_rewrite_request_uri(request, i);
+
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -299,7 +298,7 @@ int proxy_request (sip_ticket_t *ticket) {
    {
    osip_header_t *max_forwards;
    int forwards_count = DEFAULT_MAXFWD;
-   char mfwd[8];
+   char mfwd[12]; /* 10 digits, +/- sign, termination */
 
    osip_message_get_max_forwards(request, 0, &max_forwards);
    if (max_forwards == NULL) {
@@ -308,6 +307,8 @@ int proxy_request (sip_ticket_t *ticket) {
    } else {
       if (max_forwards->hvalue) {
          forwards_count = atoi(max_forwards->hvalue);
+         if ((forwards_count<=0)||
+             (forwards_count>=LONG_MAX)) forwards_count=DEFAULT_MAXFWD;
          forwards_count -=1;
          osip_free (max_forwards->hvalue);
       }
@@ -432,6 +433,7 @@ int proxy_request (sip_ticket_t *ticket) {
 
       if (url->port) {
          port=atoi(url->port);
+         if ((port<=0) || (port>65535)) port=SIP_PORT;
       } else {
          port=SIP_PORT;
       }
@@ -750,6 +752,7 @@ int proxy_response (sip_ticket_t *ticket) {
 
       if (via->port) {
          port=atoi(via->port);
+         if ((port<=0) || (port>65535)) port=SIP_PORT;
       } else {
          port=SIP_PORT;
       }
@@ -1000,8 +1003,7 @@ if (configuration.debuglevel)
       /* start an RTP proxying stream */
       if (sdp_message_m_port_get(sdp, media_stream_no)) {
          msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
-
-         if (msg_port > 0) {
+         if ((msg_port > 0) && (msg_port <= 65535)) {
 
             /* is this an RTP stream ? */
             {
@@ -1044,7 +1046,7 @@ if (configuration.debuglevel)
                static char from_string[HOSTNAME_SIZE];
                char *tmp;
                tmp=utils_inet_ntoa(ticket->from.sin_addr);
-               strncpy(from_string, tmp, HOSTNAME_SIZE-1);
+               strncpy(from_string, tmp, HOSTNAME_SIZE);
                from_string[HOSTNAME_SIZE-1]='\0';
                client_id=from_string;
             }

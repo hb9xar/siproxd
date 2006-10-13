@@ -83,6 +83,7 @@ int route_preprocess(sip_ticket_t *ticket){
     */
    url = osip_message_get_uri(mymsg);
    dest_port= (url->port)?atoi(url->port):SIP_PORT;
+   if ((dest_port <=0) || (dest_port >65535)) dest_port=SIP_PORT;
 
    if (get_ip_by_host(url->host, &addr1) == STS_SUCCESS) {
       if ((configuration.sip_listen_port == dest_port) &&
@@ -397,6 +398,7 @@ int route_determine_nexthop(sip_ticket_t *ticket,
 
       if (route->url->port) {
          *port=atoi(route->url->port);
+         if ((*port<=0) || (*port>65535)) *port=SIP_PORT;
       } else {
          *port=SIP_PORT;
       }

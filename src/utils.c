@@ -108,7 +108,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
     */
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') continue; /* empty */
-      if (strcmp(hostname, dns_cache[i].hostname) == 0) { /* match */
+      if (strcasecmp(hostname, dns_cache[i].hostname) == 0) { /* match */
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
          DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
 	        hostname, utils_inet_ntoa(*addr));
