@@ -227,14 +227,17 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define URLMAP_SIZE	128	/* number of URL mapping table entries	*/
 				/* this limits the number of clients!	*/
 
-#define RTPPROXY_SIZE	256	/* number of rtp proxy entries		*/
-				/* this limits the number of calls!	*/
 #define SOURCECACHE_SIZE 256	/* number of return addresses		*/
 #define DEJITTERLIMIT	1500000	/* max value for dejitter configuration */
 #define DEFAULT_DEJITTER 100000	/* default value for dejitter configuration */
 
+#define RTPPROXY_SIZE	256	/* number of rtp proxy entries		*/
+				/* this limits the number of calls!	*/
+
 #define BUFFER_SIZE	8196	/* input buffer for read from socket	*/
-#define RTP_BUFFER_SIZE	512	/* max size of an RTP frame		*/
+#define RTP_BUFFER_SIZE	1520	/* max size of an RTP frame		*/
+				/* (assume approx one Ethernet MTU)	*/
+
 #define URL_STRING_SIZE	128	/* max size of an URL/URI string	*/
 #define STATUSCODE_SIZE 5	/* size of string representation of status */
 #define DNS_CACHE_SIZE  256	/* number of entries in internal DNS cache */
@@ -284,3 +287,17 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #ifndef satoi
 #define satoi atoi  /* used in libosips MSG_TEST_CODE macro ... */
 #endif
+
+/*
+ * Macro that limits the frequency of this particular code
+ * block to no faster than every 'a' seconds. Used for logging
+ */
+#define LIMIT_LOG_RATE(a) \
+        static time_t last=0; \
+        time_t now; \
+        int dolog=0; \
+        time(&now); \
+        if ((last+(a)) <= now) {last=now; dolog=1;} \
+        if (dolog)
+
+

@@ -1,5 +1,6 @@
 0.6.0
 =====
+  19-Feb-2007:  - Increased RTP buffer size
   13-Oct-2006:  - Various fixes due to a code review by Andrew Jones
   05-Oct-2006:  - route_determine_nexthop(): don't remove header
   19-Aug-2006:  - increased DNS cache

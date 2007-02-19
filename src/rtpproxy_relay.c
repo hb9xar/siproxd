@@ -108,28 +108,30 @@ void rtpproxy_kill( void );
 static void sighdl_alm(int sig) {/* just wake up from select() */};
 
 /* dejitter */
-void rtp_buffer_init ();
-void add_time_values(const struct timeval *a, const struct timeval *b,
-                     struct timeval *r);
-void sub_time_values(const struct timeval *a, const struct timeval *b,
-                     struct timeval *r);
-int  cmp_time_values(const struct timeval *a, const struct timeval *b);
-double make_double_time ( const struct timeval *tv);
-void send_top_of_que ();
-void delayedsendto(int s, const void *msg, size_t len, int flags,
-                   const struct sockaddr_in *to,
-                   const struct timeval *tv, rtp_proxytable_t *errret);
-void cancelmessages (rtp_proxytable_t *dropentry);
-void flushbuffers();
-int  delay_of_next_transmission(struct timeval *tv);
-void split_double_time ( double d, struct timeval *tv);
-void init_calculate_transmit_time (timecontrol_t *tc, int dejitter);
-int  fetch_missalign_long_network_oder (char *where);
-void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
-                              const struct timeval *input_tv,
-                              struct timeval *ttv);
-void match_socket (int i);
-void error_summary (int i, int k);
+static void rtp_buffer_init ();
+static void add_time_values(const struct timeval *a,
+                            const struct timeval *b, struct timeval *r);
+static void sub_time_values(const struct timeval *a, const struct timeval *b,
+                            struct timeval *r);
+static int  cmp_time_values(const struct timeval *a, const struct timeval *b);
+static double make_double_time(const struct timeval *tv);
+static void send_top_of_que(void);
+static void delayedsendto(int s, const void *msg, size_t len, int flags,
+                          const struct sockaddr_in *to,
+                          const struct timeval *tv, rtp_proxytable_t *errret);
+static void cancelmessages(rtp_proxytable_t *dropentry);
+static void flushbuffers(void);
+static int  delay_of_next_transmission(struct timeval *tv);
+static void split_double_time(double d, struct timeval *tv);
+static void init_calculate_transmit_time(timecontrol_t *tc, int dejitter);
+static int  fetch_missalign_long_network_oder(char *where);
+static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
+                                    const struct timeval *input_tv,
+                                    struct timeval *ttv);
+
+/* */
+static void match_socket (int rtp_proxytable_idx);
+static void error_handler (int rtp_proxytable_idx, int socket_type);
 
 
 /*
@@ -272,17 +274,26 @@ static void *rtpproxy_main(void *arg) {
 
       /* check for data available and send to destination */
       for (i=0;(i<RTPPROXY_SIZE) && (num_fd>0);i++) {
-         /* RTCP control socket */
-         if ( (rtp_proxytable[i].rtp_rx_sock != 0) &&
+         /*
+          * RTCP control socket
+          */
+         if ( (rtp_proxytable[i].rtp_con_rx_sock != 0) &&
             FD_ISSET(rtp_proxytable[i].rtp_con_rx_sock, &fdset) ) {
             /* yup, have some data to send */
             num_fd--;
 
-            /* read from sock rtp_proxytable[i].sock*/
+            /* read from sock rtp_proxytable[i].rtp_con_rx_sock */
             count=read(rtp_proxytable[i].rtp_con_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
             /* check if something went banana */
-            if (count < 0) error_summary (i,1) ;
+            if (count < 0) error_handler(i,1) ;
+
+            /* Buffer really full? This may indicate a too small buffer! */
+            if (count == RTP_BUFFER_SIZE) {
+               LIMIT_LOG_RATE(30) {
+                  WARN("received an RTCP datagram bigger than buffer size");
+               }
+            }
 
             /*
              * forwarding an RTCP packet only makes sense if we really
@@ -319,17 +330,26 @@ static void *rtpproxy_main(void *arg) {
             }
          } /* if */
 
-         /* RTP data stream */
+         /*
+          * RTP data stream
+          */
          if ( (rtp_proxytable[i].rtp_rx_sock != 0) &&
             FD_ISSET(rtp_proxytable[i].rtp_rx_sock, &fdset) ) {
             /* yup, have some data to send */
             num_fd--;
 
-            /* read from sock rtp_proxytable[i].sock*/
+            /* read from sock rtp_proxytable[i].rtp_rx_sock */
             count=read(rtp_proxytable[i].rtp_rx_sock, rtp_buff, RTP_BUFFER_SIZE);
 
             /* check if something went banana */
-            if (count < 0) error_summary (i,0);
+            if (count < 0) error_handler (i,0);
+
+            /* Buffer really full? This may indicate a too small buffer! */
+            if (count == RTP_BUFFER_SIZE) {
+               LIMIT_LOG_RATE(30) {
+                  WARN("received an RTP datagram bigger than buffer size");
+               }
+            }
 
             /*
              * forwarding an RTP packet only makes sense if we really
@@ -343,8 +363,8 @@ static void *rtpproxy_main(void *arg) {
                   struct sockaddr_in dst_addr;
                   struct timeval ttv;
 
-                  calculate_transmit_time (&rtp_buff,&(rtp_proxytable[i].tc),
-                                           &input_tv,&ttv) ;
+                  calculate_transmit_time(&rtp_buff,&(rtp_proxytable[i].tc),
+                                          &input_tv,&ttv) ;
 
                   /* write to dest via socket rtp_tx_sock */
                   dst_addr.sin_family = AF_INET;
@@ -529,7 +549,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
          /*
           *  set up timecrontrol for dejitter function
           */
-         init_calculate_transmit_time (&rtp_proxytable[i].tc,dejitter);
+         init_calculate_transmit_time(&rtp_proxytable[i].tc,dejitter);
 
 
          /* return the already known local port number */
@@ -695,7 +715,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
    /*
    *  set up timecrontrol for dejitter function
    */
-   init_calculate_transmit_time (&rtp_proxytable[freeidx].tc,dejitter);
+   init_calculate_transmit_time(&rtp_proxytable[freeidx].tc,dejitter);
 
    *local_port=port;
 
@@ -950,7 +970,7 @@ void rtpproxy_kill( void ) {
 /*
  * Initialize RTP dejitter
  */
-void rtp_buffer_init () {
+static void rtp_buffer_init () {
    int i;
    rtp_delayed_message *m;
 
@@ -966,8 +986,8 @@ void rtp_buffer_init () {
 /*
  * Add timeval times
  */
-void add_time_values(const struct timeval *a, const struct timeval *b,
-                     struct timeval *r) {
+static void add_time_values(const struct timeval *a,
+                            const struct timeval *b, struct timeval *r) {
    r->tv_sec = a->tv_sec + b->tv_sec;
    r->tv_usec = a->tv_usec + b->tv_usec;
    if (r->tv_usec >= 1000000) {
@@ -979,8 +999,8 @@ void add_time_values(const struct timeval *a, const struct timeval *b,
 /*
  * Subtract timeval values
  */
-void sub_time_values(const struct timeval *a, const struct timeval *b,
-                    struct timeval *r) {
+static void sub_time_values(const struct timeval *a,
+                            const struct timeval *b, struct timeval *r) {
    if ((a->tv_sec < b->tv_sec) ||
        ((a->tv_sec == b->tv_sec) && (a->tv_usec < b->tv_usec))) {
       r->tv_usec = 0;
@@ -999,7 +1019,7 @@ void sub_time_values(const struct timeval *a, const struct timeval *b,
 /*
  * Compare timeval values
  */
-int cmp_time_values(const struct timeval *a, const struct timeval *b) {
+static int cmp_time_values(const struct timeval *a, const struct timeval *b) {
    if (a->tv_sec < b->tv_sec) return -1;
    if (a->tv_sec > b->tv_sec) return 1;
    if (a->tv_usec < b->tv_usec) return -1;
@@ -1010,14 +1030,14 @@ int cmp_time_values(const struct timeval *a, const struct timeval *b) {
 /*
  * Convert TIMEVAL to DOUBLE 
  */
-double make_double_time ( const struct timeval *tv) {
+static double make_double_time(const struct timeval *tv) {
    return 1000000.0 * tv->tv_sec + tv->tv_usec;
 }
 
 /*
  * Send Top of queue
  */
-void send_top_of_que () {
+static void send_top_of_que (void) {
    rtp_delayed_message *m;
    int sts;
 
@@ -1066,9 +1086,9 @@ void send_top_of_que () {
 /*
  * Delayed send
  */
-void delayedsendto(int s, const void *msg, size_t len, int flags,
-                   const struct sockaddr_in *to,
-                   const struct timeval *tv, rtp_proxytable_t *errret) {
+static void delayedsendto(int s, const void *msg, size_t len, int flags,
+                          const struct sockaddr_in *to,
+                          const struct timeval *tv, rtp_proxytable_t *errret) {
    rtp_delayed_message *m;
    rtp_delayed_message **linkin;
 
@@ -1088,7 +1108,7 @@ void delayedsendto(int s, const void *msg, size_t len, int flags,
    if (cmp_time_values(&current_tv,tv) >= 0) {
       m->next = msg_que;
       msg_que = m;
-      send_top_of_que ();
+      send_top_of_que();
    } else {
       linkin = &msg_que;
       while ((*linkin != NULL) &&
@@ -1103,7 +1123,7 @@ void delayedsendto(int s, const void *msg, size_t len, int flags,
 /*
  * Cancel a message
  */
-void cancelmessages (rtp_proxytable_t *dropentry) {
+static void cancelmessages(rtp_proxytable_t *dropentry) {
    rtp_delayed_message **linkout;
    rtp_delayed_message *m;
 
@@ -1124,12 +1144,12 @@ void cancelmessages (rtp_proxytable_t *dropentry) {
 /*
  * Flush buffers
  */
-void flushbuffers() {
+static void flushbuffers(void) {
    struct timezone tz;
 
    while (msg_que &&
           (cmp_time_values(&(msg_que->transm_time),&current_tv)<=0)) {
-      send_top_of_que ();
+      send_top_of_que();
       gettimeofday(&current_tv,&tz);
    }
 }
@@ -1137,7 +1157,7 @@ void flushbuffers() {
 /*
  * Delay of next transmission
  */
-int delay_of_next_transmission(struct timeval *tv) {
+static int delay_of_next_transmission(struct timeval *tv) {
    struct timezone tz ;
 
    if (msg_que) {
@@ -1154,7 +1174,7 @@ int delay_of_next_transmission(struct timeval *tv) {
 /*
  * Convert DOUBLE time into TIMEVAL
  */
-void split_double_time ( double d, struct timeval *tv) {
+static void split_double_time(double d, struct timeval *tv) {
    tv->tv_sec = d / 1000000.0;
    tv->tv_usec = d - 1000000.0 * tv->tv_sec;
 }
@@ -1162,7 +1182,7 @@ void split_double_time ( double d, struct timeval *tv) {
 /*
  * Initialize calculation of transmit the frame
  */
-void init_calculate_transmit_time (timecontrol_t *tc, int dejitter) {
+static void init_calculate_transmit_time(timecontrol_t *tc, int dejitter) {
    struct timezone tz;
 
    minstep.tv_sec = 0;
@@ -1173,14 +1193,14 @@ void init_calculate_transmit_time (timecontrol_t *tc, int dejitter) {
 
       tc->dejitter = dejitter;
       tc->dejitter_d = dejitter;
-      split_double_time (tc->dejitter_d,&(tc->dejitter_tv));
+      split_double_time(tc->dejitter_d, &(tc->dejitter_tv));
    }
 }
 
 /*
  *
  */
-int fetch_missalign_long_network_oder (char *where) {
+static int fetch_missalign_long_network_oder(char *where) {
    int i = 0;
    int k;
    int j;
@@ -1196,9 +1216,9 @@ int fetch_missalign_long_network_oder (char *where) {
 /*
  * Calculate transmit time
  */
-void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
-                              const struct timeval *input_tv,
-                              struct timeval *ttv) {
+static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
+                                    const struct timeval *input_tv,
+                                    struct timeval *ttv) {
    int    packet_time_code;
    double currenttime;
    double calculatedtime = 0;
@@ -1223,7 +1243,7 @@ void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
 
    sub_time_values(input_tv,&(tc->starttime),&input_r_tv);
 
-   calculatedtime = currenttime = make_double_time (&input_r_tv);
+   calculatedtime = currenttime = make_double_time(&input_r_tv);
    if (tc->calccount < 10) {
       DEBUGC(DBCLASS_RTP, "initial data stage 1 %f usec", currenttime);
       tc->recived_a = currenttime / (packet_time_code - tc->time_code_a);
@@ -1309,22 +1329,24 @@ void calculate_transmit_time (rtp_buff_t *rtp_buff, timecontrol_t *tc,
              packet_time_code / 160);
    }
 
-   split_double_time (calculatedtime,&output_r_tv);
+   split_double_time(calculatedtime, &output_r_tv);
    add_time_values(&output_r_tv,&(tc->starttime),ttv);
 }
 
 /*
- *
+ * match_socket
+ * matches and cross connects two rtp_proxytable entries
+ * (corresponds to the two data directions of one RTP stream)
  */
-void match_socket (int i) {
+static void match_socket (int rtp_proxytable_idx) {
    int j;
-   int rtp_direction = rtp_proxytable[i].direction;
-   int media_stream_no = rtp_proxytable[i].media_stream_no;
-/*chnnel   int channel = rtp_proxytable[i].channel;*/
+   int rtp_direction = rtp_proxytable[rtp_proxytable_idx].direction;
+   int media_stream_no = rtp_proxytable[rtp_proxytable_idx].media_stream_no;
+/*chnnel   int channel = rtp_proxytable[rtp_proxytable_idx].channel;*/
    osip_call_id_t callid;
 
-   callid.number = rtp_proxytable[i].callid_number;
-   callid.host = rtp_proxytable[i].callid_host;
+   callid.number = rtp_proxytable[rtp_proxytable_idx].callid_number;
+   callid.host = rtp_proxytable[rtp_proxytable_idx].callid_host;
 
    for (j=0;(j<RTPPROXY_SIZE);j++) {
       osip_call_id_t cid;
@@ -1342,20 +1364,24 @@ void match_socket (int i) {
            (media_stream_no == rtp_proxytable[j].media_stream_no) &&
            (rtp_direction != rtp_proxytable[j].direction) /* channel: &&
            (channel == rtp_proxytable[j].channel)*/ ) {
-         rtp_proxytable[i].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
-         rtp_proxytable[i].rtp_con_tx_sock = rtp_proxytable[j].rtp_con_rx_sock;
+         rtp_proxytable[rtp_proxytable_idx].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
+         rtp_proxytable[rtp_proxytable_idx].rtp_con_tx_sock = rtp_proxytable[j].rtp_con_rx_sock;
          DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i) <-> entry %i (fd=%i)",
                              j, rtp_proxytable[j].rtp_rx_sock,
-                             i, rtp_proxytable[i].rtp_rx_sock);
+                             rtp_proxytable_idx,
+                             rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock);
          break;
       }
    }
 }
 
 /*
+ * error_handler
  *
+ * rtp_proxytable_idx:	index into the rtp_proxytable array
+ * socket_type: 	1 - RTCP, 0 - RTP
  */
-void error_summary (int i, int k) {
+static void error_handler (int rtp_proxytable_idx, int socket_type) {
    /*
     * It has been seen on linux 2.2.x systems that for some
     * reason (ICMP issue? -> below) inside the RTP relay, select()
@@ -1371,9 +1397,10 @@ void error_summary (int i, int k) {
       /* I may want to remove this WARNing */
       WARN("read() [fd=%i, %s:%i] would block, but select() "
            "claimed to be readable!",
-           k ? rtp_proxytable[i].rtp_rx_sock : rtp_proxytable[i].rtp_con_rx_sock,
-           utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
-           rtp_proxytable[i].local_port + k);
+           socket_type ? rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock : 
+                         rtp_proxytable[rtp_proxytable_idx].rtp_con_rx_sock,
+           utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr),
+           rtp_proxytable[rtp_proxytable_idx].local_port + socket_type);
    }
 
    /*
@@ -1392,15 +1419,17 @@ void error_summary (int i, int k) {
       /* some other error that I probably want to know about */
       int j;
       WARN("read() [fd=%i, %s:%i] returned error [%i:%s]",
-      rtp_proxytable[i].rtp_rx_sock,
-      utils_inet_ntoa(rtp_proxytable[i].local_ipaddr),
-      rtp_proxytable[i].local_port, errno, strerror(errno));
+      rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock,
+      utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr),
+      rtp_proxytable[rtp_proxytable_idx].local_port, errno, strerror(errno));
       for (j=0; j<RTPPROXY_SIZE;j++) {
          DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i "
                 "lp:%i, rp:%i rip:%s",
                 j,
-                k ? rtp_proxytable[i].rtp_rx_sock : rtp_proxytable[i].rtp_con_rx_sock,
-                k ? rtp_proxytable[i].rtp_tx_sock : rtp_proxytable[i].rtp_con_tx_sock,
+                socket_type ? rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock : 
+                              rtp_proxytable[rtp_proxytable_idx].rtp_con_rx_sock,
+                socket_type ? rtp_proxytable[rtp_proxytable_idx].rtp_tx_sock : 
+                              rtp_proxytable[rtp_proxytable_idx].rtp_con_tx_sock,
                 rtp_proxytable[j].callid_number,
                 rtp_proxytable[j].callid_host,
                 rtp_proxytable[j].direction,
