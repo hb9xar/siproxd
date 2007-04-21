@@ -175,6 +175,7 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
                              int *port);				/*X*/
 int  sip_find_direction(sip_ticket_t *ticket, int *urlidx);		/*X*/
+int  sip_fixup_asterisk(char *buff, int *buflen);			/*X*/
 
 /* readconf.c */
 int read_config(char *name, int search);				/*X*/

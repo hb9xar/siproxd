@@ -1,5 +1,7 @@
 0.6.0
 =====
+  21-Apr-2007:  - Hack to deal with Asterisks broken Alert-Info headers
+                  (Asterisk does include Alert-Info header without '<>')
   19-Feb-2007:  - Increased RTP buffer size
   13-Oct-2006:  - Various fixes due to a code review by Andrew Jones
   05-Oct-2006:  - route_determine_nexthop(): don't remove header

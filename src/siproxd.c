@@ -319,6 +319,11 @@ int main (int argc, char *argv[])
       }
 
       /*
+       * Hacks to fix-up some broken headers
+       */
+      sts=sip_fixup_asterisk(buff, &buflen);
+
+      /*
        * init sip_msg
        */
       sts=osip_message_init(&ticket.sipmsg);

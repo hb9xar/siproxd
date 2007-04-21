@@ -1097,6 +1097,51 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 }
 
 
+/*
+ * SIP_FIXUP_ALERT_INFO
+ *
+ * Asterisk Hack.
+ * Asterisk seems to include broken Alert-Info headers (without <>)
+ * that cause parsing to fail (libosip2).
+ * This function does try to guess if we have such a broken SIP
+ * message and does simply remove the offending Alert-Info header.
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int  sip_fixup_asterisk(char *buff, int *buflen) {
+   char *alert_info_ptr=NULL;
+   /*
+    * Check for Asterisk UA string
+    * User-Agent: Asterisk PBX
+    */
+   if (strstr(buff, "\r\nUser-Agent: Asterisk PBX\r\n")==NULL)
+      return STS_SUCCESS;
 
+   DEBUGC(DBCLASS_SIP, "sip_fixup_alert_info: SIP message is from Asterisk");
+   /*
+    * Look form Alert-Info: header
+    */
+   alert_info_ptr=strstr(buff, "\r\nAlert-Info: ");
+   if (alert_info_ptr) {
+      char *eol_ptr=NULL;
+      DEBUGC(DBCLASS_SIP, "sip_fixup_alert_info: Asterisk message "
+             "with Alert-Info found");
+      eol_ptr=strstr((alert_info_ptr+2), "\r\n");
+      if (eol_ptr) {
+         int i;
+         // cut the Alert-Info header from the message
+         // (actually move the rest of the message up)
+         DEBUGC(DBCLASS_SIP, "sip_fixup_alert_info: removed malformed "
+                "Alert-Info header");
+         for (i=0; i<(*buflen - (eol_ptr - buff)); i++) {
+            alert_info_ptr[i]=eol_ptr[i];
+         } /* for */
+
+         *buflen=strlen(buff);
+      } /* if */
+   }
+   return STS_SUCCESS;
+}
 
 
