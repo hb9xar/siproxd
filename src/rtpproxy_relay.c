@@ -841,7 +841,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                   strerror(errno), nolock,
                   callid->number, callid->host);
          }
-         /* call to firewall API */
+         /* call to firewall API (RTP port) */
          fwapi_stop_rtp(rtp_proxytable[i].direction,
                    rtp_proxytable[i].local_ipaddr,
                    rtp_proxytable[i].local_port,
@@ -857,7 +857,7 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                   strerror(errno), nolock,
                   callid->number, callid->host);
          }
-         /* call to firewall API */
+         /* call to firewall API (RTCP port) */
          fwapi_stop_rtp(rtp_proxytable[i].direction,
                    rtp_proxytable[i].local_ipaddr,
                    rtp_proxytable[i].local_port + 1,

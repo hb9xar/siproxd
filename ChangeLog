@@ -1,5 +1,8 @@
 0.6.0
 =====
+  07-May-2007:  - Client-ID in RTP proxy is derived from Client IP address.
+                  This should fix an issue with unexpectedly timing-out RTP
+                  streams (actually too many RTP streams get started).
   21-Apr-2007:  - Hack to deal with Asterisks broken Alert-Info headers
                   (Asterisk does include Alert-Info header without '<>')
   19-Feb-2007:  - Increased RTP buffer size

@@ -1004,10 +1004,26 @@ if (configuration.debuglevel)
       if (sdp_message_m_port_get(sdp, media_stream_no)) {
          msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
          if ((msg_port > 0) && (msg_port <= 65535)) {
+            char *client_id=NULL;
+            static char from_string[HOSTNAME_SIZE];
+            char *tmp=NULL;
+            char *protocol=NULL;
 
-            /* is this an RTP stream ? */
-            {
-            char *protocol = sdp_message_m_proto_get (sdp, media_stream_no);
+            /* try to get some additional UA specific unique ID.
+             * This Client-ID should be guaranteed persistent
+             * and not depend on if a UA/Server does include a
+             * particular Header (Contact) or not.
+             * I should just go for the remote IP address here, no?
+             */
+            tmp=utils_inet_ntoa(ticket->from.sin_addr);
+            strncpy(from_string, tmp, HOSTNAME_SIZE);
+            from_string[HOSTNAME_SIZE-1]='\0';
+            client_id=from_string;
+
+            /*
+             * is this an RTP stream ? If yes, set 'isrtp=1'
+             */
+            protocol = sdp_message_m_proto_get (sdp, media_stream_no);
             if (protocol == NULL) {
                DEBUGC(DBCLASS_PROXY, "no protocol definition found!");
             } else {
@@ -1023,32 +1039,6 @@ if (configuration.debuglevel)
                } else {
                   DEBUGC(DBCLASS_PROXY, "found non RTP protocol [%s]!", protocol);
                }
-            }
-            }
-
-            osip_uri_t *cont_url = NULL;
-            char *client_id=NULL;
-            /* try to get some additional UA specific unique ID.
-             * Try:
-             * 1) User part of Contact header
-             * 2) Host part of Contact header (will be different
-             *    between internal UA and external UA)
-             * 3) IP address of sender (also different between
-             *    internal and external UA)
-             */
-            if (!osip_list_eol(mymsg->contacts, 0))
-               cont_url = ((osip_contact_t*)(mymsg->contacts->node->element))->url;
-            if (cont_url) {
-               client_id=cont_url->username;
-               if (client_id == NULL) client_id=cont_url->host;
-            }
-            if (client_id == NULL) {
-               static char from_string[HOSTNAME_SIZE];
-               char *tmp;
-               tmp=utils_inet_ntoa(ticket->from.sin_addr);
-               strncpy(from_string, tmp, HOSTNAME_SIZE);
-               from_string[HOSTNAME_SIZE-1]='\0';
-               client_id=from_string;
             }
 
             /*
