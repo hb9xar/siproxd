@@ -27,6 +27,7 @@ EXTRA_DIST = 	siproxd.conf.example \
 		RFC3261_compliance.txt \
 		sample_cfg_budgetone.txt \
 		sample_cfg_x-lite.txt \
+		sample_asterisk.txt \
 		siproxd_guide.sgml
 #
 # docbook stuff
