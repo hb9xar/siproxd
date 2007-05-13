@@ -1,5 +1,6 @@
 0.6.0
 =====
+  13-May-2007:  - deal with locally running UAs on same host (inboud IF side)
   07-May-2007:  - Client-ID in RTP proxy is derived from Client IP address.
                   This should fix an issue with unexpectedly timing-out RTP
                   streams (actually too many RTP streams get started).

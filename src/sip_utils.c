@@ -945,6 +945,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    struct sockaddr_in *from;
    osip_message_t *request;
    osip_message_t *response;
+   struct in_addr tmp_addr;
 
    from=&ticket->from;
    request=ticket->sipmsg;
@@ -958,8 +959,6 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * -> it must be an OUTGOING request
     */
    for (i=0; i<URLMAP_SIZE; i++) {
-      struct in_addr tmp_addr;
-
       if (urlmap[i].active == 0) continue;
       if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
@@ -1026,7 +1025,6 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
       } /* for i */
    } /* if type == 0 */
 
-
    if (MSG_IS_RESPONSE(ticket->sipmsg)) {
       /* &&&& Open Issue &&&&
          it has been seen with cross-provider calls that the FROM may be 'garbled'
@@ -1084,6 +1082,26 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          }
       } /* if type == 0 */
    } /* is response */
+
+   /*
+    * if the telegram is received from 127.0.0.1 of my inbound IP as sender,
+    * this likely is a locally REDIRECTED/DNATed (by iptables) packet.
+    * So it is a local UA.
+    * Example Scenario:
+    * Softphone(or PBX) running on the same host as siproxd is running.
+    * Using iptables, you do a REDIRECT of outgoping SIP traffix of the
+    * PBX to be passed to siproxd.
+    */
+   sts=get_interface_ip(IF_INBOUND, &tmp_addr);
+   if ((htonl(from->sin_addr.s_addr) == INADDR_LOOPBACK) ||
+       (from->sin_addr.s_addr == tmp_addr.s_addr)) {
+      if (MSG_IS_REQUEST(ticket->sipmsg)) {
+         type=REQTYP_OUTGOING;
+      } else {
+         type=RESTYP_OUTGOING;
+      }
+   }
+
 
    if (type == 0) {
       DEBUGC(DBCLASS_SIP, "sip_find_direction: unable to determine "
