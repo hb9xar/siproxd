@@ -678,10 +678,10 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
          replaced=1;
       }
 
-   }
+   } /* for j */
 
    if (replaced == 0) {
-      DEBUGC(DBCLASS_PROXY, "no Contact header rewritten");
+      DEBUGC(DBCLASS_PROXY, "no Contact header rewritten!");
       return STS_FAILURE;
    }
 
