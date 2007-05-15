@@ -62,11 +62,12 @@ Reported interoperability with softphones:
  - MSN messenger 4.6 (remote and local UA)
  - X-Lite (Win XP Professional)
  - SJPhone softphone
+ - Asterisk PBX (using a SIP Trunk, masqueraded via siproxd)
 
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
  - FWD		(http://www.fwd.pulver.com)
- - Sipgate *)	(http://www.sipgate.de)
+ - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
 
  *) There have been reports of people having problems using
@@ -93,7 +94,7 @@ md5sum for siproxd-0.5.13.tar.gz:
 GnuPG signature for siproxd-0.5.13.tar.gz archive:
 
 
-GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
+GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
 -      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
 -      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
 VoIP:  sip:17476691342@proxy01.sipphone.com | sip:431783@fwd.pulver.com
