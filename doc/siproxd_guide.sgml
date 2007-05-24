@@ -17,7 +17,7 @@
       <email>tries@users.sourceforge.net</email>
     </address>
     <copyright>
-      <year>2005</year>
+      <year>2005-2007</year>
       <holder>Thomas Ries</holder>
     </copyright>
     <legalnotice>
@@ -37,6 +37,12 @@
         <authorinitials>tries@users.sourceforge.net</authorinitials>
         <revremark>Comment on Asterisk Scenario</revremark>
       </revision>
+      <revision>
+        <revnumber>0.3</revnumber>
+        <date>2007-05-15</date>
+        <authorinitials>tries@users.sourceforge.net</authorinitials>
+        <revremark>New Asterisk Config Files</revremark>
+      </revision>
     </revhistory>
   </bookinfo>
   <toc></toc>
@@ -45,9 +51,33 @@
           the body of the document -->
 
   <!-- Chapter 1: Overview -->
+  <chapter label="" id="README">
+    <?dbhtml filename="siproxd_guide_c0.html">
+    <title>README</title>
+      <para>Important information, please read me!</para>
+
+    <sect1 label="">
+      <?dbhtml filename="siproxd_guide_c0s1.html">
+      <title>Important / Warning</title>
+      <para>As it still happens that people try to mix different NAT
+        traversal techologies together with siproxd I'll put some words
+        here:
+        <itemizedlist mark='bullet'>
+          <listitem><para>Do NOT USE anything like an STUN Server together
+            with siproxd.</para></listitem>
+          <listitem><para>Do NOT USE any additional techologies trying to 
+            help in NAT traversal (additional firewall modules like
+            ip_nat_sip.ko or whatever fancy stuff may tempt you).
+            </para></listitem>
+        </itemizedlist>
+        If you do not follow the above rules, those other
+        "helping technologies" WILL DO CONFLICT with siproxd and result
+        in a mess.</para>
+    </sect1>
+
+  <!-- Chapter 1: Overview -->
   <chapter label="1" id="Overview">
     <?dbhtml filename="siproxd_guide_c1.html">
-
     <title>Overview</title>
     <para>Siproxd is an proxy/masquerading daemon for the SIP protocol.
       It handles registrations of SIP clients on a private IP network
@@ -924,62 +954,181 @@ iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7080 -j ACCEPT
       <para>Asterisk configuration (SIP related part):</para>
       <para>Note: Very important are the fromuser and fromdomain
         keywords in the client section. They are required to have
-        Asterisk send the correct From headers in SIP dialogs.</para>
+        Asterisk send the correct From headers in SIP dialogs.
+        The used Asterisk version is 'SVN-branch-1.4-r62331M'.</para>
+      <para>With newer Asterisk versions, it is no longer required
+        to have a separate REGISTER definition, this can be made
+        implicit in the SIP trunk config.</para>
 <screen>
-sip.conf:
+; sip.conf:
 
 [general]
 port = 5060           ; Port to bind to (SIP is 5060)
 bindaddr = 0.0.0.0    ; Address to bind to (all addresses on machine)
 context = from-sip-external ; Send unknown SIP callers to this context
-callerid = Unknown
-defaultexpirey = 900
 
-; codecs
+useragent = PBX       ; NOTE: some providers (e.g sipcall.ch) do simply
+                      ;       not work with the default "AsteriskPBX"
+                      ;       UA String.
+
+; Network Settings
+nat=never
+localnet = 10.0.0.0/24
+domain = 10.0.0.10
+
+; Codecs
 disallow=all
 allow=gsm       ; 13 Kbps
 allow=ulaw      ; 64 Kbps
 allow=alaw      ; 64 Kbps
+autoframing = yes
 
-; SIP Trunk to sipphone.com
-; the SIP number is taken randomly for this example
-register=17476691234:&lt;password>@proxy01.sipphone.com
+; SIP Settings
+canreinvite = no      ; important!
 
-[17476691234]
-type=user
-nat=never
-context=from-pstn
-canreinvite=no
+; the following are just my settings I use, however
+; I dont' consider them critical
+allowexternaldomains = yes
+allowexternalinvites = yes
+allowguest = yes
+allowsubscribe = no
+allowtransfer = yes
+alwaysauthreject = no
+autodomain = yes
+callevents = no
+compactheaders = no
+dumphistory = no
+g726nonstandard = no
+ignoreregexpire = no
+jbenable = no
+jbforce = no
+jblog = no
+maxcallbitrate = 384
+maxexpiry = 3600
+minexpiry = 180
+notifyringing = no
+pedantic = no
+promiscredir = no
+recordhistory = no
+relaxdtmf = no
+rtcachefriends = no
+rtsavesysname = no
+rtupdate = no
+sendrpid = yes
+sipdebug = no
+t1min = 100
+progressinband = no
+;register = 
+t38pt_udptl = no
+trustrpid = no
+usereqphone = no
+videosupport = no
+</screen>
+      <para>The Trunk definition looks like:</para>
+<screen>
+; users.conf:
 
-[sipphone1]
-username=17476691234
-type=peer
-qualify=2000
-host=proxy01.sipphone.com
-fromuser=17476691234
-fromdomain=proxy01.sipphone.com
-context=from-pstn
-canreinvite=no
-secret=&lt;password>
+[general]
+;
+; Full name of a user
+;
+fullname = New User
+userbase = 200
+;
+; Create voicemail mailbox and use use macro-stdexten
+;
+hasvoicemail = yes
+;
+; Set voicemail mailbox 6000 password to 1234
+;
+vmsecret = 1234
+;
+; Create SIP Peer
+;
+hassip = yes
+hasiax = no
+;
+; Create H.323 friend
+;
+;hash323 = yes
+;
+; Create manager entry
+;
+hasmanager = no
+;
+; Remaining options are not specific to users.conf entries but are general.
+;
+callwaiting = yes
+threewaycalling = yes
+callwaitingcallerid = yes
+transfer = yes
+canpark = yes
+cancallforward = yes
+callreturn = yes
+callgroup = 1
+pickupgroup = 1
+host = dynamic
+localextenlength = 3
+allow_aliasextns = no
+allow_an_extns = no
+hasagent = no
+hasdirectory = no
 
-; local SIP extensions
-[200]
-username=200
-type=friend
-secret=XXXXXX
-qualify=500
-port=5060
-pickupgroup=
-nat=never
-mailbox=
-host=dynamic
-dtmfmode=rfc2833
-disallow=
-context=from-internal
-canreinvite=no
-callgroup=
-callerid="Extension 200" <200>
-allow=all
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Local SIP UAs
+; = locally connected phones. nothing special here.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[201]
+callwaiting = yes
+cid_number = 201
+context = local_sip
+email = e@mail
+fullname = Full Name
+group = 
+hasagent = yes
+hasdirectory = yes
+hasiax = no
+hasmanager = no
+hassip = yes
+hasvoicemail = yes
+host = dynamic
+mailbox = 201
+secret = sip_password
+threewaycalling = yes
+zapchan = 
+registeriax = no
+registersip = yes
+vmsecret = 1234
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SIP Trunks
+; these are masqueraded via siproxd
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[trunk_1]
+disallow = all
+allow = gsm,ulaw,alaw,adpcm,speex,g729,g723
+callerid = 
+contact = 17476691234       ; IMPORTANT
+context = DID_trunk_1
+dialformat = ${EXTEN:1}
+fromdomain = proxy01.sipphone.com
+fromuser = 17476691234      ; IMPORTANT
+group = 
+hasexten = no
+hasiax = no
+hassip = yes
+host = proxy01.sipphone.com
+insecure = very
+port = 5060
+provider = 
+registeriax = no
+registersip = yes
+secret = sip_password
+trunkname = Custom - sipphone1234
+trunkstyle = customvoip
+username = 17476691234
 </screen>
     </sect1>
   </chapter>
