@@ -2,6 +2,11 @@ Release Notes for siproxd-0.6.0
 ===============================
 
 Major changes since 0.5.13:
+ - Includes RTCP support and a de-jitter feature
+ - Fixes a bug that could cause termination of an ongoing connection
+   after the RTP timeout period.
+ - Can now masquerade the User-agent header, too
+ - Support for adding ;rport to Via headers (RFC3581)
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
