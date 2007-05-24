@@ -244,6 +244,20 @@ debug_port = 0
 #ua_string = Siproxd-UA
 
 ######################################################################
+# Use ;rport in via header
+#
+# may be required in some cases where the remote SIP Registrat
+# uses asymmetric SIP signalling (you receive the SIP packets
+# from another <IP>:<port> combination than you send them to.
+# Default is disabled
+#   0 - do not add ;rport to via header
+#   1 - do add ;rport to INCOMING via header only
+#   2 - do add ;rport to OUTGOING via header only
+#   3 - do add ;rport to OUTGOING and INCOMING via headers
+#
+# use_rport = 0
+
+######################################################################
 # Outbound proxy
 #
 # Siproxd itself can be told to send all traffic to another

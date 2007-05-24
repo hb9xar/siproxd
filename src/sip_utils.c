@@ -548,17 +548,31 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    int sts;
    char branch_id[VIA_BRANCH_SIZE];
    char *myaddr;
+   int  add_rport=0;
 
    if (get_interface_ip(interface, &addr) != STS_SUCCESS) {
       return STS_FAILURE;
    }
 
+   /* evaluate if we need to include an ;rport */
+   /* incoming */
+   if ((configuration.use_rport & 1) && 
+       ((ticket->direction==REQTYP_INCOMING) || 
+        (ticket->direction==RESTYP_INCOMING)) ) {
+        add_rport=1;
+   } else if ((configuration.use_rport & 2) && 
+       ((ticket->direction==REQTYP_OUTGOING) || 
+        (ticket->direction==RESTYP_OUTGOING)) ) {
+        add_rport=1;
+   }
+
    sts = sip_calculate_branch_id(ticket, branch_id);
 
    myaddr=utils_inet_ntoa(addr);
-   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s",
+   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s%s",
            myaddr, configuration.sip_listen_port,
-           branch_id);
+           branch_id,
+           (add_rport)? ";rport":"");
 
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 

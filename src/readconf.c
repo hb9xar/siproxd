@@ -184,6 +184,7 @@ static int parse_config (FILE *configfile) {
       { "pi_shortdial_akey",   TYP_STRING, &configuration.pi_shortdial_akey },
       { "pi_shortdial_entry",  TYP_STRINGA,&configuration.pi_shortdial_entry },
       { "ua_string",           TYP_STRING, &configuration.ua_string },
+      { "use_rport",           TYP_INT4,   &configuration.use_rport },
       {0, 0, 0}
    };
 
