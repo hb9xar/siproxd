@@ -94,6 +94,7 @@ struct siproxd_config {
    int  pi_shortdial;
    char *pi_shortdial_akey;
    stringa_t pi_shortdial_entry;
+   char *ua_string;
 };
 
 /*
@@ -143,6 +144,7 @@ int proxy_request (sip_ticket_t *ticket);				/*X*/
 int proxy_response (sip_ticket_t *ticket);				/*X*/
 int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction); /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
+int proxy_rewrite_useragent(sip_ticket_t *ticket);			/*X*/
 
 /* route_preprocessing.c */
 int route_preprocess(sip_ticket_t *ticket);				/*X*/

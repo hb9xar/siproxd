@@ -233,6 +233,17 @@ debug_port = 0
 # masked_host=my.public.host		-- outbound hostname proxy
 
 ######################################################################
+# User Agent Masquerading
+#
+# Siproxd can masquerade the User Agent string of your local UAs.
+# Useful for Providers that do not work with some specific UAs
+# (e.g. sipcall.ch - it does not work if your outgoing SIP
+# traffic contains an Asterisk UA string...)
+# Default is to do no replacement.
+#
+#ua_string = Siproxd-UA
+
+######################################################################
 # Outbound proxy
 #
 # Siproxd itself can be told to send all traffic to another

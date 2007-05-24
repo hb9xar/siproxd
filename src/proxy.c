@@ -189,7 +189,6 @@ int proxy_request (sip_ticket_t *ticket) {
       /* 'i' still holds the valid index into the URLMAP table */
       proxy_rewrite_request_uri(request, i);
 
-
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream(s) */
@@ -243,8 +242,11 @@ int proxy_request (sip_ticket_t *ticket) {
       }
 #endif
 
-      /* rewrite Contact header to represent the masqued address */
+      /* Rewrite Contact header to represent the masqued address */
       sip_rewrite_contact(ticket, DIR_OUTGOING);
+
+      /* Masquerade the User-Agent if configured to do so */
+      proxy_rewrite_useragent(ticket);
 
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
@@ -605,7 +607,7 @@ int proxy_response (sip_ticket_t *ticket) {
        *   response merely indicates that the subscription has been
        *   understood, and that authorization may or may not have been
        *   granted), which then of course is forwarded back to the phone.
-       *   Ans it seems that the Grandstream can *not* *handle* this
+       *   And it seems that the Grandstream can *not* *handle* this
        *   response, as it immediately sends another SUBSCRIBE request.
        *   And this games goes on and on and on...
        *
@@ -636,8 +638,11 @@ int proxy_response (sip_ticket_t *ticket) {
 	     response->from->url->host ? 
                 response->from->url->host : "*NULL*");
 
-      /* rewrite Contact header to represent the masqued address */
+      /* Rewrite Contact header to represent the masqued address */
       sip_rewrite_contact(ticket, DIR_OUTGOING);
+
+      /* Masquerade the User-Agent if configured to do so */
+      proxy_rewrite_useragent(ticket);
 
       /*
        * If an 2xx OK or 1xx response, answer to an INVITE request,
@@ -1201,6 +1206,32 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
       memcpy(port, urlmap[idx].true_url->port, strlen(urlmap[idx].true_url->port));
       port[strlen(urlmap[idx].true_url->port)]='\0';
       osip_uri_set_port(url, port);
+   }
+   return STS_SUCCESS;
+}
+
+
+/*
+ * PROXY_REWRITE_USERAGENT
+ *
+ * rewrites the User Agent String
+ * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int proxy_rewrite_useragent(sip_ticket_t *ticket){
+   osip_header_t *ua_hdr=NULL;
+   char *useragent;
+
+   osip_message_get_user_agent(ticket->sipmsg, 0, &ua_hdr);
+
+   /* Configured? & Does User-Agent header exist? */
+   if ((configuration.ua_string) && (ua_hdr && ua_hdr->hvalue)) {
+      DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: [%s] -> [%s]",
+             ua_hdr->hvalue, configuration.ua_string);
+      osip_free(ua_hdr->hvalue);
+      ua_hdr->hvalue=osip_malloc(strlen(configuration.ua_string)+1);
+      strcpy(ua_hdr->hvalue, configuration.ua_string);
    }
    return STS_SUCCESS;
 }
