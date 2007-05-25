@@ -19,6 +19,7 @@
 */
 #include "config.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -501,3 +502,27 @@ int  utils_inet_aton(const char *cp, struct in_addr *inp) {
 #error "need inet_pton() or inet_aton()"
 #endif
 }
+
+/*
+ * Create the PID file
+ */
+int createpidfile(char *pidfilename) {
+   FILE *f = NULL;
+   int sts;
+   DEBUGC(DBCLASS_CONFIG,"creating PID file [%s]", pidfilename);
+   sts=unlink(pidfilename);
+   if ((sts==0) || (errno == ENOENT)) {
+      if ((f=fopen(pidfilename, "w"))) {
+         fprintf(f,"%i\n",(int)getpid());
+         fclose(f);
+      } else {
+         WARN("couldn't create new PID file: %s", strerror(errno));
+         return STS_FAILURE;
+      }
+   } else {
+      WARN("couldn't delete old PID file: %s", strerror(errno));
+      return STS_FAILURE;
+   }
+   return STS_SUCCESS;
+}
+

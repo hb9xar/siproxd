@@ -38,6 +38,8 @@
 #define DBCLASS_RTPBABL	0x00002000	/* RTP babble			     */
 #define DBCLASS_ALL	0xffffffff	/* All classes			     */
 
+void log_init(void);
+void log_end(void);
 
 void log_set_pattern(unsigned int pattern);
 unsigned int  log_get_pattern(void);

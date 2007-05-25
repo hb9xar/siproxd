@@ -97,6 +97,8 @@ int main (int argc, char *argv[])
    char *pidfilename=NULL;
    struct sigaction act;
 
+   log_init();
+
    log_set_stderr(1);
 
 /*
@@ -120,7 +122,6 @@ int main (int argc, char *argv[])
  * prepare default configuration
  */
    make_default_config();
-
    log_set_pattern(configuration.debuglevel);
 
 /*
@@ -202,8 +203,6 @@ int main (int argc, char *argv[])
    log_set_pattern(configuration.debuglevel);
    log_set_listen_port(configuration.debugport);
 
-   /* change user and group IDs */
-   secure_enviroment();
 
    /* daemonize if requested to */
    if (configuration.daemonize) {
@@ -216,23 +215,22 @@ int main (int argc, char *argv[])
       INFO("daemonized, pid=%i", getpid());
    }
 
-   /* write PID file of main thread */
+   /* prepare for creating PID file */
    if (pidfilename == NULL) pidfilename = configuration.pid_file;
-   if (pidfilename) {
-      FILE *pidfile;
-      DEBUGC(DBCLASS_CONFIG,"creating PID file [%s]", pidfilename);
-      sts=unlink(configuration.pid_file);
-      if ((sts==0) ||(errno == ENOENT)) {
-         if ((pidfile=fopen(pidfilename, "w"))) {
-            fprintf(pidfile,"%i\n",(int)getpid());
-            fclose(pidfile);
-         } else {
-            WARN("couldn't create new PID file: %s", strerror(errno));
-         }
-      } else {
-         WARN("couldn't delete old PID file: %s", strerror(errno));
-      }
+
+   /* If going to dive into a chroot jail, create a PID file outside
+    * the jail, too. However, it will be owned by root and not deleted
+    * on process termination... */
+   if (configuration.chrootjail && ((getuid()==0) || (geteuid()==0))) {
+      if (pidfilename) createpidfile(pidfilename);
    }
+
+   /* change user and group IDs */
+   secure_enviroment();
+
+   /* write PID file of main thread as changed siproxd user and
+    * possibly into the chroot jail file tree  */
+   if (pidfilename) createpidfile(pidfilename);
 
    /* initialize the RTP proxy */
    sts=rtpproxy_init();
@@ -565,6 +563,7 @@ int main (int argc, char *argv[])
    }
 
    /* END */
+   log_end();
    return 0;
 } /* main */
 

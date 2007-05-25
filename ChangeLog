@@ -1,5 +1,9 @@
 0.6.0
 =====
+  25-May-2007:  - Just discovered some patches originating from Debian
+                  project - included most of them as they make sense.
+                  (Hint: People, if you get fixes, please drop me a note
+                  and a .diff - I won't be biting you)
   24-May-2007:  - new feature: can masquerade User-agent header
                 - new feature: can add ;rport to my own Via Headers
   13-May-2007:  - deal with locally running UAs on same host (inboud IF side)

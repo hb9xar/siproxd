@@ -162,6 +162,7 @@ int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
 int  get_interface_ip(int interface, struct in_addr *retaddr);		/*X*/
 char *utils_inet_ntoa(struct in_addr in);
 int  utils_inet_aton(const char *cp, struct in_addr *inp);
+int  createpidfile(char *pidfilename);					/*X*/
 
 /* sip_utils.c */
 osip_message_t * msg_make_template_reply (sip_ticket_t *ticket, int code);

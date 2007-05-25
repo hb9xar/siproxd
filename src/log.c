@@ -66,6 +66,14 @@ static int silence_level=1;
  */
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+void log_init(void) {
+   openlog(NULL,LOG_NDELAY|LOG_PID,LOG_DAEMON);
+}
+
+void log_end(void) {
+   closelog();
+}
+
 void log_set_pattern(unsigned int pattern) {
    debug_pattern=pattern;
    return;
@@ -239,7 +247,7 @@ void log_debug(unsigned int class, char *file, int line, const char *format, ...
       va_copy(ap_copy, ap);
       vsnprintf(string, sizeof(string), format, ap_copy);
       va_end(ap_copy);
-      syslog(LOG_USER|LOG_DEBUG, "%s:%i %s", file, line, string);
+      syslog(LOG_DAEMON|LOG_DEBUG, "%s:%i %s", file, line, string);
    }
    /*
     * Log to TCP
@@ -296,7 +304,7 @@ void log_error(char *file, int line, const char *format, ...) {
       va_copy(ap_copy, ap);
       vsnprintf(string, sizeof(string), format, ap_copy);
       va_end(ap_copy);
-      syslog(LOG_USER|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
+      syslog(LOG_DAEMON|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
    }
    /*
     * Log to TCP
@@ -353,7 +361,7 @@ void log_warn(char *file, int line, const char *format, ...) {
       va_copy(ap_copy, ap);
       vsnprintf(string, sizeof(string), format, ap_copy);
       va_end(ap_copy);
-      syslog(LOG_USER|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
+      syslog(LOG_DAEMON|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
    }
    /*
     * Log to TCP
@@ -410,7 +418,7 @@ void log_info(char *file, int line, const char *format, ...) {
       va_copy(ap_copy, ap);
       vsnprintf(string, sizeof(string), format, ap_copy);
       va_end(ap_copy);
-      syslog(LOG_USER|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
+      syslog(LOG_DAEMON|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
    }
    /*
     * Log to TCP
