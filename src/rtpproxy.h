@@ -31,11 +31,11 @@ typedef struct {
 	struct timeval		dejitter_tv ;
 	double			dejitter_d ;
 	int			time_code_a ;
-	double			recived_a ;		/* time in 탎ec sience epoch */
+	double			received_a ;		/* time in 탎ec sience epoch */
 	int			time_code_b ;
-	double			recived_b ;		/* time in 탎ec sience epoch */
+	double			received_b ;		/* time in 탎ec sience epoch */
 	int			time_code_c ;
-	double			recived_c ;		/* time in 탎ec sience epoch */
+	double			received_c ;		/* time in 탎ec sience epoch */
 
 } timecontrol_t ;
 

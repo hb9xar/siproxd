@@ -1235,6 +1235,12 @@ static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
    /* I hate this computer language ... :-/ quite confuse ! look modula */
    packet_time_code = fetch_missalign_long_network_oder(&((*rtp_buff)[4]));
 
+/*&&&& beware, it seems that when sending RTP events (payload type
+telephone-event) the timestamp does not increment and stays the same.
+The sequence number however DOES increment. This could lead to confusion when
+transmitting RTP events (like DTMF). How can we handle this? Check for RTP event
+and then do an "educated guess" for the to-be timestamp?
+*/
    if (tc->calccount == 0) {
       DEBUGC(DBCLASS_RTP, "initialise time calculatin");
       tc->starttime = *input_tv;
@@ -1246,35 +1252,35 @@ static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
    calculatedtime = currenttime = make_double_time(&input_r_tv);
    if (tc->calccount < 10) {
       DEBUGC(DBCLASS_RTP, "initial data stage 1 %f usec", currenttime);
-      tc->recived_a = currenttime / (packet_time_code - tc->time_code_a);
+      tc->received_a = currenttime / (packet_time_code - tc->time_code_a);
    } else if (tc->calccount < 20) {
-      tc->recived_a = 0.95 * tc->recived_a + 0.05 * currenttime /
+      tc->received_a = 0.95 * tc->received_a + 0.05 * currenttime /
                       (packet_time_code - tc->time_code_a);
    } else {
-      tc->recived_a = 0.99 * tc->recived_a + 0.01 * currenttime /
+      tc->received_a = 0.99 * tc->received_a + 0.01 * currenttime /
                       (packet_time_code - tc->time_code_a);
    }
    if (tc->calccount > 20) {
       if (!tc->time_code_b) {
          tc->time_code_b = packet_time_code;
-         tc->recived_b = currenttime;
+         tc->received_b = currenttime;
       } else if (tc->time_code_b < packet_time_code) {
-         calculatedtime = tc->recived_b = tc->recived_b + 
-                          (packet_time_code - tc->time_code_b) * tc->recived_a;
+         calculatedtime = tc->received_b = tc->received_b + 
+                          (packet_time_code - tc->time_code_b) * tc->received_a;
          tc->time_code_b = packet_time_code;
          if (tc->calccount < 28) {
-            tc->recived_b = 0.90 * tc->recived_b + 0.1 * currenttime;
+            tc->received_b = 0.90 * tc->received_b + 0.1 * currenttime;
          } else if (tc->calccount < 300) {
-            tc->recived_b = 0.95 * tc->recived_b + 0.05 * currenttime;
+            tc->received_b = 0.95 * tc->received_b + 0.05 * currenttime;
          } else {
-            tc->recived_b = 0.99 * tc->recived_b + 0.01 * currenttime;
+            tc->received_b = 0.99 * tc->received_b + 0.01 * currenttime;
          }
       } else {
-         calculatedtime = tc->recived_b + 
-                          (packet_time_code - tc->time_code_b) * tc->recived_a;
+         calculatedtime = tc->received_b + 
+                          (packet_time_code - tc->time_code_b) * tc->received_a;
       }
    }
-   tc->recived_c = currenttime;
+   tc->received_c = currenttime;
    tc->time_code_c = packet_time_code;
 
    if (tc->calccount < 30) {
@@ -1288,7 +1294,7 @@ static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
    /*
    ** theoretical value for F1000 Phone
    */
-   //calculatedtime = (tc->recived_a = 125.) * packet_time_code;
+   //calculatedtime = (tc->received_a = 125.) * packet_time_code;
 
    tc->calccount ++;
    calculatedtime += tc->dejitter_d;
@@ -1306,22 +1312,22 @@ static void calculate_transmit_time(rtp_buff_t *rtp_buff, timecontrol_t *tc,
       DEBUGC(DBCLASS_RTPBABL, "timecodes %i, %i, %i",
              tc->time_code_a, tc->time_code_b, tc->time_code_c);
       DEBUGC(DBCLASS_RTPBABL, "measuredtimes %f usec, %f usec, %f usec",
-             tc->recived_a, tc->recived_b, tc->recived_c);
+             tc->received_a, tc->received_b, tc->received_c);
       DEBUGC(DBCLASS_RTPBABL, "p2 - p1 = (%i,%f usec)",
              tc->time_code_b - tc->time_code_a,
-             tc->recived_b - tc->recived_a);
+             tc->received_b - tc->received_a);
       if (tc->time_code_c) {
          DEBUGC(DBCLASS_RTPBABL, "p3 - p2 = (%i,%f usec)",
                 tc->time_code_c - tc->time_code_b,
-                tc->recived_c - tc->recived_b);
+                tc->received_c - tc->received_b);
       }
       DEBUGC(DBCLASS_RTPBABL, "calculatedtime = %f", calculatedtime);
       if (calculatedtime2) {
          DEBUGC(DBCLASS_RTPBABL, "calculatedtime2 = %f", calculatedtime2);
       }
       DEBUGC(DBCLASS_RTPBABL, "transmtime = %f (%f)", calculatedtime / 
-             (160. * tc->recived_a) - packet_time_code / 160,
-             currenttime / (160. * tc->recived_a) - 
+             (160. * tc->received_a) - packet_time_code / 160,
+             currenttime / (160. * tc->received_a) - 
              packet_time_code / 160);
       DEBUGC(DBCLASS_RTPBABL, "synthetic latency = %f, %f, %f, %i, %i",
              calculatedtime-currenttime, calculatedtime,
@@ -1419,9 +1425,11 @@ static void error_handler (int rtp_proxytable_idx, int socket_type) {
       /* some other error that I probably want to know about */
       int j;
       WARN("read() [fd=%i, %s:%i] returned error [%i:%s]",
-      rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock,
-      utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr),
-      rtp_proxytable[rtp_proxytable_idx].local_port, errno, strerror(errno));
+          socket_type ? rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock : 
+                        rtp_proxytable[rtp_proxytable_idx].rtp_con_rx_sock,
+          utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr),
+          rtp_proxytable[rtp_proxytable_idx].local_port + socket_type,
+          errno, strerror(errno));
       for (j=0; j<RTPPROXY_SIZE;j++) {
          DEBUGC(DBCLASS_RTP, "%i - rx:%i tx:%i %s@%s dir:%i "
                 "lp:%i, rp:%i rip:%s",
