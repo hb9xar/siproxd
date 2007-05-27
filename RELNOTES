@@ -7,6 +7,7 @@ Major changes since 0.5.13:
    after the RTP timeout period.
  - Can now masquerade the User-agent header, too
  - Support for adding ;rport to Via headers (RFC3581)
+ - "Obscure" SIP Loops (Calls redirected back to me work better)
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
