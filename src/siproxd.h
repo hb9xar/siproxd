@@ -96,6 +96,7 @@ struct siproxd_config {
    stringa_t pi_shortdial_entry;
    char *ua_string;
    int   use_rport;
+   int   obscure_loops;
 };
 
 /*

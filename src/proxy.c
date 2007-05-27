@@ -262,6 +262,30 @@ int proxy_request (sip_ticket_t *ticket) {
          rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
       }
 
+     /*
+      * "Obscure" SIP Loops - modify Call-IDs on outgoing REQs, so calls 
+      * forked / redirected from a Call originating here may be
+      * passed back without breaking things
+      */
+      if (configuration.obscure_loops) {
+         osip_call_id_t *CID=NULL;
+         char *tmp;
+
+         CID=osip_message_get_call_id(request);
+         if (CID) {
+            /* does CID->number already exist? */
+            if (CID->number) { /* accoridng to RFC3261, this part is mandatory */
+               /* modify it */
+               tmp=osip_malloc(strlen(CID->number)+7+1);
+               sprintf(tmp,"%s-siproxd",CID->number);
+               osip_free(CID->number);
+               CID->number=tmp;
+            } else {
+               WARN("CID without number part received, not RFC3261 conform!");
+            }
+         }
+      }
+
       break;
    
    default:
@@ -559,6 +583,35 @@ int proxy_response (sip_ticket_t *ticket) {
       DEBUGC(DBCLASS_PROXY,"incoming response for %s@%s from outbound",
 	response->from->url->username? response->from->url->username:"*NULL*",
 	response->from->url->host? response->from->url->host : "*NULL*");
+
+     /*
+      * "Obscure" SIP Loops - modify Call-IDs on incoming RESs, so calls 
+      * forked / redirected from a Call originating here may be
+      * passed back without breaking things
+      */
+      if (configuration.obscure_loops) {
+         osip_call_id_t *CID=NULL;
+         char *tmp, *tmp2;
+
+         CID=osip_message_get_call_id(response);
+         if (CID) {
+            /* does CID->number already exist? */
+            if (CID->number) { /* accoridng to RFC3261, this part is mandatory */
+               /* modify it back*/
+               tmp=strstr(CID->number,"-siproxd");
+               if (tmp) {
+                  /* make sure to cut only the last marker - in case
+                     of multiple siproxd instances... */
+                  for (;(tmp2=strstr(tmp+1, "-siproxd")) != NULL;) {
+                     tmp=tmp2;
+                  }
+                  tmp[0]='\0';
+               }
+            } else {
+               WARN("CID without number part received, not RFC3261 conform!");
+            }
+         }
+      }
 
       /*
        * Response for INVITE - deal with RTP data in body and
@@ -1221,7 +1274,6 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
  */
 int proxy_rewrite_useragent(sip_ticket_t *ticket){
    osip_header_t *ua_hdr=NULL;
-   char *useragent;
 
    osip_message_get_user_agent(ticket->sipmsg, 0, &ua_hdr);
 

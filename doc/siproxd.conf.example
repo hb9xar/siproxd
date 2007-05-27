@@ -246,9 +246,9 @@ debug_port = 0
 ######################################################################
 # Use ;rport in via header
 #
-# may be required in some cases where the remote SIP Registrat
-# uses asymmetric SIP signalling (you receive the SIP packets
-# from another <IP>:<port> combination than you send them to.
+# may be required in some cases where you have a NAT router that
+# remaps the source port 5060 to something different and the
+# registrar sends back the responses to port 5060.
 # Default is disabled
 #   0 - do not add ;rport to via header
 #   1 - do add ;rport to INCOMING via header only
@@ -256,6 +256,31 @@ debug_port = 0
 #   3 - do add ;rport to OUTGOING and INCOMING via headers
 #
 # use_rport = 0
+
+######################################################################
+# Obscure SIP Loops
+#
+# By default, Siproxd can not handle the situation where a call
+# from an UA is made back to the *same* UA.
+#
+# E.g.
+#
+#   UA ----- siproxd ----- Registrar
+#
+# and UA is registered with two accounts (A & B) at "Registrar".
+# If UA (account A) now initiates a Call to its second account (B)
+# this will result in a "loop" (if you use Asterisk as UA above, it
+# will react with an "482 Loop detected" error and does not accept the
+# call). Siproxd can not handle the RTP audio stream properly in such
+# a situation - you will most likely only hear silence.
+#
+# This expirmental feature does "obscure" this loop - well, actually
+# it does modify the OUTGOING Call-Id - and when the INVITE comes back,
+# it actually looks like a second (independend) call. This even makes
+# Asterisk work in the situation mentioned above.
+#
+# Default is disabled.
+# obscure_loops=1
 
 ######################################################################
 # Outbound proxy
