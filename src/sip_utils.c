@@ -1177,3 +1177,157 @@ int  sip_fixup_asterisk(char *buff, int *buflen) {
 }
 
 
+/*
+ * SIP_OBSCURE_CALLID
+ *
+  27-May-2007:  - new feature: "Obscure Loops" does modify the Call-IDs in
+                  outgoing requests and thus allows incoming calls forked
+                  off such an outgoing call (redirect, transfer, ...) back
+                  to the same UA where the initial call did originate.
+                  This even seems to fix some issues with Asterisks
+                  Loop detection... :-)
+Needs more thinking. The logic about call termination is quite tricky -
+calls can be terminated from either side... It is not stratigh forward
+when and how to modify CIDs for call cancellation...
+ * ...
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int  sip_obscure_callid(sip_ticket_t *ticket) {
+   static char myident[]="-siproxd";
+   int myidentlen=sizeof(myident)-1; /* a static strlen() of myident */
+
+   osip_message_t *sipmsg;
+   osip_from_t *from;
+   osip_to_t *to;
+   osip_uri_param_t *fromtag, *totag; /* gname, gvalue */
+
+   osip_call_id_t *CID=NULL;
+
+   char *tmp, *tmp2;
+
+
+   /* feature enabled? */
+   if (!configuration.obscure_loops) return STS_SUCCESS;
+
+   sipmsg=ticket->sipmsg;
+
+
+      if (MSG_IS_REQUEST(sipmsg) &&
+          MSG_IS_REGISTER(sipmsg)) return STS_SUCCESS;
+      if (MSG_IS_RESPONSE(sipmsg) &&
+          MSG_IS_RESPONSE_FOR(sipmsg,"REGISTER")) return STS_SUCCESS;
+
+   from=sipmsg->from;
+   osip_from_get_tag(from, &fromtag);
+
+   to=sipmsg->to;
+   osip_to_get_tag(to, &totag);
+
+   /* at lest the From Tag must be present, otherwise out Logic does
+      not work. Is MANDATORY according to RFC3261 */
+   if (!fromtag || !fromtag->gvalue || strlen(fromtag->gvalue)==0) {
+      WARN("sip_obscure_callid: no From-Tag, not RFC3261 conform!");
+      return STS_FAILURE;
+   }
+
+   CID=osip_message_get_call_id(sipmsg);
+
+   /* does CID->number exist? According to RFC3261, this part is mandatory */
+   if (!CID || !CID->number) {
+      WARN("sip_obscure_callid: invalid Call-ID received, not RFC3261 conform!");
+      return STS_FAILURE;
+   }
+
+   DEBUGC(DBCLASS_PROXY, "sip_obscure_callid: current Callid#=%s Direction=%i",
+                         CID->number, ticket->direction);
+
+   switch (ticket->direction) {
+
+   /* Outgoing Request */
+   case REQTYP_OUTGOING:
+   /* also need testing for "normal" incoming call that is present and
+      now we SEND a cancel for this call */
+      tmp=strstr(CID->number, myident);
+      if (tmp==NULL) {
+         /* no obscuring present yet, must be a new call, modify it */
+         tmp=osip_malloc(strlen(CID->number) + myidentlen + 
+                         strlen(fromtag->gvalue) + 1);
+         sprintf(tmp,"%s%s%s",CID->number,myident,fromtag->gvalue);
+         osip_free(CID->number);
+         CID->number=tmp;
+      } else {
+         /* Obscuring is present, do nothing. */
+      }
+      break;
+
+   /* Incoming Response */
+   case RESTYP_INCOMING:
+      tmp=strstr(CID->number,myident);
+      /* modify it back if existing */
+      if (tmp) {
+         /* make sure to cut only the last marker - in case
+            of multiple siproxd instances...
+            I dont know if this actually would work (multiple instances...)*/
+         for (;(tmp2=strstr(tmp+1, myident)) != NULL;) {
+            tmp=tmp2;
+         }
+         tmp[0]='\0';
+      }
+      break;
+
+   /* Incoming Request */
+   case REQTYP_INCOMING:
+      tmp=strstr(CID->number, myident);
+      if (tmp==NULL) {
+      /* no obscuring present yet, must be a new incoming call, do nothing */
+      } else {
+         /* if BYE or CANCEL, check if obscuring present.
+          * if From-Tag different than in CID stored, modify back CID */
+DEBUGC(DBCLASS_PROXY, "tmp+myidentlen=[%s], FromTag=[%s]",
+                         tmp+myidentlen, fromtag->gvalue);
+
+         if (strcmp(tmp+myidentlen, fromtag->gvalue) != 0) {
+            tmp[0]='\0';
+         } else { 
+            /* if From-Tag equal to in CID stored, do nothing */
+         }
+      }
+      break;
+
+   /* Outgoing Response */
+   case RESTYP_OUTGOING:
+      if (MSG_IS_RESPONSE_FOR(sipmsg,"BYE")) {
+      tmp=strstr(CID->number, myident);
+      if ((tmp==NULL)&& totag && totag->gvalue) {
+         /* no obscuring present yet, must be a new call, modify it */
+         tmp=osip_malloc(strlen(CID->number) + myidentlen + 
+                         strlen(fromtag->gvalue) + 1);
+         sprintf(tmp,"%s%s%s",CID->number,myident,totag->gvalue);
+         osip_free(CID->number);
+         CID->number=tmp;
+      } else {
+         /* Obscuring is present, do nothing. */
+      }
+}
+//      tmp=strstr(CID->number, myident);
+//      /* modify it back if existing*/
+//      if (tmp) {
+//         /* make sure to cut only the last marker - in case
+//            of multiple siproxd instances... */
+//         for (;(tmp2=strstr(tmp+1, myident)) != NULL;) {
+//            tmp=tmp2;
+//         }
+//         tmp[0]='\0';
+//      }
+      break;
+
+   }
+
+   DEBUGC(DBCLASS_PROXY, "sip_obscure_callid: new Callid#=%s",CID->number);
+
+   return STS_SUCCESS;
+}
+
+

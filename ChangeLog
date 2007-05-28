@@ -1,11 +1,5 @@
 0.6.0
 =====
-  27-May-2007:  - new feature: "Obscure Loops" does modify the Call-IDs in
-                  outgoing requests and thus allows incoming calls forked
-                  off such an outgoing call (redirect, transfer, ...) back
-                  to the same UA where the initial call did originate.
-                  This even seems to fix some issues with Asterisks
-                  Loop detection... :-)
   25-May-2007:  - Just discovered some patches originating from Debian
                   project - included most of them as they make sense.
                   (Hint: People, if you get fixes, please drop me a note

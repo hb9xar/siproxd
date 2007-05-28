@@ -258,31 +258,6 @@ debug_port = 0
 # use_rport = 0
 
 ######################################################################
-# Obscure SIP Loops
-#
-# By default, Siproxd can not handle the situation where a call
-# from an UA is made back to the *same* UA.
-#
-# E.g.
-#
-#   UA ----- siproxd ----- Registrar
-#
-# and UA is registered with two accounts (A & B) at "Registrar".
-# If UA (account A) now initiates a Call to its second account (B)
-# this will result in a "loop" (if you use Asterisk as UA above, it
-# will react with an "482 Loop detected" error and does not accept the
-# call). Siproxd can not handle the RTP audio stream properly in such
-# a situation - you will most likely only hear silence.
-#
-# This expirmental feature does "obscure" this loop - well, actually
-# it does modify the OUTGOING Call-Id - and when the INVITE comes back,
-# it actually looks like a second (independend) call. This even makes
-# Asterisk work in the situation mentioned above.
-#
-# Default is disabled.
-# obscure_loops=1
-
-######################################################################
 # Outbound proxy
 #
 # Siproxd itself can be told to send all traffic to another
