@@ -1,5 +1,6 @@
 0.6.0
 =====
+  29-May-2007:  - Deal with PRACK requests (RFC3262)
   25-May-2007:  - Just discovered some patches originating from Debian
                   project - included most of them as they make sense.
                   (Hint: People, if you get fixes, please drop me a note

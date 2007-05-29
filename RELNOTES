@@ -2,6 +2,7 @@ Release Notes for siproxd-0.6.0
 ===============================
 
 Major changes since 0.5.13:
+ - Support for PRACK messages (RFC3262)
  - Includes RTCP support and a de-jitter feature
  - Fixes a bug that could cause termination of an ongoing connection
    after the RTP timeout period.
@@ -11,6 +12,7 @@ Major changes since 0.5.13:
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
    masquerading firewall
+ - Support for PRACK messages (RFC3262)
  - works with "dial-up" conenctions (dynamic IP addresses)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Access control (IP based) for incoming traffic

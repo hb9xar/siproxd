@@ -200,7 +200,7 @@ int proxy_request (sip_ticket_t *ticket) {
          /* Rewrite the body */
          sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
 
-      } else if (MSG_IS_ACK(request)) {
+      } else if (MSG_IS_ACK(request) || MSG_IS_PRACK(request)) {
          /* Rewrite the body */
          sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
 
@@ -252,7 +252,7 @@ sts=sip_obscure_callid(ticket);
       /* if an INVITE, rewrite body */
       if (MSG_IS_INVITE(request)) {
          sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
-      } else if (MSG_IS_ACK(request)) {
+      } else if (MSG_IS_ACK(request) || MSG_IS_PRACK(request)) {
          sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
       }
 
