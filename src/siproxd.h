@@ -117,6 +117,18 @@ typedef struct {
 } sip_ticket_t;
 
 
+/*
+ * Client_ID - used to identify the two sides of a Call when one
+ * call is routed twice (in->out and back out->in) through siproxd
+ * e.g. local UA1 is calling local UA2 via an external Registrar
+ */
+#define CLIENT_ID_SIZE	128
+typedef struct {
+   char    contact[CLIENT_ID_SIZE];
+   struct  in_addr from_ip;
+   /*... maybe more to come ...*/
+} client_id_t;
+
 
 /*
  * Function prototypes
@@ -164,6 +176,7 @@ int  get_interface_ip(int interface, struct in_addr *retaddr);		/*X*/
 char *utils_inet_ntoa(struct in_addr in);
 int  utils_inet_aton(const char *cp, struct in_addr *inp);
 int  createpidfile(char *pidfilename);					/*X*/
+int  compare_client_id(client_id_t cid1, client_id_t cid2);		/*X*/
 
 /* sip_utils.c */
 osip_message_t * msg_make_template_reply (sip_ticket_t *ticket, int code);
@@ -189,7 +202,7 @@ int make_default_config(void);						/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
-int  rtp_start_fwd (osip_call_id_t *callid, char *client_id,            /*X*/
+int  rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,	/*X*/
                     int direction, int media_stream_no,
                     struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport,
@@ -246,8 +259,8 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 				/* (assume approx one Ethernet MTU)	*/
 
 #define URL_STRING_SIZE	128	/* max size of an URL/URI string	*/
-#define STATUSCODE_SIZE 5	/* size of string representation of status */
-#define DNS_CACHE_SIZE  256	/* number of entries in internal DNS cache */
+#define STATUSCODE_SIZE	5	/* size of string representation of status */
+#define DNS_CACHE_SIZE	256	/* number of entries in internal DNS cache */
 #define DNS_MAX_AGE	60	/* maximum age of an cache entry (sec)	*/
 #define IFADR_CACHE_SIZE 32	/* number of entries in internal IFADR cache */
 #define IFADR_MAX_AGE	5	/* max. age of the IF address cache (sec) */
@@ -255,8 +268,9 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define HOSTNAME_SIZE	128	/* max string length of a hostname	*/
 #define USERNAME_SIZE	128	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	128	/* max string length of a password (auth) */
-#define VIA_BRANCH_SIZE 128	/* max string length for via branch param */
+#define VIA_BRANCH_SIZE	128	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
+
 #if defined(PR_NETDB_BUF_SIZE)
    #define GETHOSTBYNAME_BUFLEN PR_NETDB_BUF_SIZE 
 #else

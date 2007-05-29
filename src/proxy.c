@@ -817,28 +817,15 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
     */
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
-#if 0
-      if ((MSG_IS_RESPONSE_FOR(mymsg,"INVITE")) &&
-          (MSG_IS_STATUS_1XX(mymsg))) {
-         /* 1xx responses *MAY* contain SDP data */
-         DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
-                "no body found in message");
-         return STS_SUCCESS;
-      } else {
-         /* INVITE request and 200 response *MUST* contain SDP data */
-         ERROR("rewrite_invitation_body: no body found in message");
-         return STS_FAILURE;
-      }
-#else
       DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
                             "no body found in message");
       return STS_SUCCESS;
-#endif
    }
 
    sts = sip_body_to_str(body, &buff, &buflen);
    if (sts != 0) {
       ERROR("rewrite_invitation_body: unable to sip_body_to_str");
+      return STS_FAILURE;
    }
 
    DEBUGC(-1, "rewrite_invitation_body: payload %ld bytes", (long)buflen);
@@ -1017,8 +1004,8 @@ if (configuration.debuglevel)
       if (sdp_message_m_port_get(sdp, media_stream_no)) {
          msg_port=atoi(sdp_message_m_port_get(sdp, media_stream_no));
          if ((msg_port > 0) && (msg_port <= 65535)) {
-            char *client_id=NULL;
-            static char from_string[HOSTNAME_SIZE];
+            client_id_t client_id;
+            osip_contact_t *contact = NULL;
             char *tmp=NULL;
             char *protocol=NULL;
 
@@ -1028,10 +1015,35 @@ if (configuration.debuglevel)
              * particular Header (Contact) or not.
              * I should just go for the remote IP address here, no?
              */
-            tmp=utils_inet_ntoa(ticket->from.sin_addr);
-            strncpy(from_string, tmp, HOSTNAME_SIZE);
-            from_string[HOSTNAME_SIZE-1]='\0';
-            client_id=from_string;
+            /* &&& NO, using the sender IP will cause troubles if
+             * the remote peer (Proxy/registrar) is thrown out of
+             * the signalling path. Then suddenly the IP address changes.
+             *
+             * I should probably go back to the Contact Header based idea,
+             * with fallback to IP.
+             * I must use a n-item structure, including all things that
+             * can be used for comparing. Then, in the RTP proxy, comparison
+             * must take place according to priorities with the item
+             * with highest priority present in the RTP table *and*
+             * extracted from the SIP message.
+             * To start with, this can be just 2 things, the Contact header
+             * and the Layer 3 IP address. As long as the UAs include the
+             * Contact header, we survive IP changes (e.g. when the SIP
+             * Registrar/Proxy is removed from signalling path within an
+             * ongoing call. This may happen if the Registrar/Proxy does
+             * not explicitely ask to stay in the signalling path using 
+             * Record-Route headers - which is perfectly legal
+             *
+             */
+
+            /* get the Contact Header if present */
+            osip_message_get_contact(mymsg, 0, &contact);
+            osip_contact_to_str(contact, &tmp);
+            strcpy(client_id.contact, tmp);
+
+            /* store the IP address of the sender */
+            memcpy(&client_id.from_ip, &ticket->from.sin_addr,
+                   sizeof(client_id.from_ip));
 
             /*
              * is this an RTP stream ? If yes, set 'isrtp=1'

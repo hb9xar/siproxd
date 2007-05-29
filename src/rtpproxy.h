@@ -22,7 +22,6 @@
 
 #define CALLIDNUM_SIZE	256
 #define CALLIDHOST_SIZE	128
-#define CLIENT_ID_SIZE	128
 
 typedef struct {
 	struct timeval		starttime ;
@@ -42,11 +41,11 @@ typedef struct {
 typedef struct {
    int  rtp_rx_sock;				/* rx socket (0 -> free slot)*/
    int  rtp_tx_sock;				/* tx socket */
-   int rtp_con_rx_sock;				/* rx socket rtcp */
-   int rtp_con_tx_sock;				/* tx socket rtcp */
+   int  rtp_con_rx_sock;			/* rx socket rtcp */
+   int  rtp_con_tx_sock;			/* tx socket rtcp */
    char callid_number[CALLIDNUM_SIZE];		/* call ID */
    char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
-   char client_id[CLIENT_ID_SIZE];
+   client_id_t client_id;
    int  direction;				/* Direction of RTP stream */
    int  media_stream_no;
    timecontrol_t tc;
@@ -62,7 +61,7 @@ typedef struct {
  * RTP relay
  */
 int  rtp_relay_init(void);
-int  rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
+int  rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                           int rtp_direction, int media_stream_no,
                           struct in_addr local_ipaddr, int *local_port,
                           struct in_addr remote_ipaddr, int remote_port,

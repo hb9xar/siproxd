@@ -441,7 +441,7 @@ static void *rtpproxy_main(void *arg) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
+int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                          int rtp_direction,
                          int media_stream_no, struct in_addr local_ipaddr,
                          int *local_port, struct in_addr remote_ipaddr,
@@ -458,11 +458,6 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
 
    if (callid == NULL) {
       ERROR("rtp_relay_start_fwd: callid is NULL!");
-      return STS_FAILURE;
-   }
-
-   if (client_id == NULL) {
-      ERROR("rtp_relay_start_fwd: did not get a client ID!");
       return STS_FAILURE;
    }
 
@@ -484,16 +479,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
             callid->host, (long)strlen(callid->host),CALLIDHOST_SIZE);
       return STS_FAILURE;
    }
-   if (client_id && (strlen(client_id) >= CLIENT_ID_SIZE)) {
-      ERROR("rtp_relay_start_fwd: client ID [%s] has too many characters "
-            "(%ld, max=%i)",
-            client_id, (long)strlen(client_id),CLIENT_ID_SIZE);
-      return STS_FAILURE;
-   }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
-          "stream for: %s@%s[%s] (%s) #=%i",
-          callid->number, callid->host, client_id,
+          "stream for: CallID=%s@%s [Client-ID=%s] (%s) #=%i",
+          callid->number, callid->host, client_id.contact,
           ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           media_stream_no);
 
@@ -522,7 +511,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == rtp_direction) &&
          (rtp_proxytable[i].media_stream_no == media_stream_no) &&
-         (strcmp(rtp_proxytable[i].client_id, client_id) == 0)) {
+         (compare_client_id(rtp_proxytable[i].client_id, client_id) ==
+            STS_SUCCESS)) {
          /*
           * The RTP port number reported by the UA MAY change
           * for a given media stream
@@ -696,11 +686,8 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
       rtp_proxytable[freeidx].callid_host[0]='\0';
    }
 
-   if (client_id) {
-      strcpy(rtp_proxytable[freeidx].client_id, client_id);
-   } else {
-      rtp_proxytable[freeidx].client_id[0]='\0';
-   }
+   /* store the passed Client-ID data */
+   memcpy(&rtp_proxytable[freeidx].client_id, &client_id, sizeof(client_id_t));
 
    rtp_proxytable[freeidx].direction = rtp_direction;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
@@ -741,10 +728,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, char *client_id,
 
 //&&&
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: started RTP proxy "
-          "stream for: %s@%s[%s] (%s) #=%i idx=%i",
+          "stream for: CallID=%s@%s [Client-ID=%s] %s #=%i idx=%i",
           rtp_proxytable[freeidx].callid_number,
           rtp_proxytable[freeidx].callid_host,
-          rtp_proxytable[freeidx].client_id,
+          rtp_proxytable[freeidx].client_id.contact,
           ((rtp_proxytable[freeidx].direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           rtp_proxytable[freeidx].media_stream_no, freeidx);
 

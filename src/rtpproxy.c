@@ -72,7 +72,7 @@ int rtpproxy_init( void ) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_start_fwd (osip_call_id_t *callid, char *client_id,
+int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                    int direction, int media_stream_no,
                    struct in_addr local_ipaddr, int *local_port,
                    struct in_addr remote_ipaddr, int remote_port,
