@@ -1,5 +1,5 @@
-/* -*- Mode: C; c-basic-offset: 3 -*-
-    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
+/*
+    Copyright (C) 2002-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -115,6 +115,9 @@ int main (int argc, char *argv[])
    }
    if (sigaction(SIGUSR2, &act, NULL)) {
       ERROR("Failed to install SIGUSR2 handler");
+   }
+   if (sigaction(SIGPIPE, &act, NULL)) {
+      ERROR("Failed to install SIGPIPE handler");
    }
 
 
