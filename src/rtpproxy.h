@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2005  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -23,19 +23,22 @@
 #define CALLIDNUM_SIZE	256
 #define CALLIDHOST_SIZE	128
 
-typedef struct {
-	struct timeval		starttime ;
-	int			calccount ;
-	int			dejitter ;
-	struct timeval		dejitter_tv ;
-	double			dejitter_d ;
-	int			time_code_a ;
-	double			received_a ;		/* time in 탎ec sience epoch */
-	int			time_code_b ;
-	double			received_b ;		/* time in 탎ec sience epoch */
-	int			time_code_c ;
-	double			received_c ;		/* time in 탎ec sience epoch */
+/* Buffer structure to store an RTP frame */
+typedef char rtp_buff_t[RTP_BUFFER_SIZE];
 
+/* Time control structure to be used with De-jitter feature */
+typedef struct {
+   struct timeval starttime ;
+   int    calccount ;
+   int    dejitter ;
+   struct timeval dejitter_tv ;
+   double dejitter_d ;
+   int    time_code_a ;
+   double received_a ;				/* time in 탎ec since epoch */
+   int    time_code_b ;
+   double received_b ;				/* time in 탎ec since epoch */
+   int    time_code_c ;
+   double received_c ;				/* time in 탎ec since epoch */
 } timecontrol_t ;
 
 typedef struct {
@@ -48,7 +51,7 @@ typedef struct {
    client_id_t client_id;
    int  direction;				/* Direction of RTP stream */
    int  media_stream_no;
-   timecontrol_t tc;
+   timecontrol_t tc;				/* de-jitter feature */
    struct in_addr local_ipaddr;			/* local IP */
    int  local_port;				/* local allocated port */
    struct in_addr remote_ipaddr;		/* remote IP */
@@ -68,3 +71,6 @@ int  rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                           int dejitter);
 int  rtp_relay_stop_fwd (osip_call_id_t *callid, int rtp_direction,
                          int media_stream_no, int nolock);
+
+#define NOLOCK_FDSET	1
+#define LOCK_FDSET	0

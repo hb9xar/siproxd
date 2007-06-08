@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -208,7 +208,6 @@ int  rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,	/*X*/
                     struct in_addr lcl_client_ipaddr, int lcl_clientport,
                     int isrtp);
 int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
-void rtpproxy_kill( void );						/*X*/
 
 /* accessctl.c */
 int  accesslist_check(struct sockaddr_in from);
@@ -321,4 +320,13 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
         if ((last+(a)) <= now) {last=now; dolog=1;} \
         if (dolog)
 
-
+/*
+ * if the following symbol 'GPL' is defined, building siproxd will
+ * include all features. If not defined, some features that will
+ * conflict with a non-GPL distribution license will be disabled.
+ *
+ * If you wish to distribute siproxd under another license than GPL
+ * (commercial License for example), contact the author to elaborate
+ * the details.
+ */
+#define GPL

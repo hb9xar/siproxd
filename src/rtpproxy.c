@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2005  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
 
@@ -116,7 +116,7 @@ int rtp_stop_fwd (osip_call_id_t *callid, int direction) {
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
-      sts = rtp_relay_stop_fwd(callid, direction, -1, 0);
+      sts = rtp_relay_stop_fwd(callid, direction, -1, LOCK_FDSET);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);

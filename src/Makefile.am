@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2007  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
@@ -30,7 +30,7 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
 		  rtpproxy_relay.c accessctl.c route_processing.c \
 		  security.c auth.c fwapi.c resolve.c \
-		  plugin_shortdial.c
+		  plugin_shortdial.c dejitter.c
 #		  addrcache.c
 
 #
@@ -42,7 +42,7 @@ libcustom_fw_module_a_SOURCES = custom_fw_module.c
 
 
 noinst_HEADERS = log.h siproxd.h digcalc.h rtpproxy.h \
-		 fwapi.h plugins.h addrcache.h
+		 fwapi.h plugins.h dejitter.h addrcache.h
 
 EXTRA_DIST = .buildno
 
