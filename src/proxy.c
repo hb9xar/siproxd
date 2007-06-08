@@ -1,5 +1,5 @@
-/* -*- Mode: C; c-basic-offset: 3 -*-
-    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
+/*
+    Copyright (C) 2002-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -111,7 +111,7 @@ int proxy_request (sip_ticket_t *ticket) {
    /*
     * logging of passing calls
     */
-/*&&&& this should be moved to its own loggin plugin */
+/*&&&& this should be moved to its own logging plugin */
    if (configuration.log_calls) {
       osip_uri_t *from_url = NULL;
       osip_uri_t *to_url   = NULL;
@@ -1036,10 +1036,12 @@ if (configuration.debuglevel)
              *
              */
 
+            memset(&client_id, 0, sizeof(client_id));
+
             /* get the Contact Header if present */
             osip_message_get_contact(mymsg, 0, &contact);
-            osip_contact_to_str(contact, &tmp);
-            strcpy(client_id.contact, tmp);
+            if (contact) osip_contact_to_str(contact, &tmp);
+            if (tmp) strncpy(client_id.contact, tmp, CLIENT_ID_SIZE-1);
 
             /* store the IP address of the sender */
             memcpy(&client_id.from_ip, &ticket->from.sin_addr,

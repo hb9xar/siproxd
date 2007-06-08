@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2005  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2007  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -528,14 +528,21 @@ int createpidfile(char *pidfilename) {
 
 
 /*
+ * compare_client_id:
+ * Compares two client_id_t structures. If both have the Contact item
+ * defined (not NULL), then compare it and return.
+ * If one (or both) do NOT have the contact item defined, then
+ * fall back on comparing the from_ip (IP address).
  *
- *
+ * returns:
+ * STS_SUCCESS on match
+ * STS_FAILURE on no match
  */
 int  compare_client_id(client_id_t cid1, client_id_t cid2) {
 
-   /* Prio 1: Contact - if present */
+   /* Prio 1: Contact - if present in both structures */
    if ((cid1.contact[0] != '\0') && (cid2.contact[0] != '\0')) {
-      if (strcmp(cid1.contact, cid2.contact) == 0) {
+      if (strncmp(cid1.contact, cid2.contact, CLIENT_ID_SIZE) == 0) {
          DEBUGC(DBCLASS_BABBLE, "compare_client_id: contact match [%s]",
                 cid1.contact);
          return STS_SUCCESS;
