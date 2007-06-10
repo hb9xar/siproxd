@@ -36,6 +36,7 @@ dnl	13-Feb-2005	tries	check for # of args on libosip2 functions
 dnl	10-Apr-2005	tries	check for docbook
 dnl	18-Apr-2005	tries	added libresolv
 dnl	 9-Oct-2005	tries	libresolv is now included in static build
+dnl	10-Jun-2007	tries	test more .h files (DNS resolver related)
 dnl
 dnl
 
@@ -345,6 +346,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/time.h errno.h)
 AC_CHECK_HEADERS(stdarg.h varargs.h)
 AC_CHECK_HEADERS(pwd.h getopt.h sys/socket.h netdb.h)
+AC_CHECK_HEADERS(resolv.h arpa/nameser.h)
 
 
 dnl
