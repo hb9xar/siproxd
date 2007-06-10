@@ -124,6 +124,9 @@ A: The RTP proxy actually is quite simple. It does not use any RTP
    (configurable) that will stop RTP streams that have been inactive
    (no data received) for a specified time.
    
+   For each RTP data stream, also an RTCP stream will be handled (port
+   number of RTP strem +1).
+   
 ---------------------------------------------------------------------------
 Q: Does siproxd need to be installed on the same host as the
    firewall / NAT is running?
@@ -224,6 +227,11 @@ A: Siproxd remenbers the registrations made by UAs in a seperate file.
    - rm siproxd_registrations
    - start siproxd
 
+   Also, with newer Linux Kernels (2.6.x with conntrack kernel module
+   loaded) there may be some state information stored within conntrack.
+   Stopp all SIP traffic (UAs, including siproxd) and wait about 5
+   minutes, then try again.
+
 ---------------------------------------------------------------------------
 Q: I have problems getting MSN Messenger 5.0 to work (using FWD
    as 3rd party registrar).
@@ -282,7 +290,7 @@ A: Very likely this will not work properly. Siproxd does masquerade User
    use siproxd, but get a real SIP proxy server instead.
 
 ---------------------------------------------------------------------------
-Q: I can build siproxd, but when I try to start it it fails with
+Q: I can build siproxd, but when I try to start it, it fails with
    something like:
    $ siproxd -h
    siproxd: error while loading shared libraries: libosipparser2.so.3:
@@ -303,6 +311,18 @@ A: Make sure you have correctly installed libosip2. If libosip2 is
 
    If not, libosip2 is not correctly installed.
 
+---------------------------------------------------------------------------
+Q: I have two Internet connections, one is my main connection and the
+   second is my backup connection. Can I configure siproxd in a way
+   to handle both Internet connections (switch to the backup connection
+   if the other one fails)?
+
+A: Siproxd itself does not include support for such a thing. However what
+   you can do is, use 2 different siproxd configuration files (with the
+   two different outbound interfaces configured). Then, if the main
+   interface goes down and you activate the backup connection, just
+   copy the second siproxd config file in place and restart siproxd.
+   Active registrations are not lost, as siproxd does save them at exit.
 
 
 
