@@ -1,5 +1,7 @@
 0.6.0
 =====
+  22-Jun-2007:  - fixed an error in "my via"detection when using the
+                  "host_outbound" config directive
   08-Jun-2007:  - Some cleanup in dejitter code
   29-May-2007:  - Deal with PRACK requests (RFC3262)
   25-May-2007:  - Just discovered some patches originating from Debian

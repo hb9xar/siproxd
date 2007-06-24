@@ -177,7 +177,8 @@ int check_vialoop (sip_ticket_t *ticket) {
 
 /*
  * check if a given osip_via_t is local. I.e. its address is owned
- * by my inbound or outbound interface
+ * by my inbound or outbound interface (or externally defined using
+ * teh host_outbound directive
  *
  * RETURNS
  *	STS_TRUE if the given VIA is one of my interfaces
@@ -205,25 +206,33 @@ int is_via_local (osip_via_t *via) {
       }
    }   
 
+   if (via->port) {
+      port=atoi(via->port);
+      if ((port<=0) || (port>65535)) port=SIP_PORT;
+   } else {
+      port=SIP_PORT;
+   }
+
    found=0;
-   for (i=0; i<2; i++) {
-      /*
-       * search my in/outbound interfaces
-       */
-      DEBUGC(DBCLASS_BABBLE,"resolving IP of interface %s",
-             (i==IF_INBOUND)? "inbound":"outbound");
-      if (get_interface_ip(i, &addr_myself) != STS_SUCCESS) {
-         continue;
+   for (i=0; i<3; i++) {
+      if (i < 2) {
+         /* search my in/outbound interfaces */
+         DEBUGC(DBCLASS_BABBLE,"resolving IP of interface %s",
+                (i==IF_INBOUND)? "inbound":"outbound");
+         if (get_interface_ip(i, &addr_myself) != STS_SUCCESS) {
+            continue;
+         }
+      } else {
+         /* check againt a possible defined 'host_outbound' */
+         DEBUGC(DBCLASS_BABBLE,"resolving IP of interface ''host_outbound'");
+         /* defined? */
+         if (configuration.outbound_host == NULL) continue;
+         /* lookup */
+         if (get_ip_by_host(configuration.outbound_host,
+                            &addr_myself) != STS_SUCCESS) continue;
       }
 
       /* check the extracted VIA against my own host addresses */
-      if (via->port) {
-         port=atoi(via->port);
-         if ((port<=0) || (port>65535)) port=SIP_PORT;
-      } else {
-         port=SIP_PORT;
-      }
-
       if ( (memcmp(&addr_myself, &addr_via, sizeof(addr_myself))==0) &&
            (port == configuration.sip_listen_port) ) {
          DEBUG("got address match [%s]", utils_inet_ntoa(addr_via));
