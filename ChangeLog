@@ -1,5 +1,6 @@
 0.6.0
 =====
+  30-Jun-2007:  - some come cleanup in log.c (Bob Beers)
   22-Jun-2007:  - fixed an error in "my via"detection when using the
                   "host_outbound" config directive
   08-Jun-2007:  - Some cleanup in dejitter code

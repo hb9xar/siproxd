@@ -41,6 +41,15 @@
 
 static char const ident[]="$Id$";
 
+/* static functions */
+static void output_to_stderr(const char *label, va_list ap, char *file,
+                             int line, const char *format);
+static void output_to_syslog(const char *label, int level, va_list ap,
+                             char *file, int line, const char *format);
+static void output_to_TCP(const char *label, va_list ap, char *file,
+                          int line, const char *format);
+
+
 /* module local variables */
 static int log_to_stderr=0;
 static unsigned int debug_pattern=0;
@@ -48,7 +57,7 @@ static unsigned int debug_pattern=0;
 static int debug_listen_port=0;
 static int debug_listen_fd=0;
 static int debug_fd=0;
-static char outbuf[512];
+
 /*
  * What shall I log to syslog?
  *   0 - DEBUGs, INFOs, WARNINGs and ERRORs
@@ -60,7 +69,7 @@ static char outbuf[512];
 static int silence_level=1;
 
 /*
- * Mutex for threat synchronization when writing log data
+ * Mutex for thread synchronization when writing log data
  *
  * use a 'fast' mutex for synchronizing - as these are portable... 
  */
@@ -212,244 +221,144 @@ void log_tcp_connect(void) {
 }
 
 
-/* for all the LOGGING routines:
-   They should figure out if we are running as a daemon, then write
-   their stuff to syslog or something like that
-*/
+static void output_to_stderr(const char *label, va_list ap, char *file,
+                             int line, const char *format) {
+   va_list ap_copy;
+   time_t t;
+   struct tm *tim;
+
+   if (!log_to_stderr) return;
+
+   time(&t);
+   tim = localtime(&t);
+   fprintf(stderr, "%2.2i:%2.2i:%2.2i %s%s:%i ", tim->tm_hour,
+           tim->tm_min, tim->tm_sec, label, file, line);
+   va_copy(ap_copy, ap);
+   vfprintf(stderr, format, ap_copy);
+   va_end(ap_copy);
+   fprintf(stderr, "\n");
+   fflush(stderr);
+   return;
+}
+
+static void output_to_syslog(const char *label, int level, va_list ap,
+                             char *file, int line, const char *format) {
+   va_list ap_copy;
+   char outbuf[256];
+
+   va_copy(ap_copy, ap);
+   vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
+   va_end(ap_copy);
+   syslog(LOG_USER|level, "%s:%i %s%s", file, line, label, outbuf);
+   return;
+}
+
+static void output_to_TCP(const char *label, va_list ap, char *file,
+                          int line, const char *format) {
+   va_list ap_copy;
+   time_t t;
+   struct tm *tim;
+   char outbuf[256];
+
+   if (debug_fd <= 0) return;
+
+   time(&t);
+   tim=localtime(&t);
+   snprintf(outbuf, sizeof(outbuf), "%2.2i:%2.2i:%2.2i %s%s:%i ",
+            tim->tm_hour, tim->tm_min, tim->tm_sec, label, file, line);
+   write(debug_fd, outbuf, strlen(outbuf));
+   va_copy(ap_copy, ap);
+   vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
+   va_end(ap_copy);
+   write(debug_fd, outbuf, strlen(outbuf));
+   snprintf(outbuf, sizeof(outbuf), "\n");
+   write(debug_fd, outbuf, strlen(outbuf));
+   return;
+}
 
 
 void log_debug(unsigned int class, char *file, int line, const char *format, ...) {
-   va_list ap, ap_copy;
-   time_t t;
-   struct tm *tim;
-   char string[128];
+   va_list ap;
 
    if ((debug_pattern & class) == 0) return;
 
    va_start(ap, format);
-
    pthread_mutex_lock(&log_mutex);
-   /*
-    * DEBUG output is either STDOUT or SYSLOG, but not both
-    */
-   if (log_to_stderr) {
-      /* not running as daemon - log to STDERR */
-      time(&t);
-      tim=localtime(&t);
-      fprintf(stderr,"%2.2i:%2.2i:%2.2i %s:%i ", tim->tm_hour,
-                      tim->tm_min, tim->tm_sec, file, line);
-      va_copy(ap_copy, ap);
-      vfprintf(stderr, format, ap_copy);
-      va_end(ap_copy);
-      fprintf(stderr,"\n");
-      fflush(stderr);
-   } else if (silence_level < 1) {
-      /* running as daemon - log via SYSLOG facility */
-      va_copy(ap_copy, ap);
-      vsnprintf(string, sizeof(string), format, ap_copy);
-      va_end(ap_copy);
-      syslog(LOG_DAEMON|LOG_DEBUG, "%s:%i %s", file, line, string);
-   }
-   /*
-    * Log to TCP
-    */
-   if (debug_fd > 0) {
-      /* log to TCP socket */
-      time(&t);
-      tim=localtime(&t);
-      snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i %s:%i ",
-                       tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
-      write(debug_fd, outbuf, strlen(outbuf));
-      va_copy(ap_copy, ap);
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
-      va_end(ap_copy);
-      write(debug_fd, outbuf, strlen(outbuf));
-      snprintf(outbuf, sizeof(outbuf) ,"\n");
-      write(debug_fd, outbuf, strlen(outbuf));
-   }
-   pthread_mutex_unlock(&log_mutex);
 
+   output_to_stderr("", ap, file, line, format);
+
+   if (!log_to_stderr && silence_level < 1) {
+      output_to_syslog("", LOG_DEBUG, ap, file, line, format);
+   }
+
+   output_to_TCP("", ap, file, line, format);
+
+   pthread_mutex_unlock(&log_mutex);
    va_end(ap);
    return;
-
 }
-
 
 void log_error(char *file, int line, const char *format, ...) {
-   va_list ap, ap_copy;
-   time_t t;
-   struct tm *tim;
-   char string[128];
+   va_list ap;
 
    va_start(ap, format);
-
    pthread_mutex_lock(&log_mutex);
-   /*
-    * INFO, WARN, ERROR output is always to syslog and if not daemonized
-    * st STDOUT as well.
-    */
-   if (log_to_stderr) {
-      /* not running as daemon - log to STDERR */
-      time(&t);
-      tim=localtime(&t);
-      fprintf(stderr,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",tim->tm_hour,
-                      tim->tm_min, tim->tm_sec, file, line);
-      va_copy(ap_copy, ap);
-      vfprintf(stderr, format, ap_copy);
-      va_end(ap_copy);
-      fprintf(stderr,"\n");
-      fflush(stderr);
-   }
-   if (silence_level < 4) {
-      /* running as daemon - log via SYSLOG facility */
-      va_copy(ap_copy, ap);
-      vsnprintf(string, sizeof(string), format, ap_copy);
-      va_end(ap_copy);
-      syslog(LOG_DAEMON|LOG_WARNING, "%s:%i ERROR:%s", file, line, string);
-   }
-   /*
-    * Log to TCP
-    */
-   if (debug_fd > 0) {
-      /* log to TCP socket */
-      time(&t);
-      tim=localtime(&t);
-      snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i ERROR:%s:%i ",
-                       tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
-      write(debug_fd, outbuf, strlen(outbuf));
-      va_copy(ap_copy, ap);
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
-      va_end(ap_copy);
-      write(debug_fd, outbuf, strlen(outbuf));
-      snprintf(outbuf, sizeof(outbuf) ,"\n");
-      write(debug_fd, outbuf, strlen(outbuf));
-   }
-   pthread_mutex_unlock(&log_mutex);
 
+   output_to_stderr("ERROR:", ap, file, line, format);
+
+   if (silence_level < 4) {
+      output_to_syslog("ERROR:", LOG_ERR, ap, file, line, format);
+   }
+
+   output_to_TCP("ERROR:", ap, file, line, format);
+
+   pthread_mutex_unlock(&log_mutex);
    va_end(ap);
    return;
-
 }
-
 
 void log_warn(char *file, int line, const char *format, ...) {
-   va_list ap, ap_copy;
-   time_t t;
-   struct tm *tim;
-   char string[128];
+   va_list ap;
 
    va_start(ap, format);
-
    pthread_mutex_lock(&log_mutex);
-   /*
-    * INFO, WARN, ERROR output is always to syslog and if not daemonized
-    * st STDOUT as well.
-    */
-   if (log_to_stderr) {
-      /* not running as daemon - log to STDERR */
-      time(&t);
-      tim=localtime(&t);
-      fprintf(stderr,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",tim->tm_hour,
-                      tim->tm_min, tim->tm_sec,file,line);
-      va_copy(ap_copy, ap);
-      vfprintf(stderr, format, ap_copy);
-      va_end(ap_copy);
-      fprintf(stderr,"\n");
-      fflush(stderr);
-   }
+
+   output_to_stderr("WARNING:", ap, file, line, format);
+
    if (silence_level < 3) {
-      /* running as daemon - log via SYSLOG facility */
-      va_copy(ap_copy, ap);
-      vsnprintf(string, sizeof(string), format, ap_copy);
-      va_end(ap_copy);
-      syslog(LOG_DAEMON|LOG_NOTICE, "%s:%i WARNING:%s", file, line, string);
+      output_to_syslog("WARNING:", LOG_NOTICE, ap, file, line, format);
    }
-   /*
-    * Log to TCP
-    */
-   if (debug_fd > 0) {
-      /* log to TCP socket */
-      time(&t);
-      tim=localtime(&t);
-      snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i WARNING:%s:%i ",
-                       tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
-      write(debug_fd, outbuf, strlen(outbuf));
-      va_copy(ap_copy, ap);
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
-      va_end(ap_copy);
-      write(debug_fd, outbuf, strlen(outbuf));
-      snprintf(outbuf, sizeof(outbuf) ,"\n");
-      write(debug_fd, outbuf, strlen(outbuf));
-   }
+
+   output_to_TCP("WARNING", ap, file, line, format);
+
    pthread_mutex_unlock(&log_mutex);
-   
    va_end(ap);
    return;
-
 }
-
 
 void log_info(char *file, int line, const char *format, ...) {
-   va_list ap, ap_copy;
-   time_t t;
-   struct tm *tim;
-   char string[128];
+   va_list ap;
 
    va_start(ap, format);
-
    pthread_mutex_lock(&log_mutex);
-   /*
-    * INFO, WARN, ERROR output is always to syslog and if not daemonized
-    * st STDOUT as well.
-    */
-   if (log_to_stderr) {
-      /* not running as daemon - log to STDERR */
-      time(&t);
-      tim=localtime(&t);
-      fprintf(stderr,"%2.2i:%2.2i:%2.2i INFO:%s:%i ",tim->tm_hour,
-                      tim->tm_min, tim->tm_sec,file,line);
-      va_copy(ap_copy, ap);
-      vfprintf(stderr, format, ap_copy);
-      va_end(ap_copy);
-      fprintf(stderr,"\n");
-      fflush(stderr);
-   }
+
+   output_to_stderr("INFO:", ap, file, line, format);
+
    if (silence_level < 2) {
-      /* running as daemon - log via SYSLOG facility */
-      va_copy(ap_copy, ap);
-      vsnprintf(string, sizeof(string), format, ap_copy);
-      va_end(ap_copy);
-      syslog(LOG_DAEMON|LOG_NOTICE, "%s:%i INFO:%s", file, line, string);
+      output_to_syslog("INFO:", LOG_NOTICE, ap, file, line, format);
    }
-   /*
-    * Log to TCP
-    */
-   if (debug_fd > 0) {
-      /* log to TCP socket */
-      time(&t);
-      tim=localtime(&t);
-      snprintf(outbuf, sizeof(outbuf) ,"%2.2i:%2.2i:%2.2i INFO:%s:%i ",
-                       tim->tm_hour, tim->tm_min, tim->tm_sec, file, line);
-      write(debug_fd, outbuf, strlen(outbuf));
-      va_copy(ap_copy, ap);
-      vsnprintf(outbuf, sizeof(outbuf) , format, ap_copy);
-      va_end(ap_copy);
-      write(debug_fd, outbuf, strlen(outbuf));
-      snprintf(outbuf, sizeof(outbuf) ,"\n");
-      write(debug_fd, outbuf, strlen(outbuf));
-   }
+
+   output_to_TCP("INFO", ap, file, line, format);
+
    pthread_mutex_unlock(&log_mutex);
-   
    va_end(ap);
    return;
-
-}
-
-
+ }
 void log_dump_buffer(unsigned int class, char *file, int line,
                      char *buffer, int length) {
    int i, j;
    char tmp[8], tmplin1[80], tmplin2[80];
+   char outbuf[256];
 
    if ((debug_pattern & class) == 0) return;
    if ((!log_to_stderr) && (debug_fd <= 0)) return;
