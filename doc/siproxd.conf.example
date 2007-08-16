@@ -43,6 +43,9 @@ if_outbound = ppp0
 #      local private net -> allow_reg list
 #      external nets (from which we accept incoming calls) -> allow_sip
 #
+#    NOTE: Improper setting here will result in dropped SIP packets!
+#          Usually you do NOT want to define hosts_allow_sip!
+#
 #hosts_allow_reg = 192.168.1.8/24
 #hosts_allow_sip = 123.45.0.0/16,123.46.0.0/16
 #hosts_deny_sip  = 10.0.0.0/8,11.0.0.0/8
