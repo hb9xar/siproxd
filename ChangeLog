@@ -1,5 +1,8 @@
 0.6.0
 =====
+  03-Sep-2007:  - keep failed DNS attempts in cache for 10 minutes.
+                  This should protect from repeating DNS timeouts to
+                  caused by broken DNS server (possible DOS)
   16-Aug-2007:  - added comment in siproxd.conf about hosts_allow_sip
   30-Jun-2007:  - some come cleanup in log.c (Bob Beers)
   22-Jun-2007:  - fixed an error in "my via"detection when using the

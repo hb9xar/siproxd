@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <values.h>
 #include <time.h>
 #include <signal.h>
 #include <string.h>
@@ -62,8 +63,8 @@ extern int h_errno;
  *	STS_FAILURE on failure
  */
 int get_ip_by_host(char *hostname, struct in_addr *addr) {
-   int i, j;
-   time_t t;
+   int i, j, k;
+   time_t t1, t2;
    struct hostent *hostentry;
 #if defined(HAVE_GETHOSTBYNAME_R)
    struct hostent result_buffer;
@@ -71,8 +72,9 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 #endif
    int error;
    static struct {
-      time_t timestamp;
-      struct in_addr addr;
+      time_t expires_timestamp;	/* time of expiration */
+      struct in_addr addr;	/* IP address or 0.0.0.0 if a bad entry */
+      char   bad_entry;		/* != 0 if resolving failed */
       char hostname[HOSTNAME_SIZE+1];
    } dns_cache[DNS_CACHE_SIZE];
    static int cache_initialized=0;
@@ -94,11 +96,11 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
       cache_initialized=1;
    }
 
-   time(&t);
+   time(&t1);
    /* clean expired entries */
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') continue;
-      if ( (dns_cache[i].timestamp+DNS_MAX_AGE) < t ) {
+      if ( (dns_cache[i].expires_timestamp) < t1 ) {
          DEBUGC(DBCLASS_DNS, "cleaning DNS cache (entry %i)", i);
          memset (&dns_cache[i], 0, sizeof(dns_cache[0]));
       }
@@ -111,13 +113,19 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
       if (dns_cache[i].hostname[0]=='\0') continue; /* empty */
       if (strcasecmp(hostname, dns_cache[i].hostname) == 0) { /* match */
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
+         if (dns_cache[i].bad_entry) {
+            DEBUGC(DBCLASS_DNS, "DNS lookup - bad entry from cache: %s",
+                   hostname);
+            return STS_FAILURE;
+         }
          DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
-	        hostname, utils_inet_ntoa(*addr));
+                hostname, utils_inet_ntoa(*addr));
          return STS_SUCCESS;
       }
    }
    
-   /* did not find it in cache, so I have to resolve it */
+   /* I did not find it in cache, so I have to resolve it */
+   error = 0;
 
    /* need to deal with reentrant versions of gethostbyname_r()
     * as we may use threads... */
@@ -156,13 +164,13 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
 #else
    #error "need gethostbyname() or gethostbyname_r()"
 #endif
+   /* Here I have 'hostentry' and 'error' */
+
 
    if (hostentry==NULL) {
       /*
        * Some errors just tell us that there was no IP resolvable.
        * From the manpage:
-       *   HOST_NOT_FOUND
-       *      The specified host is unknown.
        *   HOST_NOT_FOUND
        *      The specified host is unknown.
        *   NO_ADDRESS or NO_DATA
@@ -187,27 +195,42 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
          ERROR("gethostbyname(%s) failed: h_errno=%i",hostname, h_errno);
 #endif
       }
-      return STS_FAILURE;
    }
 
-   memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
-   DEBUGC(DBCLASS_DNS, "DNS lookup - resolved: %s -> %s",
-          hostname, utils_inet_ntoa(*addr));
+   if (hostentry) {
+      memcpy(addr, hostentry->h_addr, sizeof(struct in_addr));
+      DEBUGC(DBCLASS_DNS, "DNS lookup - resolved: %s -> %s",
+             hostname, utils_inet_ntoa(*addr));
+   }
 
    /*
     * find an empty slot in the cache
     */
    j=0;
+   k=0;
+   t1=MAXINT;
+   t2=MAXINT;
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') break;
-      if (dns_cache[i].timestamp < t) {
-         /* remember oldest entry */
-         t=dns_cache[i].timestamp;
-	 j=i;
+      if ((dns_cache[i].expires_timestamp < t1) &&
+          (dns_cache[i].bad_entry == 0)) {
+         /* remember oldest good entry */
+         t1=dns_cache[i].expires_timestamp;
+         j=i;
+      } else 
+      if (dns_cache[i].expires_timestamp < t2) {
+         /* remember oldest bad entry */
+         t2=dns_cache[i].expires_timestamp;
+         k=i;
       }
    }
-   /* if no empty slot found, take oldest one */
-   if (i >= DNS_CACHE_SIZE) i=j;
+   /* if no empty slot found, victimize oldest one.
+    * Give preference to the oldest "bad" entry if 
+    * one exists */
+   if (i >= DNS_CACHE_SIZE) {
+      if (k > 0) i=k;
+      else       i=j;
+   }
 
    /*
     * store the result in the cache
@@ -215,9 +238,13 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", i);
    memset(&dns_cache[i], 0, sizeof(dns_cache[0]));
    strncpy(dns_cache[i].hostname, hostname, HOSTNAME_SIZE);
-   time(&dns_cache[i].timestamp);
-   memcpy(&dns_cache[i].addr, addr, sizeof(struct in_addr));
-
+   if (hostentry) {
+      dns_cache[i].expires_timestamp = time(NULL) + DNS_GOOD_AGE;
+      memcpy(&dns_cache[i].addr, addr, sizeof(struct in_addr));
+   } else {
+      dns_cache[i].expires_timestamp = time(NULL) + DNS_BAD_AGE;
+      dns_cache[i].bad_entry = 1;
+   }
    return STS_SUCCESS;
 }
 
