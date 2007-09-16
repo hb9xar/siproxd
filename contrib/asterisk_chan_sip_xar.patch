@@ -1,0 +1,131 @@
+Index: chan_sip.c
+===================================================================
+--- chan_sip.c	(revision 65247)
++++ chan_sip.c	(working copy)
+@@ -1414,6 +1414,8 @@
+ static struct sip_peer *temp_peer(const char *name);
+ static void register_peer_exten(struct sip_peer *peer, int onoff);
+ static struct sip_peer *find_peer(const char *peer, struct sockaddr_in *sin, int realtime);
++/*&&&*/
++static struct sip_peer *find_peer_siphead(const char *peer, struct sockaddr_in *sin, char *username, int realtime);
+ static struct sip_user *find_user(const char *name, int realtime);
+ static enum parse_register_result parse_register_contact(struct sip_pvt *pvt, struct sip_peer *p, struct sip_request *req);
+ static int expire_register(void *data);
+@@ -2506,6 +2508,7 @@
+ 					(p->addr.sin_addr.s_addr == sin->sin_addr.s_addr)));
+ }
+ 
++
+ /*! \brief Locate peer by name or ip address 
+  *	This is used on incoming SIP message to find matching peer on ip
+ 	or outgoing message to find matching peer on name */
+@@ -2524,6 +2527,38 @@
+ 	return p;
+ }
+ 
++/*!&&& \brief Locate peer by username and ip address 
++ *	This is used on incoming SIP message to find matching peer on To username and sender IP */
++static struct sip_peer *find_peer_siphead(const char *peer, struct sockaddr_in *sin, char *username, int realtime)
++{
++	struct sip_peer *p = NULL;
++
++	if (peer) {
++		return NULL; /* use find_peer instead */
++	} else {
++		typeof((&peerl)->head) found = NULL; 
++		ASTOBJ_CONTAINER_TRAVERSE(&peerl, !found, do { 
++			ASTOBJ_RDLOCK(iterator); 
++			if (!(sip_addrcmp(iterator->name, sin)) &&
++			    !(strcmp(iterator->username, username))) { 
++				found = ASTOBJ_REF(iterator); 
++			} 
++			ASTOBJ_UNLOCK(iterator); 
++		} while (0)); 
++		p=found; 
++
++		/* fallback to old behavior */
++		if (p == NULL) {
++			p=find_peer(peer, sin, realtime);
++		}
++	} /* if */
++
++	if (!p && realtime)
++		p = realtime_peer(peer, sin);
++
++	return p;
++}
++
+ /*! \brief Remove user object from in-memory storage */
+ static void sip_destroy_user(struct sip_user *user)
+ {
+@@ -9008,6 +9043,7 @@
+ 	struct sip_user *user = NULL;
+ 	struct sip_peer *peer;
+ 	char from[256], *c;
++	char to[256], *ot; /*&&&*/
+ 	char *of;
+ 	char rpid_num[50];
+ 	const char *rpid;
+@@ -9024,8 +9060,29 @@
+ 		t++;
+ 	*t = '\0';
+ 	ast_copy_string(from, get_header(req, "From"), sizeof(from));	/* XXX bug in original code, overwrote string */
+-	if (pedanticsipchecking)
++	if (pedanticsipchecking) 
+ 		ast_uri_decode(from);
++
++	/*&&&start: extract To: username from To field */
++	ast_copy_string(to, get_header(req, "To"), sizeof(to));	/* &&& */
++	if (pedanticsipchecking) {
++		ast_uri_decode(to); /*&&&*/
++	}
++	ot = get_in_brackets(to);
++	if (strncasecmp(ot, "sip:", 4)) {
++		ast_log(LOG_NOTICE, "To address missing 'sip:', using it anyway\n");
++	} else {
++		ot += 4;
++	}
++	/* Get just the username part */
++	if ((c = strchr(ot, '@'))) {
++		*c = '\0';
++		if ((c = strchr(ot, ':')))
++			*c = '\0';
++	}
++	/* ot is now the username of the From field */
++	/*&&&end */
++
+ 	/* XXX here tries to map the username for invite things */
+ 	memset(calleridname, 0, sizeof(calleridname));
+ 	get_calleridname(from, calleridname, sizeof(calleridname));
+@@ -9184,9 +9241,22 @@
+ 			/* If peer is registered from this IP address or have this as a default
+ 			   IP address, this call is from the peer 
+ 			*/
+-			peer = find_peer(NULL, &p->recv, 1);
++/*&&& Original code is weak behavior. Lookup must be done viy SIP header data,
++      then - if all this fails - I may do the lookup via sender IP address.
++      Imagine different 2 account registered at the same provider - a lookup
++      purely based on sende IP address will mess up the matching between these
++      two accounts.
++*/
++			peer = find_peer_siphead(NULL, &p->recv, ot, 1);
+ 
+ 		if (peer) {
++			/*&&&*/
++			if (debug) {
++				ast_verbose("Found matching peer for '%s:%d [%s]'\n",
++				            ast_inet_ntoa(p->recv.sin_addr),
++					    ntohs(p->recv.sin_port), peer->name);
++			}
++
+ 			/* Set Frame packetization */
+ 			if (p->rtp) {
+ 				ast_rtp_codec_setpref(p->rtp, &peer->prefs);
+@@ -14920,6 +14990,7 @@
+ 	int lockretry;
+ 
+ 	memset(&req, 0, sizeof(req));
++	memset(&sin, 0, sizeof(sin)); /*&&& just to be sure...*/
+ 	res = recvfrom(sipsock, req.data, sizeof(req.data) - 1, 0, (struct sockaddr *)&sin, &len);
+ 	if (res < 0) {
+ #if !defined(__FreeBSD__)
