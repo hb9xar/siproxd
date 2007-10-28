@@ -1,11 +1,11 @@
 0.6.0
 =====
   03-Sep-2007:  - keep failed DNS attempts in cache for 10 minutes.
-                  This should protect from repeating DNS timeouts to
+                  This should protect from repeating DNS timeouts
                   caused by broken DNS server (possible DOS)
   16-Aug-2007:  - added comment in siproxd.conf about hosts_allow_sip
   30-Jun-2007:  - some come cleanup in log.c (Bob Beers)
-  22-Jun-2007:  - fixed an error in "my via"detection when using the
+  22-Jun-2007:  - fixed an error in "my via" detection when using the
                   "host_outbound" config directive
   08-Jun-2007:  - Some cleanup in dejitter code
   29-May-2007:  - Deal with PRACK requests (RFC3262)
@@ -15,12 +15,14 @@
                   and a .diff - I won't be biting you)
   24-May-2007:  - new feature: can masquerade User-agent header
                 - new feature: can add ;rport to my own Via Headers
-  13-May-2007:  - deal with locally running UAs on same host (inboud IF side)
+  13-May-2007:  - deal with locally running UAs on same host (inbound IF side)
   07-May-2007:  - Client-ID in RTP proxy is derived from Client IP address.
                   This should fix an issue with unexpectedly timing-out RTP
                   streams (actually too many RTP streams get started).
   21-Apr-2007:  - Hack to deal with Asterisks broken Alert-Info headers
-                  (Asterisk does include Alert-Info header without '<>')
+                  (Asterisk in some setups does include Alert-Info header
+                  without '<>'. Note, this is a configuration issue in
+                  Asterisk, not an Asterisk bug!)
   19-Feb-2007:  - Increased RTP buffer size
   13-Oct-2006:  - Various fixes due to a code review by Andrew Jones
   05-Oct-2006:  - route_determine_nexthop(): don't remove header
