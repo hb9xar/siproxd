@@ -850,7 +850,7 @@ if (configuration.debuglevel)
    sts = osip_message_get_body(mymsg, 0, &body);
    sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
-   DEBUG("Body before rewrite (clen=%s, strlen=%ld):\n%s\n----",
+   DEBUG("Body before rewrite (may be truncated) - (clen=%s, strlen=%ld):\n%s\n----",
          tmp2, (long)tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
@@ -1152,7 +1152,7 @@ if (configuration.debuglevel)
    sts = osip_message_get_body(mymsg, 0, &body);
    sts = sip_body_to_str(body, &tmp, &tmplen);
    osip_content_length_to_str(mymsg->content_length, &tmp2);
-   DEBUG("Body after rewrite (clen=%s, strlen=%ld):\n%s\n----",
+   DEBUG("Body after rewrite (may be truncated) - (clen=%s, strlen=%ld):\n%s\n----",
          tmp2, (long)tmplen, tmp);
    osip_free(tmp);
    osip_free(tmp2);
