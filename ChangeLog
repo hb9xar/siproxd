@@ -1,5 +1,6 @@
 0.6.0
 =====
+  28-Oct-2007:  - Released 0.6.0
   03-Sep-2007:  - keep failed DNS attempts in cache for 10 minutes.
                   This should protect from repeating DNS timeouts
                   caused by broken DNS server (possible DOS)

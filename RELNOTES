@@ -2,12 +2,16 @@ Release Notes for siproxd-0.6.0
 ===============================
 
 Major changes since 0.5.13:
+ - keep failed DNS attempts in cache for 10 minutes
+   This should protect from repeating DNS timeouts
  - Support for PRACK messages (RFC3262)
- - Includes RTCP support and a de-jitter feature
+ - Can now masquerade the User-agent header (by configurable string).
+   Some SIP providers do behave strangely if they receive a default
+   Asterisk UA string...
+ - Support for adding ;rport to Via headers (RFC3581)
  - Fixes a bug that could cause termination of an ongoing connection
    after the RTP timeout period.
- - Can now masquerade the User-agent header, too
- - Support for adding ;rport to Via headers (RFC3581)
+ - Includes RTCP support and a de-jitter feature
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -46,22 +50,28 @@ General Overview:
 Requirements:
  - pthreads (Linux)
  - glibc2 / libc5 / uClibc
- - libosip2
+ - libosip2 (2.x.x, 3.x.x not yet supported due heavy API changes)
 
 Currently tested on:
 - Fedora Core1 (Kernel 2.4.x, Glibc)
   This is my main development and testing environment. Other platforms
   are not extensively tested by myself.
 
-Builds on:
+Builds on (tested by dev-team or reported to build):
 - Linux:	Fedora Core1
-		Fedora Core3 (x86_64 - 64 bit)
-		WRT54g (133mhz mipsel router)
-- FreeBSD:	FreeBSD 4.10-BETA
-- OpenBSD:	OpenBSD 3.4 GENERIC#18
-- SunOS:	SunOS 5.9
-- Mac OS X:	Darwin 6.8
-- Windows:	Cygwin environment
+(		Fedora Core3 (x86_64 - 64 bit))*
+(		WRT54g (133mhz mipsel router))*
+(- FreeBSD:	FreeBSD 4.10-BETA	)*
+(- OpenBSD:	OpenBSD 3.4 GENERIC#18	)*
+(- SunOS:	SunOS 5.9		)*
+(- Mac OS X:	Darwin 6.8		)*
+
+* Note: As the compile farm of sourceforge.net has been discontinued the
+        build test possibilities are now very limited. Currently
+        no explicit testing for systems/distributions other than
+        Fedora (x86 architecture) are made. We'll be looking into
+        possibilities to perform some broader testing in future.
+        Of course, external help will be heartly welcome :-)
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
@@ -71,16 +81,14 @@ Reported interoperability with softphones:
  - X-Lite (Win XP Professional)
  - SJPhone softphone
  - Asterisk PBX (using a SIP Trunk, masqueraded via siproxd)
+ - Ekiga
 
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
  - FWD		(http://www.fwd.pulver.com)
  - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
-
- *) There have been reports of people having problems using
-    siproxd with these providers.
-
+ - Sipcall.ch	(Swiss VoIP provider)
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update
@@ -88,7 +96,7 @@ Reported interoperability with SIP service providers:
 
 Known bugs:
    - SRV DNS records are not yet looked up, only A records
-   There will be more...
+   There will be more for sure...
 
 If you port siproxd to a new platform or do other kinds of changes
 or bugfixes that might be of general interest, please drop me a
@@ -97,9 +105,16 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum for siproxd-0.6.0.tar.gz: 	
+md5sum for siproxd-0.6.0.tar.gz: 	188026ad6da88cf68628e429f2771709
 
 GnuPG signature for siproxd-0.6.0.tar.gz archive:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (GNU/Linux)
+
+iD8DBQBHJKDXCfzBioe83JQRAn2uAJ9w9zmyBl0sL78CMrW05YNRTb6YOQCfSRem
+V9iSR+wUUqdC4NLoobONE4Q=
+=WgNO
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)

@@ -7,7 +7,7 @@ Make the release:
   Changes since last version
   General Overview
 - $ make dist
-- verify building on the supported plattforms (SF compile farm)
+- verify building on the supported plattforms (HP testdrive ?)
   - FreeBSD
   - OpenBSD
   - SunOS (Sparc)
