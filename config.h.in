@@ -6,6 +6,9 @@
 /* Define to 1 if you have the `accept' function. */
 #undef HAVE_ACCEPT
 
+/* Define to 1 if you have the <arpa/nameser.h> header file. */
+#undef HAVE_ARPA_NAMESER_H
+
 /* Define to 1 if you have the `bind' function. */
 #undef HAVE_BIND
 
@@ -110,6 +113,9 @@
 
 /* Define to 1 if you have the `read' function. */
 #undef HAVE_READ
+
+/* Define to 1 if you have the <resolv.h> header file. */
+#undef HAVE_RESOLV_H
 
 /* Define to 1 if you have the `sched_get_priority_max' function. */
 #undef HAVE_SCHED_GET_PRIORITY_MAX
