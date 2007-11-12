@@ -33,6 +33,8 @@
 
 #include "dejitter.h"
 
+static char const ident[]="$Id$";
+
 #ifdef GPL
 
 /*
