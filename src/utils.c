@@ -315,19 +315,13 @@ void secure_enviroment (void) {
 /*
  * get_interface_ip:
  * fetches own IP address by interface INBOUND/OUTBOUND
+ * takes into account a possible outbound_host setting.
  *
  * STS_SUCCESS on returning a valid IP and interface is UP
  * STS_FAILURE if interface is DOWN or other problem
  */
 int  get_interface_ip(int interface, struct in_addr *retaddr) {
    int sts=STS_FAILURE;
-   char *tmp=NULL;
-
-      if (interface == IF_INBOUND) {
-         tmp = configuration.inbound_if;
-      } else if (interface == IF_OUTBOUND) {
-         tmp = configuration.outbound_if;
-      }
 
    if ((interface == IF_OUTBOUND) && 
               (configuration.outbound_host) &&
@@ -339,7 +333,32 @@ int  get_interface_ip(int interface, struct in_addr *retaddr) {
          sts = STS_SUCCESS;
       }
 
-   } else if (tmp && (strcmp(tmp, "")!=0)) {
+   } else  {
+      sts = get_interface_real_ip(interface, retaddr);
+   }
+
+   return sts;
+}
+
+
+/*
+ * get_interface_real_ip:
+ * fetches the real IP address of my interface INBOUND/OUTBOUND
+ *
+ * STS_SUCCESS on returning a valid IP and interface is UP
+ * STS_FAILURE if interface is DOWN or other problem
+ */
+int  get_interface_real_ip(int interface, struct in_addr *retaddr) {
+   int sts=STS_FAILURE;
+   char *tmp=NULL;
+
+      if (interface == IF_INBOUND) {
+         tmp = configuration.inbound_if;
+      } else if (interface == IF_OUTBOUND) {
+         tmp = configuration.outbound_if;
+      }
+
+   if (tmp && (strcmp(tmp, "")!=0)) {
       DEBUGC(DBCLASS_DNS, "fetching interface IP by INTERFACE [%i]", interface);
       sts = get_ip_by_ifname(tmp, retaddr);
       if (sts != STS_SUCCESS) {

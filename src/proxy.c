@@ -1078,15 +1078,22 @@ if (configuration.debuglevel)
 
             /*
              * Am I running in front of the routing device? Then I cannot
-             * use the external IP to bind a listen socket to, so force
-             * the use of my inbound IP for listening.
+             * use the external IP to bind a listen socket to, but should
+             * use my real IP on the outbound interface (which may legally
+             * be the same as the inbound interface if only one interface
+             * is used).
              */
             if ((rtp_direction == DIR_INCOMING) &&
                 (configuration.outbound_host) &&
                 (strcmp(configuration.outbound_host, "")!=0)) {
                DEBUGC(DBCLASS_PROXY, "proxy_rewrite_invitation_body: "
-                      "in-front-of-NAT-Router");
-               memcpy(&map_addr, &inside_addr, sizeof (map_addr));
+                      "in-front-of-NAT-Router, use real outboud IP");
+               if (get_interface_real_ip(IF_OUTBOUND, &map_addr)
+                   != STS_SUCCESS) {
+                  ERROR("cannot get my real outbound interface address");
+                  /* as we do not know better, take the internal address */
+                  memcpy(&map_addr, &inside_addr, sizeof (map_addr));
+               }
             }
 
             sts = rtp_start_fwd(osip_message_get_call_id(mymsg),

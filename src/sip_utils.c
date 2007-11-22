@@ -223,7 +223,7 @@ int is_via_local (osip_via_t *via) {
             continue;
          }
       } else {
-         /* check againt a possible defined 'host_outbound' */
+         /* check against a possible defined 'host_outbound' */
          DEBUGC(DBCLASS_BABBLE,"resolving IP of interface ''host_outbound'");
          /* defined? */
          if (configuration.outbound_host == NULL) continue;

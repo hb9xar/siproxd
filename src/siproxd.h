@@ -173,6 +173,7 @@ int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
 void secure_enviroment (void);
 int  get_ip_by_ifname(char *ifname, struct in_addr *retaddr);		/*X*/
 int  get_interface_ip(int interface, struct in_addr *retaddr);		/*X*/
+int  get_interface_real_ip(int interface, struct in_addr *retaddr);	/*X*/
 char *utils_inet_ntoa(struct in_addr in);
 int  utils_inet_aton(const char *cp, struct in_addr *inp);
 int  createpidfile(char *pidfilename);					/*X*/

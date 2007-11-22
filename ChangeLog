@@ -1,5 +1,8 @@
 0.6.1
 =====
+  22-Nov-2007:  - Working on code that that will allow siproxd to use
+                  separate interfaces in its "in front of NAT routes" setup.
+                  ( UA1[LAN0]--siproxd--LAN1--NAT--Internet--UA2 )
   12-Nov-2007:  - Small changes to compile again under OpenBSD.
 
 0.6.0
