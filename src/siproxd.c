@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -215,6 +216,23 @@ int main (int argc, char *argv[])
       if (fork()!=0) exit(0);
 
       log_set_stderr(0);
+
+      /* detach STDIN/OUT/ERR file */
+      i=open("/dev/null", O_RDWR);
+      close(STDIN_FILENO);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
+      if (dup2(i, STDIN_FILENO) <0) {
+         WARN("detaching STDIN failed: %s",strerror(errno));
+      }
+      if (dup2(i, STDOUT_FILENO) <0) {
+         WARN("detaching STDOUT failed: %s",strerror(errno));
+      }
+      if (dup2(i, STDERR_FILENO) <0) {
+         WARN("detaching STDERR failed: %s",strerror(errno));
+      }
+      close(i);
+
       INFO("daemonized, pid=%i", getpid());
    }
 
