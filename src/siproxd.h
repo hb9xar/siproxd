@@ -261,6 +261,8 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define URL_STRING_SIZE	128	/* max size of an URL/URI string	*/
 #define STATUSCODE_SIZE	5	/* size of string representation of status */
 #define DNS_CACHE_SIZE	256	/* number of entries in internal DNS cache */
+#define DNS_ATTEMPTS	3	/* number of attempts to resolve a name
+				   before it is marked as bad */
 #define DNS_GOOD_AGE	60	/* maximum age of a good cache entry (sec) */
 #define DNS_BAD_AGE	600	/* maximum age of a bad cache entry (sec) */
 #define IFADR_CACHE_SIZE 32	/* number of entries in internal IFADR cache */

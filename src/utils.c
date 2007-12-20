@@ -63,7 +63,7 @@ extern int h_errno;
  *	STS_FAILURE on failure
  */
 int get_ip_by_host(char *hostname, struct in_addr *addr) {
-   int i, j, k;
+   int i, j, k, idx;
    time_t t1, t2;
    struct hostent *hostentry;
 #if defined(HAVE_GETHOSTBYNAME_R)
@@ -74,6 +74,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    static struct {
       time_t expires_timestamp;	/* time of expiration */
       struct in_addr addr;	/* IP address or 0.0.0.0 if a bad entry */
+      char   error_count;	/* counts failed resolution attempts */
       char   bad_entry;		/* != 0 if resolving failed */
       char hostname[HOSTNAME_SIZE+1];
    } dns_cache[DNS_CACHE_SIZE];
@@ -109,14 +110,21 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    /*
     * search requested entry in cache
     */
+   idx=0;
    for (i=0; i<DNS_CACHE_SIZE; i++) {
       if (dns_cache[i].hostname[0]=='\0') continue; /* empty */
       if (strcasecmp(hostname, dns_cache[i].hostname) == 0) { /* match */
          memcpy(addr, &dns_cache[i].addr, sizeof(struct in_addr));
          if (dns_cache[i].bad_entry) {
-            DEBUGC(DBCLASS_DNS, "DNS lookup - bad entry from cache: %s",
+            DEBUGC(DBCLASS_DNS, "DNS lookup - blacklisted from cache: %s",
                    hostname);
             return STS_FAILURE;
+         }
+         if (dns_cache[i].error_count > 0) {
+            DEBUGC(DBCLASS_DNS, "DNS lookup - previous resolution failed: %s"
+                   ", attempt %i", hostname, dns_cache[i].error_count);
+            idx=i;
+            break;
          }
          DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
                 hostname, utils_inet_ntoa(*addr));
@@ -203,47 +211,59 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
              hostname, utils_inet_ntoa(*addr));
    }
 
-   /*
-    * find an empty slot in the cache
-    */
-   j=0;
-   k=0;
-   t1=INT_MAX;
-   t2=INT_MAX;
-   for (i=0; i<DNS_CACHE_SIZE; i++) {
-      if (dns_cache[i].hostname[0]=='\0') break;
-      if ((dns_cache[i].expires_timestamp < t1) &&
-          (dns_cache[i].bad_entry == 0)) {
-         /* remember oldest good entry */
-         t1=dns_cache[i].expires_timestamp;
-         j=i;
-      } else 
-      if (dns_cache[i].expires_timestamp < t2) {
-         /* remember oldest bad entry */
-         t2=dns_cache[i].expires_timestamp;
-         k=i;
+   /* if we already have the entry, skip finding a new empty one */
+   if (idx == 0) {
+      /*
+       * find an empty slot in the cache
+       */
+      j=0;
+      k=0;
+      t1=INT_MAX;
+      t2=INT_MAX;
+      for (i=0; i<DNS_CACHE_SIZE; i++) {
+         if (dns_cache[i].hostname[0]=='\0') break;
+         if ((dns_cache[i].expires_timestamp < t1) &&
+             (dns_cache[i].bad_entry == 0)) {
+            /* remember oldest good entry */
+            t1=dns_cache[i].expires_timestamp;
+            j=i;
+         } else 
+         if (dns_cache[i].expires_timestamp < t2) {
+            /* remember oldest bad entry */
+            t2=dns_cache[i].expires_timestamp;
+            k=i;
+         }
       }
-   }
-   /* if no empty slot found, victimize oldest one.
-    * Give preference to the oldest "bad" entry if 
-    * one exists */
-   if (i >= DNS_CACHE_SIZE) {
-      if (k > 0) i=k;
-      else       i=j;
+      /* if no empty slot found, victimize oldest one.
+       * Give preference to the oldest "bad" entry if 
+       * one exists */
+      if (i >= DNS_CACHE_SIZE) {
+         if (k > 0) i=k;
+         else       i=j;
+      }
+      idx=i;
+      memset(&dns_cache[idx], 0, sizeof(dns_cache[0]));
    }
 
    /*
     * store the result in the cache
     */
-   DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", i);
-   memset(&dns_cache[i], 0, sizeof(dns_cache[0]));
-   strncpy(dns_cache[i].hostname, hostname, HOSTNAME_SIZE);
+   DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", idx);
+   strncpy(dns_cache[idx].hostname, hostname, HOSTNAME_SIZE);
+   dns_cache[idx].expires_timestamp = time(NULL) + DNS_GOOD_AGE;
    if (hostentry) {
-      dns_cache[i].expires_timestamp = time(NULL) + DNS_GOOD_AGE;
-      memcpy(&dns_cache[i].addr, addr, sizeof(struct in_addr));
+      memcpy(&dns_cache[idx].addr, addr, sizeof(struct in_addr));
+      dns_cache[idx].error_count = 0;
+      dns_cache[idx].bad_entry = 0;
    } else {
-      dns_cache[i].expires_timestamp = time(NULL) + DNS_BAD_AGE;
-      dns_cache[i].bad_entry = 1;
+      dns_cache[idx].error_count++;
+      DEBUGC(DBCLASS_DNS, "DNS lookup - errcnt=%i", dns_cache[idx].error_count);
+      if (dns_cache[idx].error_count >= DNS_ATTEMPTS) {
+         DEBUGC(DBCLASS_DNS, "DNS lookup - blacklisting entry");
+         dns_cache[idx].expires_timestamp = time(NULL) + DNS_BAD_AGE;
+         dns_cache[idx].bad_entry = 1;
+      }
+      return STS_FAILURE;
    }
    return STS_SUCCESS;
 }
