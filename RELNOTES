@@ -1,9 +1,8 @@
-Release Notes for siproxd-0.7.0
+Release Notes for siproxd-0.7.1
 ===============================
 
-Major changes since 0.6.1:
- - Switch to libosip2-3.x.x
-   NOTE that older versions of libosip2 will not longer work!
+Major changes since 0.7.0:
+ - 
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -99,18 +98,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.7.0.tar.gz archive:
-MD5 Hash:	6c978eef0d00160e50073e2e2fd8c23d
-SHA-256 Hash:	7990635f34b93771f842e59afda7babeeb0bf4ad244f4bd4a09ffb59ca9af7a3
+Signatures for siproxd-0.7.1.tar.gz archive:
+MD5 Hash:	
+SHA-256 Hash:	
 
 GnuPG signature:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (GNU/Linux)
-
-iD8DBQBHkiDhCfzBioe83JQRAoFBAKCmvZG0jhrTlg+UuSo8hLN7bMlxpACeJKmo
-xDfHg+no12XizP+gRu0ok4U=
-=pN1v
------END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)

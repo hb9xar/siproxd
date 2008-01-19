@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2007  Hans Carlos Hofmann <labtop-carlos@hchs.de>,
+    Copyright (C) 2006-2008  Hans Carlos Hofmann <labtop-carlos@hchs.de>,
                              Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
