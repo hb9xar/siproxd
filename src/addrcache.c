@@ -111,10 +111,10 @@ int	seek_for_entry (osip_message_t *sipmsg, addrcache_t **entry_out)
 
 				while ( isequal &&
 					(level == 0 || entry->direction == DIR_INCOMING) &&
-					!osip_list_eol (sipmsg->vias, level) &&
-					!osip_list_eol (entry->sipmsg->vias, level) &&
-					(via1 = (osip_via_t *) osip_list_get (sipmsg->vias, level)) &&
-					(via2 = (osip_via_t *) osip_list_get (entry->sipmsg->vias, level)) &&
+					!osip_list_eol (&(sipmsg->vias), level) &&
+					!osip_list_eol (&(entry->sipmsg->vias), level) &&
+					(via1 = (osip_via_t *) osip_list_get(&(sipmsg->vias), level)) &&
+					(via2 = (osip_via_t *) osip_list_get(&(entry->sipmsg->vias), level)) &&
 					(level < 70))
 				{
 					/*
@@ -139,8 +139,8 @@ int	seek_for_entry (osip_message_t *sipmsg, addrcache_t **entry_out)
 					level ++ ;
 				} ;
 				if (isequal &&
-					osip_list_eol (sipmsg->vias, level) &&
-					(osip_list_eol (entry->sipmsg->vias, level) || 
+					osip_list_eol (&(sipmsg->vias), level) &&
+					(osip_list_eol (&(entry->sipmsg->vias), level) || 
 					 entry->direction == DIR_OUTGOING ) )
 				{
 					*entry_out = entry ;
