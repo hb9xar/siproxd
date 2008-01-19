@@ -94,15 +94,15 @@ osip_message_t *msg_make_template_reply (sip_ticket_t *ticket, int code) {
       osip_contact_t *res_contact = NULL;
       osip_message_get_contact(request, 0, &req_contact);
       if (req_contact) osip_contact_clone (req_contact, &res_contact);
-      if (res_contact) osip_list_add(response->contacts,res_contact,0);
+      if (res_contact) osip_list_add(&(response->contacts),res_contact,0);
    }
 
    /* via headers */
    pos = 0;
-   while (!osip_list_eol (request->vias, pos)) {
+   while (!osip_list_eol (&(request->vias), pos)) {
       char *tmp;
       osip_via_t *via;
-      via = (osip_via_t *) osip_list_get (request->vias, pos);
+      via = (osip_via_t *) osip_list_get (&(request->vias), pos);
       osip_via_to_str (via, &tmp);
 
       osip_message_set_via (response, tmp);
@@ -153,9 +153,9 @@ int check_vialoop (sip_ticket_t *ticket) {
    found_own_via=0;
    pos = 1;	/* for detecting a loop, don't check the first entry 
    		   as this is my own VIA! */
-   while (!osip_list_eol (my_msg->vias, pos)) {
+   while (!osip_list_eol (&(my_msg->vias), pos)) {
       osip_via_t *via;
-      via = (osip_via_t *) osip_list_get (my_msg->vias, pos);
+      via = (osip_via_t *) osip_list_get (&(my_msg->vias), pos);
       sts = is_via_local (via);
       if (sts == STS_TRUE) found_own_via+=1;
       pos++;
@@ -178,7 +178,7 @@ int check_vialoop (sip_ticket_t *ticket) {
 /*
  * check if a given osip_via_t is local. I.e. its address is owned
  * by my inbound or outbound interface (or externally defined using
- * teh host_outbound directive
+ * the host_outbound directive
  *
  * RETURNS
  *	STS_TRUE if the given VIA is one of my interfaces
@@ -224,9 +224,9 @@ int is_via_local (osip_via_t *via) {
          }
       } else {
          /* check against a possible defined 'host_outbound' */
-         DEBUGC(DBCLASS_BABBLE,"resolving IP of interface ''host_outbound'");
          /* defined? */
          if (configuration.outbound_host == NULL) continue;
+         DEBUGC(DBCLASS_BABBLE,"resolving IP of interface 'host_outbound'");
          /* lookup */
          if (get_ip_by_host(configuration.outbound_host,
                             &addr_myself) != STS_SUCCESS) continue;
@@ -591,7 +591,7 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    sts = osip_via_parse(via, tmp);
    if (sts!=0) return STS_FAILURE;
 
-   osip_list_add(ticket->sipmsg->vias,via,0);
+   osip_list_add(&(ticket->sipmsg->vias),via,0);
 
    return STS_SUCCESS;
 }
@@ -609,7 +609,7 @@ int sip_del_myvia (sip_ticket_t *ticket) {
    int sts;
 
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
-   via = osip_list_get (ticket->sipmsg->vias, 0);
+   via = osip_list_get (&(ticket->sipmsg->vias), 0);
    
    if ( via == NULL ) {
       ERROR("Got empty VIA list - is your UA configured properly?");
@@ -621,7 +621,7 @@ int sip_del_myvia (sip_ticket_t *ticket) {
       return STS_FAILURE;
    }
 
-   sts = osip_list_remove(ticket->sipmsg->vias, 0);
+   sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
    osip_via_free (via);
    return STS_SUCCESS;
 }
@@ -680,7 +680,7 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
          }
 
          /* remove old entry */
-         osip_list_remove(sip_msg->contacts,j);
+         osip_list_remove(&(sip_msg->contacts),j);
          osip_contact_to_str(contact, &tmp);
          osip_contact_free(contact);
 
@@ -697,7 +697,7 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
             osip_uri_clone(urlmap[i].true_url, &contact->url);
          }
 
-         osip_list_add(sip_msg->contacts,contact,j);
+         osip_list_add(&(sip_msg->contacts),contact,j);
          replaced=1;
       }
 
@@ -760,7 +760,7 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
     * If it is there, I use THIS branch parameter as input for
     * our hash calculation
     */
-   via = osip_list_get (sip_msg->vias, 0);
+   via = osip_list_get (&(sip_msg->vias), 0);
    if (via == NULL) {
       ERROR("have a SIP message without any via header");
       return STS_FAILURE;
@@ -1057,13 +1057,13 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          Maybe I should put in a 'siproxd' ftag value to recognize it as a header
          inserted by myself
       */
-      if ((type == 0) && (!osip_list_eol(response->vias, 0))) {
+      if ((type == 0) && (!osip_list_eol(&(response->vias), 0))) {
          osip_via_t *via;
          struct in_addr addr_via, addr_myself;
          int port_via, port_ua;
 
          /* get the via address */
-         via = (osip_via_t *) osip_list_get (response->vias, 0);
+         via = (osip_via_t *) osip_list_get (&(response->vias), 0);
          DEBUGC(DBCLASS_SIP, "sip_find_direction: check via [%s] for "
                 "registered UA",via->host);
          sts=get_ip_by_host(via->host, &addr_via);
@@ -1107,7 +1107,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    } /* is response */
 
    /*
-    * if the telegram is received from 127.0.0.1 of my inbound IP as sender,
+    * if the telegram is received from 127.0.0.1 use my inbound IP as sender,
     * this likely is a locally REDIRECTED/DNATed (by iptables) packet.
     * So it is a local UA.
     * Example Scenario:

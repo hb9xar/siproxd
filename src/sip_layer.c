@@ -31,15 +31,10 @@ static char const ident[]="$Id$";
  */
 
 int sip_message_parse(osip_message_t * sip, const char *buf, size_t len) {
-#ifdef HAVE_FUNC_OSIP_MESSAGE_PARSE_3
    return osip_message_parse(sip, buf, len);
-#else 
-   return osip_message_parse(sip, buf);
-#endif
 }
 
 int sip_message_to_str(osip_message_t * sip, char **dest, size_t *len) {
-#ifdef  HAVE_FUNC_OSIP_MESSAGE_TO_STR_3
    int sts;
    sts = osip_message_to_str(sip, dest, len);
    /*
@@ -48,16 +43,9 @@ int sip_message_to_str(osip_message_t * sip, char **dest, size_t *len) {
     */
    (*dest)[*len]='\0';
    return sts;
-#else 
-   int sts;
-   sts = osip_message_to_str(sip, dest);
-   *len = strlen(*dest);
-   return sts;
-#endif
 }
 
 int sip_body_to_str(const osip_body_t * body, char **dest, size_t *len) {
-#ifdef  HAVE_FUNC_OSIP_BODY_TO_STR_3
    int sts;
    sts = osip_body_to_str(body, dest, len);
    /*
@@ -66,19 +54,9 @@ int sip_body_to_str(const osip_body_t * body, char **dest, size_t *len) {
     */
    (*dest)[*len]='\0';
    return sts;
-#else 
-   int sts;
-   sts = osip_body_to_str(body, dest);
-   *len = strlen(*dest);
-   return sts;
-#endif
 }
 
 int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len) {
-#ifdef  HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3
    return osip_message_set_body(sip, buf, len);
-#else 
-   return osip_message_set_body(sip, buf);
-#endif
 }
 

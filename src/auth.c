@@ -112,7 +112,7 @@ int auth_include_authrq(osip_message_t *sipmsg) {
       return STS_FAILURE;
    }
 
-   osip_list_add (sipmsg->proxy_authenticates, p_auth, -1);
+   osip_list_add (&(sipmsg->proxy_authenticates), p_auth, -1);
 
    DEBUGC(DBCLASS_AUTH,"added authentication header");
 

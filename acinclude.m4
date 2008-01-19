@@ -2,7 +2,8 @@ dnl
 dnl	History
 dnl	-------
 dnl	before time		a lot happend before start of history
-dnl	13-Sep-2002	tries	test for libosip2 finctions (number of args)
+dnl	13-Sep-2002	tries	test for libosip2 functions (number of args)
+dnl	18-Dec-2007	tries	test for new osip_message_t structure
 dnl
 dnl
 dnl --------------------------------------------------------------------
@@ -304,68 +305,38 @@ AC_MSG_RESULT($acx_which_gethostname_r)
 ])dnl ACX_WHICH_GETHOSTBYNAME_R
 
 dnl --------------------------------------------------------------------
-dnl @synopsis ACX_WHICH_LIBOSIP
+dnl @synopsis ACX_CHECK_LIBOSIP_VERSION
 dnl
-dnl Provides a test to determine the correct 
-dnl way to call libosip2
+dnl Provides a test to determine the version of libosip installed.
 dnl
-dnl defines HAVE_FUNC_OSIP_MESSAGE_PARSE_3
+dnl Fails ./configure if a version < 3.0.0 
 dnl
-nl
-AC_DEFUN([ACX_WHICH_LIBOSIP], [
+dnl Actually, this is quite some guesswork as libosip2 does not include
+dnl any version info in its header files. So I just look for the new data
+dnl structures in osip_message_t structure.
+dnl
+AC_DEFUN([ACX_CHECK_LIBOSIP_VERSION], [
+
+acx_check_libosip_version=fail
 
 dnl -----------------------------------
-AC_CHECK_FUNC(osip_message_parse, [
-  AC_MSG_CHECKING(how many arguments takes osip_message_parse)
-  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
-        int sts;sts=osip_message_parse ( NULL, NULL, 0);
-  ],acx_which_osip_message_parse=three, acx_which_osip_message_parse=two)
-], )
-if test $acx_which_osip_message_parse = three; then
-  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_PARSE_3,,
-            [osip_message_parse takes 3 arguments])
+AC_MSG_CHECKING(libosip2 version > 3.0.0)
+
+dnl check if contacts member is a structure with nb_elt (ok) or a
+dnl pointer to the structure (bad)
+AC_COMPILE_IFELSE([
+  #include <osipparser2/osip_parser.h>
+  main() {
+  osip_message_t t;
+  int  e;
+  e=t.contacts.nb_elt;
+  }
+],acx_check_libosip_version=ok, )
+
+if test $acx_check_libosip_version = fail; then
+  echo "*** ERROR: libosip2-3.x.x is required!";exit 1;
 fi
-AC_MSG_RESULT($acx_which_osip_message_parse)
+AC_MSG_RESULT(ok)
 
-dnl -----------------------------------
-AC_CHECK_FUNC(osip_message_to_str, [
-  AC_MSG_CHECKING(how many arguments takes osip_message_to_str)
-  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
-        int sts;sts=osip_message_to_str( NULL, NULL, NULL);
-  ],acx_which_osip_message_to_str=three, acx_which_osip_message_to_str=two)
-], )
-if test $acx_which_osip_message_to_str = three; then
-  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_TO_STR_3,,
-            [osip_message_to_str takes 3 arguments])
-fi
-AC_MSG_RESULT($acx_which_osip_message_to_str)
-
-
-dnl -----------------------------------
-AC_CHECK_FUNC(osip_body_to_str, [
-  AC_MSG_CHECKING(how many arguments takes osip_body_to_str)
-  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
-        int sts;sts=osip_body_to_str( NULL, NULL, NULL);
-  ],acx_which_osip_body_to_str=three, acx_which_osip_body_to_str=two)
-], )
-if test $acx_which_osip_body_to_str = three; then
-  AC_DEFINE(HAVE_FUNC_OSIP_BODY_TO_STR_3,,
-            [osip_body_to_str takes 3 arguments])
-fi
-AC_MSG_RESULT($acx_which_osip_body_to_str)
-
-dnl -----------------------------------
-AC_CHECK_FUNC(osip_message_set_body, [
-  AC_MSG_CHECKING(how many arguments takes osip_message_set_body)
-  AC_TRY_COMPILE([#include <osipparser2/osip_parser.h>], [
-        int sts;sts=osip_message_set_body( NULL, NULL, NULL);
-  ],acx_which_osip_message_set_body=three, acx_which_osip_message_set_body=two)
-], )
-if test $acx_which_osip_message_set_body = three; then
-  AC_DEFINE(HAVE_FUNC_OSIP_MESSAGE_SET_BODY_3,,
-            [osip_message_set_body takes 3 arguments])
-fi
-AC_MSG_RESULT($acx_which_osip_message_set_body)
-
-])dnl ACX_WHICH_LIBOSIP
+])dnl ACX_CHECK_LIBOSIP_VERSION
 

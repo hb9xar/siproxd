@@ -37,6 +37,7 @@ dnl	10-Apr-2005	tries	check for docbook
 dnl	18-Apr-2005	tries	added libresolv
 dnl	 9-Oct-2005	tries	libresolv is now included in static build
 dnl	10-Jun-2007	tries	test more .h files (DNS resolver related)
+dnl	18-Dec-2007	tries	requires libosip2-3.x.x
 dnl
 dnl
 
@@ -49,8 +50,8 @@ dnl
 dnl Release Version
 dnl
 SPD_MAJOR_VERSION=0
-SPD_MINOR_VERSION=6
-SPD_MICRO_VERSION=1
+SPD_MINOR_VERSION=7
+SPD_MICRO_VERSION=0
 
 SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
 
@@ -324,8 +325,8 @@ else
    fi
 fi
 
-dnl which version of libosip2?
-ACX_WHICH_LIBOSIP()
+dnl correct version of libosip2?
+ACX_CHECK_LIBOSIP_VERSION()
 
 
 dnl

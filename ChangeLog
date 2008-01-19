@@ -1,3 +1,9 @@
+0.7.0
+=====
+  19-Jan-2007:  - Converting to use libosip2-3.x.x
+                  This means older libosip2 versions before 3.0.0
+                  are no longer supported and will fail to build!
+
 0.6.1
 =====
   19-Jan-2008:  - Released 0.6.1

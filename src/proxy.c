@@ -125,7 +125,7 @@ int proxy_request (sip_ticket_t *ticket) {
       if (request->from->url) {
          from_url = request->from->url;
       } else {
-         from_url = (osip_uri_t *)osip_list_get(request->contacts, 0);
+         from_url = (osip_uri_t *)osip_list_get(&(request->contacts), 0);
       }
 
       to_url = request->to->url;
@@ -397,7 +397,7 @@ sts=sip_obscure_callid(ticket);
     * If so, fetch address from topmost Route: header and remove it.
     */
    } else if ((type == REQTYP_OUTGOING) && 
-              (request->routes && !osip_list_eol(request->routes, 0))) {
+              (!osip_list_eol(&(request->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
@@ -407,7 +407,7 @@ sts=sip_obscure_callid(ticket);
              utils_inet_ntoa(sendto_addr), port);
 #else
    if ((type == REQTYP_OUTGOING) && 
-              (request->routes && !osip_list_eol(request->routes, 0))) {
+              (!osip_list_eol(&(request->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
@@ -721,7 +721,7 @@ sts=sip_obscure_callid(ticket);
     * If so, fetch address from topmost Route: header and remove it.
     */
    } else if ((type == RESTYP_OUTGOING) && 
-              (response->routes && !osip_list_eol(response->routes, 0))) {
+              (!osip_list_eol(&(response->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
@@ -731,7 +731,7 @@ sts=sip_obscure_callid(ticket);
              utils_inet_ntoa(sendto_addr), port);
 #else
    if ((type == RESTYP_OUTGOING) && 
-              (response->routes && !osip_list_eol(response->routes, 0))) {
+              (!osip_list_eol(&(response->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
@@ -750,7 +750,7 @@ sts=sip_obscure_callid(ticket);
 #endif
    } else {
       /* get target address and port from VIA header */
-      via = (osip_via_t *) osip_list_get (response->vias, 0);
+      via = (osip_via_t *) osip_list_get (&(response->vias), 0);
       if (via == NULL) {
          ERROR("proxy_response: list_get via failed");
          return STS_FAILURE;
@@ -1106,7 +1106,7 @@ if (configuration.debuglevel)
 
             if (sts == STS_SUCCESS) {
                /* and rewrite the port */
-               sdp_med=osip_list_get(sdp->m_medias, media_stream_no);
+               sdp_med=osip_list_get(&(sdp->m_medias), media_stream_no);
                if (sdp_med && sdp_med->m_port) {
                   osip_free(sdp_med->m_port);
                   sdp_med->m_port=osip_malloc(8); /* 5 digits, \0 + align */
@@ -1127,7 +1127,7 @@ if (configuration.debuglevel)
    } /* for media_stream_no */
 
    /* remove old body */
-   sts = osip_list_remove(mymsg->bodies, 0);
+   sts = osip_list_remove(&(mymsg->bodies), 0);
    osip_body_free(body);
 
    /* dump new body */

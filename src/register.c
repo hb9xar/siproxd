@@ -135,6 +135,7 @@ void register_save(void) {
    FILE *stream;
 
    if (configuration.registrationfile) {
+      DEBUGC(DBCLASS_REG,"saving registration table");
       /* write urlmap back to file */
       stream = fopen(configuration.registrationfile, "w+");
       if (!stream) {
@@ -244,7 +245,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
     * Libosip parses an:
     * "Contact: *"
     * the following way (Note: Display name!! and URL is NULL)
-    * (gdb) p *((osip_contact_t*)(sip->contacts->node->element))
+    * (gdb) p *((osip_contact_t*)(sip->contacts.node->element))
     * $5 = {displayname = 0x8af8848 "*", url = 0x0, gen_params = 0x8af8838}
     */
 
@@ -282,10 +283,10 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    * look for an Contact expires parameter - in case of REGISTER
    * these two are equal. The Contact expires has higher priority!
    */
-   if (ticket->sipmsg->contacts && ticket->sipmsg->contacts->node &&
-       ticket->sipmsg->contacts->node->element) {
+   if (ticket->sipmsg->contacts.node &&
+       ticket->sipmsg->contacts.node->element) {
       osip_contact_param_get_byname(
-              (osip_contact_t*) ticket->sipmsg->contacts->node->element,
+              (osip_contact_t*) ticket->sipmsg->contacts.node->element,
               EXPIRES, &expires_param);
    }
 
@@ -364,7 +365,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          urlmap[i].active=1;
          /* Contact: field */
          osip_uri_clone( ((osip_contact_t*)
-                         (ticket->sipmsg->contacts->node->element))->url, 
+                         (ticket->sipmsg->contacts.node->element))->url, 
                          &urlmap[i].true_url);
          /* To: field */
          osip_uri_clone( ticket->sipmsg->to->url, 
@@ -419,7 +420,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          /* Contact: field (true_url) */
          osip_uri_free(urlmap[i].true_url);
          osip_uri_clone( ((osip_contact_t*)
-                         (ticket->sipmsg->contacts->node->element))->url, 
+                         (ticket->sipmsg->contacts.node->element))->url, 
                          &urlmap[i].true_url);
          /* To: field (reg_url) */
          osip_uri_free(urlmap[i].reg_url);
@@ -519,7 +520,6 @@ void register_agemap(void) {
    /* auto-save of registration table */
    if ((configuration.autosave_registrations > 0) &&
        ((last_save + configuration.autosave_registrations) < t)) {
-      DEBUGC(DBCLASS_REG,"auto-saving registration table");
       register_save();
       last_save = t;
    }

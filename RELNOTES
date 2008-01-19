@@ -1,8 +1,9 @@
-Release Notes for siproxd-0.6.1
+Release Notes for siproxd-0.7.0
 ===============================
 
-Major changes since 0.6.0:
- - only small corrections. Check the Changelog for details.
+Major changes since 0.6.1:
+ - Switch to libosip2-3.x.x
+   NOTE that older versions of libosip2 will not longer work!
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -41,7 +42,7 @@ General Overview:
 Requirements:
  - pthreads (Linux)
  - glibc2 / libc5 / uClibc
- - libosip2 (2.x.x, 3.x.x not yet supported due to API changes)
+ - libosip2 (3.x.x)
 
 Currently tested on:
 - Fedora Core1 (Kernel 2.4.x, Glibc)
@@ -57,8 +58,8 @@ Builds on (tested by dev-team or reported to build):
 (- SunOS:	SunOS 5.9		)*
 (- Mac OS X:	Darwin 6.8		)*
 
-* Note: As the compile farm of sourceforge.net has been discontinued the
-        build test possibilities are now very limited. Currently
+* Note: As the compile farm of sourceforge.net has been discontinued our
+        building test possibilities are now very limited. Currently
         no explicit testing for systems/distributions other than
         Fedora (x86 architecture) are made. We'll be looking into
         possibilities to perform some broader testing in future.
@@ -80,6 +81,8 @@ Reported interoperability with SIP service providers:
  - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
  - Sipcall.ch	(Swiss VoIP provider)
+ - Ekiga
+ - Gizmo	(actually sipphone.com)
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update
@@ -96,17 +99,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-md5sum  siproxd-0.6.1.tar.gz: 	8dcc0b29e68d495e040f867207074bc1
-sha1sum				6e1353c3d9179caa7a33c6c9a7da84ea3a79d01b
+Signatures for siproxd-0.7.0.tar.gz archive:
+MD5 Hash:	
+SHA-256 Hash:	
 
-GnuPG signature for siproxd-0.6.1.tar.gz archive:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (GNU/Linux)
-
-iD8DBQBHkhY5CfzBioe83JQRAsDzAKCRcMpCg8TnaIqty59g4XdkJtsKcwCdElTZ
-S2vbyD51AeQdJqfY5hTVwMQ=
-=jf1e
------END PGP SIGNATURE-----
+GnuPG signature:
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)

@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
 
@@ -127,7 +128,7 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    for (i=0; (contact != NULL) || (i == 0); i++) {
       osip_message_get_contact(ticket->sipmsg, 0, &contact);
       if (contact) {
-         osip_list_remove(ticket->sipmsg->contacts,0);
+         osip_list_remove(&(ticket->sipmsg->contacts),0);
          osip_contact_free(contact);
       }
    } /* for i */
@@ -139,7 +140,7 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    contact->url->username=osip_malloc(len);
    strcpy(contact->url->username, new_to_user);
 
-   osip_list_add(ticket->sipmsg->contacts,contact,0);
+   osip_list_add(&(ticket->sipmsg->contacts),contact,0);
 
    /* sent redirect message back to local client */
    sip_gen_response(ticket, 302 /*Moved temporarily*/);

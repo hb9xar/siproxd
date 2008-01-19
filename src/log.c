@@ -329,7 +329,7 @@ void log_warn(char *file, int line, const char *format, ...) {
       output_to_syslog("WARNING:", LOG_NOTICE, ap, file, line, format);
    }
 
-   output_to_TCP("WARNING", ap, file, line, format);
+   output_to_TCP("WARNING:", ap, file, line, format);
 
    pthread_mutex_unlock(&log_mutex);
    va_end(ap);
@@ -348,7 +348,7 @@ void log_info(char *file, int line, const char *format, ...) {
       output_to_syslog("INFO:", LOG_NOTICE, ap, file, line, format);
    }
 
-   output_to_TCP("INFO", ap, file, line, format);
+   output_to_TCP("INFO:", ap, file, line, format);
 
    pthread_mutex_unlock(&log_mutex);
    va_end(ap);

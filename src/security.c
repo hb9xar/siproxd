@@ -276,12 +276,6 @@ RFC 3261            SIP: Session Initiation Protocol           June 2002
       return STS_FAILURE;
    }
 
-  /* check for existing Via: header list */
-   if (sip->vias==NULL) {
-      ERROR("security check failed: No Via Headers");
-      return STS_FAILURE;
-   }
-
 
 
    /* TODO: still way to go here ... */

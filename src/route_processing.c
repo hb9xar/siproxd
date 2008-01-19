@@ -59,7 +59,7 @@ int route_preprocess(sip_ticket_t *ticket){
    osip_route_t *route;
    osip_uri_param_t *param=NULL;
 
-   if ((mymsg->routes==NULL) || (osip_list_size(mymsg->routes)<=0)) {
+   if (osip_list_size(&(mymsg->routes))<=0) {
       DEBUGC(DBCLASS_PROXY, "route_preprocess: no Route header present");
       return STS_SUCCESS;
    }
@@ -96,8 +96,8 @@ int route_preprocess(sip_ticket_t *ticket){
                 (url->host)?url->host:"*NULL*",
                 (url->port)?atoi(url->port):SIP_PORT);
          /* get last route in list */
-         last=osip_list_size(mymsg->routes)-1;
-         route = (osip_route_t *) osip_list_get(mymsg->routes, last);
+         last=osip_list_size(&(mymsg->routes))-1;
+         route = (osip_route_t *) osip_list_get(&(mymsg->routes), last);
          DEBUGC(DBCLASS_PROXY, "moving last Route [%s@%s:%i] to URI",
                 (route->url->username)?route->url->username:"*NULL*",
                 (route->url->host)?route->url->host:"*NULL*",
@@ -118,7 +118,7 @@ int route_preprocess(sip_ticket_t *ticket){
          osip_uri_clone(route->url, &(mymsg->req_uri));
 
          /* remove from list */
-         osip_list_remove(mymsg->routes, last);
+         osip_list_remove(&(mymsg->routes), last);
          osip_route_free(route);
       }
    } else {
@@ -133,7 +133,7 @@ int route_preprocess(sip_ticket_t *ticket){
     */
    DEBUGC(DBCLASS_PROXY, "route_preprocess: checking topmost "
           "Route header");
-   route = (osip_route_t *) osip_list_get(mymsg->routes, 0);
+   route = (osip_route_t *) osip_list_get(&(mymsg->routes), 0);
    if ((route != NULL) && (route->url != NULL) &&
        (route->url->host != NULL)) {
       sts = get_ip_by_host(route->url->host, &addr1);
@@ -145,9 +145,8 @@ int route_preprocess(sip_ticket_t *ticket){
            (route->url->port ?
                configuration.sip_listen_port == atoi(route->url->port):
                configuration.sip_listen_port == SIP_PORT)) {
-         osip_list_remove(mymsg->routes, 0);
+         osip_list_remove(&(mymsg->routes), 0);
          osip_route_free(route);
-         /* request->routes will be freed by osip_message_free() */
          DEBUGC(DBCLASS_PROXY, "removed Route header pointing to myself");
       }
    }
@@ -187,9 +186,9 @@ int route_postprocess(sip_ticket_t *ticket){
     *    header field.
     */
 
-   if (mymsg->routes && !osip_list_eol(mymsg->routes, 0)) {
+   if (!osip_list_eol(&(mymsg->routes), 0)) {
 
-      route = (osip_route_t *) osip_list_get(mymsg->routes, 0);
+      route = (osip_route_t *) osip_list_get(&(mymsg->routes), 0);
       if (route->url) {
          /* check for non existing lr parameter */
          if (osip_uri_uparam_get_byname(route->url, "lr", &param) != 0) {
@@ -199,7 +198,7 @@ int route_postprocess(sip_ticket_t *ticket){
             /* push Request URI into Route header list at the last position */
             osip_route_init(&new_route);
             osip_uri_clone(url, &new_route->url);
-            osip_list_add(mymsg->routes, new_route, -1);
+            osip_list_add(&(mymsg->routes), new_route, -1);
 
             /* rewrite request URI to now topmost Route header */
             DEBUGC(DBCLASS_PROXY, "Route header w/o 'lr': rewriting request "
@@ -208,7 +207,7 @@ int route_postprocess(sip_ticket_t *ticket){
             url=NULL;
             osip_uri_clone(route->url, &url);
             /* remove first Route header from list & free */
-            osip_list_remove(mymsg->routes, 0);
+            osip_list_remove(&(mymsg->routes), 0);
             osip_route_free(route);
             route = NULL;
          }
@@ -289,7 +288,7 @@ int route_add_recordroute(sip_ticket_t *ticket){
          }
 
          /* insert into record-route list*/
-         osip_list_add (mymsg->record_routes, r_route, position);
+         osip_list_add (&(mymsg->record_routes), r_route, position);
 
       } else {
           osip_record_route_free(r_route);
@@ -315,45 +314,44 @@ int route_purge_recordroute(sip_ticket_t *ticket){
    int last, i, sts;
    struct in_addr addr1, addr2, addr3;
 
-   if (mymsg->record_routes) {
-      last=osip_list_size(mymsg->record_routes)-1;
-      /* I *MUST NOT* purge any alien (non-mine) Record-Route headers,
-       * only the ones I've put in myself! */
-      if (last >= 0) {
-         for (i=last; i>=0; i--) {
-            r_route = (osip_record_route_t *)
-                      osip_list_get(mymsg->record_routes, i);
+   last=osip_list_size(&(mymsg->record_routes))-1;
+   /* I *MUST NOT* purge any alien (non-mine) Record-Route headers,
+    * only the ones I've put in myself! */
+   if (last >= 0) {
+      for (i=last; i>=0; i--) {
+         r_route = (osip_record_route_t *)
+                   osip_list_get(&(mymsg->record_routes), i);
 
-            /* skip empty entries */
-            if (r_route == NULL) continue;
-            if (r_route->url == NULL) continue;
-            if (r_route->url->host == NULL) continue;
+         /* skip empty entries */
+         if (r_route == NULL) continue;
+         if (r_route->url == NULL) continue;
+         if (r_route->url->host == NULL) continue;
 
-            /* resolve IP addresses (of RR header, inbound & outbound IF) */
-            sts = get_ip_by_host(r_route->url->host, &addr1);
-            if (get_interface_ip(IF_INBOUND, &addr2) != STS_SUCCESS) {
-               return STS_FAILURE;
-            }
-            if (get_interface_ip(IF_OUTBOUND, &addr3) != STS_SUCCESS) {
-               return STS_FAILURE;
-            }
+         /* resolve IP addresses (of RR header, inbound & outbound IF) */
+         sts = get_ip_by_host(r_route->url->host, &addr1);
+         if (get_interface_ip(IF_INBOUND, &addr2) != STS_SUCCESS) {
+            return STS_FAILURE;
+         }
+         if (get_interface_ip(IF_OUTBOUND, &addr3) != STS_SUCCESS) {
+            return STS_FAILURE;
+         }
 
-            /* check if my own route header? */
-            if ((sts == STS_SUCCESS) &&
-                ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
-                 (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
-                 (r_route->url->port ?
-                     configuration.sip_listen_port == atoi(r_route->url->port):
-                     configuration.sip_listen_port == SIP_PORT)) {
+         /* check if my own route header? */
+         if ((sts == STS_SUCCESS) &&
+             ((memcmp(&addr1, &addr2, sizeof(addr1)) == 0) ||
+              (memcmp(&addr1, &addr3, sizeof(addr1)) == 0)) &&
+              (r_route->url->port ?
+                  configuration.sip_listen_port == atoi(r_route->url->port):
+                  configuration.sip_listen_port == SIP_PORT)) {
 
-               osip_list_remove(mymsg->record_routes, i);
-               osip_record_route_free(r_route);
-               DEBUGC(DBCLASS_PROXY, "removed Record-Route header pointing "
-                      "to myself");
-            }
-         } // for
-      } // if
-   }
+            osip_list_remove(&(mymsg->record_routes), i);
+            osip_record_route_free(r_route);
+            DEBUGC(DBCLASS_PROXY, "removed Record-Route header pointing "
+                   "to myself");
+         }
+      } // for
+   } // if
+
    return STS_SUCCESS;
 }
 
@@ -379,10 +377,10 @@ int route_determine_nexthop(sip_ticket_t *ticket,
    * If this route header does NOT have a lr parameter set, rewrite
    * the SIP URI to point to the destination of the route (NOT IMPLEMENTED)
    */
-   if (mymsg->routes && !osip_list_eol(mymsg->routes, 0)) {
+   if (!osip_list_eol(&(mymsg->routes), 0)) {
 
       /* get the destination from the Route Header */
-      route = (osip_route_t *) osip_list_get(mymsg->routes, 0);
+      route = (osip_route_t *) osip_list_get(&(mymsg->routes), 0);
       if (route==NULL || route->url==NULL || route->url->host==NULL) {
          DEBUGC(DBCLASS_PROXY, "route_determine_nexthop: got broken Route "
                 "header - discarding packet");
