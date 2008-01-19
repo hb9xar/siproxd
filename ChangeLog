@@ -1,9 +1,13 @@
 0.6.1
 =====
+  19-Jan-2008:  - Released 0.6.1
+                  This will be the last release supporting libosip2-2.x.x.
+                  With 0.7.0, siproxd will switch to the new version 
+                  libosip2-3.x.x.
   20-Dec-2007:  - DNS failure cache: do several attempts before blacklisting
   28-Nov-2007:  - Fix: Detach from controlling TTY if daemonized
   22-Nov-2007:  - Working on code that that will allow siproxd to use
-                  separate interfaces in its "in front of NAT routes" setup.
+                  separate interfaces in its "in front of NAT router" setup.
                   ( UA1[LAN0]--siproxd--LAN1--NAT--Internet--UA2 )
   12-Nov-2007:  - Small changes to compile again under OpenBSD.
 
