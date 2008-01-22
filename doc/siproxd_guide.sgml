@@ -74,6 +74,7 @@
         "helping technologies" WILL DO CONFLICT with siproxd and result
         in a mess.</para>
     </sect1>
+  </chapter>
 
   <!-- Chapter 1: Overview -->
   <chapter label="1" id="Overview">
