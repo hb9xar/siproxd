@@ -76,7 +76,11 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
  * to clean up its mess (e.g. dynamic memory allocation, database
  * connections, whatever the plugin messes around with)
  */
-int  plugin_end(void){
+int  plugin_end(plugin_def_t *plugin_def){
+   /* free my allocated rescources */
+   if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
+   if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
+
    INFO("plugin_demo ends here");
    return STS_SUCCESS;
 }

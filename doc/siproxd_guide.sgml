@@ -43,6 +43,12 @@
         <authorinitials>tries@users.sourceforge.net</authorinitials>
         <revremark>New Asterisk Config Files</revremark>
       </revision>
+      <revision>
+        <revnumber>0.7.1</revnumber>
+        <date>2008-01-27</date>
+        <authorinitials>tries@users.sourceforge.net</authorinitials>
+        <revremark>Plugin API</revremark>
+      </revision>
     </revhistory>
   </bookinfo>
   <toc></toc>
@@ -523,10 +529,102 @@ pi_shortdial_entry = 17474745000
       <para>Create chroot jail</para>
       <para>What files must be present?</para>
     </sect1>
+  </chapter>
 
-    <!-- Chapter 4.3: Quick Dial -->
-    <sect1 label="4.3">
-      <?dbhtml filename="siproxd_guide_c4s3.html">
+  <!-- Chapter 5: Plugins -->
+  <chapter label="5" id="Plugins">
+    <?dbhtml filename="siproxd_guide_c5.html">
+    <title>Plugins</title>
+
+    <!-- Chapter 5.1: Plugin API -->
+    <sect1 label="5.1">
+      <?dbhtml filename="siproxd_guide_c5s1.html">
+      <title>Plugin API</title>
+      <para>Siproxd plugins are dynamic loadable libraries and must provide
+        3 functions towards siproxd:
+<screen>
+int  plugin_init(plugin_def_t *plugin_def);
+int  plugin_process(int stage, sip_ticket_t *ticket);
+int  plugin_end(plugin_def_t *plugin_def);
+</screen>
+        </para>
+      <para>
+        The <filename>plugin_init</filename> function is called when
+        the plugin is loaded during startup of siproxd. The plugin must
+        defined the following 4 fields of the plugin_def structure:
+        <orderedlist numeration="arabic">
+          <listitem><para><filename>api_version</filename></para></listitem>
+          <listitem><para><filename>name</filename></para></listitem>
+          <listitem><para><filename>desc</filename></para></listitem>
+          <listitem><para><filename>exe_mask</filename></para></listitem>
+        </orderedlist>
+
+        Example code fragment:
+<screen>
+/* API version number of siproxd that this plugin is built against.
+ * This constant will change whenever changes to the API are made
+ * that require adaptions in the plugin. */
+plugin_def->api_version=SIPROXD_API_VERSION;
+
+/* Name and descriptive text of the plugin */
+plugin_def->name=strdup("plugin_demo");
+plugin_def->desc=strdup("This is just a demo plugin without any purpose");
+
+/* Execution mask - during what stages of SIP processing shall
+ * the plugin be called. */
+plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
+</screen>
+        </para>
+      <para>
+        The <filename>plugin_process</filename> function is called at
+        the requested SIP processing stages (see 'execution mask').
+        Your processing will be done here.
+        </para>
+      <para>
+        The <filename>plugin_end</filename> function is called at
+        shutdown of siproxd and gives the plugin the opportunity
+        to clean up and properly shutdown itself.</para>
+      <para>Note: The previously allocated 'name' and 'desc' must be
+        freed by the plugin.</para>
+      <para>
+        Minimum required clean up procedure:
+<screen>
+int  plugin_end(plugin_def_t *plugin_def){
+   /* free my allocated rescources */
+   if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
+   if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
+   return STS_SUCCESS;
+}
+</screen>
+        </para>
+      <para>
+        For a simple example refer to the simple demonstration plugin
+        <filename>plugin_demo</filename>.
+        .</para>
+    </sect1>
+
+    <!-- Chapter 5.2: Available Plugins -->
+    <sect1 label="5.2">
+      <?dbhtml filename="siproxd_guide_c5s2.html">
+      <title>Available Plugins</title>
+      <para>The following plugins are provided with siproxd:
+        <orderedlist numeration="arabic">
+          <listitem><para><filename>plugin_demo</filename></para>
+                    <para>Demo plugin. Provides the basic framework to
+                      be used for plugins.
+                    </para></listitem>
+          <listitem><para><filename>plugin_shortdial</filename></para>
+                    <para>Quick Dial feature.
+                    </para></listitem>
+        </orderedlist>
+        Some of the plugins are described in more detail in the
+        following chapters.
+      </para>
+    </sect1>
+
+    <!-- Chapter 5.3: Quick Dial -->
+    <sect1 label="5.3">
+      <?dbhtml filename="siproxd_guide_c5s3.html">
       <title>Quick Dial</title>
 <!--&&&& do be completed -->
       <para>Since 0.5.12, Siproxd includes a Quick-Dial feature. This
@@ -546,14 +644,14 @@ pi_shortdial_entry = 17474745000
     </sect1>
   </chapter>
 
-  <!-- Chapter 5: Troubleshooting -->
-  <chapter label="5" id="Troubleshooting">
-    <?dbhtml filename="siproxd_guide_c5.html">
+  <!-- Chapter 6: Troubleshooting -->
+  <chapter label="6" id="Troubleshooting">
+    <?dbhtml filename="siproxd_guide_c6.html">
     <title>Troubleshooting</title>
 
-    <!-- Chapter 5.1: Problem Reporting -->
-    <sect1 label="5.1">
-      <?dbhtml filename="siproxd_guide_c5s1.html">
+    <!-- Chapter 6.1: Problem Reporting -->
+    <sect1 label="6.1">
+      <?dbhtml filename="siproxd_guide_c6s1.html">
       <title>Problem Reporting</title>
       <para>If you encounter problems/crashes and ask for support,
         please include as much information as possible. Very helpful
@@ -563,9 +661,9 @@ pi_shortdial_entry = 17474745000
         include your <filename>siproxd.conf</filename>.</para>
     </sect1>
 
-    <!-- Chapter 5.2: Create a Debug Log -->
-    <sect1 label="5.2">
-      <?dbhtml filename="siproxd_guide_c5s2.html">
+    <!-- Chapter 6.2: Create a Debug Log -->
+    <sect1 label="6.2">
+      <?dbhtml filename="siproxd_guide_c6s2.html">
       <title>Create a Debug Log</title>
       <para>The easiest way to generate a debug log is:
         <orderedlist numeration="arabic">
@@ -597,9 +695,9 @@ pi_shortdial_entry = 17474745000
         the outbound network) can connect.</para>
     </sect1>
 
-    <!-- Chapter 5.3: Siproxd crashes -->
-    <sect1 label="5.3">
-      <?dbhtml filename="siproxd_guide_c5s3.html">
+    <!-- Chapter 6.3: Siproxd crashes -->
+    <sect1 label="6.3">
+      <?dbhtml filename="siproxd_guide_c6s3.html">
       <title>Siproxd crashes</title>
       <para>If siproxd crashes, a stack back trace usually is
         helpful to me:
@@ -635,7 +733,7 @@ pi_shortdial_entry = 17474745000
     </sect1>
   </chapter>
 
-  <!-- Chapter 6: Sample Configurations -->
+  <!-- Chapter 7: Sample Configurations -->
   <chapter label="6" id="Sample-Configurations">
      <?dbhtml filename="siproxd_guide_c6.html">
     <title>Sample Configurations</title>

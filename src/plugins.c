@@ -40,7 +40,7 @@ plugin_def_t *siproxd_plugins=NULL;
 /* code */
 typedef int (*func_plugin_init_t)(plugin_def_t *plugin_def);
 typedef int (*func_plugin_process_t)(int stage, sip_ticket_t *ticket);
-typedef int (*func_plugin_end_t)(void);
+typedef int (*func_plugin_end_t)(plugin_def_t *plugin_def);
 
 
 /* 
@@ -110,7 +110,8 @@ int load_plugins (void) {
             ERROR("Plugin '%s' does not support correct API version. "
                   "Please compile plugin with correct siproxd version.",
                   cur->name);
-            sts=(*plugin_end)();
+            sts=(*plugin_end)(cur);
+            free(cur);
             continue;
          }
 
@@ -207,7 +208,7 @@ int unload_plugins(void) {
       for (cur=siproxd_plugins; cur->next != NULL; cur = cur->next) {last=cur;}
 
       plugin_end=cur->plugin_end;
-      sts=(*plugin_end)();
+      sts=(*plugin_end)(cur);
       DEBUGC(DBCLASS_PLUGIN, "unload_plugins: '%s' unloaded with %s, ptr=%p",
              cur->name, (sts==STS_SUCCESS)?"success":"failure", cur);
 
@@ -217,10 +218,9 @@ int unload_plugins(void) {
          ERROR("lt_dlclose() failed for plugin %s", cur->name);
       }
 
-      /* deallocate plugins list item */
-      if (cur->name) {free(cur->name); cur->name=NULL;}
-      if (cur->desc) {free(cur->desc); cur->desc=NULL;}
+      /* NOTE: cur->name and cur->desc must be cleaned up by the plugin! */
 
+      /* deallocate plugins list item */
       if (last) last->next=NULL;
       free(cur);
 

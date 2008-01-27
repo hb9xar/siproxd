@@ -78,4 +78,4 @@ typedef struct {
 */
 int  plugin_init(plugin_def_t *plugin_def);
 int  plugin_process(int stage, sip_ticket_t *ticket);
-int  plugin_end(void);
+int  plugin_end(plugin_def_t *plugin_def);
