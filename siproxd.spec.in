@@ -72,6 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %config %{sysconfdir}/siproxd.conf
 %config %{sysconfdir}/siproxd_passwd.cfg
 %attr(0755,root,root) %{_initrddir}/siproxd
+%attr(0755,root,root) %{_libdir}/%{name}/
 
 %attr(0700,%{siproxduser},root) %{piddir}
 %attr(0700,%{siproxduser},root) %{regdir}
