@@ -236,6 +236,14 @@ int main (int argc, char *argv[])
       INFO("daemonized, pid=%i", getpid());
    }
 
+   /* load and initialize the plugins */
+   sts=load_plugins();
+   /* if error, abort siproxd */
+   if (sts != STS_SUCCESS) {
+      ERROR("Error while loading and initializing plug-ins - aborting");
+      exit(1);
+   }
+
    /* prepare for creating PID file */
    if (pidfilename == NULL) pidfilename = configuration.pid_file;
 
@@ -380,6 +388,7 @@ int main (int argc, char *argv[])
        * (check request URI and refuse with 416 if not understood)
        */
       /* NOT IMPLEMENTED */
+/*&&& PLUGIN_VALIDATE */
 
       /*
        * RFC 3261, Section 16.3 step 3
@@ -448,14 +457,13 @@ int main (int argc, char *argv[])
        * The message did pass all the
        * tests above and is now ready
        * to be proxied.
-       * Before we do so, we apply some
-       * additional preprocessing
+       * Feed to the plugins. If a plugin decides
+       * to end processing and terminate the ongoing
+       * dialog (STS_SIP_SENT), then just free
+       * the allocated resources.
        *********************************/
-      /* Dial shortcuts */
-      if (configuration.pi_shortdial) {
-         sts = plugin_shortdial(&ticket);
-         if (sts == STS_SIP_SENT) goto end_loop;
-      }
+      sts = call_plugins(PLUGIN_DETERMINE_TARGET, &ticket);
+      if (sts == STS_SIP_SENT) goto end_loop;
 
 
       /*********************************
@@ -582,6 +590,9 @@ int main (int argc, char *argv[])
          WARN("couldn't delete old PID file: %s", strerror(errno));
       }
    }
+
+   /* unload the plugins */
+   unload_plugins();
 
    /* END */
    log_end();

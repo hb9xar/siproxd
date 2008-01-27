@@ -34,6 +34,7 @@
 #include <osipparser2/sdp_message.h>
 
 #include "siproxd.h"
+#include "plugins.h"
 #include "log.h"
 
 static char const ident[]="$Id$";
@@ -108,6 +109,8 @@ int proxy_request (sip_ticket_t *ticket) {
     sip_find_direction(ticket, &i);
     type = ticket->direction;
 
+/*&&&& PLUGIN_PRE_PROXY */
+    call_plugins(PLUGIN_PRE_PROXY, ticket);
    /*
     * logging of passing calls
     */
@@ -288,6 +291,8 @@ sts=sip_obscure_callid(ticket);
  * How about "408 Request Timeout" ?
  *
  */
+/*&&&& PLUGIN_PROXY_UNK */
+      call_plugins(PLUGIN_PROXY_UNK, ticket);
       sip_gen_response(ticket, 408 /* Request Timeout */);
 
       return STS_FAILURE;
@@ -406,6 +411,10 @@ sts=sip_obscure_callid(ticket);
       DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
 #else
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
    if ((type == REQTYP_OUTGOING) && 
               (!osip_list_eol(&(request->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
@@ -419,10 +428,6 @@ sts=sip_obscure_callid(ticket);
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
              utils_inet_ntoa(sendto_addr), port);
-   /*
-    * Route present?
-    * If so, fetch address from topmost Route: header and remove it.
-    */
 #endif
    /*
     * destination from SIP URI
@@ -468,6 +473,9 @@ sts=sip_obscure_callid(ticket);
    * Proxy Behavior - Add a Content-Length header field if necessary
    */
   /* not necessary, already in message and we do not support TCP */
+
+/*&&&& PLUGIN_POST_PROXY */
+   call_plugins(PLUGIN_POST_PROXY, ticket);
 
   /*
    * RFC 3261, Section 16.6 step 10
@@ -550,6 +558,8 @@ int proxy_response (sip_ticket_t *ticket) {
     */
     sip_find_direction(ticket, NULL);
     type = ticket->direction;
+/*&&&& PLUGIN_PRE_PROXY */
+    call_plugins(PLUGIN_PRE_PROXY, ticket);
 
 /*
  * ok, we got a response that we are allowed to process.
@@ -679,6 +689,8 @@ sts=sip_obscure_callid(ticket);
       DEBUGC(DBCLASS_PROXY, "response from/to unregistered UA (%s@%s)",
 	   response->from->url->username? response->from->url->username:"*NULL*",
 	   response->from->url->host? response->from->url->host : "*NULL*");
+/*&&&& PLUGIN_PROXY_UNK */
+      call_plugins(PLUGIN_PROXY_UNK, ticket);
       return STS_FAILURE;
    }
 
@@ -730,6 +742,10 @@ sts=sip_obscure_callid(ticket);
       DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
 #else
+   /*
+    * Route present?
+    * If so, fetch address from topmost Route: header and remove it.
+    */
    if ((type == RESTYP_OUTGOING) && 
               (!osip_list_eol(&(response->routes), 0))) {
       sts=route_determine_nexthop(ticket, &sendto_addr, &port);
@@ -743,10 +759,6 @@ sts=sip_obscure_callid(ticket);
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
              utils_inet_ntoa(sendto_addr), port);
-   /*
-    * Route present?
-    * If so, fetch address from topmost Route: header and remove it.
-    */
 #endif
    } else {
       /* get target address and port from VIA header */
@@ -771,6 +783,12 @@ sts=sip_obscure_callid(ticket);
       }
    }
 
+/*&&&& PLUGIN_POST_PROXY */
+    call_plugins(PLUGIN_POST_PROXY, ticket);
+
+  /*
+   * Proxy Behavior - Forward the response
+   */
    sts = sip_message_to_str(response, &buffer, &buflen);
    if (sts != 0) {
       ERROR("proxy_response: sip_message_to_str failed");

@@ -15,6 +15,9 @@
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
@@ -72,6 +75,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `ltdl' library (-lltdl). */
+#undef HAVE_LIBLTDL
+
 /* Define to 1 if you have the `osip2' library (-losip2). */
 #undef HAVE_LIBOSIP2
 
@@ -83,6 +89,15 @@
 
 /* Define to 1 if you have the `listen' function. */
 #undef HAVE_LISTEN
+
+/* Define to 1 if you have the `lt_dlclose' function. */
+#undef HAVE_LT_DLCLOSE
+
+/* Define to 1 if you have the `lt_dlopen' function. */
+#undef HAVE_LT_DLOPEN
+
+/* Define to 1 if you have the `lt_dlsym' function. */
+#undef HAVE_LT_DLSYM
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

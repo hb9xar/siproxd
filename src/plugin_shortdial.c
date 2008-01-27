@@ -24,11 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
 #include "log.h"
+#include "plugins.h"
 
 static char const ident[]="$Id$";
 
@@ -37,17 +39,50 @@ extern struct siproxd_config configuration;
 
 /* local prototypes */
 static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no);
+static int plugin_shortdial(sip_ticket_t *ticket);
 
+
+
+/* 
+ * Plugin API functions code
+ */
+/* Initialization */
+int  plugin_init(plugin_def_t *plugin_def) {
+   plugin_def->api_version=SIPROXD_API_VERSION;
+   plugin_def->name=strdup("plugin_shortdial");
+   plugin_def->desc=strdup("Handles Dial shortcuts as defined in config file");
+   plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET;
+   return STS_SUCCESS;
+}
+
+/* Processing */
+int  plugin_process(int stage, sip_ticket_t *ticket){
+   int sts;
+   sts=plugin_shortdial(ticket);
+   return sts;
+}
+
+/* De-Initialization */
+int  plugin_end(void){
+   return STS_SUCCESS;
+}
+
+
+/*
+ * Workload code
+ */
 
 /* returns STS_SIP_SENT if processing is to be terminated,
  * otherwise STS_SUCCESS (go on with processing) */
 /* code (entry point) */
-int plugin_shortdial(sip_ticket_t *ticket) {
+static int plugin_shortdial(sip_ticket_t *ticket) {
    int sts=STS_SUCCESS;
    osip_uri_t *req_url;
    int  shortcut_no=0;
 
-   if (!ticket || !ticket->sipmsg) return STS_FAILURE;
+   /* plugin loaded and not configured, return with success */
+   if (configuration.pi_shortdial_akey==NULL) return STS_SUCCESS;
+   if (configuration.pi_shortdial_entry.used==0) return STS_SUCCESS;
 
    DEBUGC(DBCLASS_PLUGIN,"plugin entered");
    req_url=osip_message_get_uri(ticket->sipmsg);
@@ -105,7 +140,7 @@ int plugin_shortdial(sip_ticket_t *ticket) {
 }
 
 
-/* private code */
+/* private plugin code */
 static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    osip_uri_t *to_url=ticket->sipmsg->to->url;
    char *to_user=to_url->username;

@@ -91,12 +91,13 @@ struct siproxd_config {
    char *pid_file;
    int  default_expires;
    int  autosave_registrations;
-   int  pi_shortdial;
    char *pi_shortdial_akey;
    stringa_t pi_shortdial_entry;
    char *ua_string;
    int   use_rport;
    int   obscure_loops;
+   char *plugin_dir;
+   stringa_t load_plugin;
 };
 
 /*
@@ -236,6 +237,10 @@ int sip_message_to_str(osip_message_t * sip,   char **dest,     size_t *len);
 int sip_body_to_str(const osip_body_t * body,  char **dest,     size_t *len);
 int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 
+/* plugins.c */
+int load_plugins (void);
+int call_plugins(int stage, sip_ticket_t *ticket);
+int unload_plugins(void);
 
 /*
  * some constant definitions
@@ -258,6 +263,7 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define RTP_BUFFER_SIZE	1520	/* max size of an RTP frame		*/
 				/* (assume approx one Ethernet MTU)	*/
 
+#define PATH_STRING_SIZE 256	/* max size of an file path		*/
 #define URL_STRING_SIZE	128	/* max size of an URL/URI string	*/
 #define STATUSCODE_SIZE	5	/* size of string representation of status */
 #define DNS_CACHE_SIZE	256	/* number of entries in internal DNS cache */
@@ -297,7 +303,7 @@ int sip_message_set_body(osip_message_t * sip, const char *buf, size_t len);
 #define STS_FAILURE	1	/* FAILURE				*/
 #define STS_FALSE	1	/* FALSE				*/
 #define STS_NEED_AUTH	1001	/* need authentication			*/
-#define STS_SIP_SENT	2001	/* SIP packet is already sent		*/
+#define STS_SIP_SENT	2001	/* SIP packet is already sent, end of dialog */
 
 /* symbolic direction of data */
 #define DIR_INCOMING	1

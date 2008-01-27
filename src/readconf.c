@@ -180,12 +180,13 @@ static int parse_config (FILE *configfile) {
       { "pid_file",            TYP_STRING, &configuration.pid_file },
       { "default_expires",     TYP_INT4,   &configuration.default_expires },
       { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },
-      { "pi_shortdial_enable", TYP_INT4,   &configuration.pi_shortdial },
       { "pi_shortdial_akey",   TYP_STRING, &configuration.pi_shortdial_akey },
       { "pi_shortdial_entry",  TYP_STRINGA,&configuration.pi_shortdial_entry },
       { "ua_string",           TYP_STRING, &configuration.ua_string },
       { "use_rport",           TYP_INT4,   &configuration.use_rport },
       { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
+      { "plugin_dir",          TYP_STRING, &configuration.plugin_dir },
+      { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
       {0, 0, 0}
    };
 

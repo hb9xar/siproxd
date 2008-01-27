@@ -30,8 +30,21 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
 		  rtpproxy_relay.c accessctl.c route_processing.c \
 		  security.c auth.c fwapi.c resolve.c \
-		  plugin_shortdial.c dejitter.c
+		  dejitter.c plugins.c
 #		  addrcache.c
+
+#
+# Plugin modules, installed in "pkglib" directory ($prefix/lib/siproxd/)
+#
+pkglib_LTLIBRARIES =	plugin_demo.la \
+			plugin_shortdial.la
+#
+plugin_demo_la_SOURCES = plugin_demo.c
+plugin_demo_la_LDFLAGS = -module
+#
+plugin_shortdial_la_SOURCES = plugin_shortdial.c
+plugin_shortdial_la_LDFLAGS = -module
+
 
 #
 # an example for a custom firewall control module

@@ -9,5 +9,5 @@ test -f configure.in || {
 set -e
 aclocal
 autoheader
-automake -a
+automake --add-missing --copy
 autoconf
