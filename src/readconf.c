@@ -38,7 +38,7 @@ static char const ident[]="$Id$";
 extern struct siproxd_config configuration;
 
 /* prototypes used locally only */
-static int parse_config (FILE *configfile);
+static int parse_config (FILE *configfile, cfgopts_t cfgopts[]);
 
 
 /* try to open (whichever is found first):
@@ -52,7 +52,7 @@ static int parse_config (FILE *configfile);
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int read_config(char *name, int search) {
+int read_config(char *name, int search, cfgopts_t cfgopts[]) {
    int sts;
    FILE *configfile=NULL;
    int i;
@@ -97,7 +97,7 @@ int read_config(char *name, int search) {
       return STS_FAILURE;
    }
 
-   sts = parse_config(configfile);
+   sts = parse_config(configfile, cfgopts);
    fclose(configfile);
 
    /*
@@ -130,7 +130,7 @@ int read_config(char *name, int search) {
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-static int parse_config (FILE *configfile) {
+static int parse_config (FILE *configfile, cfgopts_t configoptions[]) {
    char buff[1024];
    char *ptr;
    int i;
@@ -138,58 +138,6 @@ static int parse_config (FILE *configfile) {
    int num;
    size_t len;
    char *tmpptr;
-
-   struct cfgopts {
-      char *keyword;
-      enum type {TYP_INT4, TYP_STRING, TYP_FLOAT, TYP_STRINGA} type;
-      void *dest;
-   } configoptions[] = {
-      { "debug_level",         TYP_INT4,   &configuration.debuglevel },
-      { "debug_port",          TYP_INT4,   &configuration.debugport },
-      { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
-      { "daemonize",           TYP_INT4,   &configuration.daemonize },
-      { "silence_log",         TYP_INT4,   &configuration.silence_log },
-      { "if_inbound",          TYP_STRING, &configuration.inbound_if },
-      { "if_outbound",         TYP_STRING, &configuration.outbound_if },
-      { "host_outbound",       TYP_STRING, &configuration.outbound_host },
-      { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
-      { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
-      { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
-      { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
-      { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp },
-      { "rtp_input_dejitter",  TYP_INT4,   &configuration.rtp_input_dejitter },
-      { "rtp_output_dejitter", TYP_INT4,   &configuration.rtp_output_dejitter },
-      { "user",                TYP_STRING, &configuration.user },
-      { "chrootjail",          TYP_STRING, &configuration.chrootjail },
-      { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },
-      { "hosts_allow_sip",     TYP_STRING, &configuration.hosts_allow_sip },
-      { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
-      { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
-      { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
-      { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
-      { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
-      { "mask_host",           TYP_STRINGA,&configuration.mask_host },
-      { "masked_host",         TYP_STRINGA,&configuration.masked_host },
-      { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host },
-      { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
-      { "outbound_domain_name",TYP_STRINGA,&configuration.outbound_proxy_domain_name },
-      { "outbound_domain_host",TYP_STRINGA,&configuration.outbound_proxy_domain_host },
-      { "outbound_domain_port",TYP_STRINGA,&configuration.outbound_proxy_domain_port },
-      { "registration_file",   TYP_STRING, &configuration.registrationfile },
-      { "log_calls",           TYP_INT4,   &configuration.log_calls },
-      { "pid_file",            TYP_STRING, &configuration.pid_file },
-      { "default_expires",     TYP_INT4,   &configuration.default_expires },
-      { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },
-      { "pi_shortdial_akey",   TYP_STRING, &configuration.pi_shortdial_akey },
-      { "pi_shortdial_entry",  TYP_STRINGA,&configuration.pi_shortdial_entry },
-      { "ua_string",           TYP_STRING, &configuration.ua_string },
-      { "use_rport",           TYP_INT4,   &configuration.use_rport },
-      { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
-      { "plugin_dir",          TYP_STRING, &configuration.plugin_dir },
-      { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
-      {0, 0, 0}
-   };
-
 
    while (fgets(buff,sizeof(buff),configfile) != NULL) {
       /* life insurance */

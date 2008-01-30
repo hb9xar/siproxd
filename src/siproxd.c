@@ -44,6 +44,53 @@ static char const ident[]="$Id$";
 
 /* configuration storage */
 struct siproxd_config configuration;
+/* instructions for config parser */
+cfgopts_t main_cfg_opts[] = {
+   { "debug_level",         TYP_INT4,   &configuration.debuglevel },
+   { "debug_port",          TYP_INT4,   &configuration.debugport },
+   { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
+   { "daemonize",           TYP_INT4,   &configuration.daemonize },
+   { "silence_log",         TYP_INT4,   &configuration.silence_log },
+   { "if_inbound",          TYP_STRING, &configuration.inbound_if },
+   { "if_outbound",         TYP_STRING, &configuration.outbound_if },
+   { "host_outbound",       TYP_STRING, &configuration.outbound_host },
+   { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
+   { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
+   { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
+   { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
+   { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp },
+   { "rtp_input_dejitter",  TYP_INT4,   &configuration.rtp_input_dejitter },
+   { "rtp_output_dejitter", TYP_INT4,   &configuration.rtp_output_dejitter },
+   { "user",                TYP_STRING, &configuration.user },
+   { "chrootjail",          TYP_STRING, &configuration.chrootjail },
+   { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },
+   { "hosts_allow_sip",     TYP_STRING, &configuration.hosts_allow_sip },
+   { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
+   { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
+   { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
+   { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
+   { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
+   { "mask_host",           TYP_STRINGA,&configuration.mask_host },
+   { "masked_host",         TYP_STRINGA,&configuration.masked_host },
+   { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host },
+   { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
+   { "outbound_domain_name",TYP_STRINGA,&configuration.outbound_proxy_domain_name },
+   { "outbound_domain_host",TYP_STRINGA,&configuration.outbound_proxy_domain_host },
+   { "outbound_domain_port",TYP_STRINGA,&configuration.outbound_proxy_domain_port },
+   { "registration_file",   TYP_STRING, &configuration.registrationfile },
+   { "log_calls",           TYP_INT4,   &configuration.log_calls },
+   { "pid_file",            TYP_STRING, &configuration.pid_file },
+   { "default_expires",     TYP_INT4,   &configuration.default_expires },
+   { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },
+   { "pi_shortdial_akey",   TYP_STRING, &configuration.pi_shortdial_akey },
+   { "pi_shortdial_entry",  TYP_STRINGA,&configuration.pi_shortdial_entry },
+   { "ua_string",           TYP_STRING, &configuration.ua_string },
+   { "use_rport",           TYP_INT4,   &configuration.use_rport },
+   { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
+   { "plugin_dir",          TYP_STRING, &configuration.plugin_dir },
+   { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
+   {0, 0, 0}
+};
 
 /* Global File instance on pw file */
 FILE *siproxd_passwordfile;
@@ -185,7 +232,9 @@ int main (int argc, char *argv[])
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" "UNAME" starting up");
 
    /* read the config file */
-   if (read_config(configfile, config_search) == STS_FAILURE) exit(1);
+   if (read_config(configfile, config_search, main_cfg_opts) == STS_FAILURE) {
+      exit(1);
+   }
 
    /* if a debug level > 0 has been given on the commandline use its
       value and not what is in the config file */

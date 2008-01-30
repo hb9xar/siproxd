@@ -43,6 +43,7 @@ struct urlmap_s {
  */
 
 
+
 /*
  * Array of strings - used within configuration store
  */
@@ -53,7 +54,7 @@ typedef struct {
 } stringa_t;
 
 /*
- * configuration option table
+ * global configuration option table
  */
 struct siproxd_config {
    unsigned int debuglevel;
@@ -101,6 +102,15 @@ struct siproxd_config {
 };
 
 /*
+ * control structure for config file parser
+ */
+typedef struct {
+   char *keyword;
+   enum type {TYP_INT4, TYP_STRING, TYP_FLOAT, TYP_STRINGA} type;
+   void *dest;
+} cfgopts_t;
+
+/*
  * SIP ticket
  */
 typedef struct {
@@ -142,7 +152,7 @@ int sipsock_listen(void);						/*X*/
 int sipsock_wait(void);
 int sipsock_read(void *buf, size_t bufsize,
                  struct sockaddr_in *from, int *protocol);
-int sipsock_send(struct in_addr addr, int port,	int protocol,			/*X*/
+int sipsock_send(struct in_addr addr, int port,	int protocol,		/*X*/
                  char *buffer, size_t size);
 int sockbind(struct in_addr ipaddr, int localport, int errflg);
 
@@ -199,7 +209,7 @@ int  sip_fixup_asterisk(char *buff, int *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
 
 /* readconf.c */
-int read_config(char *name, int search);				/*X*/
+int read_config(char *name, int search, cfgopts_t cfgopts[]);		/*X*/
 int make_default_config(void);						/*X*/
 
 /* rtpproxy.c */

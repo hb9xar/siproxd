@@ -208,14 +208,16 @@ int unload_plugins(void) {
       for (cur=siproxd_plugins; cur->next != NULL; cur = cur->next) {last=cur;}
 
       plugin_end=cur->plugin_end;
+      DEBUGC(DBCLASS_PLUGIN, "unload_plugins: '%s' unloading ptr=%p",
+             cur->name, cur);
       sts=(*plugin_end)(cur);
-      DEBUGC(DBCLASS_PLUGIN, "unload_plugins: '%s' unloaded with %s, ptr=%p",
-             cur->name, (sts==STS_SUCCESS)?"success":"failure", cur);
+      DEBUGC(DBCLASS_PLUGIN, "unload_plugins: status=%s",
+             (sts==STS_SUCCESS)?"success":"failure");
 
       /* dlclose */
       sts = lt_dlclose(cur->dlhandle);
       if (sts != 0) {
-         ERROR("lt_dlclose() failed for plugin %s", cur->name);
+         ERROR("lt_dlclose() failed, ptr=%p", cur);
       }
 
       /* NOTE: cur->name and cur->desc must be cleaned up by the plugin! */
