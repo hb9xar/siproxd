@@ -154,8 +154,8 @@ rtp_dscp = 46
 #    Artificial delay to be used to de-jitter RTP data streams.
 #    This time is in microseconds.
 #
-rtp_input_dejitter  = 100000
-rtp_output_dejitter = 100000
+rtp_input_dejitter  = 25000
+rtp_output_dejitter = 25000
 
 ######################################################################
 # Default Expiration timeout for Registrations
@@ -290,15 +290,21 @@ debug_port = 0
 # the processing order is given by the load order.
 #
 # plugin_dir: MUST be terminated with '/'
-plugin_dir=/usr/lib/siproxd/
+plugindir=/home/hb9xar/src/siproxd/src/.libs/
 #
 # List of plugins to load
-load_plugin=plugin_demo.so
+#load_plugin=plugin_demo.so
 load_plugin=plugin_shortdial.so
 
 
 ######################################################################
-# Plugins
+# Plugin_demo
+#
+plugin_demo_string = This_is_a_string_passed_to_the_demo_plugin
+
+
+######################################################################
+# Plugin_shortdial
 #
 # Quick Dial (Short Dial)
 # ability to define quick dial numbers that can be accessed by
@@ -310,11 +316,11 @@ load_plugin=plugin_shortdial.so
 #       quick dial entry.
 #
 # The first character is the "key", the following characters give
-# the length of the number string. E.g. "*00" allows qpeed dials
+# the length of the number string. E.g. "*00" allows speed dials
 # from *01 to *99. (the number "*100" will be passed through unprocessed)
-pi_shortdial_akey = *00
+plugin_shortdial_akey = *00
 #
 # *01 sipphone echo test
-pi_shortdial_entry = 17474743246
+plugin_shortdial_entry = 17474743246
 # *02 sipphone welcome message
-pi_shortdial_entry = 17474745000
+plugin_shortdial_entry = 17474745000
