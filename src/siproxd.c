@@ -45,7 +45,7 @@ static char const ident[]="$Id$";
 /* configuration storage */
 struct siproxd_config configuration;
 /* instructions for config parser */
-cfgopts_t main_cfg_opts[] = {
+static cfgopts_t main_cfg_opts[] = {
    { "debug_level",         TYP_INT4,   &configuration.debuglevel },
    { "debug_port",          TYP_INT4,   &configuration.debugport },
    { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
@@ -82,12 +82,10 @@ cfgopts_t main_cfg_opts[] = {
    { "pid_file",            TYP_STRING, &configuration.pid_file },
    { "default_expires",     TYP_INT4,   &configuration.default_expires },
    { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },
-   { "pi_shortdial_akey",   TYP_STRING, &configuration.pi_shortdial_akey },
-   { "pi_shortdial_entry",  TYP_STRINGA,&configuration.pi_shortdial_entry },
    { "ua_string",           TYP_STRING, &configuration.ua_string },
    { "use_rport",           TYP_INT4,   &configuration.use_rport },
    { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
-   { "plugin_dir",          TYP_STRING, &configuration.plugin_dir },
+   { "plugindir",           TYP_STRING, &configuration.plugin_dir },
    { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
    {0, 0, 0}
 };
@@ -232,9 +230,13 @@ int main (int argc, char *argv[])
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" "UNAME" starting up");
 
    /* read the config file */
-   if (read_config(configfile, config_search, main_cfg_opts) == STS_FAILURE) {
+   if (read_config(configfile, config_search, main_cfg_opts, "") == STS_FAILURE) {
       exit(1);
    }
+   /* remember where config file is located, so the plugins
+    * can load it as well - if required */
+   configuration.configfile = strdup(configfile);
+   configuration.config_search = config_search;
 
    /* if a debug level > 0 has been given on the commandline use its
       value and not what is in the config file */

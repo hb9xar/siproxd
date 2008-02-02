@@ -104,6 +104,20 @@ int load_plugins (void) {
          /* call the init function */
          sts=(*plugin_init)(cur);
 
+         /* Tell the user something about the plugin we have just loaded */
+         INFO("Plugin '%s' [%s] loaded with %s, exemask=0x%X",
+              cur->name, cur->desc, (sts==STS_SUCCESS)?"success":"failure",
+              cur->exe_mask);
+
+         /* check return status from plugin - failure leads to unload */
+         if (sts != STS_SUCCESS) {
+            /* complain and unload the plugin */
+            ERROR("Plugin '%s' did fail to load.", cur->name);
+            sts=(*plugin_end)(cur);
+            free(cur);
+            continue;
+         }
+
          /* check API version that the plugin was biuilt against */
          if (cur->api_version != SIPROXD_API_VERSION) {
             /* complain and unload the plugin */
@@ -119,11 +133,6 @@ int load_plugins (void) {
          cur->plugin_process = plugin_process;
          cur->plugin_end = plugin_end;
          cur->dlhandle = handle;
-
-         /* Tell the user something about the plugin we have just loaded */
-         INFO("Plugin '%s' [%s] loaded with %s, exemask=0x%X",
-              cur->name, cur->desc, (sts==STS_SUCCESS)?"success":"failure",
-              cur->exe_mask);
 
          /* store forward pointer */
          if (siproxd_plugins == NULL) {
@@ -219,8 +228,6 @@ int unload_plugins(void) {
       if (sts != 0) {
          ERROR("lt_dlclose() failed, ptr=%p", cur);
       }
-
-      /* NOTE: cur->name and cur->desc must be cleaned up by the plugin! */
 
       /* deallocate plugins list item */
       if (last) last->next=NULL;

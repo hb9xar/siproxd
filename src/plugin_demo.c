@@ -28,14 +28,28 @@
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
-#include "log.h"
 #include "plugins.h"
+#include "log.h"
 
 static char const ident[]="$Id$";
 
-/* configuration storage */
+/* Plug-in identification */
+static char name[]="plugin_demo";
+static char desc[]="This is just a demo plugin without any purpose";
+
+/* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
 
+/* plugin configuration storage */
+static struct plugin_config {
+   char *string;
+} plugin_cfg;
+
+/* Instructions for config parser */
+static cfgopts_t plugin_cfg_opts[] = {
+   { "plugin_demo_string",      TYP_STRING, &plugin_cfg.string },
+   {0, 0, 0}
+};
 
 
 /* 
@@ -49,12 +63,20 @@ int  plugin_init(plugin_def_t *plugin_def) {
    plugin_def->api_version=SIPROXD_API_VERSION;
 
    /* Name and descriptive text of the plugin */
-   plugin_def->name=strdup("plugin_demo");
-   plugin_def->desc=strdup("This is just a demo plugin without any purpose");
+   plugin_def->name=name;
+   plugin_def->desc=desc;
 
    /* Execution mask - during what stages of SIP processing shall
     * the plugin be called. */
    plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
+
+   /* read the config file */
+   if (read_config(configuration.configfile,
+                   configuration.config_search,
+                   plugin_cfg_opts, name) == STS_FAILURE) {
+      ERROR("Plugin '%s': could not load config file", name);
+      return STS_FAILURE;
+   }
 
    INFO("plugin_demo is initialized");
    return STS_SUCCESS;
@@ -77,10 +99,6 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
  * connections, whatever the plugin messes around with)
  */
 int  plugin_end(plugin_def_t *plugin_def){
-   /* free my allocated rescources */
-   if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
-   if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
-
    INFO("plugin_demo ends here");
    return STS_SUCCESS;
 }

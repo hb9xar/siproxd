@@ -29,18 +29,35 @@
 #include <osipparser2/osip_parser.h>
 
 #include "siproxd.h"
-#include "log.h"
 #include "plugins.h"
+#include "log.h"
 
 static char const ident[]="$Id$";
 
-/* configuration storage */
+/* Plug-in identification */
+static char name[]="plugin_shortdial";
+static char desc[]="Handles Dial shortcuts as defined in config file";
+
+/* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
+
+
+/* plugin configuration storage */
+static struct plugin_config {
+   char *shortdial_akey;
+   stringa_t shortdial_entry;
+} plugin_cfg;
+/* Instructions for config parser */
+static cfgopts_t plugin_cfg_opts[] = {
+   { "plugin_shortdial_akey",   TYP_STRING, &plugin_cfg.shortdial_akey },
+   { "plugin_shortdial_entry",  TYP_STRINGA,&plugin_cfg.shortdial_entry },
+   {0, 0, 0}
+};
+
 
 /* local prototypes */
 static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no);
 static int plugin_shortdial(sip_ticket_t *ticket);
-
 
 
 /* 
@@ -49,9 +66,18 @@ static int plugin_shortdial(sip_ticket_t *ticket);
 /* Initialization */
 int  plugin_init(plugin_def_t *plugin_def) {
    plugin_def->api_version=SIPROXD_API_VERSION;
-   plugin_def->name=strdup("plugin_shortdial");
-   plugin_def->desc=strdup("Handles Dial shortcuts as defined in config file");
+   plugin_def->name=name;
+   plugin_def->desc=desc;
    plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET;
+
+   /* read the config file */
+   if (read_config(configuration.configfile,
+                   configuration.config_search,
+                   plugin_cfg_opts, name) == STS_FAILURE) {
+      ERROR("Plugin '%s': could not load config file", name);
+      return STS_FAILURE;
+   }
+
    return STS_SUCCESS;
 }
 
@@ -64,10 +90,6 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
 
 /* De-Initialization */
 int  plugin_end(plugin_def_t *plugin_def){
-   /* free my allocated rescources */
-   if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
-   if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
-
    return STS_SUCCESS;
 }
 
@@ -85,8 +107,8 @@ static int plugin_shortdial(sip_ticket_t *ticket) {
    int  shortcut_no=0;
 
    /* plugin loaded and not configured, return with success */
-   if (configuration.pi_shortdial_akey==NULL) return STS_SUCCESS;
-   if (configuration.pi_shortdial_entry.used==0) return STS_SUCCESS;
+   if (plugin_cfg.shortdial_akey==NULL) return STS_SUCCESS;
+   if (plugin_cfg.shortdial_entry.used==0) return STS_SUCCESS;
 
    DEBUGC(DBCLASS_PLUGIN,"plugin entered");
    req_url=osip_message_get_uri(ticket->sipmsg);
@@ -103,23 +125,23 @@ static int plugin_shortdial(sip_ticket_t *ticket) {
    /* REQ URI with username must exist, length as defined in config,
     * shortdial must be enabled and short dial key must match */
    if (!req_url || !req_url->username ||
-       !configuration.pi_shortdial_akey ||
-       (strlen(req_url->username) != strlen(configuration.pi_shortdial_akey)) ||
-       (req_url->username[0] != configuration.pi_shortdial_akey[0]))
+       !plugin_cfg.shortdial_akey ||
+       (strlen(req_url->username) != strlen(plugin_cfg.shortdial_akey)) ||
+       (req_url->username[0] != plugin_cfg.shortdial_akey[0]))
       return STS_SUCCESS; /* ignore */
 
    shortcut_no = atoi(&(req_url->username[1]));
    if ((shortcut_no <= 0) || (shortcut_no >= LONG_MAX)) return STS_SUCCESS; /* not a number */
 
    /* requested number is not defined (out of range) */
-   if (shortcut_no > configuration.pi_shortdial_entry.used) {
+   if (shortcut_no > plugin_cfg.shortdial_entry.used) {
       DEBUGC(DBCLASS_PLUGIN, "shortdial: shortcut %i > available shortcuts (%i)",
-            shortcut_no, configuration.pi_shortdial_entry.used);
+            shortcut_no, plugin_cfg.shortdial_entry.used);
       return STS_SUCCESS;
    }
 
    /* requested number is not defined (empty) */
-   if (!configuration.pi_shortdial_entry.string[shortcut_no-1]) {
+   if (!plugin_cfg.shortdial_entry.string[shortcut_no-1]) {
       DEBUGC(DBCLASS_PLUGIN, "shortdial: shortcut %i empty", shortcut_no);
       return STS_SUCCESS;
    }
@@ -153,7 +175,7 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    size_t len;
    osip_contact_t *contact = NULL;
 
-   new_to_user=configuration.pi_shortdial_entry.string[shortcut_no-1];
+   new_to_user=plugin_cfg.shortdial_entry.string[shortcut_no-1];
    if (!new_to_user) return STS_SUCCESS;
 
    DEBUGC(DBCLASS_PLUGIN,"redirect: redirecting [%s]->[%s]",

@@ -38,7 +38,7 @@ static char const ident[]="$Id$";
 extern struct siproxd_config configuration;
 
 /* prototypes used locally only */
-static int parse_config (FILE *configfile, cfgopts_t cfgopts[]);
+static int parse_config (FILE *configfile, cfgopts_t cfgopts[], char *filter);
 
 
 /* try to open (whichever is found first):
@@ -48,11 +48,14 @@ static int parse_config (FILE *configfile, cfgopts_t cfgopts[]);
  *	/usr/etc/<name>.conf
  *	/usr/local/etc/<name>.conf
  *
+ *	cfgopts: control array for the parser. defined keywors and types
+ *	filter:  passed to parse_config (read there for details)
+ *
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int read_config(char *name, int search, cfgopts_t cfgopts[]) {
+int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
    int sts;
    FILE *configfile=NULL;
    int i;
@@ -97,7 +100,7 @@ int read_config(char *name, int search, cfgopts_t cfgopts[]) {
       return STS_FAILURE;
    }
 
-   sts = parse_config(configfile, cfgopts);
+   sts = parse_config(configfile, cfgopts, filter);
    fclose(configfile);
 
    /*
@@ -126,18 +129,31 @@ int read_config(char *name, int search, cfgopts_t cfgopts[]) {
 /*
  * parse configuration file
  *
+ * configfile            - file STREAM to open config file
+ *
+ * configoptions         - control structure for config parser
+ *
+ * filter = NULL         - no filtering done
+ * filter = "plugin_xxx" - only consider keywords starting
+ *                         with "plugin_xxx", skip the rest.
+ *                         PLugins set this to load their scope
+ *                         of config options
+ * filter = ""           - read main configuration, skipp everything
+ *                         starting with "plugin_" (hardwired).
+ *
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-static int parse_config (FILE *configfile, cfgopts_t configoptions[]) {
+static int parse_config (FILE *configfile, cfgopts_t configoptions[],
+                         char *filter) {
    char buff[1024];
    char *ptr;
-   int i;
-   int k;
+   int i, k;
    int num;
    size_t len;
    char *tmpptr;
+   char *eqsign;
 
    while (fgets(buff,sizeof(buff),configfile) != NULL) {
       /* life insurance */
@@ -161,7 +177,43 @@ static int parse_config (FILE *configfile, cfgopts_t configoptions[]) {
       }
       if (i == strlen(buff)) continue;
 
-      DEBUGC(DBCLASS_CONFIG,"pc:\"%s\"",buff);
+
+      /* search for token separator '=' */
+      eqsign = strchr(buff, '=');
+      if (eqsign == NULL) {
+         ERROR("Syntax error in config file [%s]", buff);
+         continue;
+      }
+
+
+      /* keyword filtering: 
+       * filter = NULL         - no filtering done
+       * filter = "plugin_xxx" - only consider keywords starting
+       *                         with "plugin_xxx", skip the rest.
+       *                         PLugins set this to load their scope
+       *                         of config options
+       * filter = ""           - read main configuration, skipp everything
+       *                         starting with "plugin_" (hardwired).
+       */
+      if (filter) {
+         /* filter == "": skip all plugin config entries */
+         if (filter[0] == '\0') {
+            ptr=strstr(buff,"plugin_");
+            if (ptr && (ptr < eqsign)) {
+               DEBUGC(DBCLASS_CONFIG,"skipped: \"%s\"",buff);
+               continue;
+            }
+         /* filter == "something": only consider "somethingxxxxx" */
+         } else {
+            ptr=strstr(buff, filter);
+            if ((ptr==NULL) || (ptr > eqsign)) {
+               DEBUGC(DBCLASS_CONFIG,"skipped: \"%s\"",buff);
+               continue;
+            }
+         }
+      } /* filter == NULL */
+
+      DEBUGC(DBCLASS_CONFIG,"cfg line:\"%s\"",buff);
 
       /* scan for known keyword */
       for (k=0; configoptions[k].keyword != NULL; k++) {

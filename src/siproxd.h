@@ -57,6 +57,9 @@ typedef struct {
  * global configuration option table
  */
 struct siproxd_config {
+   char *configfile;
+   int   config_search;
+   /* everything below here will be filled according to the config file */
    unsigned int debuglevel;
    int debugport;
    char *inbound_if;
@@ -92,8 +95,6 @@ struct siproxd_config {
    char *pid_file;
    int  default_expires;
    int  autosave_registrations;
-   char *pi_shortdial_akey;
-   stringa_t pi_shortdial_entry;
    char *ua_string;
    int   use_rport;
    int   obscure_loops;
@@ -209,7 +210,7 @@ int  sip_fixup_asterisk(char *buff, int *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
 
 /* readconf.c */
-int read_config(char *name, int search, cfgopts_t cfgopts[]);		/*X*/
+int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter); /*X*/
 int make_default_config(void);						/*X*/
 
 /* rtpproxy.c */

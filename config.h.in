@@ -75,9 +75,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `ltdl' library (-lltdl). */
-#undef HAVE_LIBLTDL
-
 /* Define to 1 if you have the `osip2' library (-losip2). */
 #undef HAVE_LIBOSIP2
 

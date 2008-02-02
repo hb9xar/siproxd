@@ -19,6 +19,7 @@
 #
 
 
-SUBDIRS = src doc scripts contrib
+SUBDIRS = libltdl src doc scripts contrib
+INCLUDES = $(LTDLINCL)
 
 EXTRA_DIST = TODO RELNOTES siproxd.spec autogen.sh
