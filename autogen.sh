@@ -11,3 +11,4 @@ aclocal
 autoheader
 automake --add-missing --copy
 autoconf
+libtoolize --ltdl --copy
