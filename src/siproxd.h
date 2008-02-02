@@ -91,7 +91,6 @@ struct siproxd_config {
    stringa_t outbound_proxy_domain_host;
    stringa_t outbound_proxy_domain_port;
    char *registrationfile;
-   int  log_calls;
    char *pid_file;
    int  default_expires;
    int  autosave_registrations;

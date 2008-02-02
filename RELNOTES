@@ -2,7 +2,18 @@ Release Notes for siproxd-0.7.1
 ===============================
 
 Major changes since 0.7.0:
- - 
+ - Plugin API
+
+Upgrade Notes 0.7.0 to 0.7.1:
+  With the new plugin API, some configurations have changed in
+  configuration file.
+  - plugin_shortdial: configuration options have been renamed
+    pi_shortdial_akey  -> plugin_shortdial_akey
+    pi_shortdial_entry -> plugin_shortdial_entry
+  - Call logging: The log_calls directive does no longer exist.
+    You load plugin_logcall and get logging. You don't load it
+    and don't get logging to syslog.
+
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a

@@ -111,60 +111,6 @@ int proxy_request (sip_ticket_t *ticket) {
 
 /*&&&& PLUGIN_PRE_PROXY */
     call_plugins(PLUGIN_PRE_PROXY, ticket);
-   /*
-    * logging of passing calls
-    */
-/*&&&& this should be moved to its own logging plugin */
-   if (configuration.log_calls) {
-      osip_uri_t *from_url = NULL;
-      osip_uri_t *to_url   = NULL;
-      char *to_username =NULL;
-      char *to_host = NULL;
-      char *from_username =NULL;
-      char *from_host = NULL;
-      char *call_type = NULL;
-
-      /* From: 1st preference is From header, then try contact header */
-      if (request->from->url) {
-         from_url = request->from->url;
-      } else {
-         from_url = (osip_uri_t *)osip_list_get(&(request->contacts), 0);
-      }
-
-      to_url = request->to->url;
-
-      if (to_url) {
-         to_username = to_url->username;
-         to_host = to_url->host;
-      }
-
-      if (from_url) {
-         from_username = from_url->username;
-         from_host = from_url->host;
-      }
-
-      /* INVITE */
-      if (MSG_IS_INVITE(request)) {
-         if (type==REQTYP_INCOMING) call_type="Incoming";
-         else call_type="Outgoing";
-      /* BYE / CANCEL */
-      } else if (MSG_IS_ACK(request)) {
-         call_type="ACK";
-      } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-         call_type="Ending";
-      }
-
-      if (call_type) {
-         INFO("%s Call: %s@%s -> %s@%s",
-              call_type,
-              from_username ? from_username: "*NULL*",
-              from_host     ? from_host    : "*NULL*",
-              to_username   ? to_username  : "*NULL*",
-              to_host       ? to_host      : "*NULL*");
-      }
-
-   } /* log_calls */
-
 
    /*
     * RFC 3261, Section 16.6 step 1

@@ -78,7 +78,6 @@ static cfgopts_t main_cfg_opts[] = {
    { "outbound_domain_host",TYP_STRINGA,&configuration.outbound_proxy_domain_host },
    { "outbound_domain_port",TYP_STRINGA,&configuration.outbound_proxy_domain_port },
    { "registration_file",   TYP_STRING, &configuration.registrationfile },
-   { "log_calls",           TYP_INT4,   &configuration.log_calls },
    { "pid_file",            TYP_STRING, &configuration.pid_file },
    { "default_expires",     TYP_INT4,   &configuration.default_expires },
    { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },

@@ -75,11 +75,6 @@ daemonize = 1
 silence_log = 1
 
 ######################################################################
-# Shall I log call establishment to syslog?
-#
-log_calls = 1
-
-######################################################################
 # Secure Enviroment settings:
 #   user:	uid/gid to switch to after startup
 #   chrootjail:	path to chroot to (chroot jail)
@@ -295,6 +290,7 @@ plugindir=/home/hb9xar/src/siproxd/src/.libs/
 # List of plugins to load
 #load_plugin=plugin_demo.so
 load_plugin=plugin_shortdial.so
+load_plugin=plugin_logcall.so
 
 
 ######################################################################

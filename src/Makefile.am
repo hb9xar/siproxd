@@ -39,13 +39,17 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 # Plugin modules, installed in "pkglib" directory ($prefix/lib/siproxd/)
 #
 pkglib_LTLIBRARIES =	plugin_demo.la \
-			plugin_shortdial.la
+			plugin_shortdial.la \
+			plugin_logcall.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module
 #
 plugin_shortdial_la_SOURCES = plugin_shortdial.c
 plugin_shortdial_la_LDFLAGS = -module
+#
+plugin_logcall_la_SOURCES = plugin_logcall.c
+plugin_logcall_la_LDFLAGS = -module
 
 
 #
