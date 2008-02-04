@@ -106,11 +106,11 @@ int proxy_request (sip_ticket_t *ticket) {
     * figure out whether this is an incoming or outgoing request
     * by doing a lookup in the registration table.
     */
-    sip_find_direction(ticket, &i);
-    type = ticket->direction;
+   sip_find_direction(ticket, &i);
+   type = ticket->direction;
 
-/*&&&& PLUGIN_PRE_PROXY */
-    call_plugins(PLUGIN_PRE_PROXY, ticket);
+   /* Call Plugins for stage: PLUGIN_PRE_PROXY */
+   sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
 
    /*
     * RFC 3261, Section 16.6 step 1
@@ -237,8 +237,11 @@ sts=sip_obscure_callid(ticket);
  * How about "408 Request Timeout" ?
  *
  */
-/*&&&& PLUGIN_PROXY_UNK */
-      call_plugins(PLUGIN_PROXY_UNK, ticket);
+      /* Call Plugins for stage: PLUGIN_PROXY_UNK */
+      sts = call_plugins(PLUGIN_PROXY_UNK, ticket);
+      /*&&& we might want have the possibility for a plugin to generate
+            and send a response, similar an in stage PLUGIN_DETERMINE_TARGET */
+
       sip_gen_response(ticket, 408 /* Request Timeout */);
 
       return STS_FAILURE;
@@ -420,8 +423,8 @@ sts=sip_obscure_callid(ticket);
    */
   /* not necessary, already in message and we do not support TCP */
 
-/*&&&& PLUGIN_POST_PROXY */
-   call_plugins(PLUGIN_POST_PROXY, ticket);
+   /* Call Plugins for stage: PLUGIN_POST_PROXY */
+   sts = call_plugins(PLUGIN_POST_PROXY, ticket);
 
   /*
    * RFC 3261, Section 16.6 step 10
@@ -433,8 +436,7 @@ sts=sip_obscure_callid(ticket);
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, ticket->protocol,
-                buffer, buflen); 
+   sipsock_send(sendto_addr, port, ticket->protocol, buffer, buflen);
    osip_free (buffer);
 
   /*
@@ -502,10 +504,11 @@ int proxy_response (sip_ticket_t *ticket) {
     * figure out if this is an request coming from the outside
     * world to one of our registered clients
     */
-    sip_find_direction(ticket, NULL);
-    type = ticket->direction;
-/*&&&& PLUGIN_PRE_PROXY */
-    call_plugins(PLUGIN_PRE_PROXY, ticket);
+   sip_find_direction(ticket, NULL);
+   type = ticket->direction;
+
+   /* Call Plugins for stage: PLUGIN_PRE_PROXY */
+   sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
 
 /*
  * ok, we got a response that we are allowed to process.
@@ -635,8 +638,9 @@ sts=sip_obscure_callid(ticket);
       DEBUGC(DBCLASS_PROXY, "response from/to unregistered UA (%s@%s)",
 	   response->from->url->username? response->from->url->username:"*NULL*",
 	   response->from->url->host? response->from->url->host : "*NULL*");
-/*&&&& PLUGIN_PROXY_UNK */
-      call_plugins(PLUGIN_PROXY_UNK, ticket);
+
+      /* Call Plugins for stage: PLUGIN_PROXY_UNK */
+      sts = call_plugins(PLUGIN_PROXY_UNK, ticket);
       return STS_FAILURE;
    }
 
@@ -729,8 +733,8 @@ sts=sip_obscure_callid(ticket);
       }
    }
 
-/*&&&& PLUGIN_POST_PROXY */
-    call_plugins(PLUGIN_POST_PROXY, ticket);
+   /* Call Plugins for stage: PLUGIN_POST_PROXY */
+   sts = call_plugins(PLUGIN_POST_PROXY, ticket);
 
   /*
    * Proxy Behavior - Forward the response
@@ -741,8 +745,7 @@ sts=sip_obscure_callid(ticket);
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, ticket->protocol,
-                buffer, buflen); 
+   sipsock_send(sendto_addr, port, ticket->protocol, buffer, buflen);
    osip_free (buffer);
    return STS_SUCCESS;
 }

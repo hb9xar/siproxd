@@ -438,7 +438,9 @@ int main (int argc, char *argv[])
        * (check request URI and refuse with 416 if not understood)
        */
       /* NOT IMPLEMENTED */
-/*&&& PLUGIN_VALIDATE */
+
+      /* Call Plugins for stage: PLUGIN_VALIDATE */
+      sts = call_plugins(PLUGIN_VALIDATE, &ticket);
 
       /*
        * RFC 3261, Section 16.3 step 3
@@ -504,6 +506,7 @@ int main (int argc, char *argv[])
                    ticket.sipmsg->reason_phrase : "NULL")));
 
       /*********************************
+       * Call Plugins for stage: PLUGIN_DETERMINE_TARGET
        * The message did pass all the
        * tests above and is now ready
        * to be proxied.

@@ -120,6 +120,7 @@ typedef struct {
 #define PROTO_UDP  1
 #define PROTO_TCP  2
    int protocol;		/* received by protocol */
+#define DIRTYP_UNKNOWN		0
 #define REQTYP_INCOMING		1
 #define REQTYP_OUTGOING		2
 #define RESTYP_INCOMING		3

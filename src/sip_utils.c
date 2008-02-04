@@ -973,9 +973,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    from=&ticket->from;
    request=ticket->sipmsg;
    response=ticket->sipmsg;
-   type = 0;
+   type = DIRTYP_UNKNOWN;
 
-   ticket->direction = 0;
+   ticket->direction = DIRTYP_UNKNOWN;
 
    /*
     * did I receive the telegram from a REGISTERED host?
@@ -1004,7 +1004,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * is the telegram directed to an internally registered host?
     * -> it must be an INCOMING request
     */
-   if (type == 0) {
+   if (type == DIRTYP_UNKNOWN) {
       for (i=0; i<URLMAP_SIZE; i++) {
          if (urlmap[i].active == 0) continue;
          /* RFC3261:
@@ -1046,7 +1046,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
             }
          } /* is request */
       } /* for i */
-   } /* if type == 0 */
+   } /* if type == DIRTYP_UNKNOWN */
 
    if (MSG_IS_RESPONSE(ticket->sipmsg)) {
       /* &&&& Open Issue &&&&
@@ -1057,7 +1057,8 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          Maybe I should put in a 'siproxd' ftag value to recognize it as a header
          inserted by myself
       */
-      if ((type == 0) && (!osip_list_eol(&(response->vias), 0))) {
+      if ((type == DIRTYP_UNKNOWN) && 
+          (!osip_list_eol(&(response->vias), 0))) {
          osip_via_t *via;
          struct in_addr addr_via, addr_myself;
          int port_via, port_ua;
@@ -1103,7 +1104,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
                }
             } /* for i */
          }
-      } /* if type == 0 */
+      } /* if type == DIRTYP_UNKNOWN */
    } /* is response */
 
    /*
@@ -1126,7 +1127,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    }
 
 
-   if (type == 0) {
+   if (type == DIRTYP_UNKNOWN) {
       DEBUGC(DBCLASS_SIP, "sip_find_direction: unable to determine "
                           "direction of SIP packet");
       return STS_FAILURE;

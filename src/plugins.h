@@ -36,11 +36,11 @@
  * see plugin_shortcut that sends a redirect back to the client */
 #define PLUGIN_DETERMINE_TARGET	0x00000020	/* Determining Request Targets */
 /* SIP package before siproxd starts the proxying process */
-#define PLUGIN_PRE_PROXY	0x00000040	/*  */
+#define PLUGIN_PRE_PROXY	0x00000040	/* before MASQuerading */
 /* to/from unregistered UA */
 #define PLUGIN_PROXY_UNK	0x00000080	/* e.g. incoming call to unknown UA */
 /* before sending the SIP message */
-#define PLUGIN_POST_PROXY	0x00000100	/*  */
+#define PLUGIN_POST_PROXY	0x00000100	/* after MASQuerading */
 
 
 /* Plugin "database" */

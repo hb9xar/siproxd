@@ -287,10 +287,11 @@ debug_port = 0
 # plugin_dir: MUST be terminated with '/'
 plugindir=/home/hb9xar/src/siproxd/src/.libs/
 #
-# List of plugins to load
+# List of plugins to load:
 #load_plugin=plugin_demo.so
-load_plugin=plugin_shortdial.so
+#load_plugin=plugin_shortdial.so
 load_plugin=plugin_logcall.so
+#load_plugin=plugin_defaulttarget.so
 
 
 ######################################################################
@@ -320,3 +321,12 @@ plugin_shortdial_akey = *00
 plugin_shortdial_entry = 17474743246
 # *02 sipphone welcome message
 plugin_shortdial_entry = 17474745000
+
+######################################################################
+# Plugin_defaulttarget
+#
+plugin_defaulttarget_log = 1
+# target must be a full SIP URI with the syntax
+# sip:user@hst[:port]
+plugin_defaulttarget_target = sip:internal@dddd:port
+
