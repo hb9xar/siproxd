@@ -113,9 +113,10 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
 
    /* direction is unknown and SIP message is a REQUEST */
    if ((ticket->direction == DIRTYP_UNKNOWN) &&
-       (MSG_IS_REQUEST(ticket->sipmsg))) {
+       (MSG_IS_REQUEST(ticket->sipmsg)) &&
+       (MSG_IS_INVITE(ticket->sipmsg))) {
 
-      /* LOG is master wishes so */
+      /* LOG if master wishes so */
       if (plugin_cfg.log) {
          osip_uri_t *to_url=ticket->sipmsg->to->url;
          INFO("Unknown Target, redirecting call %s@%s -> %s",
