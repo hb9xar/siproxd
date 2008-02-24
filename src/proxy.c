@@ -383,6 +383,11 @@ sts=sip_obscure_callid(ticket);
     */
    } else {
       /* get the destination from the SIP URI */
+/*&&&& Here, the SRV record lookup magic must go.
+In a first implementation we may just try to get the lowest priority,
+max weighted '_sip._udp.domain' entry and port number.
+No load balancing and no failover are supported with this.
+&&&*/
       sts = get_ip_by_host(url->host, &sendto_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
@@ -667,7 +672,7 @@ sts=sip_obscure_callid(ticket);
 /*&&&& priority probably should be:
  * 1) Route header
  * 2) fixed outbound proxy
- * 3) SIP URI
+ * 3) Via header
  */
    /*
     * check if we need to send to an outbound proxy

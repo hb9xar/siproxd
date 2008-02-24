@@ -35,36 +35,44 @@ static char const ident[]="$Id$";
 
 
 /* local functions */
-static int _resolve(char *name, int proto, int type,
+static int _resolve(char *name, int class, int type,
                     char *dname, int dnamelen, int *port);
-
-#define PROTO_UDP       1
-#define PROTO_TCP       2
 
 /*
  * perform a SRV record lookup
+ *
+ * name		name of service
+ * dname	return
+ * dnamelen	length of return buffer
+ * port		port number of service
  */
-int resolve_SRV(char *name, int proto, char *dname, int dnamelen, int *port) {
-   return _resolve(name, proto, T_SRV, dname, dnamelen, port);
+int resolve_SRV(char *name, char *dname, int dnamelen, int *port) {
+   char nname[256];
+   snprintf(nname, sizeof(nname), "_sip._udp.%s", name);
+   return _resolve(name, C_IN, T_SRV, dname, dnamelen, port);
 }
 
+#if 0
 /*
  * perform a NAPTR lookup
+ *
+ * name		name of service
+ * dname	return
+ * dnamelen	length of return buffer
  */
 int resolve_NAPTR(char *name, char *dname, int dnamelen) {
    int port=0;
-   return _resolve(name, 0, T_NAPTR, dname, dnamelen, &port);
+   return _resolve(name, C_ANY, T_NAPTR, dname, dnamelen, &port);
 }
-
+#endif
 
 /*
  * query the DNS for a specific record type
  */
-static int _resolve(char *name, int proto, int type,
+static int _resolve(char *name, int class, int type,
                     char *dname, int dnamelen, int *port) {
    int sts;
 
-   int class=C_ANY;
 
    // message buffer
    unsigned char msg[PACKETSZ];
@@ -89,7 +97,6 @@ static int _resolve(char *name, int proto, int type,
 
    dname[0]='\0';
    *port=0;
-
 
    // issue request
    sts=res_query(name, class, type, msg, msglen);
@@ -141,7 +148,44 @@ static int _resolve(char *name, int proto, int type,
          mptr += sizeof(short);
          xptr = mptr;
          mptr += j;
-         if( ty == T_NAPTR ) {
+         if( ty == T_SRV ) {
+            u_short pr;
+            u_short we;
+            u_short po;
+            usp = (unsigned short *)xptr;
+            pr = ntohs( *usp );
+            xptr += sizeof( short );
+            usp = (unsigned short *)xptr;
+            we = ntohs( *usp );
+            xptr += sizeof( short );
+            usp = (unsigned short *)xptr;
+            po = ntohs( *usp );
+            xptr += sizeof( short );
+            j = dn_expand( msg, msg + PACKETSZ, xptr, tmpname, MAXDNAME );
+            if( j < 0 ) {
+               break;
+            } else {
+                DEBUGC(DBCLASS_DNS, "_resolve: A[%i] - type SRV pr=%i, we=%i, "
+                       "po=%i name=[%s]", i, pr, we, po, tmpname);
+               if( !priority || pr < priority ||
+                   (pr == priority && we > weight) ) {
+                  priority = pr;
+                  weight = we;
+                  *port = po;
+                  strncpy(dname, tmpname, dnamelen);
+/*&&& here the magic with the priorities should go.
+which one do we use? RFC3263 talks a bit on how a stateless
+SIP proxy should handle it - BY GOING STATEFUL if the lowest priority
+is unavailable. Why do I have a stateless proxy? Exactly, because I
+do NOT want to do the whole stateful crap.
+Rethinking needed.
+Currently just the first (lowest prio, highest weight) entry is returned.
+*/
+                  xptr+=j;
+               }
+            }
+#if 0
+         } else if( ty == T_NAPTR ) {
             DEBUGC(DBCLASS_DNS, "_resolve: A - type NAPTR");
             usp = (unsigned short *)xptr;
             xptr += sizeof(short);
@@ -171,7 +215,10 @@ static int _resolve(char *name, int proto, int type,
             } else {
 /*
  * there should be some REGEX magic, no?
+ * Not yet used nor implemented. Just complain in
+ * case somebody feels lucky enough trying to use it.
  */
+ERROR("_resolve: NAPTR lookup not yet supported.");
                if( proto == PROTO_UDP ) {
                   if( strstr(tmpname, "_udp" ) ) {
                      strncpy(dname, tmpname, dnamelen);
@@ -185,34 +232,7 @@ static int _resolve(char *name, int proto, int type,
                       i, tmpname);
                xptr+=j;
             }
-         } else if( ty == T_SRV ) {
-            u_short pr;
-            u_short we;
-            u_short po;
-            usp = (unsigned short *)xptr;
-            pr = ntohs( *usp );
-            xptr += sizeof( short );
-            usp = (unsigned short *)xptr;
-            we = ntohs( *usp );
-            xptr += sizeof( short );
-            usp = (unsigned short *)xptr;
-            po = ntohs( *usp );
-            xptr += sizeof( short );
-            j = dn_expand( msg, msg + PACKETSZ, xptr, tmpname, MAXDNAME );
-            if( j < 0 ) {
-               break;
-            } else {
-                DEBUGC(DBCLASS_DNS, "_resolve: A[%i] - type SRV pr=%i, we=%i, "
-                       "po=%i name=[%s]", i, pr, we, po, tmpname);
-               if( !priority || pr < priority ||
-                   (pr == priority && we < weight) ) {
-                  priority = pr;
-                  weight = we;
-                  *port = po;
-                  strncpy(dname, tmpname, dnamelen);
-                  xptr+=j;
-               }
-            }
+#endif
          } else {
             ERROR("_resolve: unknown type in DNS answer [type=%i]\n", ty);
          } // if ty

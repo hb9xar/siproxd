@@ -47,7 +47,7 @@
         <revnumber>0.7.1</revnumber>
         <date>2008-01-27</date>
         <authorinitials>tries@users.sourceforge.net</authorinitials>
-        <revremark>Plugin API</revremark>
+        <revremark>Plug-in API</revremark>
       </revision>
     </revhistory>
   </bookinfo>
@@ -310,11 +310,6 @@ daemonize = 1
 silence_log = 0
 </screen>
 
-      <para>Siproxd can log call establishment to syslog.</para>
-<screen>
-log_calls = 1
-</screen>
-
       <para>If siproxd is started as root, it can drop the root
         privileges and change its user ID at startup. It also can
         put itself into a chroot() jail (see 4.2 for details)</para>
@@ -469,23 +464,6 @@ debug_port = 0
 #outbound_domain_host = proxy.for.domain.freende.de
 #outbound_domain_port = 5060
 </screen>
-
-      <para>Quick-Dial "Plug-in": 
-        ability to define quick dial numbers that can be accessed by
-        dialing "*nn" from a local phone. 'nn' corresponds to the entry number
-        pi_shortdial_entry) below. The '*' character can be chosen freely
-        (pi_shortdial_akey).
-        Note: To call a real number like "*1234" you would have to dial
-        "**1234"</para>
-<screen>
-pi_shortdial_enable = 1
-pi_shortdial_akey = *
-#
-# *01 sipphone echo test
-pi_shortdial_entry = 17474743246
-# *02 sipphone welcome message
-pi_shortdial_entry = 17474745000
-</screen>
     </sect1>
 
     <!-- Chapter 3.2: Command Line Options -->
@@ -497,6 +475,7 @@ pi_shortdial_entry = 17474745000
 -h, --help                      help
 -d, --debug &lt;pattern>           set debug-pattern
 -c, --config &lt;cfgfile>          use the specified config file
+-p, --pid-file &lt;pidfile>        create pid file at &lt;pidfile>
 </screen>
       <para>These options take precedence over the values configured
         in the configuration file.</para>
@@ -527,31 +506,31 @@ pi_shortdial_entry = 17474745000
       <title>Chroot() Jail</title>
 <!--&&&& do be completed -->
       <para>Create chroot jail</para>
-      <para>What files must be present?</para>
+      <para>What files must be present? To be completed!</para>
     </sect1>
   </chapter>
 
-  <!-- Chapter 5: Plugins -->
-  <chapter label="5" id="Plugins">
+  <!-- Chapter 5: Plug-ins -->
+  <chapter label="5" id="Plug-ins">
     <?dbhtml filename="siproxd_guide_c5.html">
-    <title>Plugins</title>
+    <title>Plug-ins</title>
 
-    <!-- Chapter 5.1: Plugin API -->
+    <!-- Chapter 5.1: Plug-in API -->
     <sect1 label="5.1">
       <?dbhtml filename="siproxd_guide_c5s1.html">
-      <title>Plugin API</title>
-      <para>Siproxd plugins are dynamic loadable libraries and must provide
+      <title>Plug-in API</title>
+      <para>Siproxd plug-ins are dynamic loadable libraries and must provide
         3 functions towards siproxd:
+        </para>
 <screen>
 int  plugin_init(plugin_def_t *plugin_def);
 int  plugin_process(int stage, sip_ticket_t *ticket);
 int  plugin_end(plugin_def_t *plugin_def);
 </screen>
-        </para>
       <para>
         The <filename>plugin_init</filename> function is called when
-        the plugin is loaded during startup of siproxd. The plugin must
-        defined the following 4 fields of the plugin_def structure:
+        the plug-in is loaded during startup of siproxd. The plug-in must
+        define the following 4 fields of the plugin_def structure:
         <orderedlist numeration="arabic">
           <listitem><para><filename>api_version</filename></para></listitem>
           <listitem><para><filename>name</filename></para></listitem>
@@ -560,21 +539,23 @@ int  plugin_end(plugin_def_t *plugin_def);
         </orderedlist>
 
         Example code fragment:
+        </para>
 <screen>
-/* API version number of siproxd that this plugin is built against.
+/* API version number of siproxd that this plug-in is built against.
  * This constant will change whenever changes to the API are made
- * that require adaptions in the plugin. */
+ * that require adaptions in the plug-in. */
 plugin_def->api_version=SIPROXD_API_VERSION;
 
-/* Name and descriptive text of the plugin */
+/* Name and descriptive text of the plug-in. Those item MUST NOT be
+   on the stack but either allocated via malloc (and then freed
+   of course) or a static string in the plug-in. */
 plugin_def->name=strdup("plugin_demo");
 plugin_def->desc=strdup("This is just a demo plugin without any purpose");
 
 /* Execution mask - during what stages of SIP processing shall
- * the plugin be called. */
+ * the plug-in be called. */
 plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
 </screen>
-        </para>
       <para>
         The <filename>plugin_process</filename> function is called at
         the requested SIP processing stages (see 'execution mask').
@@ -582,15 +563,16 @@ plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
         </para>
       <para>
         The <filename>plugin_end</filename> function is called at
-        shutdown of siproxd and gives the plugin the opportunity
+        shutdown of siproxd and gives the plug-in the opportunity
         to clean up and properly shutdown itself.</para>
       <para>Note: The previously allocated 'name' and 'desc' must be
-        freed by the plugin.</para>
+        freed by the plug-in. If you did use a static string then of
+        course you must not try to free() anything.</para>
       <para>
         Minimum required clean up procedure:
 <screen>
 int  plugin_end(plugin_def_t *plugin_def){
-   /* free my allocated rescources */
+   /* free my allocated rescources (if allocated via malloc only) */
    if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
    if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
    return STS_SUCCESS;
@@ -598,49 +580,130 @@ int  plugin_end(plugin_def_t *plugin_def){
 </screen>
         </para>
       <para>
-        For a simple example refer to the simple demonstration plugin
+        For a simple example refer to the simple demonstration plug-in
         <filename>plugin_demo</filename>.
-        .</para>
+        </para>
+      <para>
+        Each plug-in can have its own set of configuration parameters
+        in <filename>siproxd.conf</filename>. The plug-in has to define
+        a <filename>cfgopts_t</filename> structure and call <filename>
+        read_config</filename> during its initialization. Look at <filename>
+        plugin_demo</filename> for a simple example. The naming of
+        the config parameters is by definition
+        <filename>plugin_name_</filename>option.
+      </para>
     </sect1>
 
-    <!-- Chapter 5.2: Available Plugins -->
+    <!-- Chapter 5.2: Available Plug-ins -->
     <sect1 label="5.2">
       <?dbhtml filename="siproxd_guide_c5s2.html">
-      <title>Available Plugins</title>
-      <para>The following plugins are provided with siproxd:
+      <title>Available Plug-ins</title>
+      <para>The following plug-ins are provided with siproxd:
         <orderedlist numeration="arabic">
           <listitem><para><filename>plugin_demo</filename></para>
-                    <para>Demo plugin. Provides the basic framework to
-                      be used for plugins.
+                    <para>Demo plug-in. Provides the basic framework to
+                      be used for plug-ins.
+                    </para></listitem>
+          <listitem><para><filename>plugin_logcall</filename></para>
+                    <para>Very simplistic call logging to syslog.
                     </para></listitem>
           <listitem><para><filename>plugin_shortdial</filename></para>
                     <para>Quick Dial feature.
                     </para></listitem>
+          <listitem><para><filename>plugin_defaulttarget</filename></para>
+                    <para>Incoming calls to a non-existing UA are
+                      redirected to a specific target (catch-all).
+                    </para></listitem>
         </orderedlist>
-        Some of the plugins are described in more detail in the
+        Some of the plug-ins are described in more detail in the
         following chapters.
       </para>
-    </sect1>
 
-    <!-- Chapter 5.3: Quick Dial -->
-    <sect1 label="5.3">
-      <?dbhtml filename="siproxd_guide_c5s3.html">
-      <title>Quick Dial</title>
-<!--&&&& do be completed -->
-      <para>Since 0.5.12, Siproxd includes a Quick-Dial feature. This
-        allows you to define SIP numbers that can be accessed by
-        using a shortctu (like "*nn") from any local SIP phone.</para>
-      <para>For example, the following lines in your siproxd.conf will
-        configure 2 Quick-Dial numbers:</para>
+      <!-- Chapter 5.2.1: Demo Plug-in -->
+      <sect2 label="5.2.1">
+        <?dbhtml filename="siproxd_guide_c5s2-1.html">
+        <title>Demo Plug-in</title>
+        <para>Name: plugin_demo</para>
+        <para>Purpose: To be used as skeletton for your own plug-ins.</para>
+        <para>Configuration options:</para>
 <screen>
-# *01 sipphone echo test
-pi_shortdial_entry = 17474743246
-# *02 sipphone welcome message
-pi_shortdial_entry = 17474745000
+plugin_demo_string = This_is_a_string_passed_to_the_demo_plugin
 </screen>
-      <para>The numbering starts with "1" ("*01") and every following
-        "pi_shortdial_entry" entry will allocate the following position.
-        Curently it is not possible to freely assign the positions.</para>
+        <para>Description:</para>
+        <para>This plug-in can be used as framework for your own plug-ins.
+          It contains the required code for the API and also shows
+          how to load plug-in specific configuration parameters.
+          </para>
+      </sect2>
+
+      <!-- Chapter 5.2.2: Call Logging Plug-in -->
+      <sect2 label="5.2.2">
+        <?dbhtml filename="siproxd_guide_c5s2-2.html">
+        <title>Call Logging Plug-in</title>
+        <para>Name: plugin_logcall</para>
+        <para>Purpose: Does a very simplistic call logging to syslog.</para>
+        <para>Configuration options:</para>
+<screen>
+none
+</screen>
+        <para>Description:</para>
+        <para>XXXXXXXXXXXXXXXXxThe numbering starts with "1" ("*01") and every following
+          "plugin_shortdial_entry" entry will allocate the following position.
+          It is not possible to freely assign the positions.</para>
+      </sect2>
+
+      <!-- Chapter 5.2.3: Short Dial Plug-in -->
+      <sect2 label="5.2.3">
+        <?dbhtml filename="siproxd_guide_c5s2-3.html">
+        <title>Short Dial Plug-in</title>
+        <para>Name: plugin_shortdial.c</para>
+        <para>Purpose: Provides a quick-Dial feature.
+        </para>
+<screen>
+# The first character is the "key", the following characters give
+# the length of the number string. E.g. "*00" allows speed dials
+# from *01 to *99. (the number "*100" will be passed through unprocessed)
+plugin_shortdial_akey = *00
+#
+# *01 sipphone echo test
+plugin_shortdial_entry = 17474743246
+# *02 sipphone welcome message
+plugin_shortdial_entry = 17474745000
+</screen>
+        <para>Description:</para>
+        <para>Allows the definition of quick dial entries. E.g.
+          *01 to *99 can be defined to redirect the caller.
+          Note: Currently only the user part (phone number) can
+          be replaced, the domain part will not be changed (means
+          a short dial tarket of sip:111@other.domain.com will
+          not work). The '*' character can be chosen freely
+          (plugin_shortdial_akey).
+          Note: To call a real number like "*12" you have to dial
+          "**12"
+          </para>
+      </sect2>
+
+      <!-- Chapter 5.2.4: Default Target Plug-in -->
+      <sect2 label="5.2.4">
+        <?dbhtml filename="siproxd_guide_c5s2-4.html">
+        <title>Default Target Plug-in</title>
+        <para>Name: plugin_defaulttarget</para>
+        <para>Purpose: Incoming calls to non-existing local UAs are 
+          redirected to another SIP URI.</para>
+        <para>Configuration options:</para>
+<screen>
+# Log redirects to syslog
+plugin_defaulttarget_log = 1
+# target must be a full SIP URI with the syntax
+# sip:user@host[:port]
+plugin_defaulttarget_target = sip:defaulttarget@some.sip.domain:port
+</screen>
+        <para>Description:</para>
+        <para>Incoming SIP calls directed to a non-existing (registered)
+          local UA will be redirected to another target. This basically
+          implements a catch-all feature. The new target can be any SIP
+          URI and is not required to be local.</para>
+      </sect2>
     </sect1>
   </chapter>
 
@@ -734,14 +797,14 @@ pi_shortdial_entry = 17474745000
   </chapter>
 
   <!-- Chapter 7: Sample Configurations -->
-  <chapter label="6" id="Sample-Configurations">
-     <?dbhtml filename="siproxd_guide_c6.html">
+  <chapter label="7" id="Sample-Configurations">
+     <?dbhtml filename="siproxd_guide_c7.html">
     <title>Sample Configurations</title>
     <para>Check also the FAQ in the siproxd package.</para>
 
-    <!-- Chapter 6.1: The "Standard Scenario" -->
-    <sect1 label="6.1">
-      <?dbhtml filename="siproxd_guide_c6s1.html">
+    <!-- Chapter 7.1: The "Standard Scenario" -->
+    <sect1 label="7.1">
+      <?dbhtml filename="siproxd_guide_c7s1.html">
       <title>The "Standard Scenario"</title>
       <para>Scenario:</para>
 <screen>
@@ -783,9 +846,9 @@ ipchains -A input --proto udp --dport 7070:7089 -j ACCEPT
         incoming RTP traffic).</para>
     </sect1>
 
-    <!-- Chapter 6.2: GS BT-100 behind NAT Router running Siproxd -->
-    <sect1 label="6.2">
-      <?dbhtml filename="siproxd_guide_c6s2.html">
+    <!-- Chapter 7.2: GS BT-100 behind NAT Router running Siproxd -->
+    <sect1 label="7.2">
+      <?dbhtml filename="siproxd_guide_c7s2.html">
       <title>GS BT-100 behind NAT Router running Siproxd</title>
       <para>Scenario:</para>
 <screen>
@@ -812,7 +875,6 @@ hosts_allow_reg = 10.0.0.0/24
 sip_listen_port = 5060
 daemonize = 1
 silence_log = 1
-log_calls = 1
 user = siproxd
 registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
@@ -858,9 +920,9 @@ Send DTMF:              via RTP (RFC2833)
 </screen>
     </sect1>
 
-    <!-- Chapter 6.3: GS BT-100 with Siproxd running "in front of" a NAT router -->
-    <sect1 label="6.3">
-      <?dbhtml filename="siproxd_guide_c6s3.html">
+    <!-- Chapter 7.3: GS BT-100 with Siproxd running "in front of" a NAT router -->
+    <sect1 label="7.3">
+      <?dbhtml filename="siproxd_guide_c7s3.html">
       <title>GS BT-100 with Siproxd running "in front of" a NAT router</title>
       <para>Scenario:</para>
 <screen>
@@ -894,7 +956,6 @@ hosts_allow_reg = 10.0.0.0/24
 sip_listen_port = 5060
 daemonize = 1
 silence_log = 1
-log_calls = 1
 user = siproxd
 registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
@@ -940,9 +1001,9 @@ Send DTMF:              via RTP (RFC2833)
     </sect1>
 
 
-    <!-- Chapter 6.4: Transparent SIP Proxy -->
-    <sect1 label="6.4">
-      <?dbhtml filename="siproxd_guide_c6s4.html">
+    <!-- Chapter 7.4: Transparent SIP Proxy -->
+    <sect1 label="7.4">
+      <?dbhtml filename="siproxd_guide_c7s4.html">
       <title>Transparent SIP Proxy</title>
       <para>Scenario:</para>
 <screen>
@@ -971,7 +1032,6 @@ hosts_allow_reg = 10.0.0.0/24
 sip_listen_port = 5060
 daemonize = 1
 silence_log = 1
-log_calls = 1
 user = siproxd
 registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid
@@ -994,9 +1054,9 @@ iptables -A INPUT -m udp -p udp -i ppp0 --dport 7070:7089 -j ACCEPT
 </screen>
     </sect1>
 
-    <!-- Chapter 6.5: Masquerading an Asterisk box -->
-    <sect1 label="6.5">
-      <?dbhtml filename="siproxd_guide_c6s5.html">
+    <!-- Chapter 7.5: Masquerading an Asterisk box -->
+    <sect1 label="7.5">
+      <?dbhtml filename="siproxd_guide_c7s5.html">
       <title>Masquerading an Asterisk box</title>
       <para>Scenario:</para>
 <screen>
@@ -1029,7 +1089,6 @@ hosts_allow_reg = 10.0.0.0/24
 sip_listen_port = 5060
 daemonize = 1
 silence_log = 1
-log_calls = 1
 user = siproxd
 registration_file = /var/lib/siproxd_registrations
 pid_file = /var/run/siproxd/siproxd.pid

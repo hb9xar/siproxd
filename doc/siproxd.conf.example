@@ -325,8 +325,9 @@ plugin_shortdial_entry = 17474745000
 ######################################################################
 # Plugin_defaulttarget
 #
+# Log redirects to syslog
 plugin_defaulttarget_log = 1
 # target must be a full SIP URI with the syntax
-# sip:user@hst[:port]
+# sip:user@host[:port]
 plugin_defaulttarget_target = sip:internal@dddd:port
 
