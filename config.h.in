@@ -102,6 +102,9 @@
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
+/* Define to 1 if you have the `osip_MD5Init' function. */
+#undef HAVE_OSIP_MD5INIT
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
@@ -285,6 +288,18 @@
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
+
+/* function osip_MD5Final */
+#undef osip_MD5Final
+
+/* function osip_MD5Init */
+#undef osip_MD5Init
+
+/* function osip_MD5Update */
+#undef osip_MD5Update
+
+/* type osip_MD5_CTX */
+#undef osip_MD5_CTX
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t

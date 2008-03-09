@@ -338,5 +338,21 @@ if test $acx_check_libosip_version = fail; then
 fi
 AC_MSG_RESULT(ok)
 
+
+dnl
+dnl With libosip2-3.1.0, some MD5 related function names have changed.
+dnl Check for new names and if not present, create #defines that point
+dnl to the original old ones.
+dnl 
+AC_CHECK_FUNCS(osip_MD5Init,
+    ,
+    AC_MSG_RESULT(libosip2 is < 3.1.0 - creating some required defines)
+    AC_DEFINE(osip_MD5Init, [MD5Init],[function  osip_MD5Init])
+    AC_DEFINE(osip_MD5Update, [MD5Update],[function  osip_MD5Update])
+    AC_DEFINE(osip_MD5Final, [MD5Final],[function  osip_MD5Final])
+    AC_DEFINE(osip_MD5Init, [MD5Init],[function  osip_MD5Init])
+    AC_DEFINE(osip_MD5_CTX, [MD5_CTX],[type osip_MD5_CTX]),
+    )
+
 ])dnl ACX_CHECK_LIBOSIP_VERSION
 
