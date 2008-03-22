@@ -148,9 +148,10 @@ rtp_dscp = 46
 # Dejitter value
 #    Artificial delay to be used to de-jitter RTP data streams.
 #    This time is in microseconds.
+#    0 - completely disable dejitter (default)
 #
-rtp_input_dejitter  = 25000
-rtp_output_dejitter = 25000
+rtp_input_dejitter  = 0
+rtp_output_dejitter = 0
 
 ######################################################################
 # Default Expiration timeout for Registrations

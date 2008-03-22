@@ -191,11 +191,17 @@ static void *rtpproxy_main(void *arg) {
    for (;;) {
 
 #ifdef USE_DEJITTER
-      /* calculate time until next packet to send from dejitter buffer */
-      if (!dejitter_delay_of_next_tx(&sleep_tv, &current_tv)) {
+      if ((configuration.rtp_input_dejitter > 0) || 
+          (configuration.rtp_output_dejitter > 0)) {
+         /* calculate time until next packet to send from dejitter buffer */
+         if (!dejitter_delay_of_next_tx(&sleep_tv, &current_tv)) {
+            sleep_tv.tv_sec = 5;
+            sleep_tv.tv_usec = 0;
+         }
+      } else {
          sleep_tv.tv_sec = 5;
          sleep_tv.tv_usec = 0;
-      };
+      }
 #else
       sleep_tv.tv_sec = 5;
       sleep_tv.tv_usec = 0;
@@ -206,7 +212,10 @@ static void *rtpproxy_main(void *arg) {
 
 #ifdef USE_DEJITTER
       /* Send delayed Packets that are timed to be send */
-      dejitter_flush(&current_tv, LOCK_FDSET);
+      if ((configuration.rtp_input_dejitter > 0) || 
+          (configuration.rtp_output_dejitter > 0)) {
+         dejitter_flush(&current_tv, LOCK_FDSET);
+      }
 #endif
 
       /* exit point for this thread in case of program terminaction */
@@ -326,12 +335,46 @@ static void *rtpproxy_main(void *arg) {
                   dst_addr.sin_port= htons(rtp_proxytable[i].remote_port);
 
 #ifdef USE_DEJITTER
-                  dejitter_calc_tx_time(&rtp_buff, &(rtp_proxytable[i].tc),
-                                          &current_tv, &ttv);
-                  dejitter_delayedsendto(rtp_proxytable[i].rtp_tx_sock,
-                                         rtp_buff, count, 0, &dst_addr,
-                                         &ttv, &current_tv,
-                                         &rtp_proxytable[i], NOLOCK_FDSET);
+                  if ((configuration.rtp_input_dejitter > 0) || 
+                      (configuration.rtp_output_dejitter > 0)) {
+                     dejitter_calc_tx_time(&rtp_buff, &(rtp_proxytable[i].tc),
+                                             &current_tv, &ttv);
+                     dejitter_delayedsendto(rtp_proxytable[i].rtp_tx_sock,
+                                            rtp_buff, count, 0, &dst_addr,
+                                            &ttv, &current_tv,
+                                            &rtp_proxytable[i], NOLOCK_FDSET);
+                  } else {
+                     /*&&& duplicated code - needs cleanup! */
+                     sts = sendto(rtp_proxytable[i].rtp_tx_sock, rtp_buff,
+                                  count, 0, (const struct sockaddr *)&dst_addr,
+                                  (socklen_t)sizeof(dst_addr));
+                     if (sts == -1) {
+                        if (errno != ECONNREFUSED) {
+                           osip_call_id_t callid;
+
+                           ERROR("sendto() [%s:%i size=%i] call failed: %s",
+                           utils_inet_ntoa(rtp_proxytable[i].remote_ipaddr),
+                           rtp_proxytable[i].remote_port, count, strerror(errno));
+
+                           /* if sendto() fails with bad filedescriptor,
+                            * this means that the opposite stream has been
+                            * canceled or timed out.
+                            * we should then cancel this stream as well.*/
+
+                           WARN("stopping opposite stream");
+                           callid.number=rtp_proxytable[i].callid_number;
+                           callid.host=rtp_proxytable[i].callid_host;
+                           /* don't lock the mutex, as we own the lock already */
+                           sts = rtp_relay_stop_fwd(&callid,
+                                                    rtp_proxytable[i].direction,
+                                                    -1, NOLOCK_FDSET);
+                           if (sts != STS_SUCCESS) {
+                              /* force the streams to timeout on next occasion */
+                              rtp_proxytable[i].timestamp=0;
+                           }
+                        }
+                     }
+                  }
 #else
                   sts = sendto(rtp_proxytable[i].rtp_tx_sock, rtp_buff,
                                count, 0, (const struct sockaddr *)&dst_addr,
@@ -391,7 +434,10 @@ static void *rtpproxy_main(void *arg) {
                callid.number=rtp_proxytable[i].callid_number;
                callid.host=rtp_proxytable[i].callid_host;
 #ifdef USE_DEJITTER
-               dejitter_cancel(&rtp_proxytable[i]);
+               if ((configuration.rtp_input_dejitter > 0) || 
+                   (configuration.rtp_output_dejitter > 0)) {
+                  dejitter_cancel(&rtp_proxytable[i]);
+               }
 #endif
                INFO("RTP stream %s@%s (media=%i) has expired",
                     callid.number, callid.host,
@@ -530,7 +576,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
 
 #ifdef USE_DEJITTER
          /* Initialize up timecrontrol for dejitter function */
-         dejitter_init_time(&rtp_proxytable[i].tc, dejitter);
+         if ((configuration.rtp_input_dejitter > 0) || 
+             (configuration.rtp_output_dejitter > 0)) {
+            dejitter_init_time(&rtp_proxytable[i].tc, dejitter);
+         }
 #endif
 
 
@@ -693,7 +742,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
 
 #ifdef USE_DEJITTER
    /* Initialize up timecrontrol for dejitter function */
-   dejitter_init_time(&rtp_proxytable[freeidx].tc, dejitter);
+   if ((configuration.rtp_input_dejitter > 0) || 
+       (configuration.rtp_output_dejitter > 0)) {
+      dejitter_init_time(&rtp_proxytable[freeidx].tc, dejitter);
+   }
 #endif
 
    *local_port=port;

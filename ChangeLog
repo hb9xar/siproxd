@@ -1,5 +1,6 @@
 0.7.1
 =====
+  22-Mar-2008:  - dejitter can be completely disabled by specifying 0ms
   09-Mar-2008:  - libosip2-3.1.0 (changes MD5 related function names)
   04-Feb-2008:  - 'Default Target' plugin: incoming calls to unknown
                   are redirected to a "catch-all" target.
