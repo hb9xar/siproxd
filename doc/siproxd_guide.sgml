@@ -659,6 +659,7 @@ none
         <para>Name: plugin_shortdial.c</para>
         <para>Purpose: Provides a quick-Dial feature.
         </para>
+        <para>Configuration options:</para>
 <screen>
 # The first character is the "key", the following characters give
 # the length of the number string. E.g. "*00" allows speed dials
@@ -703,6 +704,28 @@ plugin_defaulttarget_target = sip:defaulttarget@some.sip.domain:port
           local UA will be redirected to another target. This basically
           implements a catch-all feature. The new target can be any SIP
           URI and is not required to be local.</para>
+      </sect2>
+
+      <!-- Chapter 5.2.5: Fix bogus Via Plug-in -->
+      <sect2 label="5.2.5">
+        <?dbhtml filename="siproxd_guide_c5s2-4.html">
+        <title>Fix bogus Via Plug-in</title>
+        <para>Name: plugin_fix_bogus_via</para>
+        <para>Purpose: Fixes broken VIA headers on incoming SIP requests.</para>
+        <para>Configuration options:</para>
+<screen>
+# Incoming (from public network) SIP messages are checked for broken
+# SIP Via headers. If the IP address in the latest Via Header is
+# part of the list below, it will be replaced by the IP where the
+# SIP message has been received from.
+plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+</screen>
+        <para>Description:</para>
+        <para>Fixes broken VIA headers on incoming SIP requests
+          (inspired by Ralph Babel, see http://babel.de/art20080317a.html
+          for more info). Can be applied if you have remote UAs calling you
+          from the Internet and those UAs do have crappy Via headers (like 
+          private IPs because there is some NAT involved on their side).</para>
       </sect2>
     </sect1>
   </chapter>

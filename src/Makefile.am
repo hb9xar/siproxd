@@ -41,7 +41,8 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_shortdial.la \
 			plugin_logcall.la \
-			plugin_defaulttarget.la
+			plugin_defaulttarget.la \
+			plugin_fix_bogus_via.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module
@@ -54,6 +55,9 @@ plugin_logcall_la_LDFLAGS = -module
 #
 plugin_defaulttarget_la_SOURCES = plugin_defaulttarget.c
 plugin_defaulttarget_la_LDFLAGS = -module
+#
+plugin_fix_bogus_via_la_SOURCES = plugin_fix_bogus_via.c
+plugin_fix_bogus_via_la_LDFLAGS = -module
 
 
 #

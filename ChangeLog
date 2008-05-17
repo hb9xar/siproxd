@@ -1,5 +1,8 @@
 0.7.1
 =====
+  17-May-2008:  - plugin_fix_bogus_via: fixes broken VIA headers on
+                  incoming SIP messages (inspired by Ralph Babel, see
+                  http://babel.de/art20080317a.html for more info)
   22-Mar-2008:  - dejitter can be completely disabled by specifying 0ms
   09-Mar-2008:  - libosip2-3.1.0 (changes MD5 related function names)
   04-Feb-2008:  - 'Default Target' plugin: incoming calls to unknown

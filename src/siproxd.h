@@ -210,8 +210,8 @@ int  sip_fixup_asterisk(char *buff, int *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
 
 /* readconf.c */
-int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter); /*X*/
-int make_default_config(void);						/*X*/
+int  read_config(char *name, int search, cfgopts_t cfgopts[], char *filter); /*X*/
+int  make_default_config(void);						/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
@@ -224,6 +224,7 @@ int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
 
 /* accessctl.c */
 int  accesslist_check(struct sockaddr_in from);
+int  process_aclist (char *aclist, struct sockaddr_in from);
 
 /* security.c */
 int  security_check_raw(char *sip_buffer, size_t size);			/*X*/
@@ -288,6 +289,7 @@ int unload_plugins(void);
 #define HOSTNAME_SIZE	128	/* max string length of a hostname	*/
 #define USERNAME_SIZE	128	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	128	/* max string length of a password (auth) */
+#define IPSTRING_SIZE	16	/* stringsize of IP address xxx.xxx.xxx.xxx */
 #define VIA_BRANCH_SIZE	128	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
 

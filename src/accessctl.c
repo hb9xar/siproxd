@@ -36,9 +36,6 @@ static char const ident[]="$Id$";
 /* configuration storage */
 struct siproxd_config configuration;
 
-/* prototypes used locally only */
-int process_aclist (char *aclist, struct sockaddr_in from);
-
 
 /*
  * verifies the from address agains the access lists

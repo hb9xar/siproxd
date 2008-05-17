@@ -293,6 +293,7 @@ plugindir=/home/hb9xar/src/siproxd/src/.libs/
 #load_plugin=plugin_shortdial.so
 load_plugin=plugin_logcall.so
 #load_plugin=plugin_defaulttarget.so
+#load_plugin=plugin_fix_bogus_via.so
 
 
 ######################################################################
@@ -331,4 +332,13 @@ plugin_defaulttarget_log = 1
 # target must be a full SIP URI with the syntax
 # sip:user@host[:port]
 plugin_defaulttarget_target = sip:internal@dddd:port
+
+######################################################################
+# Plugin_fix_bogus_via
+#
+# Incoming (from public network) SIP messages are checked for broken
+# SIP Via headers. If the IP address in the latest Via Header is
+# part of the list below, it will be replaced by the IP where the
+# SIP message has been received from.
+plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 
