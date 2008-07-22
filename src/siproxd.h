@@ -206,7 +206,7 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
                              int *port);				/*X*/
 int  sip_find_direction(sip_ticket_t *ticket, int *urlidx);		/*X*/
-int  sip_fixup_asterisk(char *buff, int *buflen);			/*X*/
+int  sip_fixup_asterisk(char *buff, size_t *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
 
 /* readconf.c */
@@ -233,7 +233,7 @@ int  security_check_sip(sip_ticket_t *ticket);				/*X*/
 /* auth.c */
 int  authenticate_proxy(osip_message_t *sipmsg);			/*X*/
 int  auth_include_authrq(osip_message_t *sipmsg);			/*X*/
-void CvtHex(char *hash, char *hashstring);
+void CvtHex(unsigned char *hash, unsigned char *hashstring);
 
 /* fwapi.c */
 int fwapi_start_rtp(int rtp_direction,

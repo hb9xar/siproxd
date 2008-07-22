@@ -777,8 +777,8 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
          HASH HA1;
 
          osip_MD5Init(&Md5Ctx);
-         osip_MD5Update(&Md5Ctx, param->gvalue,
-                   strlen(param->gvalue));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)param->gvalue,
+                        strlen(param->gvalue)); 
          osip_MD5Final(HA1, &Md5Ctx);
          CvtHex(HA1, hashstring);
 
@@ -808,40 +808,42 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
       /* topmost via */
       osip_via_to_str(via, &tmp);
       if (tmp) {
-         osip_MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)tmp, strlen(tmp));
          osip_free(tmp);
       }
      
       /* Tag in To header */
       osip_to_get_tag(sip_msg->to, &param);
       if (param && param->gvalue) {
-         osip_MD5Update(&Md5Ctx, param->gvalue, strlen(param->gvalue));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)param->gvalue,
+	                strlen(param->gvalue));
       }
 
       /* Tag in From header */
       osip_from_get_tag(sip_msg->from, &param);
       if (param && param->gvalue) {
-         osip_MD5Update(&Md5Ctx, param->gvalue, strlen(param->gvalue));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)param->gvalue,
+	                strlen(param->gvalue));
       }
 
       /* Call-ID */
       call_id = osip_message_get_call_id(sip_msg);
       osip_call_id_to_str(call_id, &tmp);
       if (tmp) {
-         osip_MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)tmp, strlen(tmp));
          osip_free(tmp);
       }
 
       /* CSeq number (but not method) */
       tmp = osip_cseq_get_number(sip_msg->cseq);
       if (tmp) {
-         osip_MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)tmp, strlen(tmp));
       }
  
       /* Request URI */
       osip_uri_to_str(sip_msg->req_uri, &tmp);
       if (tmp) {
-         osip_MD5Update(&Md5Ctx, tmp, strlen(tmp));
+         osip_MD5Update(&Md5Ctx, (unsigned char*)tmp, strlen(tmp));
          osip_free(tmp);
       }
 
@@ -1151,7 +1153,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
  * RETURNS
  *	STS_SUCCESS on success
  */
-int  sip_fixup_asterisk(char *buff, int *buflen) {
+int  sip_fixup_asterisk(char *buff, size_t *buflen) {
    char *alert_info_ptr=NULL;
    /*
     * Check for Asterisk UA string
