@@ -1,5 +1,6 @@
 0.7.1
 =====
+  23-Jul-2008:  - Released 0.7.1
   22-Jul-2008:  - fixes some signedness warnings
   17-May-2008:  - plugin_fix_bogus_via: fixes broken VIA headers on
                   incoming SIP messages (inspired by Ralph Babel, see

@@ -1,4 +1,4 @@
-The following procedure shall be used to make a new release:
+The following procedure shall be used to make a new release (siproxd-stable):
 
 Make the release:
 - check in all tested changes
@@ -14,7 +14,7 @@ Make the release:
   - Mac OS
   - Linux 64bit
 - $ make dist
-- calculate MD5 checksum & GPG
+- calculate MD5 checksum, sha256 (shasum -a256) & GPG
 - update RELNOTES
 - check in outstanding changes
 - create CVS tag (e.g. $ cvs rtag rel_0_5_7 siproxd)
