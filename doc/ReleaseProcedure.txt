@@ -20,6 +20,8 @@ Make the release:
 - create CVS tag (e.g. $ cvs rtag rel_0_5_7 siproxd)
 - publish on SF.net
 - publish on freshmeat.net
+- copy RELNOTES to SF web page
+- copy html doxument to SF web page
 
 Open new working release:
 - change version number in configure.in

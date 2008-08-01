@@ -301,7 +301,7 @@
 /* type osip_MD5_CTX */
 #undef osip_MD5_CTX
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
 /* typedef socklen_t available */
