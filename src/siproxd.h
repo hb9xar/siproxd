@@ -99,6 +99,7 @@ struct siproxd_config {
    int   obscure_loops;
    char *plugin_dir;
    stringa_t load_plugin;
+   int   sip_dscp;
 };
 
 /*

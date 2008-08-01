@@ -145,6 +145,12 @@ rtp_timeout = 300
 rtp_dscp = 46
 
 ######################################################################
+# DSCP value for sent SIP packets
+#    Same as above but for SIP signalling.
+#
+sip_dscp = 0
+
+######################################################################
 # Dejitter value
 #    Artificial delay to be used to de-jitter RTP data streams.
 #    This time is in microseconds.

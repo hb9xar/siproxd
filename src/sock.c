@@ -62,6 +62,36 @@ int sipsock_listen (void) {
    sip_udp_socket=sockbind(ipaddr, configuration.sip_listen_port, 1);
    if (sip_udp_socket == 0) return STS_FAILURE; /* failure*/
 
+   /* set DSCP value, need to be ROOT */
+   if (configuration.sip_dscp) {
+      int tos;
+      int uid,euid;
+      uid=getuid();
+      euid=geteuid();
+      DEBUGC(DBCLASS_SIP,"uid=%i, euid=%i", uid, euid);
+      if (uid != euid) seteuid(0);
+      if (geteuid()==0) {
+         /* now I'm root */
+         if (!(configuration.sip_dscp & ~0x3f)) {
+            tos = (configuration.sip_dscp << 2) & 0xff;
+            if(setsockopt(sip_udp_socket, SOL_IP, IP_TOS, &tos, sizeof(tos))) {
+               ERROR("sipsock_listen: setsockopt() failed while "
+                     "setting DSCP value: %s", strerror(errno));
+            }
+         } else {
+            ERROR("sipsock_listen: Invalid DSCP value %d",
+                  configuration.sip_dscp);
+            configuration.sip_dscp = 0; /* inhibit further attempts */
+         }
+      } else {
+         /* could not get root */
+         WARN("siproxd not started as root - cannot set DSCP value");
+         configuration.rtp_dscp = 0; /* inhibit further attempts */
+      }
+      /* drop privileges */
+      if (uid != euid) seteuid(euid);
+   }
+
    INFO("bound to port %i", configuration.sip_listen_port);
    DEBUGC(DBCLASS_NET,"bound socket %i",sip_udp_socket);
    return STS_SUCCESS;

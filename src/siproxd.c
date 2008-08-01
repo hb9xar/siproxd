@@ -86,6 +86,7 @@ static cfgopts_t main_cfg_opts[] = {
    { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
    { "plugindir",           TYP_STRING, &configuration.plugin_dir },
    { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
+   { "sip_dscp",            TYP_INT4,   &configuration.sip_dscp },
    {0, 0, 0}
 };
 
