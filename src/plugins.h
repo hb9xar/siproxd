@@ -48,7 +48,7 @@
 typedef struct {
    void *next;		/* link to next plugin element, NULL if last */
    int  api_version;	/* API version that PLUGIN uses */
-   char *name;		/* Plugn name */
+   char *name;		/* Plugin name */
    char *desc;		/* Description */
    int  exe_mask;	/* bitmask for activation of different processing
    			   stages during SIP processing that a plugin wants

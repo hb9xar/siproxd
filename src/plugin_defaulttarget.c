@@ -133,7 +133,7 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
       return sts;
    }
 
-   /* Catch the ACK following the rediredct */
+   /* Catch the ACK following the redirect */
    if ((ticket->direction == DIRTYP_UNKNOWN) &&
        (MSG_IS_REQUEST(ticket->sipmsg)) &&
        (MSG_IS_ACK(ticket->sipmsg))) {
