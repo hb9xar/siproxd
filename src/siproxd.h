@@ -332,9 +332,6 @@ int unload_plugins(void);
 #define satoi atoi  /* used in libosips MSG_TEST_CODE macro ... */
 #endif
 
-#if !defined(SOL_IP)
-#define SOL_IP IPPROTO_IP
-#endif
 
 /*
  * Macro that limits the frequency of this particular code

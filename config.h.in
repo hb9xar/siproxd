@@ -241,6 +241,9 @@
 /* will search for config file here */
 #undef SIPROXDCONFPATH
 
+/* SOL_IP for setsockopt() */
+#undef SOL_IP
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 

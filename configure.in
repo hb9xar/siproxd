@@ -334,6 +334,21 @@ AC_STRUCT_TM
 
 
 dnl
+dnl Check for Constants that may be non-existing on some platforms
+dnl
+dnl SOL_IP (used in setsockopt)
+AC_CHECK_DECL(SOL_IP,
+    ,
+    AC_MSG_RESULT(SOL_IP is not available - creating DEFINE to IPPROTO_IP)
+    AC_DEFINE(SOL_IP,IPPROTO_IP,[SOL_IP for setsockopt()]),
+    [[$ac_includes_default]
+    [#ifdef HAVE_NETDB_H]
+    [#include <netdb.h>]
+    [#endif]]
+)
+
+
+dnl
 dnl check for typedef socklen (not available on SUSE 5.3 for example)
 dnl
 dnl  FreeBSD has it in <netdb.h> and <sys/socket.h>
