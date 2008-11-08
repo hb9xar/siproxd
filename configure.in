@@ -229,6 +229,7 @@ ACX_PTHREAD(,
    dnl link dynamically (default)
    LIBS="$PTHREAD_LIBS $LIBS"
    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+   LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
    CC="$PTHREAD_CC"
 
 

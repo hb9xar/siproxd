@@ -25,6 +25,7 @@ dnl use these variables in your default LIBS, CFLAGS, and CC:
 dnl
 dnl        LIBS="$PTHREAD_LIBS $LIBS"
 dnl        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+dnl        LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
 dnl        CC="$PTHREAD_CC"
 dnl
 dnl In addition, if the PTHREAD_CREATE_JOINABLE thread-attribute
@@ -60,6 +61,8 @@ acx_pthread_ok=no
 if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
         save_CFLAGS="$CFLAGS"
         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        save_LDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
         save_LIBS="$LIBS"
         LIBS="$PTHREAD_LIBS $LIBS"
         AC_MSG_CHECKING([for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS])
@@ -68,9 +71,11 @@ if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
         if test x"$acx_pthread_ok" = xno; then
                 PTHREAD_LIBS=""
                 PTHREAD_CFLAGS=""
+                PTHREAD_LDFLAGS=""
         fi
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
+        LDFLAGS="$save_LDFLAGS"
 fi
 
 # We must check for the threads library under a number of different
@@ -138,8 +143,10 @@ for flag in $acx_pthread_flags; do
 
         save_LIBS="$LIBS"
         save_CFLAGS="$CFLAGS"
+        save_LDFLAGS="$LDFLAGS"
         LIBS="$PTHREAD_LIBS $LIBS"
         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
 
         # Check for various functions.  We must include pthread.h,
         # since some functions may be macros.  (On the Sequent, we
@@ -158,6 +165,7 @@ for flag in $acx_pthread_flags; do
 
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
+        LDFLAGS="$save_LDFLAGS"
 
         AC_MSG_RESULT($acx_pthread_ok)
         if test "x$acx_pthread_ok" = xyes; then
@@ -166,6 +174,7 @@ for flag in $acx_pthread_flags; do
 
         PTHREAD_LIBS=""
         PTHREAD_CFLAGS=""
+        PTHREAD_LDFLAGS=""
 done
 fi
 
@@ -175,6 +184,8 @@ if test "x$acx_pthread_ok" = xyes; then
         LIBS="$PTHREAD_LIBS $LIBS"
         save_CFLAGS="$CFLAGS"
         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        save_LDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
 
         # Detect AIX lossage: threads are created detached by default
         # and the JOINABLE attribute has a nonstandard name (UNDETACHED).
@@ -210,6 +221,7 @@ if test "x$acx_pthread_ok" = xyes; then
 
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
+        LDFLAGS="$save_LDFLAGS"
 
         # More AIX lossage: must compile with cc_r
         AC_CHECK_PROG(PTHREAD_CC, cc_r, cc_r, ${CC})
@@ -219,6 +231,7 @@ fi
 
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LDFLAGS)
 AC_SUBST(PTHREAD_CC)
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
