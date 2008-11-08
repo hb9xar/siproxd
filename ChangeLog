@@ -1,6 +1,7 @@
 0.7.2
 =====
   01-Aug-2008:  - SIP DSCP value configurable
+  08-Nov-2008:  - check & define if SOL_IP not existing (some *BSDs)
 
 0.7.1
 =====
