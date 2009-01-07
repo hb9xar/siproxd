@@ -266,8 +266,8 @@ sts=sip_obscure_callid(ticket);
    } else {
       if (max_forwards->hvalue) {
          forwards_count = atoi(max_forwards->hvalue);
-         if ((forwards_count<=0)||
-             (forwards_count>=LONG_MAX)) forwards_count=DEFAULT_MAXFWD;
+         if ((forwards_count<0)||
+             (forwards_count>255)) forwards_count=DEFAULT_MAXFWD;
          forwards_count -=1;
          osip_free (max_forwards->hvalue);
       }

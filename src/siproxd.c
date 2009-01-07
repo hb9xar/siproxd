@@ -455,8 +455,8 @@ int main (int argc, char *argv[])
          osip_message_get_max_forwards(ticket.sipmsg, 0, &max_forwards);
          if (max_forwards && max_forwards->hvalue) {
             forwards_count = atoi(max_forwards->hvalue);
-            if ((forwards_count<=0)||
-                (forwards_count>=LONG_MAX)) forwards_count=DEFAULT_MAXFWD;
+            if ((forwards_count<0)||
+                (forwards_count>255)) forwards_count=DEFAULT_MAXFWD;
          }
 
          DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);

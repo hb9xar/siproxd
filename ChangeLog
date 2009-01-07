@@ -1,5 +1,7 @@
 0.7.2
 =====
+  07-Jan-2009:  - fixed some senseless range checks on "Max-Forward"
+                  and "Expires" headers (Thank you Alex for telling me)
   08-Nov-2008:  - check & define if SOL_IP not existing (some *BSDs)
                 - honor PTHREAD_LDFLAGS from environment
   01-Aug-2008:  - SIP DSCP value configurable
