@@ -293,12 +293,12 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
    if (expires_param && expires_param->gvalue) {
       /* get expires from contact Header */
       expires=atoi(expires_param->gvalue);
-      if ((expires < 0) || (expires >= ((2**32)-1) ))
+      if ((expires < 0) || (expires >= UINT_MAX ))
          expires=configuration.default_expires;
    } else if (expires_hdr && expires_hdr->hvalue) {
       /* get expires from expires Header */
       expires=atoi(expires_hdr->hvalue);
-      if ((expires < 0) || (expires >= ((2**32)-1) ))
+      if ((expires < 0) || (expires >= UINT_MAX ))
          expires=configuration.default_expires;
    } else {
       char tmp[16];
@@ -665,12 +665,12 @@ int register_set_expire(sip_ticket_t *ticket) {
       if (expires_param && expires_param->gvalue) {
          /* get expires from contact Header */
          expires=atoi(expires_param->gvalue);
-         if ((expires < 0) || (expires >= ((2**32)-1) ))
+         if ((expires < 0) || (expires >= UINT_MAX ))
             expires=configuration.default_expires;
       } else if (expires_hdr && expires_hdr->hvalue) {
          /* get expires from expires Header */
          expires=atoi(expires_hdr->hvalue);
-         if ((expires < 0) || (expires >= ((2**32)-1) ))
+         if ((expires < 0) || (expires >= UINT_MAX ))
             expires=configuration.default_expires;
       }
 
