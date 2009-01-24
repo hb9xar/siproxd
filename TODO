@@ -1,11 +1,6 @@
 TODOs, in random order:
 =======================
 
-- siproxd daemonized: looks like clashes between threads
-- lost 200 ACK immediately before RTP starts...
-
-- /var/run PID file
-
 - check via loop and private IP addresses
   can comment be used to store a unique ID in there?
 
@@ -21,7 +16,6 @@ TODOs, in random order:
 - get_ip_by_host: reduce DNS timeouts (seems to be a more complex problem...)
 
 - via loop detection: send 482 error code
-
 
 - feature: don't bind to 0.0.0.0 address, but only to inbound/outbound IF's
   (defined by IFNAME)

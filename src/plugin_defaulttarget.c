@@ -119,9 +119,12 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
       /* LOG if master wishes so */
       if (plugin_cfg.log) {
          osip_uri_t *to_url=ticket->sipmsg->to->url;
-         INFO("Unknown Target, redirecting call %s@%s -> %s",
-              to_url->username? to_url->username:"*NULL*",
-              to_url->host?     to_url->host:    "*NULL*",
+         osip_uri_t *from_url=ticket->sipmsg->from->url;
+         INFO("Unknown Target (from: %s@%s), redirecting %s@%s -> %s",
+              from_url->username? from_url->username:"*NULL*",
+              from_url->host?     from_url->host:    "*NULL*",
+              to_url->username?   to_url->username:"*NULL*",
+              to_url->host?       to_url->host:    "*NULL*",
               plugin_cfg.target);
       }
 
