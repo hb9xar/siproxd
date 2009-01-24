@@ -1,5 +1,8 @@
 0.7.2
 =====
+  24-Jan-2009:  - fixed an issue with RTP timeouts (on calls with multiple
+                  media streams an timeout on one single stream would
+                  cancel all streams in the end. Seen with X-Lite UAs)
   07-Jan-2009:  - fixed some senseless range checks on "Max-Forward"
                   and "Expires" headers (Thank you Alex for telling me)
   08-Nov-2008:  - check & define if SOL_IP not existing (some *BSDs)

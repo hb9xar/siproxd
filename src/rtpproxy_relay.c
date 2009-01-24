@@ -355,7 +355,9 @@ static void *rtpproxy_main(void *arg) {
                            /* if sendto() fails with bad filedescriptor,
                             * this means that the opposite stream has been
                             * canceled or timed out.
-                            * we should then cancel this stream as well.*/
+                            * we should then cancel this stream as well.
+                            * But only this specific media stream and not all
+                            * active media streams in this ongoing call! */
 
                            WARN("stopping opposite stream");
                            callid.number=rtp_proxytable[i].callid_number;
@@ -363,7 +365,8 @@ static void *rtpproxy_main(void *arg) {
                            /* don't lock the mutex, as we own the lock already */
                            sts = rtp_relay_stop_fwd(&callid,
                                                     rtp_proxytable[i].direction,
-                                                    -1, NOLOCK_FDSET);
+                                                    rtp_proxytable[i].media_stream_no,
+                                                    NOLOCK_FDSET);
                            if (sts != STS_SUCCESS) {
                               /* force the streams to timeout on next occasion */
                               rtp_proxytable[i].timestamp=0;
@@ -394,7 +397,8 @@ static void *rtpproxy_main(void *arg) {
                         /* don't lock the mutex, as we own the lock already */
                         sts = rtp_relay_stop_fwd(&callid,
                                                  rtp_proxytable[i].direction,
-                                                 -1, NOLOCK_FDSET);
+                                                 rtp_proxytable[i].media_stream_no,
+                                                 NOLOCK_FDSET);
                         if (sts != STS_SUCCESS) {
                            /* force the streams to timeout on next occasion */
                            rtp_proxytable[i].timestamp=0;
@@ -404,8 +408,9 @@ static void *rtpproxy_main(void *arg) {
 #endif
                }
             } /* count > 0 */
+
             /* update timestamp of last usage for both (RX and TX) entries.
-             * This allows silence (no data) on one stream without breaking
+             * This allows silence (no data) on one direction without breaking
              * the connection after the RTP timeout */
             rtp_proxytable[i].timestamp=current_tv.tv_sec;
             if (rtp_proxytable[i].opposite_entry > 0) {
