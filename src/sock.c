@@ -142,7 +142,7 @@ int sipsock_read(void *buf, size_t bufsize,
    socklen_t fromlen;
 
    fromlen=sizeof(struct sockaddr_in);
-   *protocol = PROTO_UDP; /* up to now, unly UDP */
+   *protocol = PROTO_UDP; /* up to now, only UDP */
    count=recvfrom(sip_udp_socket, buf, bufsize, 0,
                   (struct sockaddr *)from, &fromlen);
 
