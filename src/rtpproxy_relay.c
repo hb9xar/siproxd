@@ -345,7 +345,10 @@ static void *rtpproxy_main(void *arg) {
                                   count, 0, (const struct sockaddr *)&dst_addr,
                                   (socklen_t)sizeof(dst_addr));
                      if (sts == -1) {
-                        if (errno != ECONNREFUSED) {
+                        /* ECONNREFUSED: Got ICMP destination unreachable
+                         * ENOBUFS: Full TX queue, packet dropped (FreeBSD for example)
+                         */
+                        if ((errno != ECONNREFUSED) && (errno != ENOBUFS)){
                            osip_call_id_t callid;
 
                            ERROR("sendto() [%s:%i size=%i] call failed: %s",
@@ -379,7 +382,10 @@ static void *rtpproxy_main(void *arg) {
                                count, 0, (const struct sockaddr *)&dst_addr,
                                (socklen_t)sizeof(dst_addr));
                   if (sts == -1) {
-                     if (errno != ECONNREFUSED) {
+                     /* ECONNREFUSED: Got ICMP destination unreachable
+                      * ENOBUFS: Full TX queue, packet dropped (FreeBSD for example)
+                      */
+                     if ((errno != ECONNREFUSED) && (errno != ENOBUFS)){
                         osip_call_id_t callid;
 
                         ERROR("sendto() [%s:%i size=%i] call failed: %s",

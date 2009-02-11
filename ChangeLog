@@ -1,5 +1,7 @@
 0.7.2
 =====
+  11-Feb-2009:  - Don't abort RTP streams on ENOBUFS (Internet upstream
+                  saturated and a Packet is dropped)
   24-Jan-2009:  - fixed an issue with RTP timeouts (on calls with multiple
                   media streams an timeout on one single stream would
                   cancel all streams in the end. Seen with X-Lite UAs)
