@@ -90,6 +90,16 @@ Reported interoperability with SIP service providers:
  and/or service provider, please drop me a short note so I can update
  the list.
 
+Known ipteroperability issues with SIP service providers:
+ - callcentric.com	(afaik callcentric fails with "500 network failure"
+ 			during REGISTER if more than one Via header is
+			present in a SIP packet. Having multiple Via headers
+			is completely in compliance with RFC3261. This might
+			be related to their "NAT problem avoidance magic".
+			There is nothing that can be done within siproxd
+			to avoid this issue as callcentric does not comply
+			with the SIP specification.
+
 Known bugs:
    - SRV DNS records are not yet looked up, only A records
    There will be more for sure...
