@@ -520,15 +520,22 @@ debug_port = 0
       <?dbhtml filename="siproxd_guide_c5s1.html">
       <title>Plug-in API</title>
       <para>Siproxd plug-ins are dynamic loadable libraries and must provide
-        3 functions towards siproxd:
+        3 functions towards siproxd. As we make use of some libltdl features
+        we do some internal macor magic - the PLUGIN_xxx funcation names
+        are actually CPP macros that will expand in unique names. Th have
+        this working properly the PLUGIN_NAME must be #defined before 
+        the plugins.h header file is included:
         </para>
 <screen>
-int  plugin_init(plugin_def_t *plugin_def);
-int  plugin_process(int stage, sip_ticket_t *ticket);
-int  plugin_end(plugin_def_t *plugin_def);
+#define PLUGIN_NAME     plugin_myplugin
+#include "plugins.h"
+[...]
+int  PLUGIN_INIT(plugin_def_t *plugin_def);
+int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket);
+int  PLUGIN_END(plugin_def_t *plugin_def);
 </screen>
       <para>
-        The <filename>plugin_init</filename> function is called when
+        The <filename>PLUGIN_INIT</filename> function is called when
         the plug-in is loaded during startup of siproxd. The plug-in must
         define the following 4 fields of the plugin_def structure:
         <orderedlist numeration="arabic">
@@ -557,12 +564,12 @@ plugin_def->desc=strdup("This is just a demo plugin without any purpose");
 plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
 </screen>
       <para>
-        The <filename>plugin_process</filename> function is called at
+        The <filename>PLUGIN_PROCESS</filename> function is called at
         the requested SIP processing stages (see 'execution mask').
         Your processing will be done here.
         </para>
       <para>
-        The <filename>plugin_end</filename> function is called at
+        The <filename>PLUGIN_END</filename> function is called at
         shutdown of siproxd and gives the plug-in the opportunity
         to clean up and properly shutdown itself.</para>
       <para>Note: The previously allocated 'name' and 'desc' must be
@@ -571,7 +578,7 @@ plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET|PLUGIN_PRE_PROXY;
       <para>
         Minimum required clean up procedure:
 <screen>
-int  plugin_end(plugin_def_t *plugin_def){
+int  PLUGIN_END(plugin_def_t *plugin_def){
    /* free my allocated rescources (if allocated via malloc only) */
    if (plugin_def->name) {free(plugin_def->name); plugin_def->name=NULL;}
    if (plugin_def->desc) {free(plugin_def->desc); plugin_def->desc=NULL;}
@@ -647,7 +654,7 @@ plugin_demo_string = This_is_a_string_passed_to_the_demo_plugin
 none
 </screen>
         <para>Description:</para>
-        <para>XXXXXXXXXXXXXXXXxThe numbering starts with "1" ("*01") and every following
+        <para>The numbering starts with "1" ("*01") and every following
           "plugin_shortdial_entry" entry will allocate the following position.
           It is not possible to freely assign the positions.</para>
       </sect2>

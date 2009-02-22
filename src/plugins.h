@@ -58,7 +58,7 @@ typedef struct {
    lt_ptr dlhandle;	/* handle returned by dlopen() */
 } plugin_def_t;
 
-#define SIPROXD_API_VERSION	0x0100
+#define SIPROXD_API_VERSION	0x0101
 
 
 /* The plugin must provide the following entry points */
@@ -80,3 +80,14 @@ typedef struct {
 int  plugin_init(plugin_def_t *plugin_def);
 int  plugin_process(int stage, sip_ticket_t *ticket);
 int  plugin_end(plugin_def_t *plugin_def);
+
+/* libltdl symbol name magic...
+   convert plugin_init into <module>_LTX_plugin_init			*/
+
+#if defined (PLUGIN_NAME)
+#define JOIN(x, y) JOIN_AGAIN(x, y)
+#define JOIN_AGAIN(x, y) x ## y
+#define PLUGIN_INIT	JOIN(PLUGIN_NAME, _LTX_plugin_init)
+#define PLUGIN_PROCESS	JOIN(PLUGIN_NAME, _LTX_plugin_process)
+#define PLUGIN_END	JOIN(PLUGIN_NAME, _LTX_plugin_end)
+#endif

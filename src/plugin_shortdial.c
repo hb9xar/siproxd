@@ -18,6 +18,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+/* must be defined before including <plugin.h> */
+#define PLUGIN_NAME	plugin_shortdial
+
 #include "config.h"
 
 #include <stdio.h>
@@ -66,7 +69,7 @@ static int plugin_shortdial(sip_ticket_t *ticket);
  * Plugin API functions code
  */
 /* Initialization */
-int  plugin_init(plugin_def_t *plugin_def) {
+int  PLUGIN_INIT(plugin_def_t *plugin_def) {
    plugin_def->api_version=SIPROXD_API_VERSION;
    plugin_def->name=name;
    plugin_def->desc=desc;
@@ -84,14 +87,14 @@ int  plugin_init(plugin_def_t *plugin_def) {
 }
 
 /* Processing */
-int  plugin_process(int stage, sip_ticket_t *ticket){
+int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    int sts;
    sts=plugin_shortdial(ticket);
    return sts;
 }
 
 /* De-Initialization */
-int  plugin_end(plugin_def_t *plugin_def){
+int  PLUGIN_END(plugin_def_t *plugin_def){
    return STS_SUCCESS;
 }
 

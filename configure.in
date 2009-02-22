@@ -40,6 +40,8 @@ dnl	10-Jun-2007	tries	test more .h files (DNS resolver related)
 dnl	18-Dec-2007	tries	requires libosip2-3.x.x
 dnl	02-Feb-2008	tries	removed variety of fli4l and static extra
 dnl				build options
+dnl	21-Feb-2009	tries	--enable-static-libosip2 does search static
+dnl				libs now in libosip_prefix_dir
 dnl
 dnl
 
@@ -278,8 +280,9 @@ else
    dnl link statically to this lib
    dnl (this probably only will work on linux yet...)
    AC_MSG_CHECKING("where I can find libosip2.a")
-   libosip_static=`find $extra_libs /lib /usr/lib /usr/local/lib \
-                   -name libosip2.a 2>/dev/null|head -1`
+   libosip_static=`find $extra_libs $libosip_prefix_dir/lib /lib \
+                        /usr/lib /usr/local/lib \
+                        -name libosip2.a 2>/dev/null|head -1`
    if test "x$libosip_static" != "x"; then
       LIBS="$libosip_static $LIBS"
       AC_MSG_RESULT($libosip_static)
@@ -287,8 +290,9 @@ else
       echo "*** ERROR: a static libosip library is required!";exit 1;
    fi
    AC_MSG_CHECKING("where I can find libosipparser2.a")
-   libosip_static=`find $extra_libs /lib /usr/lib /usr/local/lib \
-                   -name libosipparser2.a 2>/dev/null|head -1`
+   libosip_static=`find $extra_libs $libosip_prefix_dir/lib /lib \
+                        /usr/lib /usr/local/lib \
+                        -name libosipparser2.a 2>/dev/null|head -1`
    if test "x$libosip_static" != "x"; then
       LIBS="$libosip_static $LIBS"
       AC_MSG_RESULT($libosip_static)
@@ -344,7 +348,11 @@ AC_CHECK_DECL(SOL_IP,
     [[$ac_includes_default]
     [#ifdef HAVE_NETDB_H]
     [#include <netdb.h>]
-    [#endif]]
+    [#endif]
+    [#ifdef HAVE_SYS_SOCKET_H]
+    [#include <sys/socket.h>]
+    [#endif]
+    ]
 )
 
 

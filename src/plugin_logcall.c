@@ -18,6 +18,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+/* must be defined before including <plugin.h> */
+#define PLUGIN_NAME	plugin_logcall
+
 #include "config.h"
 
 #include <string.h>
@@ -46,7 +49,7 @@ extern struct siproxd_config configuration;
  * Initialization.
  * Called once suring siproxd startup.
  */
-int  plugin_init(plugin_def_t *plugin_def) {
+int  PLUGIN_INIT(plugin_def_t *plugin_def) {
    /* API version number of siproxd that this plugin is built against.
     * This constant will change whenever changes to the API are made
     * that require adaptions in the plugin. */
@@ -67,7 +70,7 @@ int  plugin_init(plugin_def_t *plugin_def) {
  * Processing.
  * 
  */
-int  plugin_process(int stage, sip_ticket_t *ticket){
+int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    osip_message_t *request;
    osip_uri_t *from_url = NULL;
    osip_uri_t *to_url   = NULL;
@@ -126,7 +129,7 @@ int  plugin_process(int stage, sip_ticket_t *ticket){
  * to clean up its mess (e.g. dynamic memory allocation, database
  * connections, whatever the plugin messes around with)
  */
-int  plugin_end(plugin_def_t *plugin_def){
+int  PLUGIN_END(plugin_def_t *plugin_def){
    return STS_SUCCESS;
 }
 

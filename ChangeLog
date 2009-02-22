@@ -1,5 +1,9 @@
 0.7.2
 =====
+  22-Feb-2009:  - Reworked handling of plugin mechanism (libltdl "static"
+                  inclusion of plugins should work now). Building under
+                  Windows (with Cygwin) does work (build with
+                  ./configure --enable-static-libosip2).
   11-Feb-2009:  - Don't abort RTP streams on ENOBUFS (Internet upstream
                   saturated and a Packet is dropped)
   24-Jan-2009:  - fixed an issue with RTP timeouts (on calls with multiple
