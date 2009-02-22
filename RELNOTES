@@ -90,7 +90,7 @@ Reported interoperability with SIP service providers:
  and/or service provider, please drop me a short note so I can update
  the list.
 
-Known ipteroperability issues with SIP service providers:
+Known interoperability issues with SIP service providers:
  - callcentric.com	(afaik callcentric fails with "500 network failure"
  			during REGISTER if more than one Via header is
 			present in a SIP packet. Having multiple Via headers
