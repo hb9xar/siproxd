@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-#ifndef _CYGWIN
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
@@ -247,4 +245,3 @@ ERROR("_resolve: NAPTR lookup not yet supported.");
    return 0;
 }
 
-#endif	/*_CYGWIN */
