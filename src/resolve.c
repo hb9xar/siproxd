@@ -18,6 +18,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
+#include "config.h"
+
+#ifndef _CYGWIN
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
@@ -242,3 +246,5 @@ ERROR("_resolve: NAPTR lookup not yet supported.");
    dname[dnamelen-1]='\0';
    return 0;
 }
+
+#endif	/*_CYGWIN */

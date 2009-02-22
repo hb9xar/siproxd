@@ -23,20 +23,6 @@ AM_CFLAGS = -Wall -D_GNU_SOURCE \
             -DBUILDSTR="\"`cat .buildno`\""
 
 #
-# Siproxd itself
-#
-sbin_PROGRAMS = siproxd
-siproxd_LDFLAGS=-export-dynamic
-siproxd_LDADD = $(LIBLTDL) $(DLOPENPLUGINS)
-siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
-		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
-		  rtpproxy_relay.c accessctl.c route_processing.c \
-		  security.c auth.c fwapi.c resolve.c \
-		  dejitter.c plugins.c
-#		  addrcache.c
-
-
-#
 # Plugin modules, installed in "pkglib" directory ($prefix/lib/siproxd/)
 #
 pkglib_LTLIBRARIES =	plugin_demo.la \
@@ -64,6 +50,22 @@ plugin_defaulttarget_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_fix_bogus_via_la_SOURCES = plugin_fix_bogus_via.c
 plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shrext '.so'
+
+
+#
+# Siproxd itself
+# (references DLOPENPLUGINS defined above - must be placed afterwards
+#  else Cygwin goes beserk when building...)
+#
+sbin_PROGRAMS = siproxd
+siproxd_LDFLAGS=-export-dynamic
+siproxd_LDADD = $(LIBLTDL) $(DLOPENPLUGINS)
+siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
+		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
+		  rtpproxy_relay.c accessctl.c route_processing.c \
+		  security.c auth.c fwapi.c resolve.c \
+		  dejitter.c plugins.c
+#		  addrcache.c
 
 
 #
