@@ -65,5 +65,9 @@ install-data-local:
 	$(INSTALL_DATA) $(srcdir)/siproxd_passwd.cfg	$(DESTDIR)$(sysconfdir)/
 	chmod 600 $(DESTDIR)$(sysconfdir)/siproxd_passwd.cfg
 	$(mkinstalldirs) $(DESTDIR)$(docdir)
+if have_docbook2pdf
 	$(INSTALL_DATA) $(srcdir)/pdf/*			$(DESTDIR)$(docdir)/
+endif
+if have_docbook2html
 	$(INSTALL_DATA) $(srcdir)/html/*		$(DESTDIR)$(docdir)/
+endif
