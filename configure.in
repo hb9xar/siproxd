@@ -147,8 +147,8 @@ dnl
    AC_MSG_CHECKING(link statically against libosip2)
    AC_ARG_ENABLE(static-libosip2,
       [  --enable-static-libosip2    link statically against libosip2],
-      build_static_libosip="yes";
-      AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
+      build_static_libosip="$enableval";
+      AC_MSG_RESULT($enableval), AC_MSG_RESULT(no))
 
 
 dnl **********************************************
@@ -160,8 +160,11 @@ dnl    --enable-dmalloc
    AC_MSG_CHECKING(building with DMALLOC support)
    AC_ARG_ENABLE(dmalloc,
       [  --enable-dmalloc            build with DMALLOC support],
+      dmalloc="$enableval";
+      AC_MSG_RESULT($enableval), AC_MSG_RESULT(no))
+   if test "x$dmalloc" = "xyes"; then
       CFLAGS="$CFLAGS -DDMALLOC ";LIBS="-ldmallocth $LIBS";
-      AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
+   fi
 
 
 dnl
