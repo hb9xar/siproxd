@@ -259,6 +259,7 @@ static void output_to_TCP(const char *label, va_list ap, char *file,
    time_t t;
    struct tm *tim;
    char outbuf[256];
+   int sts;
 
    if (debug_fd <= 0) return;
 
@@ -266,13 +267,13 @@ static void output_to_TCP(const char *label, va_list ap, char *file,
    tim=localtime(&t);
    snprintf(outbuf, sizeof(outbuf), "%2.2i:%2.2i:%2.2i %s%s:%i ",
             tim->tm_hour, tim->tm_min, tim->tm_sec, label, file, line);
-   write(debug_fd, outbuf, strlen(outbuf));
+   sts=write(debug_fd, outbuf, strlen(outbuf));
    va_copy(ap_copy, ap);
    vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
    va_end(ap_copy);
-   write(debug_fd, outbuf, strlen(outbuf));
+   sts=write(debug_fd, outbuf, strlen(outbuf));
    snprintf(outbuf, sizeof(outbuf), "\n");
-   write(debug_fd, outbuf, strlen(outbuf));
+   sts=write(debug_fd, outbuf, strlen(outbuf));
    return;
 }
 
@@ -359,6 +360,7 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    int i, j;
    char tmp[8], tmplin1[80], tmplin2[80];
    char outbuf[256];
+   int sts;
 
    if ((debug_pattern & class) == 0) return;
    if ((!log_to_stderr) && (debug_fd <= 0)) return;
@@ -367,7 +369,7 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    if (log_to_stderr) fprintf(stderr,  "---BUFFER DUMP follows---\n");
    if (debug_fd > 0) {
       snprintf(outbuf, sizeof(outbuf) ,"---BUFFER DUMP follows---\n");
-      write(debug_fd, outbuf, strlen(outbuf));
+      sts=write(debug_fd, outbuf, strlen(outbuf));
    }
 
    for (i=0; i<length; i+=16) {
@@ -385,7 +387,7 @@ void log_dump_buffer(unsigned int class, char *file, int line,
       if (debug_fd > 0) {
          snprintf(outbuf, sizeof(outbuf) ,"  %-47.47s %-16.16s\n",
                   tmplin1, tmplin2);
-         write(debug_fd, outbuf, strlen(outbuf));
+         sts=write(debug_fd, outbuf, strlen(outbuf));
       }
    }
 
@@ -395,7 +397,7 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    }
    if (debug_fd > 0) {
       snprintf(outbuf, sizeof(outbuf) ,"---end of BUFFER DUMP---\n");
-      write(debug_fd, outbuf, strlen(outbuf));
+      sts=write(debug_fd, outbuf, strlen(outbuf));
    }
    pthread_mutex_unlock(&log_mutex);
 
