@@ -137,6 +137,33 @@ done
 
 
 dnl **********************************************
+dnl * Building doc
+dnl **********************************************
+
+dnl
+dnl --enable-doc
+dnl
+
+   build_docs="yes";
+   AC_MSG_CHECKING(build documentation)
+   AC_ARG_ENABLE(doc,
+      [  --disable-doc               build pdf/html doc (default=enabled)],
+      if test "x$enableval" = "xno"; then
+         build_docs="no";
+      fi
+      AC_MSG_RESULT($build_docs), AC_MSG_RESULT($build_docs))
+   if test "x$build_docs" = "xyes"; then
+      AC_CHECK_PROG(docbook2pdf,docbook2pdf,yes,)
+      AM_CONDITIONAL(have_docbook2pdf,test "$docbook2pdf" = "yes")
+      AC_CHECK_PROG(docbook2html,docbook2html,yes,)
+      AM_CONDITIONAL(have_docbook2html,test "$docbook2html" = "yes")
+   else
+      AM_CONDITIONAL(have_docbook2pdf,false)
+      AM_CONDITIONAL(have_docbook2html,false)
+   fi
+
+
+dnl **********************************************
 dnl * Selection of static build variants
 dnl **********************************************
 
@@ -154,9 +181,10 @@ dnl
 dnl **********************************************
 dnl * Debugging helps
 dnl **********************************************
+
 dnl
-dnl add
 dnl    --enable-dmalloc
+dnl
    AC_MSG_CHECKING(building with DMALLOC support)
    AC_ARG_ENABLE(dmalloc,
       [  --enable-dmalloc            build with DMALLOC support],
