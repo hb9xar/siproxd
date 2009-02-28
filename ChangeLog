@@ -1,5 +1,6 @@
 0.7.2
 =====
+  28-Feb-2009:  - make install: install docu as well
   22-Feb-2009:  - Reworked handling of plugin mechanism (libltdl "static"
                   inclusion of plugins should work now). Building under
                   Windows (with Cygwin) does work (build with
