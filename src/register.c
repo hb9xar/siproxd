@@ -57,6 +57,7 @@ void register_init(void) {
    int sts, i;
    size_t len;
    char buff[128];
+   char *c;
 
    memset(urlmap, 0, sizeof(urlmap));
 
@@ -73,7 +74,7 @@ void register_init(void) {
       } else {
          /* read the url table from file */
          for (i=0;i < URLMAP_SIZE; i++) {
-            fgets(buff, sizeof(buff), stream);
+            c=fgets(buff, sizeof(buff), stream);
             sts=sscanf(buff, "***:%i:%i", &urlmap[i].active, &urlmap[i].expires);
             if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
@@ -82,7 +83,7 @@ void register_init(void) {
                osip_uri_init(&urlmap[i].reg_url);
 
                #define R(X) {\
-               fgets(buff, sizeof(buff), stream);\
+               c=fgets(buff, sizeof(buff), stream);\
                buff[sizeof(buff)-1]='\0';\
                if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
                if (strchr(buff, 13)) *strchr(buff, 13)='\0';\

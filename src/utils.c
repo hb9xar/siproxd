@@ -307,7 +307,7 @@ void secure_enviroment (void) {
          sts = chroot(configuration.chrootjail);
 	 if (sts != 0) DEBUGC(DBCLASS_CONFIG,"chroot(%s) failed: %s",
 	                      configuration.chrootjail, strerror(errno));
-         chdir("/");
+         sts=chdir("/");
       }
 
       /*
