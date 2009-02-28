@@ -65,5 +65,5 @@ install-data-local:
 	$(INSTALL_DATA) $(srcdir)/siproxd_passwd.cfg	$(DESTDIR)$(sysconfdir)/
 	chmod 600 $(DESTDIR)$(sysconfdir)/siproxd_passwd.cfg
 	$(mkinstalldirs) $(DESTDIR)$(docdir)
-	$(INSTALL_DATA) $(srcdir)/pdf/siproxd_guide.pdf   $(DESTDIR)$(docdir)/
-	$(INSTALL_DATA) $(srcdir)/html/siproxd_guide.html $(DESTDIR)$(docdir)/
+	$(INSTALL_DATA) $(srcdir)/pdf/*			$(DESTDIR)$(docdir)/
+	$(INSTALL_DATA) $(srcdir)/html/*		$(DESTDIR)$(docdir)/
