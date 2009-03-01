@@ -1,5 +1,8 @@
 0.7.2
 =====
+   1-Mar-2009:  - building with --enable-static-libosip2 requires
+                  --disable-shared to be set as well (plugins will
+                  be statically linked into siproxd)
   28-Feb-2009:  - make install: install docu as well
                 - properly handle some "--disable-*" configure options
                 - added configure option: --disable-doc 

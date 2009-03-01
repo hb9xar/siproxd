@@ -42,6 +42,9 @@ dnl	02-Feb-2008	tries	removed variety of fli4l and static extra
 dnl				build options
 dnl	21-Feb-2009	tries	--enable-static-libosip2 does search static
 dnl				libs now in libosip_prefix_dir
+dnl	 1-Mar-2009	tries	building with --enable-static-libosip2 requires
+dnl				--disable-shared to be set as well (plugins will
+dnl				be statically linked into siproxd)
 dnl
 dnl
 
@@ -84,8 +87,9 @@ AM_CONDITIONAL(have_docbook2pdf,test "$docbook2pdf" = "yes")
 AC_CHECK_PROG(docbook2html,docbook2html,yes,)
 AM_CONDITIONAL(have_docbook2html,test "$docbook2html" = "yes")
 
-dnl
+dnl **********************************************
 dnl prepare libtool
+dnl **********************************************
 dnl
 dnl We require the ltdl (libtool portable dynamic loader)
 dnl for our plugins. As this would require the automake/libtool
@@ -176,6 +180,13 @@ dnl
       [  --enable-static-libosip2    link statically against libosip2],
       build_static_libosip="$enableval";
       AC_MSG_RESULT($enableval), AC_MSG_RESULT(no))
+   if test "x$build_static_libosip" = "xyes"; then
+dnl      AC_MSG_RESULT(Plugins will be linked in statically.)
+dnl      enable_shared=no;
+      if test "x$enable_shared" = "xyes"; then
+         echo "*** ERROR: requires the '--disable-shared' option to be specified!";exit 1;
+      fi
+   fi
 
 
 dnl **********************************************
