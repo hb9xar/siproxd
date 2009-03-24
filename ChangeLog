@@ -2,6 +2,7 @@
 =====
   24-Mar-2009:  - allow the usage of @ in shortdial entries to call
                   other users on other sip networks (patch by Andreas)
+                - revised rpmbuild (SPEC file and some Makefiles)
    1-Mar-2009:  - building with --enable-static-libosip2 requires
                   --disable-shared to be set as well (plugins will
                   be statically linked into siproxd)
