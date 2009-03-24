@@ -176,8 +176,10 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    osip_uri_t *to_url=ticket->sipmsg->to->url;
    char *to_user=to_url->username;
    char *new_to_user=NULL;
+   char *new_to_host=NULL;
    int  i;
-   size_t len;
+   size_t username_len;
+   size_t host_len;
    osip_contact_t *contact = NULL;
 
    new_to_user=plugin_cfg.shortdial_entry.string[shortcut_no-1];
@@ -185,7 +187,6 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
 
    DEBUGC(DBCLASS_PLUGIN,"redirect: redirecting [%s]->[%s]",
           to_user, new_to_user);
-   len=strlen(new_to_user)+1; /* include trailing "\0" */
 
    /* use a "302 Moved temporarily" response back to the client */
    /* new target is within the Contact Header */
@@ -199,12 +200,43 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
       }
    } /* for i */
 
+   /* get info about new target (user and optional host part) */
+   username_len=strlen(new_to_user);	/* excluding \0 */
+
+   /* check if there is an '@' in the shortdial entry */
+   new_to_host = strstr(new_to_user, "@"); 
+   if (new_to_host) {
+      host_len=strlen(new_to_host)-1;	/* don't count '@' */
+      /* only include the username length */
+      username_len = (size_t)(new_to_host-new_to_user); 
+      if (host_len == 0) {
+         /* if '@' is the last character, then dont rewrite host */
+         new_to_host = NULL;
+      } else {
+         /*  advance one character for the pointer to the host part (skip @) */
+         new_to_host++;
+      }
+   }
+
    /* insert one new Contact header containing the new target address */
    osip_contact_init(&contact);
    osip_uri_clone(to_url, &contact->url);
+
+   /* USER part is always present */
    osip_free(contact->url->username);
-   contact->url->username=osip_malloc(len);
-   strcpy(contact->url->username, new_to_user);
+   contact->url->username=osip_malloc(username_len+1); /* *_len excluding \0 */
+
+   /* only copy the part that really belongs to the username */
+   strncpy(contact->url->username, new_to_user, username_len);
+   /* strncpy does not terminate - do it manually */
+   contact->url->username[username_len]='\0';
+
+   /* HOST part is optional */
+   if (new_to_host) {
+      osip_free(contact->url->host);
+      contact->url->host=osip_malloc(host_len+1); /* *_len excluding \0 */
+      strcpy(contact->url->host, new_to_host);
+   }
 
    osip_list_add(&(ticket->sipmsg->contacts),contact,0);
 
