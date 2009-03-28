@@ -86,7 +86,7 @@ int accesslist_check (struct sockaddr_in from) {
  */
    if ( (configuration.hosts_allow_reg !=NULL) &&
         (strcmp(configuration.hosts_allow_reg,"")!=0) ) {
-      /* non-empty list -> check agains it */
+      /* non-empty list -> check against it */
       if (process_aclist(configuration.hosts_allow_reg, from)==STS_SUCCESS) {
          /* SIP registration access granted */
          DEBUGC(DBCLASS_ACCESS,"granted REG/SIP access");
