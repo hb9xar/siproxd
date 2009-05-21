@@ -101,7 +101,7 @@ int sipsock_listen (void) {
  * Wait for incoming SIP message. After a 2 sec timeout
  * this function returns with sts=0
  *
- * RETURNS >0 if data received, =0 if nothing received /T/O), -1 on error
+ * RETURNS >0 if data received, =0 if nothing received (T/O), -1 on error
  */
 int sipsock_wait(void) {
    int sts;
