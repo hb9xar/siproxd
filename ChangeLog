@@ -1,5 +1,6 @@
 0.7.2
 =====
+  21-May-2009:  - Updated the documentation (plugin related stuff)
   24-Mar-2009:  - allow the usage of @ in shortdial entries to call
                   other users on other sip networks (patch by Andreas)
                 - revised rpmbuild (SPEC file and some Makefiles)

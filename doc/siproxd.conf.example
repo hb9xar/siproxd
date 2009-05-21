@@ -292,14 +292,14 @@ debug_port = 0
 # the processing order is given by the load order.
 #
 # plugin_dir: MUST be terminated with '/'
-plugindir=/home/hb9xar/src/siproxd/src/.libs/
+plugindir=/usr/lib/siproxd/
 #
-# List of plugins to load:
-#load_plugin=plugin_demo.so
-#load_plugin=plugin_shortdial.so
-load_plugin=plugin_logcall.so
-#load_plugin=plugin_defaulttarget.so
-#load_plugin=plugin_fix_bogus_via.so
+# List of plugins to load. MUST use the .la file extension!
+#load_plugin=plugin_demo.la
+#load_plugin=plugin_shortdial.la
+load_plugin=plugin_logcall.la
+#load_plugin=plugin_defaulttarget.la
+#load_plugin=plugin_fix_bogus_via.la
 
 
 ######################################################################

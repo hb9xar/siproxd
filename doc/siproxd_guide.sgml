@@ -464,6 +464,32 @@ debug_port = 0
 #outbound_domain_host = proxy.for.domain.freende.de
 #outbound_domain_port = 5060
 </screen>
+
+      <para>Siproxd supports dynamic loadable plug-ins. Such plug-ins 
+        are loaded during runtime and do not require recompilation 
+        of the executable. This allows the easy addition of specific
+        functionality to siproxd. Even 3rd party functional extensions
+        are possible without the requirement to patch and rebuild the
+        siproxd source code with each new release.</para>
+      <para>Note: Dynamic loading of shared libraries is not supported
+        on all platforms. If a platform does not support it, plug-ins
+        can still be used but they will be statically linked during
+        the build process of siproxd. The configuration ("loading" the
+        plugins) is identical.
+        For more information on this topic you may familiarize yourself
+        with libltdl.
+      </para>
+      <para>Note: As the plug-in mechanism uses LTDL, the plugins to load 
+        MUST use a .la extension and not an .so extension! Trying to load an
+        plugin using xxx.so as it's name will fail.</para>
+<screen>
+# plugin_dir: MUST be terminated with '/'
+plugindir=/usr/lib/siproxd/
+
+# List of plugins to load:
+#load_plugin=plugin_demo.la
+load_plugin=plugin_logcall.la
+</screen>
     </sect1>
 
     <!-- Chapter 3.2: Command Line Options -->
@@ -620,6 +646,9 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
           <listitem><para><filename>plugin_defaulttarget</filename></para>
                     <para>Incoming calls to a non-existing UA are
                       redirected to a specific target (catch-all).
+                    </para></listitem>
+          <listitem><para><filename>plugin_fix_bogus_via</filename></para>
+                    <para>Fixes broken VIA headers on incoming calls.
                     </para></listitem>
         </orderedlist>
         Some of the plug-ins are described in more detail in the

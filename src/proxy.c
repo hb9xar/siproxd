@@ -800,8 +800,9 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
       return STS_FAILURE;
    }
 
-   DEBUGC(-1, "rewrite_invitation_body: payload %ld bytes", (long)buflen);
-   DUMP_BUFFER(-1, buff, buflen);
+   DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: payload %ld bytes", 
+          (long)buflen);
+   DUMP_BUFFER(DBCLASS_PROXY, buff, buflen);
 
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, buff);
