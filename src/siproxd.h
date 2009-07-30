@@ -137,7 +137,7 @@ typedef struct {
  */
 #define CLIENT_ID_SIZE	128
 typedef struct {
-   char    contact[CLIENT_ID_SIZE];
+   char    idstring[CLIENT_ID_SIZE];
    struct  in_addr from_ip;
    /*... maybe more to come ...*/
 } client_id_t;

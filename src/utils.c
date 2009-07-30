@@ -607,18 +607,18 @@ int createpidfile(char *pidfilename) {
 int  compare_client_id(client_id_t cid1, client_id_t cid2) {
 
    /* Prio 1: Contact - if present in both structures */
-   if ((cid1.contact[0] != '\0') && (cid2.contact[0] != '\0')) {
-      if (strncmp(cid1.contact, cid2.contact, CLIENT_ID_SIZE) == 0) {
+   if ((cid1.idstring[0] != '\0') && (cid2.idstring[0] != '\0')) {
+      if (strncmp(cid1.idstring, cid2.idstring, CLIENT_ID_SIZE) == 0) {
          DEBUGC(DBCLASS_BABBLE, "compare_client_id: contact match [%s]",
-                cid1.contact);
+                cid1.idstring);
          return STS_SUCCESS;
       }
       DEBUGC(DBCLASS_BABBLE, "compare_client_id: contact NO match [%s<->%s]",
-             cid1.contact, cid2.contact);
+             cid1.idstring, cid2.idstring);
       return STS_FAILURE;
    }
 
-   /* Prio 2: IP (always present) */
+   /* Prio 2: IP (always present) - fallback, if no ID string present. */
    if (memcmp(&cid1.from_ip, &cid2.from_ip, sizeof(struct in_addr)) == 0) {
       DEBUGC(DBCLASS_BABBLE, "compare_client_id: IP match [%s]",
              utils_inet_ntoa(cid1.from_ip));

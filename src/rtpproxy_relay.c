@@ -527,7 +527,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
           "stream for: CallID=%s@%s [Client-ID=%s] (%s) #=%i",
-          callid->number, callid->host, client_id.contact,
+          callid->number, callid->host, client_id.idstring,
           ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           media_stream_no);
 
@@ -556,8 +556,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == rtp_direction) &&
          (rtp_proxytable[i].media_stream_no == media_stream_no) &&
-         (compare_client_id(rtp_proxytable[i].client_id, client_id) ==
-            STS_SUCCESS)) {
+         (compare_client_id(rtp_proxytable[i].client_id, client_id) == STS_SUCCESS)) {
          /*
           * The RTP port number reported by the UA MAY change
           * for a given media stream
@@ -782,7 +781,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
           "stream for: CallID=%s@%s [Client-ID=%s] %s #=%i idx=%i",
           rtp_proxytable[freeidx].callid_number,
           rtp_proxytable[freeidx].callid_host,
-          rtp_proxytable[freeidx].client_id.contact,
+          rtp_proxytable[freeidx].client_id.idstring,
           ((rtp_proxytable[freeidx].direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           rtp_proxytable[freeidx].media_stream_no, freeidx);
 
@@ -1033,12 +1032,27 @@ static void match_socket (int rtp_proxytable_idx) {
            (media_stream_no == rtp_proxytable[j].media_stream_no) &&
            (rtp_direction != rtp_proxytable[j].direction) /* channel: &&
            (channel == rtp_proxytable[j].channel)*/ ) {
+         char remip1[16], remip2[16];
+         char lclip1[16], lclip2[16];
+         
+         /* connect the two sockets */
          rtp_proxytable[rtp_proxytable_idx].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
          rtp_proxytable[rtp_proxytable_idx].rtp_con_tx_sock = rtp_proxytable[j].rtp_con_rx_sock;
-         DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i) <-> entry %i (fd=%i)",
+
+         strcpy(remip1, utils_inet_ntoa(rtp_proxytable[j].remote_ipaddr));
+         strcpy(lclip1, utils_inet_ntoa(rtp_proxytable[j].local_ipaddr));	
+         strcpy(remip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].remote_ipaddr));
+         strcpy(lclip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr));
+
+         DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i, %s:%i->%s:%i) <-> entry %i (fd=%i, %s:%i->%s:%i)",
                              j, rtp_proxytable[j].rtp_rx_sock,
+                             lclip1, rtp_proxytable[j].local_port,
+                             remip1, rtp_proxytable[j].remote_port,
                              rtp_proxytable_idx,
-                             rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock);
+                             rtp_proxytable[rtp_proxytable_idx].rtp_rx_sock,
+                             lclip2, rtp_proxytable[rtp_proxytable_idx].local_port,
+                             remip2, rtp_proxytable[rtp_proxytable_idx].remote_port
+                             );
          break;
       }
    }

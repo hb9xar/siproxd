@@ -979,46 +979,60 @@ if (configuration.debuglevel)
          if ((msg_port > 0) && (msg_port <= 65535)) {
             client_id_t client_id;
             osip_contact_t *contact = NULL;
-            char *tmp=NULL;
             char *protocol=NULL;
 
             /* try to get some additional UA specific unique ID.
              * This Client-ID should be guaranteed persistent
              * and not depend on if a UA/Server does include a
              * particular Header (Contact) or not.
-             * I should just go for the remote IP address here, no?
              */
-            /* &&& NO, using the sender IP will cause troubles if
-             * the remote peer (Proxy/registrar) is thrown out of
-             * the signalling path. Then suddenly the IP address changes.
-             *
-             * I should probably go back to the Contact Header based idea,
-             * with fallback to IP.
-             * I must use a n-item structure, including all things that
-             * can be used for comparing. Then, in the RTP proxy, comparison
-             * must take place according to priorities with the item
-             * with highest priority present in the RTP table *and*
-             * extracted from the SIP message.
-             * To start with, this can be just 2 things, the Contact header
-             * and the Layer 3 IP address. As long as the UAs include the
-             * Contact header, we survive IP changes (e.g. when the SIP
-             * Registrar/Proxy is removed from signalling path within an
-             * ongoing call. This may happen if the Registrar/Proxy does
-             * not explicitely ask to stay in the signalling path using 
-             * Record-Route headers - which is perfectly legal
-             *
-             */
+            /* we will use - if present the from/to fields.
+              * Outgoing call (RQ out, RS in  => use the "from" field to identify local client
+              * Incoming call (RQ in,  RS out => use the "to" field to identify local client
+              */
+             /* If no proper TO/FROM headers are present, fall back to use Contact header... */
 
             memset(&client_id, 0, sizeof(client_id));
 
-            /* get the Contact Header if present */
-            osip_message_get_contact(mymsg, 0, &contact);
-            if (contact) osip_contact_to_str(contact, &tmp);
-            if (tmp) strncpy(client_id.contact, tmp, CLIENT_ID_SIZE-1);
+             /* Outgoing call (RQ out, RS in  => use the "from" field to identify local client */
+            if ((MSG_IS_REQUEST(mymsg) && direction == DIR_OUTGOING) ||
+                (!MSG_IS_REQUEST(mymsg) && direction == DIR_INCOMING)) {
+
+                /* I have a full FROM SIP URI 'user@host' */
+                if (mymsg->from && mymsg->from->url && 
+                    mymsg->from->url->username && mymsg->from->url->host) {
+                   snprintf(client_id.idstring, CLIENT_ID_SIZE-1, "%s@%s", 
+                            mymsg->from->url->username, mymsg->from->url->host);
+                } else {
+                   char *tmp=NULL;
+                   /* get the Contact Header if present */
+                   osip_message_get_contact(mymsg, 0, &contact);
+                   if (contact) osip_contact_to_str(contact, &tmp);
+                   if (tmp) strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE-1);
+                } /* if from header */
+
+            /* Incoming call (RQ in,  RS out => use the "to" field to identify local client */
+            } else { /*(MSG_IS_REQUEST(mymsg) && direction == DIR_INCOMING) ||
+                       (!MSG_IS_REQUEST(mymsg) && direction == DIR_OUTGOING)) */
+
+                /* I have a full TO SIP URI 'user@host' */
+                if (mymsg->to && mymsg->to->url && 
+                    mymsg->to->url->username && mymsg->to->url->host) {
+                   snprintf(client_id.idstring, CLIENT_ID_SIZE-1, "%s@%s", 
+                            mymsg->to->url->username, mymsg->to->url->host);
+                } else {
+                   char *tmp=NULL;
+                   /* get the Contact Header if present */
+                   osip_message_get_contact(mymsg, 0, &contact);
+                   if (contact) osip_contact_to_str(contact, &tmp);
+                   if (tmp) strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE-1);
+                } /* if to header */
+            }
 
             /* store the IP address of the sender */
             memcpy(&client_id.from_ip, &ticket->from.sin_addr,
                    sizeof(client_id.from_ip));
+
 
             /*
              * is this an RTP stream ? If yes, set 'isrtp=1'
