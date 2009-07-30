@@ -2,7 +2,7 @@
 =====
   30-Jul-2009:  - RTP proxy could get confused and mess up RTP streams
                   if two local UAs did use the same usernames but register
-                  on different providers. A call from UA1 to UA2 the could
+                  on different providers. A call from UA1 to UA2 then could
                   mess up the audio.
   21-May-2009:  - Updated the documentation (plugin related stuff)
   24-Mar-2009:  - allow the usage of @ in shortdial entries to call
