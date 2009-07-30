@@ -989,7 +989,28 @@ if (configuration.debuglevel)
             /* we will use - if present the from/to fields.
               * Outgoing call (RQ out, RS in  => use the "from" field to identify local client
               * Incoming call (RQ in,  RS out => use the "to" field to identify local client
+              *
+              * According to RFC3261, the From and To headers MUST NOT change
+              * withing an ongoing dialog:
+              *
+              * 8.2.6.2 Headers and Tags
+              *
+              *    The From field of the response MUST equal the From header field of
+              *    the request.  The Call-ID header field of the response MUST equal the
+              *    Call-ID header field of the request.  The CSeq header field of the
+              *    response MUST equal the CSeq field of the request.  The Via header
+              *    field values in the response MUST equal the Via header field values
+              *    in the request and MUST maintain the same ordering.
+              *
+              *    If a request contained a To tag in the request, the To header field
+              *    in the response MUST equal that of the request.  However, if the To
+              *    header field in the request did not contain a tag, the URI in the To
+              *    header field in the response MUST equal the URI in the To header
+              *    field; additionally, the UAS MUST add a tag to the To header field in
+              *    the response (with the exception of the 100 (Trying) response, in
+              *    [...]
               */
+
              /* If no proper TO/FROM headers are present, fall back to use Contact header... */
 
             memset(&client_id, 0, sizeof(client_id));
