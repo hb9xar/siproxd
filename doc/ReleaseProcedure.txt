@@ -21,7 +21,7 @@ Make the release:
 - publish on SF.net
 - publish on freshmeat.net
 - copy RELNOTES to SF web page
-- copy html doxument to SF web page
+- copy html documentation to SF web page
 
 Open new working release:
 - change version number in configure.in
