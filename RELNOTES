@@ -2,10 +2,10 @@ Release Notes for siproxd-0.7.2
 ===============================
 
 Major changes since 0.7.1:
- - 
+ - mostly bugfixes related to aborting RTP streams
 
 Upgrade Notes 0.7.1 to 0.7.2:
-
+ - none
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -49,10 +49,11 @@ Requirements:
 Mainly tested on:
 - Fedora 32bit Linux 
   This is my main development and testing environment. Other platforms
-  are not extensively tested by myself.
+  are not extensively tested.
 
 Builds on (tested by dev-team or reported to build):
 - Linux:	Fedora
+		CentOS
 (		Fedora 64bit		)*
 (		WRT54g (133mhz mipsel router))*
 (- FreeBSD:	FreeBSD 4.10-BETA	)*
@@ -63,9 +64,9 @@ Builds on (tested by dev-team or reported to build):
 * Note: As the compile farm of sourceforge.net has been discontinued our
         building test possibilities are now very limited. Currently
         no explicit testing for systems/distributions other than
-        Fedora (x86 architecture) are made. We'll be looking into
+        Fedora/CentOS (x86 architecture) is made. We'll be looking into
         possibilities to perform some broader testing in future.
-        Of course, external help will be heartly welcome :-)
+        Of course, external help will be welcome :-)
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
@@ -76,6 +77,7 @@ Reported interoperability with softphones:
  - SJPhone softphone
  - Asterisk PBX (using a SIP Trunk, masqueraded via siproxd)
  - Ekiga
+ - FreePBX
 
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
@@ -85,6 +87,7 @@ Reported interoperability with SIP service providers:
  - Sipcall.ch	(Swiss VoIP provider)
  - Ekiga
  - Gizmo	(actually sipphone.com)
+
 
  If you have siproxd successfully running with another SIP phone
  and/or service provider, please drop me a short note so I can update
@@ -100,6 +103,14 @@ Known interoperability issues with SIP service providers:
 			to avoid this issue as callcentric does not comply
 			with the SIP specification.
 
+ - asterisk PBX		Asterisk has an issue finding the proper peer
+			if multiple peers originate from the same IP/port
+			tuple (a is the case if multiple phones are proxied
+			via siproxd to the same asterisk instance).
+			This is caused by the SIP implementation in 
+			asterisk (chan_sip).
+
+
 Known bugs:
    - SRV DNS records are not yet looked up, only A records
    There will be more for sure...
@@ -112,10 +123,17 @@ distribution I'd be happy to get a short notice.
 
 -----
 Signatures for siproxd-0.7.2.tar.gz archive:
-MD5 Hash:	
-SHA-256 Hash:	
+MD5 Hash:	ad2e0ba599adf3b5267a39dad28af973
+SHA-256 Hash:	c586d0f8e66841189e1e236eb18a1b0c8126d6e28aa6d0a28b591b016ccebbcb
 
 GnuPG signature:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (GNU/Linux)
+
+iD8DBQBK0bHMB2xLpFxU+GURAs+9AJ41ElSvkW/W5/+aH+iQdEmYjH3B9gCfanWK
+4uJ3zlGTH95+4SpIC0BC08A=
+=xMrq
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)

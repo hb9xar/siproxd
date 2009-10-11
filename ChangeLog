@@ -1,5 +1,6 @@
 0.7.2
 =====
+  11-Oct-2009:  - Released 0.7.2
   30-Jul-2009:  - RTP proxy could get confused and mess up RTP streams
                   if two local UAs did use the same usernames but register
                   on different providers. A call from UA1 to UA2 then could
