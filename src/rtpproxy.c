@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
 
@@ -73,7 +73,7 @@ int rtpproxy_init( void ) {
  *	STS_FAILURE on error
  */
 int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
-                   int direction, int media_stream_no,
+                   int direction, int call_direction, int media_stream_no,
                    struct in_addr local_ipaddr, int *local_port,
                    struct in_addr remote_ipaddr, int remote_port,
                    int isrtp) {
@@ -91,7 +91,7 @@ int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
          }
       }
       sts = rtp_relay_start_fwd (callid, client_id,
-                                 direction, media_stream_no,
+                                 direction, call_direction, media_stream_no,
                                  local_ipaddr, local_port,
                                  remote_ipaddr, remote_port, dejitter);
    } else {

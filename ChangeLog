@@ -1,5 +1,8 @@
 0.7.3
 =====
+  27-Oct-2009:  - Make local UA to local UA calls work better with UAs that
+                  blindly practice symmetric RTP and ignore the SDP media
+                  description completely (did anyone shout X-Lite?)
 
 0.7.2
 =====

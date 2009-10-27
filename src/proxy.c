@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -779,6 +779,7 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
    sdp_connection_t *sdp_conn;
    sdp_media_t *sdp_med;
    int rtp_direction=0;
+   int call_direction=0;
    int have_c_media=0;
    int isrtp = 0 ;
 
@@ -850,18 +851,22 @@ if (configuration.debuglevel)
    if (MSG_IS_REQUEST(mymsg)) {
       if (direction == DIR_INCOMING) {
          memcpy(&map_addr, &inside_addr, sizeof (map_addr));
-         rtp_direction = DIR_OUTGOING;
+         rtp_direction  = DIR_OUTGOING;
+         call_direction = DIR_INCOMING;
       } else {
          memcpy(&map_addr, &outside_addr, sizeof (map_addr));
-         rtp_direction = DIR_INCOMING;
+         rtp_direction  = DIR_INCOMING;
+         call_direction = DIR_OUTGOING;
       }
    } else /* MSG_IS_REPONSE(mymsg) */ {
       if (direction == DIR_INCOMING) {
          memcpy(&map_addr, &inside_addr, sizeof (map_addr));
-         rtp_direction = DIR_OUTGOING;
+         rtp_direction  = DIR_OUTGOING;
+         call_direction = DIR_OUTGOING;
       } else {
          memcpy(&map_addr, &outside_addr, sizeof (map_addr));
-         rtp_direction = DIR_INCOMING;
+         rtp_direction  = DIR_INCOMING;
+         call_direction = DIR_INCOMING;
       }
    }
 
@@ -1104,9 +1109,12 @@ if (configuration.debuglevel)
                }
             }
 
+            /*
+             * Start the RTP stream
+             */
             sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
                                 client_id,
-                                rtp_direction,
+                                rtp_direction, call_direction,
                                 media_stream_no,
                                 map_addr, &map_port,
                                 addr_media, msg_port,

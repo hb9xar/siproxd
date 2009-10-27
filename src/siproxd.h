@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -217,7 +217,7 @@ int  make_default_config(void);						/*X*/
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
 int  rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,	/*X*/
-                    int direction, int media_stream_no,
+                    int direction, int call_direction, int media_stream_no,
                     struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport,
                     int isrtp);

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
 
@@ -487,7 +487,7 @@ static void *rtpproxy_main(void *arg) {
  *	STS_FAILURE on error
  */
 int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
-                         int rtp_direction,
+                         int rtp_direction, int call_direction,
                          int media_stream_no, struct in_addr local_ipaddr,
                          int *local_port, struct in_addr remote_ipaddr,
                          int remote_port, int dejitter) {
@@ -526,9 +526,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
-          "stream for: CallID=%s@%s [Client-ID=%s] (%s) #=%i",
+          "stream for: CallID=%s@%s [Client-ID=%s] (%s,%s) #=%i",
           callid->number, callid->host, client_id.idstring,
           ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
+          ((call_direction == DIR_INCOMING) ? "incoming Call" : "outgoing Call"),
           media_stream_no);
 
    /* lock mutex */
@@ -1004,13 +1005,14 @@ static void rtpproxy_kill( void ) {
 /*
  * match_socket
  * matches and cross connects two rtp_proxytable entries
- * (corresponds to the two data directions of one RTP stream)
+ * (corresponds to the two data directions of one RTP stream
+ * within one call).
  */
 static void match_socket (int rtp_proxytable_idx) {
    int j;
    int rtp_direction = rtp_proxytable[rtp_proxytable_idx].direction;
+   int call_direction = rtp_proxytable[rtp_proxytable_idx].call_direction;
    int media_stream_no = rtp_proxytable[rtp_proxytable_idx].media_stream_no;
-/*chnnel   int channel = rtp_proxytable[rtp_proxytable_idx].channel;*/
    osip_call_id_t callid;
 
    callid.number = rtp_proxytable[rtp_proxytable_idx].callid_number;
@@ -1028,10 +1030,10 @@ static void match_socket (int rtp_proxytable_idx) {
        * - different client ID
        */
       if ( (rtp_proxytable[j].rtp_rx_sock != 0) &&
-           (compare_callid(&callid, &cid) == STS_SUCCESS) &&
-           (media_stream_no == rtp_proxytable[j].media_stream_no) &&
-           (rtp_direction != rtp_proxytable[j].direction) /* channel: &&
-           (channel == rtp_proxytable[j].channel)*/ ) {
+           (compare_callid(&callid, &cid) == STS_SUCCESS) &&		// same Call-ID
+           (call_direction == rtp_proxytable[j].call_direction) &&	// same Call direction
+           (media_stream_no == rtp_proxytable[j].media_stream_no) &&	// same stream
+           (rtp_direction != rtp_proxytable[j].direction) ) {		// opposite RTP dir
          char remip1[16], remip2[16];
          char lclip1[16], lclip2[16];
          

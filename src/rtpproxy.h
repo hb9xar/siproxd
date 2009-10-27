@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -50,6 +50,7 @@ typedef struct {
    char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
    client_id_t client_id;
    int  direction;				/* Direction of RTP stream */
+   int  call_direction;				/* Direction of Call DIR_x */
    int  media_stream_no;
    timecontrol_t tc;				/* de-jitter feature */
    struct in_addr local_ipaddr;			/* local IP */
@@ -65,7 +66,7 @@ typedef struct {
  */
 int  rtp_relay_init(void);
 int  rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
-                          int rtp_direction, int media_stream_no,
+                          int rtp_direction, int call_direction, int media_stream_no,
                           struct in_addr local_ipaddr, int *local_port,
                           struct in_addr remote_ipaddr, int remote_port,
                           int dejitter);
