@@ -78,7 +78,7 @@ static void sighdl_alm(int sig) {/* just wake up from select() */};
 static void *rtpproxy_main(void *i);
 static void rtpproxy_kill( void );
 static int  rtp_recreate_fdset(void);
-static void match_socket (int rtp_proxytable_idx);
+static int  match_socket (int rtp_proxytable_idx);
 static void error_handler (int rtp_proxytable_idx, int socket_type);
 
 
@@ -262,9 +262,9 @@ static void *rtpproxy_main(void *arg) {
              * have got some data in it (count > 0)
              */
             if (count > 0) {
-               /* find the corresponding TX socket */
-               if (rtp_proxytable[i].rtp_con_tx_sock == 0) match_socket(i);
-
+               /* send only if I have the matching TX socket, otherwise throw away.
+                * this requires a full 2-way communication to be set up for each
+                * RTP stream... */
                if (rtp_proxytable[i].rtp_con_tx_sock != 0) {
                   struct sockaddr_in dst_addr;
 
@@ -314,9 +314,9 @@ static void *rtpproxy_main(void *arg) {
              * have got some data in it (count > 0)
              */
             if (count > 0) {
-               /* find the corresponding TX socket */
-               if (rtp_proxytable[i].rtp_tx_sock == 0) match_socket(i);
-
+               /* send only if I have the matching TX socket, otherwise throw away.
+                * this requires a full 2-way communication to be set up for each
+                * RTP stream... */
                if (rtp_proxytable[i].rtp_tx_sock != 0) {
                   struct sockaddr_in dst_addr;
 #ifdef USE_DEJITTER
@@ -738,6 +738,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
    memcpy(&rtp_proxytable[freeidx].client_id, &client_id, sizeof(client_id_t));
 
    rtp_proxytable[freeidx].direction = rtp_direction;
+   rtp_proxytable[freeidx].call_direction = call_direction;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
    memcpy(&rtp_proxytable[freeidx].local_ipaddr,
           &local_ipaddr, sizeof(struct in_addr));
@@ -769,6 +770,11 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                    rtp_proxytable[freeidx].local_port + 1,
                    rtp_proxytable[freeidx].remote_ipaddr,
                    rtp_proxytable[freeidx].remote_port + 1);
+
+   /* try to find the matching socket for return path. This has to be done for
+    * both directions, the new socket and if one found, it must link back. */
+   i=match_socket(freeidx);
+   if (i>=0 && i<RTPPROXY_SIZE) j=match_socket(i);
 
    /* prepare FD set for next select operation */
    rtp_recreate_fdset();
@@ -1007,8 +1013,9 @@ static void rtpproxy_kill( void ) {
  * matches and cross connects two rtp_proxytable entries
  * (corresponds to the two data directions of one RTP stream
  * within one call).
+ * returns the matching rtp_proxytable index of -1 if not found.
  */
-static void match_socket (int rtp_proxytable_idx) {
+static int match_socket (int rtp_proxytable_idx) {
    int j;
    int rtp_direction = rtp_proxytable[rtp_proxytable_idx].direction;
    int call_direction = rtp_proxytable[rtp_proxytable_idx].call_direction;
@@ -1058,6 +1065,8 @@ static void match_socket (int rtp_proxytable_idx) {
          break;
       }
    }
+   if (j >= RTPPROXY_SIZE) j= -1;
+   return j;
 }
 
 
