@@ -970,7 +970,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    struct sockaddr_in *from;
    osip_message_t *request;
    osip_message_t *response;
-   struct in_addr tmp_addr;
+   struct in_addr tmp_addr, tmp_addr2;
 
    from=&ticket->from;
    request=ticket->sipmsg;
@@ -1113,14 +1113,17 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * if the telegram is received from 127.0.0.1 use my inbound IP as sender,
     * this likely is a locally REDIRECTED/DNATed (by iptables) packet.
     * So it is a local UA.
+    * Also, my own outbound address is considered to be redirected traffic
     * Example Scenario:
     * Softphone(or PBX) running on the same host as siproxd is running.
     * Using iptables, you do a REDIRECT of outgoping SIP traffix of the
     * PBX to be passed to siproxd.
     */
    sts=get_interface_ip(IF_INBOUND, &tmp_addr);
+   sts=get_interface_ip(IF_OUTBOUND, &tmp_addr2);
    if ((htonl(from->sin_addr.s_addr) == INADDR_LOOPBACK) ||
-       (from->sin_addr.s_addr == tmp_addr.s_addr)) {
+       (from->sin_addr.s_addr == tmp_addr.s_addr) ||
+       (from->sin_addr.s_addr == tmp_addr2.s_addr)) {
       if (MSG_IS_REQUEST(ticket->sipmsg)) {
          type=REQTYP_OUTGOING;
       } else {

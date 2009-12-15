@@ -2,7 +2,8 @@
 =====
   28-Oct-2009:  - Make local UA to local UA calls work better with UAs that
                   blindly practice symmetric RTP and ignore the SDP media
-                  description completely (did anyone shout X-Lite?)
+                  description completely.
+  15-Dec-2009:  - Better handling for SIP redirecting with newer kernels
 
 0.7.2
 =====
