@@ -1119,15 +1119,17 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * Using iptables, you do a REDIRECT of outgoping SIP traffix of the
     * PBX to be passed to siproxd.
     */
-   sts=get_interface_ip(IF_INBOUND, &tmp_addr);
-   sts=get_interface_ip(IF_OUTBOUND, &tmp_addr2);
-   if ((htonl(from->sin_addr.s_addr) == INADDR_LOOPBACK) ||
-       (from->sin_addr.s_addr == tmp_addr.s_addr) ||
-       (from->sin_addr.s_addr == tmp_addr2.s_addr)) {
-      if (MSG_IS_REQUEST(ticket->sipmsg)) {
-         type=REQTYP_OUTGOING;
-      } else {
-         type=RESTYP_OUTGOING;
+   if (type == DIRTYP_UNKNOWN) {
+      sts=get_interface_ip(IF_INBOUND, &tmp_addr);
+      sts=get_interface_ip(IF_OUTBOUND, &tmp_addr2);
+      if ((htonl(from->sin_addr.s_addr) == INADDR_LOOPBACK) ||
+	  (from->sin_addr.s_addr == tmp_addr.s_addr) ||
+	  (from->sin_addr.s_addr == tmp_addr2.s_addr)) {
+	 if (MSG_IS_REQUEST(ticket->sipmsg)) {
+            type=REQTYP_OUTGOING;
+	 } else {
+            type=RESTYP_OUTGOING;
+	 }
       }
    }
 
