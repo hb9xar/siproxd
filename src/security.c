@@ -59,6 +59,8 @@ int security_check_raw(char *sip_buffer, size_t size) {
     * empiric: a line should not be longer than 256 characters
     * (libosip may die with "virtual memory exhausted" otherwise)
     * Ref: protos test suite c07-sip-r2.jar, test case 203
+    * !! Contact records may all come in one single line, getting QUITE long...
+    *    especially on TCP.
     */
    for (p1=sip_buffer; (p1+SEC_MAXLINELEN) < (sip_buffer+size); p1=p2+1) {
       p2=strchr(p1, 10);
