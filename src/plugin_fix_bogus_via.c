@@ -51,7 +51,7 @@ static struct plugin_config {
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_fix_bogus_via_networks",      TYP_STRING, &plugin_cfg.networks },
+   { "plugin_fix_bogus_via_networks",      TYP_STRING, &plugin_cfg.networks,	{0, NULL} },
    {0, 0, 0}
 };
 

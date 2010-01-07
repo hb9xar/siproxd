@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002-2008  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
@@ -29,12 +29,14 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_shortdial.la \
 			plugin_logcall.la \
 			plugin_defaulttarget.la \
-			plugin_fix_bogus_via.la
+			plugin_fix_bogus_via.la \
+			plugin_stun.la
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
 			-dlopen plugin_logcall.la \
 			-dlopen plugin_defaulttarget.la \
-			-dlopen plugin_fix_bogus_via.la
+			-dlopen plugin_fix_bogus_via.la \
+			-dlopen plugin_stun.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
@@ -50,6 +52,9 @@ plugin_defaulttarget_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_fix_bogus_via_la_SOURCES = plugin_fix_bogus_via.c
 plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_stun_la_SOURCES = plugin_stun.c
+plugin_stun_la_LDFLAGS = -module -avoid-version -shrext '.so'
 
 
 #
