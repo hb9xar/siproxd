@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -46,47 +46,50 @@ static char const ident[]="$Id$";
 struct siproxd_config configuration;
 /* instructions for config parser */
 static cfgopts_t main_cfg_opts[] = {
-   { "debug_level",         TYP_INT4,   &configuration.debuglevel },
-   { "debug_port",          TYP_INT4,   &configuration.debugport },
-   { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port },
-   { "daemonize",           TYP_INT4,   &configuration.daemonize },
-   { "silence_log",         TYP_INT4,   &configuration.silence_log },
-   { "if_inbound",          TYP_STRING, &configuration.inbound_if },
-   { "if_outbound",         TYP_STRING, &configuration.outbound_if },
-   { "host_outbound",       TYP_STRING, &configuration.outbound_host },
-   { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low },
-   { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high },
-   { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout },
-   { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable },
-   { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp },
-   { "rtp_input_dejitter",  TYP_INT4,   &configuration.rtp_input_dejitter },
-   { "rtp_output_dejitter", TYP_INT4,   &configuration.rtp_output_dejitter },
-   { "user",                TYP_STRING, &configuration.user },
-   { "chrootjail",          TYP_STRING, &configuration.chrootjail },
-   { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg },
-   { "hosts_allow_sip",     TYP_STRING, &configuration.hosts_allow_sip },
-   { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
-   { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip },
-   { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm },
-   { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd },
-   { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile },
-   { "mask_host",           TYP_STRINGA,&configuration.mask_host },
-   { "masked_host",         TYP_STRINGA,&configuration.masked_host },
-   { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host },
-   { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port },
-   { "outbound_domain_name",TYP_STRINGA,&configuration.outbound_proxy_domain_name },
-   { "outbound_domain_host",TYP_STRINGA,&configuration.outbound_proxy_domain_host },
-   { "outbound_domain_port",TYP_STRINGA,&configuration.outbound_proxy_domain_port },
-   { "registration_file",   TYP_STRING, &configuration.registrationfile },
-   { "pid_file",            TYP_STRING, &configuration.pid_file },
-   { "default_expires",     TYP_INT4,   &configuration.default_expires },
-   { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations },
-   { "ua_string",           TYP_STRING, &configuration.ua_string },
-   { "use_rport",           TYP_INT4,   &configuration.use_rport },
-   { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops },
-   { "plugindir",           TYP_STRING, &configuration.plugin_dir },
-   { "load_plugin",         TYP_STRINGA,&configuration.load_plugin },
-   { "sip_dscp",            TYP_INT4,   &configuration.sip_dscp },
+   { "debug_level",         TYP_INT4,   &configuration.debuglevel,		{0, NULL} },
+   { "debug_port",          TYP_INT4,   &configuration.debugport,		{0, NULL} },
+   { "sip_listen_port",     TYP_INT4,   &configuration.sip_listen_port,		{SIP_PORT, NULL} },
+   { "daemonize",           TYP_INT4,   &configuration.daemonize,		{0, NULL} },
+   { "silence_log",         TYP_INT4,   &configuration.silence_log,		{1, NULL} },
+   { "if_inbound",          TYP_STRING, &configuration.inbound_if,		{0, NULL} },
+   { "if_outbound",         TYP_STRING, &configuration.outbound_if,		{0, NULL} },
+   { "host_outbound",       TYP_STRING, &configuration.outbound_host,		{0, NULL} },
+   { "rtp_port_low",        TYP_INT4,   &configuration.rtp_port_low,		{0, NULL} },
+   { "rtp_port_high",       TYP_INT4,   &configuration.rtp_port_high,		{0, NULL} },
+   { "rtp_timeout",         TYP_INT4,   &configuration.rtp_timeout,		{0, NULL} },
+   { "rtp_proxy_enable",    TYP_INT4,   &configuration.rtp_proxy_enable,	{1, NULL} },
+   { "rtp_dscp",            TYP_INT4,   &configuration.rtp_dscp,		{0, NULL} },
+   { "rtp_input_dejitter",  TYP_INT4,   &configuration.rtp_input_dejitter,	{0, NULL} },
+   { "rtp_output_dejitter", TYP_INT4,   &configuration.rtp_output_dejitter,	{0, NULL} },
+   { "user",                TYP_STRING, &configuration.user,			{0, NULL} },
+   { "chrootjail",          TYP_STRING, &configuration.chrootjail,		{0, NULL} },
+   { "hosts_allow_reg",     TYP_STRING, &configuration.hosts_allow_reg,		{0, NULL} },
+   { "hosts_allow_sip",     TYP_STRING, &configuration.hosts_allow_sip,		{0, NULL} },
+   { "hosts_deny_sip",      TYP_STRING, &configuration.hosts_deny_sip,		{0, NULL} },
+   { "proxy_auth_realm",    TYP_STRING, &configuration.proxy_auth_realm,	{0, NULL} },
+   { "proxy_auth_passwd",   TYP_STRING, &configuration.proxy_auth_passwd,	{0, NULL} },
+   { "proxy_auth_pwfile",   TYP_STRING, &configuration.proxy_auth_pwfile,	{0, NULL} },
+   { "mask_host",           TYP_STRINGA,&configuration.mask_host,		{0, NULL} },
+   { "masked_host",         TYP_STRINGA,&configuration.masked_host,		{0, NULL} },
+   { "outbound_proxy_host", TYP_STRING, &configuration.outbound_proxy_host,	{0, NULL} },
+   { "outbound_proxy_port", TYP_INT4,   &configuration.outbound_proxy_port,	{0, NULL} },
+   { "outbound_domain_name",TYP_STRINGA,&configuration.outbound_proxy_domain_name,{0, NULL} },
+   { "outbound_domain_host",TYP_STRINGA,&configuration.outbound_proxy_domain_host,{0, NULL} },
+   { "outbound_domain_port",TYP_STRINGA,&configuration.outbound_proxy_domain_port,{0, NULL} },
+   { "registration_file",   TYP_STRING, &configuration.registrationfile,	{0, NULL} },
+   { "pid_file",            TYP_STRING, &configuration.pid_file,		{0, NULL} },
+   { "default_expires",     TYP_INT4,   &configuration.default_expires,		{DEFAULT_EXPIRES, NULL} },
+   { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations,	{0, NULL} },
+   { "ua_string",           TYP_STRING, &configuration.ua_string,		{0, NULL} },
+   { "ua_string",           TYP_STRING, &configuration.ua_string,		{0, "foobar"} },
+   { "use_rport",           TYP_INT4,   &configuration.use_rport,		{0, NULL} },
+   { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops,		{0, NULL} },
+   { "plugindir",           TYP_STRING, &configuration.plugin_dir,		{0, NULL} },
+   { "load_plugin",         TYP_STRINGA,&configuration.load_plugin,		{0, NULL} },
+   { "sip_dscp",            TYP_INT4,   &configuration.sip_dscp,		{0, NULL} },
+   { "tcp_timeout",         TYP_INT4,   &configuration.tcp_timeout,		{TCP_IDLE_TO, NULL} },
+   { "tcp_connect_timeout", TYP_INT4,   &configuration.tcp_connect_timeout,	{TCP_CONNECT_TO, NULL} },
+   { "tcp_keepalive",       TYP_INT4,   &configuration.tcp_keepalive,		{0, NULL} },
    {0, 0, 0}
 };
 
@@ -131,7 +134,7 @@ int main (int argc, char *argv[])
    int i;
    size_t buflen;
    int access;
-   char buff [BUFFER_SIZE];
+   char buff[BUFFER_SIZE];
    sip_ticket_t ticket;
 
    extern char *optarg;         /* Defined in libc getopt and unistd.h */
@@ -170,8 +173,8 @@ int main (int argc, char *argv[])
 /*
  * prepare default configuration
  */
-   make_default_config();
-   log_set_pattern(configuration.debuglevel);
+   memset (&configuration, 0, sizeof(configuration));
+   log_set_pattern(0);
 
 /*
  * parse command line
@@ -345,38 +348,53 @@ int main (int argc, char *argv[])
  *****************************/
    while (!exit_program) {
 
-      DEBUGC(DBCLASS_BABBLE,"going into sipsock_wait\n");
-      while (sipsock_wait()<=0) {
-         /* got no input, here by timeout. do aging */
-         register_agemap();
+      while ((sts = sipsock_waitfordata(buff, sizeof(buff)-1,
+                                    &ticket.from, &ticket.protocol)) <=0 ) {
 
-         /* TCP log: check for a connection */
-         log_tcp_connect();
-
-         /* dump memory stats if requested to do so */
-         if (dmalloc_dump) {
-            dmalloc_dump=0;
-#ifdef DMALLOC
-            INFO("SIGUSR2 - DMALLOC statistics is dumped");
-            dmalloc_log_stats();
-            dmalloc_log_unfreed();
-#else
-            INFO("SIGUSR2 - DMALLOC support is not compiled in");
-#endif
-         }
-
+         /* allow exit, even if there is no activity... */
          if (exit_program) goto exit_prg;
-      }
+
+         if (sts < 0) {
+            /* got no input, here by timeout. do aging */
+            register_agemap();
+
+            /* TCP log: check for a connection */
+            log_tcp_connect();
+
+            /* dump memory stats if requested to do so */
+            if (dmalloc_dump) {
+               dmalloc_dump=0;
+#ifdef DMALLOC
+               INFO("SIGUSR2 - DMALLOC statistics is dumped");
+               dmalloc_log_stats();
+               dmalloc_log_unfreed();
+#else
+               INFO("SIGUSR2 - DMALLOC support is not compiled in");
+#endif
+            } /* if dmalloc */
+
+            /* Timer activation of plugins */
+            sts = call_plugins(PLUGIN_TIMER, NULL);
+
+         } /* if sts < 0 */
+
+      } /* while sts */
 
       /*
        * got input, process
        */
-      DEBUGC(DBCLASS_BABBLE,"back from sipsock_wait");
+      buflen = (size_t)sts;
+      DEBUGC(DBCLASS_BABBLE,"received %i bytes of data", buflen);
       ticket.direction=0;
-
-      buflen=sipsock_read(&buff, sizeof(buff)-1, &ticket.from,
-                           &ticket.protocol);
       buff[buflen]='\0';
+
+      /* pointers in ticket to raw message */
+      ticket.raw_buffer=buff;
+      ticket.raw_buffer_len=buflen;
+
+      /* Call Plugins for stage: PLUGIN_PROCESS_RAW */
+      sts = call_plugins(PLUGIN_PROCESS_RAW, &ticket);
+      if (sts == STS_FALSE) continue;
 
       /*
        * evaluate the access lists (IP based filter)
@@ -442,6 +460,7 @@ int main (int argc, char *argv[])
 
       /* Call Plugins for stage: PLUGIN_VALIDATE */
       sts = call_plugins(PLUGIN_VALIDATE, &ticket);
+      if (sts == STS_FALSE) goto end_loop;
 
       /*
        * RFC 3261, Section 16.3 step 3
