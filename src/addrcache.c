@@ -119,7 +119,7 @@ int	seek_for_entry (osip_message_t *sipmsg, addrcache_t **entry_out)
 				{
 					/*
 					 * This must be, because of legal loop backs in case of
-					 * calling one party behind this prox from behind this
+					 * calling one party behind this proxy from behind this
 					 * proxy :-/
 					 */
 
