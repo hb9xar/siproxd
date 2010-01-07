@@ -40,6 +40,9 @@ extern struct siproxd_config configuration;
 /* prototypes used locally only */
 static int parse_config (FILE *configfile, cfgopts_t cfgopts[], char *filter);
 
+/* load default values from cfgopts_t structure */
+static int load_defaults(cfgopts_t cfgopts2[]);
+
 
 /* try to open (whichever is found first):
  *	<name>
@@ -68,6 +71,9 @@ int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
 	"/usr/local/etc/%s.conf",
 	NULL };
 
+
+   DEBUGC(DBCLASS_CONFIG,"setting default config values");
+   load_defaults(cfgopts);
 
    DEBUGC(DBCLASS_CONFIG,"trying to read config file");
 
@@ -314,12 +320,57 @@ static int parse_config (FILE *configfile, cfgopts_t configoptions[],
 }
 
 
-int make_default_config(void){
-   memset (&configuration, 0, sizeof(configuration));
-   configuration.sip_listen_port=SIP_PORT;
-   configuration.default_expires=DEFAULT_EXPIRES;
-   configuration.rtp_input_dejitter=DEFAULT_DEJITTER;
-   configuration.rtp_output_dejitter=DEFAULT_DEJITTER;
+/* load_defaults
+ *
+ *	Loads the default values as defined in the cfgopts structure
+ *
+ *	cfgopts: control array for the parser. defined keywors and types
+ *
+ * RETURNS
+ *	STS_SUCCESS on success
+ *	STS_FAILURE on error
+ */
+static int load_defaults(cfgopts_t cfgopts2[]){
+   int k;
+   void *ptr;
+
+   /* loop through the config array */
+   for (k=0; cfgopts2[k].keyword != NULL; k++) {
+
+      switch (cfgopts2[k].type) {
+         //
+         // Integer4
+         //
+         case TYP_INT4:
+            ptr=cfgopts2[k].dest;
+            *(int*)ptr=cfgopts2[k].defval.int4;
+            break;	    
+
+         //
+         // String
+         // copy the pointer to a statically allocated string. If overridden
+         // by the config file, memory will be allocated dynamically and
+         // overwrites the destination pointer.
+         //
+         case TYP_STRING:
+            ptr=cfgopts2[k].dest;
+            memcpy(ptr, &cfgopts2[k].defval.string, sizeof (char *));
+            break;	    
+
+         //
+         // String array
+         //
+         case TYP_STRINGA:
+            memset(cfgopts2[k].dest, 0, sizeof (char *));
+            break;	    
+
+         default:
+            break;
+      }
+
+   } /* for k */
 
    return STS_SUCCESS;
-}
+};
+
+
