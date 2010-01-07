@@ -52,8 +52,8 @@ static struct plugin_config {
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_defaulttarget_target",      TYP_STRING, &plugin_cfg.target },
-   { "plugin_defaulttarget_log",         TYP_INT4,   &plugin_cfg.log },
+   { "plugin_defaulttarget_target",      TYP_STRING, &plugin_cfg.target,	{0, NULL} },
+   { "plugin_defaulttarget_log",         TYP_INT4,   &plugin_cfg.log,		{0, NULL} },
    {0, 0, 0}
 };
 /* local storage */

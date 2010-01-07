@@ -52,7 +52,7 @@ static struct plugin_config {
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_demo_string",      TYP_STRING, &plugin_cfg.string },
+   { "plugin_demo_string",      TYP_STRING, &plugin_cfg.string,			{0, NULL} },
    {0, 0, 0}
 };
 

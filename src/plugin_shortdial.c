@@ -54,8 +54,8 @@ static struct plugin_config {
 } plugin_cfg;
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_shortdial_akey",   TYP_STRING, &plugin_cfg.shortdial_akey },
-   { "plugin_shortdial_entry",  TYP_STRINGA,&plugin_cfg.shortdial_entry },
+   { "plugin_shortdial_akey",   TYP_STRING, &plugin_cfg.shortdial_akey,		{0, NULL} },
+   { "plugin_shortdial_entry",  TYP_STRINGA,&plugin_cfg.shortdial_entry,	{0, NULL} },
    {0, 0, 0}
 };
 
@@ -179,7 +179,7 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    char *new_to_host=NULL;
    int  i;
    size_t username_len;
-   size_t host_len;
+   size_t host_len=0;
    osip_contact_t *contact = NULL;
 
    new_to_user=plugin_cfg.shortdial_entry.string[shortcut_no-1];

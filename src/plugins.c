@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2003-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2003-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
 
@@ -168,8 +168,9 @@ int call_plugins(int stage, sip_ticket_t *ticket) {
    int sts;
    func_plugin_process_t plugin_process;
 
-   /* sanity check, beware pluigins from crappy stuff */
-   if (!ticket || !ticket->sipmsg) return STS_FAILURE;
+   /* sanity check, beware plugins from crappy stuff 
+    * applies when SIP message has been parsed        */
+   if ((stage > PLUGIN_PROCESS_RAW) && (!ticket || !ticket->sipmsg)) return STS_FAILURE;
 
    /* for each plugin in plugins, do */
    for (cur=siproxd_plugins; cur != NULL; cur = cur->next) {
@@ -178,14 +179,36 @@ int call_plugins(int stage, sip_ticket_t *ticket) {
          plugin_process=cur->plugin_process;
          sts=(*plugin_process)(stage, ticket);
          switch (stage) {
+            /* PLUGIN_PROCESS_RAW can be prematurely ended by plugin -
+               plugin determines that the UDP message is to be discarded */
+            case (PLUGIN_PROCESS_RAW):
+               /* return with the plugins status back to the caller */
+               if (sts == STS_FAILURE) {
+                  DEBUGC(DBCLASS_PLUGIN, "call_plugins: PLUGIN_PROCESS_RAW "
+                         "prematurely ending plugin processing in module "
+                         "%s sts=STS_FAILURE", cur->name);
+                  return sts;
+               }
+               break;
+            /* PLUGIN_VALIDATE can be prematurely ended by plugin -
+               plugin determines that the UDP message is to be discarded */
+            case (PLUGIN_VALIDATE):
+               /* return with the plugins status back to the caller */
+               if (sts == STS_FAILURE) {
+                  DEBUGC(DBCLASS_PLUGIN, "call_plugins: PLUGIN_VALIDATE "
+                         "prematurely ending plugin processing in module "
+                         "%s sts=STS_FAILURE", cur->name);
+                  return sts;
+               }
+               break;
             /* PLUGIN_DETERMINE_TARGET can be prematurely ended by plugin - 
                plugin processes and sends the final SIP message itself */
             case (PLUGIN_DETERMINE_TARGET):
                /* return with the plugins status back to the caller */
                if (sts == STS_SIP_SENT) {
-                  DEBUGC(DBCLASS_PLUGIN, "call_plugins: prematurely ending "
-                         "plugin processing in module %s sts=STS_SIP_SENT",
-                         cur->desc);
+                  DEBUGC(DBCLASS_PLUGIN, "call_plugins: PLUGIN_DETERMINE_TARGET "
+                         "prematurely ending plugin processing in module "
+                         "%s sts=STS_SIP_SENT", cur->desc);
                   return sts;
                }
                break;

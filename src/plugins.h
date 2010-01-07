@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2008  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
     
@@ -30,16 +30,34 @@
 /*
  * Processing stages for Plugins
  */
+/* get cyclic trigger */
+/* NO ticket is present (ticket = NULL pointer) */
+#define PLUGIN_TIMER		0x00000001
+
+/* Process RAW data received */
+/* may end the current SIP processing in siproxd by returning STS_FALSE *
+ * may be used to intercept other traffic on SIP port */
+/* ticket with NO sipmsg is present (ticket.sipmsg = NULL pointer) */
+#define PLUGIN_PROCESS_RAW	0x00000005
+
+/*--------- below here a valid sip message (ticket->sipmsg) is present ---*/
+
 /* Validation of SIP packet */
+/* may end the current SIP processing in siproxd by returning STS_FALSE *
+ * may be used to intercept other traffic on SIP port */
 #define PLUGIN_VALIDATE		0x00000010	
+
 /* Determining Request Targets */
 /* may end the current SIP processing in siproxd by returning STS_SIP_SENT
  * see plugin_shortcut that sends a redirect back to the client */
 #define PLUGIN_DETERMINE_TARGET	0x00000020	/* Determining Request Targets */
+
 /* SIP package before siproxd starts the proxying process */
 #define PLUGIN_PRE_PROXY	0x00000040	/* before MASQuerading */
+
 /* to/from unregistered UA */
 #define PLUGIN_PROXY_UNK	0x00000080	/* e.g. incoming call to unknown UA */
+
 /* before sending the SIP message */
 #define PLUGIN_POST_PROXY	0x00000100	/* after MASQuerading */
 
