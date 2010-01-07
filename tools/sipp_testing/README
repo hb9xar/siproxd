@@ -1,0 +1,36 @@
+
+Setup:
+------
+
+HOSTA ---------- siproxd ------------HOSTB
+private net         |     Internet
+
+
+siproxd must be setup as transparent proxy (iptables rules to
+redirect all outgoing SIP traffic from sipp to HOSTB to local siproxd)
+
+Client on HOSTA
+---------------
+- limited to 10 simultaneous calls (-> default configured RTP port range)
+- server and client are on port 5070
+- each call is kept for 1000ms (-d), then terminated
+- every 1000ms (-rp) 5 (-r) new calls are spawned
+- end test after 100 total calls
+
+./sipp -sf myuac.xml -l 10 -p 5070 -d 1000 \
+       -m 100 -r 5 -rp 1000 HOSTB:5070 
+
+
+Server on HOSTB
+---------------
+- port 5070
+
+./sipp -sf myuas.xml -p 5070
+
+
+Note: siproxd has limited simultaneous calls
+      - RTP port range
+      - some compile time constants for RTP array sizing
+
+Those XML scenarios include a REGISTER step before doing the
+actual call. This is required for siproxd to know the local UA.

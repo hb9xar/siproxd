@@ -33,6 +33,8 @@
 
 #include "log.h"
 
+#define USE_NAPTR	0
+
 static char const ident[]="$Id$";
 
 
@@ -54,7 +56,7 @@ int resolve_SRV(char *name, char *dname, int dnamelen, int *port) {
    return _resolve(name, C_IN, T_SRV, dname, dnamelen, port);
 }
 
-#if 0
+#if USE_NAPTR
 /*
  * perform a NAPTR lookup
  *
@@ -186,7 +188,7 @@ Currently just the first (lowest prio, highest weight) entry is returned.
                   xptr+=j;
                }
             }
-#if 0
+#if USE_NAPTR
          } else if( ty == T_NAPTR ) {
             DEBUGC(DBCLASS_DNS, "_resolve: A - type NAPTR");
             usp = (unsigned short *)xptr;
