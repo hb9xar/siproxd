@@ -979,9 +979,22 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 
    ticket->direction = DIRTYP_UNKNOWN;
 
+   /* Search order is as follows:
+    * - "from" IP address one of our registered local UAs
+    * - "To:" SIP header (Request) directed to internal UA
+    *   or
+    *   "From:" SIP header (Response) coming from internal UA
+    * - SIP URI matches one of the registered local UAs
+    * - for Responses: check for bottommost "Via:" header to be
+    *   one of our registered local UA IPs
+    * - "from" IP == 127.0.0.1 || inbound_IP || outbound IP 
+    *
+    * The first successful match is taken.
+    */
+
    /*
     * did I receive the telegram from a REGISTERED host?
-    * -> it must be an OUTGOING request
+    * -> it must be an OUTGOING request/response
     */
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
@@ -1002,9 +1015,11 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
       }
    }
 
+
    /*
     * is the telegram directed to an internally registered host?
-    * -> it must be an INCOMING request
+    * -> likely to be an INCOMING request/response
+    * check for a match on the To: header  first
     */
    if (type == DIRTYP_UNKNOWN) {
       for (i=0; i<URLMAP_SIZE; i++) {
@@ -1017,20 +1032,12 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 
          /* So this means, that we must check the SIP URI supplied with the
           * INVITE method, as this points to the real wanted target.
-          * Q: does there exist a situation where the SIP URI itself does
-          *    point to "somewhere" but the To: points to the correct UA?
-          * So for now, we just look at both of them (SIP URI and To: header)
+          * First we will try to match on the To: and From: headers
+          * If nothing is found here, we try again with SIP URI futher down.
           */
 
          if (MSG_IS_REQUEST(ticket->sipmsg)) {
             /* REQUEST */
-            /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
-            if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
-                (!MSG_IS_REGISTER(request) &&
-                 (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
-               type=REQTYP_INCOMING;
-               break;
-            }
             /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
             if ((compare_url(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
                 (!MSG_IS_REGISTER(request) &&
@@ -1050,17 +1057,37 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
       } /* for i */
    } /* if type == DIRTYP_UNKNOWN */
 
-   if (MSG_IS_RESPONSE(ticket->sipmsg)) {
-      /* &&&& Open Issue &&&&
-         it has been seen with cross-provider calls that the FROM may be 'garbled'
-         (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
-         How can we deal with this? Should I take into consideration the 'Via'
-         headers? This is the only clue I have, pointing to the *real* UA.
-         Maybe I should put in a 'siproxd' ftag value to recognize it as a header
-         inserted by myself
-      */
-      if ((type == DIRTYP_UNKNOWN) && 
-          (!osip_list_eol(&(response->vias), 0))) {
+
+   /*
+    * nothing found yet? 
+    * -> likely to be an INCOMING request/response
+    * check for a match on the SIP URI (requests only)
+    */
+   if ((type == DIRTYP_UNKNOWN) && (MSG_IS_REQUEST(ticket->sipmsg))) {
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+         /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
+         if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
+             (!MSG_IS_REGISTER(request) &&
+              (compare_url(request->req_uri, urlmap[i].reg_url)==STS_SUCCESS))) {
+            type=REQTYP_INCOMING;
+            break;
+         }
+      } /* for i */
+   } /* if type == DIRTYP_UNKNOWN */
+
+
+   /* &&&& Open Issue &&&&
+    * it has been seen with cross-provider calls that the FROM may be 'garbled'
+    * (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
+    * How can we deal with this? Should I take into consideration the 'Via'
+    * headers? This is the only clue I have, pointing to the *real* UA.
+    * Maybe I should put in a 'siproxd' ftag value to recognize it as a header
+    * inserted by myself
+    */
+   if ((type == DIRTYP_UNKNOWN) && 
+       (!osip_list_eol(&(response->vias), 0))) {
+      if (MSG_IS_RESPONSE(ticket->sipmsg)) {
          osip_via_t *via;
          struct in_addr addr_via, addr_myself;
          int port_via, port_ua;
@@ -1106,8 +1133,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
                }
             } /* for i */
          }
-      } /* if type == DIRTYP_UNKNOWN */
-   } /* is response */
+      } /* is response */
+   } /* if type == DIRTYP_UNKNOWN */
+
 
    /*
     * if the telegram is received from 127.0.0.1 use my inbound IP as sender,
@@ -1131,7 +1159,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
             type=RESTYP_OUTGOING;
 	 }
       }
-   }
+   } /* if type == DIRTYP_UNKNOWN */
 
 
    if (type == DIRTYP_UNKNOWN) {
