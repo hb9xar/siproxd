@@ -100,21 +100,31 @@ struct siproxd_config {
    char *plugin_dir;
    stringa_t load_plugin;
    int   sip_dscp;
+   int   tcp_timeout;
+   int   tcp_connect_timeout;
+   int   tcp_keepalive;
 };
 
 /*
  * control structure for config file parser
  */
 typedef struct {
+   int  int4;
+   char *string;
+} defval_t;
+typedef struct {
    char *keyword;
    enum type {TYP_INT4, TYP_STRING, TYP_FLOAT, TYP_STRINGA} type;
    void *dest;
+   defval_t defval;
 } cfgopts_t;
 
 /*
  * SIP ticket
  */
 typedef struct {
+   char *raw_buffer;		/* raw UDP packet */
+   int  raw_buffer_len;		/* length of raw data */
    osip_message_t *sipmsg;	/* SIP */
    struct sockaddr_in from;	/* received from */
 #define PROTO_UNKN -1
@@ -151,12 +161,13 @@ typedef struct {
 
 /* sock.c */
 int sipsock_listen(void);						/*X*/
-int sipsock_wait(void);
-int sipsock_read(void *buf, size_t bufsize,
-                 struct sockaddr_in *from, int *protocol);
+//int sipsock_wait(void);
+int sipsock_waitfordata(char *buf, size_t bufsize,
+                        struct sockaddr_in *from, int *protocol);
 int sipsock_send(struct in_addr addr, int port,	int protocol,		/*X*/
                  char *buffer, size_t size);
-int sockbind(struct in_addr ipaddr, int localport, int errflg);
+int sockbind(struct in_addr ipaddr, int localport, int protocol, int errflg);
+int tcp_find(struct sockaddr_in dst_addr);
 
 /* register.c */
 void register_init(void);
@@ -173,7 +184,7 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction); /*X*/
 int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx);		/*X*/
 int proxy_rewrite_useragent(sip_ticket_t *ticket);			/*X*/
 
-/* route_preprocessing.c */
+/* route_processing.c */
 int route_preprocess(sip_ticket_t *ticket);				/*X*/
 int route_add_recordroute(sip_ticket_t *ticket);			/*X*/
 int route_purge_recordroute(sip_ticket_t *ticket);			/*X*/
@@ -209,10 +220,12 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
 int  sip_find_direction(sip_ticket_t *ticket, int *urlidx);		/*X*/
 int  sip_fixup_asterisk(char *buff, size_t *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
+int  sip_add_received_param(sip_ticket_t *ticket);			/*X*/
+int  sip_get_received_param(sip_ticket_t *ticket,
+                            struct in_addr *dest, int *port);		/*X*/
 
 /* readconf.c */
 int  read_config(char *name, int search, cfgopts_t cfgopts[], char *filter); /*X*/
-int  make_default_config(void);						/*X*/
 
 /* rtpproxy.c */
 int  rtpproxy_init( void );						/*X*/
@@ -262,12 +275,14 @@ int unload_plugins(void);
 #define DEFAULT_MAXFWD	70	/* default Max-Forward count */
 #define DEFAULT_EXPIRES	3600	/* default Expires timeout */
 
+#define TCP_IDLE_TO	300	/* TCP connection idle timeout in seconds */
+#define TCP_CONNECT_TO	500	/* TCP connect() timeout in msec */
+
 #define URLMAP_SIZE	128	/* number of URL mapping table entries	*/
 				/* this limits the number of clients!	*/
 
 #define SOURCECACHE_SIZE 256	/* number of return addresses		*/
 #define DEJITTERLIMIT	1500000	/* max value for dejitter configuration */
-#define DEFAULT_DEJITTER 100000	/* default value for dejitter configuration */
 
 #define RTPPROXY_SIZE	256	/* number of rtp proxy entries		*/
 				/* this limits the number of calls!	*/
@@ -302,7 +317,7 @@ int unload_plugins(void);
 
 /* constants for security testing */
 #define SEC_MINLEN	16	/* minimum received length */
-#define SEC_MAXLINELEN	1024	/* maximum acceptable length of one line
+#define SEC_MAXLINELEN	2048	/* maximum acceptable length of one line
 				   in the SIP telegram (security check)
 				   Careful: Proxy-Authorization lines may
 				   get quite long */

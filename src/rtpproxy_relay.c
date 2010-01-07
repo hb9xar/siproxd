@@ -661,10 +661,10 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
       /* port is available, try to allocate */
       if (j == RTPPROXY_SIZE) {
          port=i;
-         sock=sockbind(local_ipaddr, port, 0);	/* RTP */
+         sock=sockbind(local_ipaddr, port, PROTO_UDP, 0);	/* RTP */
 
          if (sock) {
-            sock_con=sockbind(local_ipaddr, port+1, 0);	/* RTCP */
+            sock_con=sockbind(local_ipaddr, port+1, PROTO_UDP, 0);	/* RTCP */
             /* if success break, else try further on */
             if (sock_con) break;
             sts = close(sock);
@@ -908,6 +908,9 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                    rtp_proxytable[i].remote_ipaddr,
                    rtp_proxytable[i].remote_port + 1);
          /* clean up */
+         if (rtp_proxytable[i].opposite_entry) {
+            rtp_proxytable[rtp_proxytable[i].opposite_entry-1].opposite_entry=0;
+         }
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
       }
@@ -1052,6 +1055,9 @@ static int match_socket (int rtp_proxytable_idx) {
          strcpy(lclip1, utils_inet_ntoa(rtp_proxytable[j].local_ipaddr));	
          strcpy(remip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].remote_ipaddr));
          strcpy(lclip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr));
+
+         rtp_proxytable[rtp_proxytable_idx].opposite_entry=j+1;
+         rtp_proxytable[j].opposite_entry=rtp_proxytable_idx+1;
 
          DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i, %s:%i->%s:%i) <-> entry %i (fd=%i, %s:%i->%s:%i)",
                              j, rtp_proxytable[j].rtp_rx_sock,

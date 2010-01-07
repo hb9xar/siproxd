@@ -96,6 +96,16 @@ int proxy_request (sip_ticket_t *ticket) {
    request=ticket->sipmsg;
 
    /*
+    * RFC&&&&
+    * add a received= parameter to the topmost Via header. Used for TCP
+    * connections - send answer within the existing TCP connection back
+    * to client.
+    */
+   if (ticket->protocol == PROTO_TCP) {
+      sip_add_received_param(ticket);
+   }
+
+   /*
     * RFC 3261, Section 16.4
     * Proxy Behavior - Route Information Preprocessing
     * (process Route header)
@@ -338,29 +348,6 @@ sts=sip_obscure_callid(ticket);
  * 3) SIP URI
  */
    /*
-    * fixed or domain outbound proxy defined ?
-    */
-// let's try with Route header first
-#if 0
-   if ((type == REQTYP_OUTGOING) &&
-       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
-      DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
-   /*
-    * Route present?
-    * If so, fetch address from topmost Route: header and remove it.
-    */
-   } else if ((type == REQTYP_OUTGOING) && 
-              (!osip_list_eol(&(request->routes), 0))) {
-      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
-         return STS_FAILURE;
-      }
-      DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
-#else
-   /*
     * Route present?
     * If so, fetch address from topmost Route: header and remove it.
     */
@@ -373,11 +360,13 @@ sts=sip_obscure_callid(ticket);
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
+   /*
+    * fixed or domain outbound proxy defined ?
+    */
    } else if ((type == REQTYP_OUTGOING) &&
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
              utils_inet_ntoa(sendto_addr), port);
-#endif
    /*
     * destination from SIP URI
     */
@@ -670,18 +659,17 @@ sts=sip_obscure_callid(ticket);
     * Determine Next-Hop Address
     */
 /*&&&& priority probably should be:
+ * 0) rport=;received= header (TCP only for now)
  * 1) Route header
  * 2) fixed outbound proxy
  * 3) Via header
  */
    /*
-    * check if we need to send to an outbound proxy
+    * IF TCP, check for rport=x;received=y parameters in VIA
     */
-// let's try with Route header first
-#if 0
-   if ((type == RESTYP_OUTGOING) &&
-       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
-      DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
+   if ((ticket->protocol == PROTO_TCP) && 
+       (sip_get_received_param(ticket,  &sendto_addr, &port) == STS_SUCCESS)) {
+      DEBUGC(DBCLASS_PROXY, "proxy_response: have received/rport to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
    /*
     * Route present?
@@ -696,25 +684,13 @@ sts=sip_obscure_callid(ticket);
       }
       DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
              utils_inet_ntoa(sendto_addr), port);
-#else
    /*
-    * Route present?
-    * If so, fetch address from topmost Route: header and remove it.
+    * check if we need to send to an outbound proxy
     */
-   if ((type == RESTYP_OUTGOING) && 
-              (!osip_list_eol(&(response->routes), 0))) {
-      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
-      if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
-         return STS_FAILURE;
-      }
-      DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
    } else if ((type == RESTYP_OUTGOING) &&
        (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
              utils_inet_ntoa(sendto_addr), port);
-#endif
    } else {
       /* get target address and port from VIA header */
       via = (osip_via_t *) osip_list_get (&(response->vias), 0);

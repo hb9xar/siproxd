@@ -578,10 +578,17 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
    sts = sip_calculate_branch_id(ticket, branch_id);
 
    myaddr=utils_inet_ntoa(addr);
-   sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s%s",
-           myaddr, configuration.sip_listen_port,
-           branch_id,
-           (add_rport)? ";rport":"");
+   if (ticket->protocol == PROTO_UDP) {
+      sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s%s",
+              myaddr, configuration.sip_listen_port,
+              branch_id,
+              (add_rport)? ";rport":"");
+   } else {
+      sprintf(tmp, "SIP/2.0/TCP %s:%i;branch=%s%s",
+              myaddr, configuration.sip_listen_port,
+              branch_id,
+              (add_rport)? ";rport":"");
+   }
 
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 
@@ -695,6 +702,11 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
          } else {
             /* incoming, use true url */
             osip_uri_clone(urlmap[i].true_url, &contact->url);
+         }
+
+         /* add transport=tcp parameter if TCP */
+         if (ticket->protocol == PROTO_TCP) {
+            osip_uri_set_transport_tcp(contact->url);
          }
 
          osip_list_add(&(sip_msg->contacts),contact,j);
@@ -1144,7 +1156,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * Also, my own outbound address is considered to be redirected traffic
     * Example Scenario:
     * Softphone(or PBX) running on the same host as siproxd is running.
-    * Using iptables, you do a REDIRECT of outgoping SIP traffix of the
+    * Using iptables, you do a REDIRECT of outgoing SIP traffic of the
     * PBX to be passed to siproxd.
     */
    if (type == DIRTYP_UNKNOWN) {
@@ -1376,3 +1388,83 @@ DEBUGC(DBCLASS_PROXY, "tmp+myidentlen=[%s], FromTag=[%s]",
 }
 
 
+/*
+ * SIP_ADD_RECEIVED_PARAM
+ *
+ * Add a received parameter to the topmost VIA header (IP and port)
+ * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int sip_add_received_param(sip_ticket_t *ticket){
+   osip_via_t *via;
+   char tmp[6];
+
+   DEBUGC(DBCLASS_PROXY,"adding received= param to topmost via");
+   via = osip_list_get (&(ticket->sipmsg->vias), 0);
+   
+   /* set rport=xxx;received=1.2.3.4 */
+   snprintf(tmp, sizeof(tmp), "%i", ntohs(ticket->from.sin_port));
+   osip_via_param_add(via,osip_strdup("rport"),osip_strdup(tmp));
+
+   osip_via_param_add(via,osip_strdup("received"),
+                      osip_strdup(utils_inet_ntoa(ticket->from.sin_addr)));
+
+   return STS_SUCCESS;
+}
+
+
+/*
+ * SIP_GET_RECEIVED_PARAM
+ *
+ * Get a received parameter from the topmost VIA header (IP and port)
+ * 
+ * RETURNS
+ *	STS_SUCCESS on success
+ */
+int  sip_get_received_param(sip_ticket_t *ticket,
+                            struct in_addr *dest, int *port) {
+   osip_via_t *via;
+   osip_generic_param_t *received=NULL;
+   osip_generic_param_t *rport=NULL;
+   int sts;
+
+   DEBUGC(DBCLASS_PROXY,"searching received= param in topmost via");
+   via = osip_list_get (&(ticket->sipmsg->vias), 0);
+
+   osip_via_param_get_byname (via, "received", &received);
+   osip_via_param_get_byname (via, "rport",    &rport);
+
+   if (received && rport && received->gvalue && rport->gvalue) {
+      /* fetch the IP */
+      sts = get_ip_by_host(received->gvalue, dest);
+      if (sts != STS_SUCCESS) return STS_FAILURE;
+      
+      /* fetch the port number */
+      *port = atoi(rport->gvalue);
+      if ((*port <=0) || (*port >=65536)) return STS_FAILURE;
+
+      /* If TCP, then validate first if an existing connection is in the cache.
+       * If not, do not use this - a new conection must be established! */
+      if (ticket->protocol == PROTO_TCP) {
+         struct sockaddr_in addr;
+         addr.sin_family = AF_INET;
+         memcpy(&addr.sin_addr, dest, sizeof(struct in_addr));
+         addr.sin_port= htons(*port);
+         sts = tcp_find(addr);
+         if (sts < 0) {
+            DEBUGC(DBCLASS_BABBLE, "IP: %s, port: %i not found in cache",
+                   utils_inet_ntoa(*dest), *port);
+            return STS_FAILURE;
+         }
+      }
+
+      /* found, return */
+      DEBUGC(DBCLASS_BABBLE, "IP:%s, port:%i is ok to be reused",
+             utils_inet_ntoa(*dest), *port);
+      return STS_SUCCESS;
+   }
+
+   /* not found */
+   return STS_FAILURE;
+}
