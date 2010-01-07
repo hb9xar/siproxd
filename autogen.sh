@@ -9,6 +9,6 @@ test -f configure.in || {
 set -e
 aclocal
 autoheader
-libtoolize --ltdl --copy
+libtoolize --ltdl --copy --force
 automake --add-missing --copy
 autoconf

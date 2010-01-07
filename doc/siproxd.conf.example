@@ -160,12 +160,31 @@ rtp_input_dejitter  = 0
 rtp_output_dejitter = 0
 
 ######################################################################
-# Default Expiration timeout for Registrations
-#    If a REGISTER request does not contain an Expires header
-#    or expires= parameter in the Contact header, this number of
-#    seconds will be used - and reported back to the UA in the answer.
+# TCP SIP settings:
+# TCP inactivity timeout:
+#    For TCP SIP signalling, this indicates the inactivity timeout
+#    (seconds) after that an idling TCP connection is disconnected.
+#    Note that making this too short may cause multiple parallell
+#    registrations for the same phone. This timeout must be set larger
+#    than the used registration interval.
 #
-default_expires = 600
+tcp_timeout = 600
+#
+# Timeout for connection attempts in msec:
+#    How many msecs shall siproxd wait for an successful connect
+#    when establishing an outgoing SIP signalling connection. This
+#    should be kept as short as possible as waiting for an TCP
+#    connection to establish is a BLOCKING operation - while waiting
+#    for a connect to succeed not SIP messages are processed (RTP is
+#    not affected).
+#
+tcp_connect_timeout = 500
+#
+# TCP keepalive period
+#    For TCP SIP signalling, if > 0 empty SIP packets will be sent
+#    every 'n' seconds to keep the connection alive. Default is off.
+#
+tcp_keepalive = 20
 
 ######################################################################
 # Proxy authentication
@@ -300,6 +319,7 @@ plugindir=/usr/lib/siproxd/
 load_plugin=plugin_logcall.la
 #load_plugin=plugin_defaulttarget.la
 #load_plugin=plugin_fix_bogus_via.la
+#load_plugin=plugin_stun.la
 
 
 ######################################################################
@@ -347,4 +367,15 @@ plugin_defaulttarget_target = sip:internal@dddd:port
 # part of the list below, it will be replaced by the IP where the
 # SIP message has been received from.
 plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+
+######################################################################
+# Plugin_stun
+#
+# Uses an external STUN server to determine the public IP
+# address of siproxd. Useful for "in-front-of-NAT-router"
+# scenarios.
+plugin_stun_server = stun.ekiga.net
+plugin_stun_port = 3478
+# period in seconds to request IP info from STUN server
+plugin_stun_period = 300
 
