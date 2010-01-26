@@ -1,10 +1,18 @@
-0.7.3
+0.8.0
 =====
+  21-Jan-2010:  - Support for UPDATE (RFC3311) - working on it
   07-Jan-2010:  - Better handling of matching the local UAs
   15-Dec-2009:  - Better handling for SIP redirecting with newer kernels
   28-Oct-2009:  - Make local UA to local UA calls work better with UAs that
                   blindly practice symmetric RTP and ignore the SDP media
                   description completely.
+  26-Oct-2009:  - plugin_stun: use external STUN server to determine
+                  the public IP address of siproxd.
+  13-Jul-2009:  - TCP keepalive feature - to avoid issues with changing
+                  port numbers upon disconnect/reconnect a TCP connection.
+                - symmetric reuse of existing TCP connections
+  12-Jul-2009:  - Added basic TCP support for SIP signalling
+  06-Jun-2009:  - Defined default values for config options
 
 0.7.2
 =====

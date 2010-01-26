@@ -163,6 +163,10 @@ int proxy_request (sip_ticket_t *ticket) {
          /* Rewrite the body */
          sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
 
+      } else if (MSG_IS_UPDATE(request)) {
+         /* Rewrite the body */
+         sts = proxy_rewrite_invitation_body(ticket, DIR_INCOMING);
+
       }
 sts=sip_obscure_callid(ticket);
       break;
@@ -212,6 +216,8 @@ sts=sip_obscure_callid(ticket);
       if (MSG_IS_INVITE(request)) {
          sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
       } else if (MSG_IS_ACK(request) || MSG_IS_PRACK(request)) {
+         sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
+      } else if (MSG_IS_UPDATE(request)) {
          sts = proxy_rewrite_invitation_body(ticket, DIR_OUTGOING);
       }
 
@@ -524,7 +530,8 @@ sts=sip_obscure_callid(ticket);
        *                       start RTP proxy stream(s). In case
        *                       of a negative answer, stop RTP stream
        */
-      if (MSG_IS_RESPONSE_FOR(response,"INVITE")) {
+      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) ||
+          (MSG_IS_RESPONSE_FOR(response,"UPDATE"))) {
          /* positive response, start RTP stream */
          if ((MSG_IS_STATUS_1XX(response)) || 
               (MSG_IS_STATUS_2XX(response))) {
@@ -611,7 +618,8 @@ sts=sip_obscure_callid(ticket);
        *
        * In case of a negative answer, stop RTP stream
        */
-      if (MSG_IS_RESPONSE_FOR(response,"INVITE")) {
+      if ((MSG_IS_RESPONSE_FOR(response,"INVITE")) ||
+          (MSG_IS_RESPONSE_FOR(response,"UPDATE"))) {
          /* positive response, start RTP stream */
          if ((MSG_IS_STATUS_1XX(response)) || 
               (MSG_IS_STATUS_2XX(response))) {
