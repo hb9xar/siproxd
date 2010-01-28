@@ -1,6 +1,6 @@
 0.8.0
 =====
-  21-Jan-2010:  - Support for UPDATE (RFC3311) - working on it
+  21-Jan-2010:  - Support for UPDATE (RFC3311)
   07-Jan-2010:  - Better handling of matching the local UAs
   15-Dec-2009:  - Better handling for SIP redirecting with newer kernels
   28-Oct-2009:  - Make local UA to local UA calls work better with UAs that
