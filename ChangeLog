@@ -1,5 +1,8 @@
 0.8.0
 =====
+  19-Feb-2010:  - CVE-2009-3736: use libltdl on host if existing and fall 
+                  back using convenienve libltdl (with a config warning)
+                - updated libtool version
   21-Jan-2010:  - Support for UPDATE (RFC3311)
   07-Jan-2010:  - Better handling of matching the local UAs
   15-Dec-2009:  - Better handling for SIP redirecting with newer kernels

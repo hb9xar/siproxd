@@ -45,6 +45,8 @@ dnl				libs now in libosip_prefix_dir
 dnl	 1-Mar-2009	tries	building with --enable-static-libosip2 requires
 dnl				--disable-shared to be set as well (plugins will
 dnl				be statically linked into siproxd)
+dnl	19-Feb-2010	tries	CVE-2009-3736: use libltdl on host if existing
+dnl				and fall back using convenienve libltdl (WARN)
 dnl
 dnl
 
@@ -100,13 +102,21 @@ AC_LIBLTDL_CONVENIENCE
 dnl
 dnl Check for dlopen support
 AC_LIBTOOL_DLOPEN
+dnl
 dnl Configure libtool
 AC_PROG_LIBTOOL
 dnl
 dnl Substitute LTDLINCL and LIBLTDL in the Makefiles
-AC_SUBST(LTDLINCL)
-AC_SUBST(LIBLTDL)
-AC_CONFIG_SUBDIRS(libltdl)
+dnl this is only done if no native libltdl is found.
+AC_CHECK_LIB(ltdl, lt_dlopen, [
+   echo "Good: native libltdl found, using it.";
+   LIBS="$LIBS -lltdl";
+],[
+   echo "*** WARNING: no native libltdl found, using convenience libltdl!";
+   AC_SUBST(LTDLINCL)
+   AC_SUBST(LIBLTDL)
+   AC_CONFIG_SUBDIRS(libltdl)
+],)
 
 
 dnl **********************************************
