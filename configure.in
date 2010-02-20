@@ -98,7 +98,18 @@ dnl for our plugins. As this would require the automake/libtool
 dnl packages to be present we include that library with
 dnl the siproxd package as so called "convenience library"
 dnl
-AC_LIBLTDL_CONVENIENCE
+AC_CHECK_LIB(ltdl, lt_dlopen, [
+   echo "Good: native libltdl found, using it.";
+   use_native_ltdl="yes";
+],[
+   echo "*** WARNING: no native libltdl found, using convenience libltdl!";
+   use_native_ltdl="no";
+],)
+
+if test "x$use_native_ltdl" = "xno"; then
+   AC_LIBLTDL_CONVENIENCE
+fi
+
 dnl
 dnl Check for dlopen support
 AC_LIBTOOL_DLOPEN
@@ -108,15 +119,14 @@ AC_PROG_LIBTOOL
 dnl
 dnl Substitute LTDLINCL and LIBLTDL in the Makefiles
 dnl this is only done if no native libltdl is found.
-AC_CHECK_LIB(ltdl, lt_dlopen, [
-   echo "Good: native libltdl found, using it.";
+
+if test "x$use_native_ltdl" = "xyes"; then
    LIBS="$LIBS -lltdl";
-],[
-   echo "*** WARNING: no native libltdl found, using convenience libltdl!";
+else
    AC_SUBST(LTDLINCL)
    AC_SUBST(LIBLTDL)
    AC_CONFIG_SUBDIRS(libltdl)
-],)
+fi
 
 
 dnl **********************************************
