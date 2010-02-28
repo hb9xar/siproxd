@@ -1,17 +1,11 @@
-Release Notes for siproxd-0.8.0
+Release Notes for siproxd-0.8.1
 ===============================
 
-Major changes since 0.7.2:
- - CVE-2009-3736: use libltdl on host if existing and fall 
-   back using convenienve libltdl (with a config warning)
- - updated libtool version
- - Support for UPDATE (RFC3311)
- - Basic TCP support for SIP signalling
- - Better handling of symmetric RTP
- - STUN plugin to determine the public (outbound) IP address
+Major changes since 0.8.0:
+ - 
 
-Upgrade Notes 0.7.2 to 0.8.0:
- - Merge the configuration file
+Upgrade Notes 0.8.0 to 0.8.1:
+ - 
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -131,18 +125,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.8.0.tar.gz archive:
-MD5 Hash:	a39bc2a06a1c9abb6118ca3482e98f3c
-SHA-256 Hash:	1a0306dbf5dd65f2c6d779bd449cbabba8c1a4cc79ca034e9cc83836c60f8542
+Signatures for siproxd-0.8.1.tar.gz archive:
+MD5 Hash:	
+SHA-256 Hash:	
 
 GnuPG signature:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-
-iD8DBQBLirh2B2xLpFxU+GURAtm5AJ9re2s9XG5N2zeA8V+jRmy1CdBTOgCffchn
-huYlFw+MwcBhyBFUbhvewpU=
-=cl+h
------END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
