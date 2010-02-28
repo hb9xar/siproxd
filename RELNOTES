@@ -1,17 +1,25 @@
-Release Notes for siproxd-0.7.3
+Release Notes for siproxd-0.8.0
 ===============================
 
 Major changes since 0.7.2:
- - 
+ - CVE-2009-3736: use libltdl on host if existing and fall 
+   back using convenienve libltdl (with a config warning)
+ - updated libtool version
+ - Support for UPDATE (RFC3311)
+ - Basic TCP support for SIP signalling
+ - Better handling of symmetric RTP
+ - STUN plugin to determine the public (outbound) IP address
 
-Upgrade Notes 0.7.2 to 0.7.3:
- - 
+Upgrade Notes 0.7.2 to 0.8.0:
+ - Merge the configuration file
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
    masquerading firewall
  - Support for PRACK messages (RFC3262)
- - works with "dial-up" conenctions (dynamic IP addresses)
+ - Support for UPDATE messages (RFC3311)
+ - SIP UDP and TCP supported
+ - Works with "dial-up" conenctions (dynamic IP addresses)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Access control (IP based) for incoming traffic
  - Proxy Authentication for registration of local clients (User Agents)
@@ -32,7 +40,7 @@ General Overview:
  - Supports running in a chroot jail and changing user-ID after startup
  - All configuration done via one simple ascii configuration file
  - Logging to syslog in daemon mode
- - RPM package
+ - RPM package (Spec file)
  - The host part of UA registration entries can be masqueraded
    (mask_host, masked_host config items). Some Siemens SIP phones seem to
    need this 'feature'.
@@ -47,13 +55,13 @@ Requirements:
  - libosip2 (3.x.x)
 
 Mainly tested on:
-- Fedora 32bit Linux 
+- CentOS 5, 32bit Linux 
   This is my main development and testing environment. Other platforms
   are not extensively tested.
 
 Builds on (tested by dev-team or reported to build):
 - Linux:	Fedora
-		CentOS
+		CentOS/RedHat
 (		Fedora 64bit		)*
 (		WRT54g (133mhz mipsel router))*
 (- FreeBSD:	FreeBSD 4.10-BETA	)*
@@ -81,7 +89,6 @@ Reported interoperability with softphones:
 
 Reported interoperability with SIP service providers:
  - Sipphone	(http://www.sipphone.com)
- - FWD		(http://www.fwd.pulver.com)
  - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
  - Sipcall.ch	(Swiss VoIP provider)
@@ -109,6 +116,8 @@ Known interoperability issues with SIP service providers:
 			via siproxd to the same asterisk instance).
 			This is caused by the SIP implementation in 
 			asterisk (chan_sip).
+			Note: This seems to be no longer valid with
+			      asterisk version 1.6 and up.
 
 
 Known bugs:
@@ -122,11 +131,18 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.7.3.tar.gz archive:
-MD5 Hash:	
-SHA-256 Hash:	
+Signatures for siproxd-0.8.0.tar.gz archive:
+MD5 Hash:	a39bc2a06a1c9abb6118ca3482e98f3c
+SHA-256 Hash:	1a0306dbf5dd65f2c6d779bd449cbabba8c1a4cc79ca034e9cc83836c60f8542
 
 GnuPG signature:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQBLirh2B2xLpFxU+GURAtm5AJ9re2s9XG5N2zeA8V+jRmy1CdBTOgCffchn
+huYlFw+MwcBhyBFUbhvewpU=
+=cl+h
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
