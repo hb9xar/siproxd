@@ -17,7 +17,7 @@
       <email>tries@users.sourceforge.net</email>
     </address>
     <copyright>
-      <year>2005-2009</year>
+      <year>2005-2010</year>
       <holder>Thomas Ries</holder>
     </copyright>
     <legalnotice>
@@ -48,6 +48,12 @@
         <date>2008-01-27</date>
         <authorinitials>tries@users.sourceforge.net</authorinitials>
         <revremark>Plug-in API</revremark>
+      </revision>
+      <revision>
+        <revnumber>0.8.0</revnumber>
+        <date>2010-02-24</date>
+        <authorinitials>tries@users.sourceforge.net</authorinitials>
+        <revremark>TCP, STUN plugin, config file updates</revremark>
       </revision>
     </revhistory>
   </bookinfo>
@@ -243,7 +249,6 @@ make install
         interface definition for the inbound and outbound network
         interfaces (<parameter>if_inbound</parameter> and 
         <parameter>if_outbound</parameter>).</para>
-
       <para>Definition of network interfaces for the inbound network
         (local network where your SIP client is connected, this
         network normally uses IP addresses from on of the private
@@ -259,7 +264,7 @@ if_outbound = ppp0
         The <parameter>host_outbound</parameter> directive comes into
         play when running siproxd "in front of" a NAT router. Please
         check the configuration examples in this document for more
-        details.</para>
+        details. Also check the STUN plugin.</para>
 <screen>
 # host_outbound = &lt;my_public_ip_address>
 </screen>
@@ -318,12 +323,14 @@ user = nobody
 # chrootjail = /var/lib/siproxd/
 </screen>
 
-      <para>Where to store the current registrations. This allows
+      <para>Where to store the current registrations and the cycle
+        in seconds to perform the cyclic writing. This allows
         siproxd to remember registration across a restart. An empty
         value means we do not save registrations. The specified
         directory path must exist.</para>
 <screen>
 registration_file = /var/lib/siproxd/siproxd_registrations
+autosave_registrations = 300
 </screen>
 
       <para>Where to create the PID file.</para>
@@ -332,8 +339,8 @@ pid_file = /var/run/siproxd/siproxd.pid
 </screen>
 
       <para>Enable/disable the RTP proxy. This must always be
-        enabled. In some future release this directive may
-        become obsolete.</para>
+        enabled. In some future release this directive will
+        become obsolete and will be removed.</para>
 <screen>
 rtp_proxy_enable = 1
 </screen>
@@ -356,6 +363,14 @@ rtp_port_high = 7089
 rtp_timeout = 300
 </screen>
 
+      <para>DSCP (differentiated services) value to be assigned 
+        to RTP and SIP UDP packets. Allows QOS aware routers to
+        handle different types traffic with different priorities.</para>
+<screen>
+rtp_dscp = 46
+sip_dscp = 0
+</screen>
+
       <para>If a REGISTER request does not contain an
         <literal>Expires</literal> header or <literal>expires=</literal>
         parameter in the <literal>Contact</literal> header, this
@@ -363,6 +378,36 @@ rtp_timeout = 300
         in the answer.</para>
 <screen>
 default_expires = 600
+</screen>
+
+      <para>TCP inactivity timeout: For TCP SIP signalling, this 
+        indicates the inactivity timeout (seconds) after that an 
+        idling TCP connection is disconnected. Note that making 
+        this too short may cause multiple parallell registrations 
+        for the same phone. This timeout must be set larger than the 
+        used registration interval.</para>
+<screen>
+tcp_timeout = 600
+</screen>
+
+      <para>Timeout for connection attempts in msec: 
+        How many msecs shall siproxd wait for an successful connect
+        when establishing an outgoing SIP signalling connection. This
+        should be kept as short as possible as waiting for an TCP
+        connection to establish is a BLOCKING operation - while waiting
+        for a connect to succeed not SIP messages are processed (RTP is
+        not affected).</para>
+<screen>
+tcp_connect_timeout = 500
+</screen>
+
+
+      <para>TCP keepalive period:
+        For TCP SIP signalling, if > 0 empty SIP packets will be sent
+        every 'n' seconds to keep the connection alive. Default is off.
+        </para>
+<screen>
+tcp_keepalive = 20
 </screen>
 
       <para>If siproxd is used as registration server and
@@ -444,6 +489,25 @@ debug_port = 0
 # masked_host=public.domaind.org
 </screen>
 
+      <para>User Agent Masquerading: 
+        Siproxd can masquerade the User Agent string of your local UAs.
+        Useful for Providers that do not work with some specific UAs
+        (e.g. sipcall.ch - it does not work if your outgoing SIP
+        traffic contains an Asterisk UA string...)
+        Default is to do no replacement.</para>
+<screen>
+ua_string = Siproxd-UA
+</screen>
+
+      <para>Use ;rport in via header:
+        may be required in some cases where you have a NAT router that
+        remaps the source port 5060 to something different and the
+        registrar sends back the responses to port 5060.
+        Default is disabled (0)</para>
+<screen>
+use_rport = 0
+</screen>
+
       <para>Siproxd itself can be told to send all traffic to another
         outbound proxy. You can use this feature to 'chain' multiple
         siproxd proxies if you have several masquerading firewalls
@@ -489,6 +553,14 @@ plugindir=/usr/lib/siproxd/
 # List of plugins to load:
 #load_plugin=plugin_demo.la
 load_plugin=plugin_logcall.la
+</screen>
+
+      <para>Each plugin does manage it's own set of configuration 
+        options. They are named like plugin_&lt;pluginname>_xxxxx.
+        For the detailed description of configuration settings, refer
+        to the plugin description.</para>
+<screen>
+plugin_demo_string = This_is_a_string_passed_to_the_demo_plugin
 </screen>
     </sect1>
 
@@ -650,6 +722,10 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
           <listitem><para><filename>plugin_fix_bogus_via</filename></para>
                     <para>Fixes broken VIA headers on incoming calls.
                     </para></listitem>
+          <listitem><para><filename>plugin_stun</filename></para>
+                    <para>Cyclically checks with an STUN server for
+                      the public IP address of siproxd.
+                    </para></listitem>
         </orderedlist>
         Some of the plug-ins are described in more detail in the
         following chapters.
@@ -762,6 +838,33 @@ plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
           for more info). Can be applied if you have remote UAs calling you
           from the Internet and those UAs do have crappy Via headers (like 
           private IPs because there is some NAT involved on their side).</para>
+      </sect2>
+
+      <!-- Chapter 5.2.6: STUN Plug-in -->
+      <sect2 label="5.2.6">
+        <?dbhtml filename="siproxd_guide_c5s2-6.html">
+        <title>STUN Plug-in</title>
+        <para>Name: plugin_stun</para>
+        <para>Purpose: Uses an external STUN server to determine the
+          public IP address of the host running siproxd.</para>
+        <para>Configuration options:</para>
+<screen>
+# Plugin_stun
+#
+# Uses an external STUN server to determine the public IP
+# address of siproxd. Useful for "in-front-of-NAT-router"
+# scenarios.
+plugin_stun_server = stun.ekiga.net
+plugin_stun_port = 3478
+# period in seconds to request IP info from STUN server
+plugin_stun_period = 300
+</screen>
+        <para>Description:</para>
+        <para>Does contact the configured STUN server at startup and then
+          cyclically at the configured interval to determine the public
+          visible IP address of the host running siproxd. Useful for setups
+          that have changing public IP addresses and siproxd is running
+          in the "in-front-of-NAT-router" scenario.</para>
       </sect2>
     </sect1>
   </chapter>
