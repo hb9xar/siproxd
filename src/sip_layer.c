@@ -37,9 +37,9 @@ int sip_message_parse(osip_message_t * sip, const char *buf, size_t len) {
 int sip_message_to_str(osip_message_t * sip, char **dest, size_t *len) {
    int sts;
    /* check params */
-   if ((len == NULL) || (dest == NULL) || (*dest == NULL)) return -1;
+   if ((len == NULL) || (dest == NULL)) return -1;
 
-   len=0;
+   *len=0;
 
    sts = osip_message_to_str(sip, dest, len);
    if (sts == 0) {
@@ -47,7 +47,7 @@ int sip_message_to_str(osip_message_t * sip, char **dest, size_t *len) {
        * NULL termination (libosip2-2.2.0 does NOT do this properly,
        * there is always one byte too much :-( )
        */
-      if (len >= 0) (*dest)[*len]='\0';
+      if (*len >= 0) (*dest)[*len]='\0';
    }
 
    return sts;
@@ -56,9 +56,9 @@ int sip_message_to_str(osip_message_t * sip, char **dest, size_t *len) {
 int sip_body_to_str(const osip_body_t * body, char **dest, size_t *len) {
    int sts;
    /* check params */
-   if ((len == NULL) || (dest == NULL) || (*dest == NULL)) return -1;
+   if ((len == NULL) || (dest == NULL)) return -1;
 
-   len=0;
+   *len=0;
 
    sts = osip_body_to_str(body, dest, len);
    if (sts == 0) {
@@ -66,7 +66,7 @@ int sip_body_to_str(const osip_body_t * body, char **dest, size_t *len) {
        * NULL termination (libosip2-2.2.0 does NOT do this properly,
        * there is always one byte too much :-( )
        */
-      if (len >= 0) (*dest)[*len]='\0';
+      if (*len >= 0) (*dest)[*len]='\0';
    }
 
    return sts;
