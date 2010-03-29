@@ -1,10 +1,11 @@
 0.8.1
 =====
-
+  29-Mar-2010:  - fix: siproxd could crash when trying to rewrite a malformed
+                  SIP message. (thank you, Lucas)
 
 0.8.0
 =====
-  28-Oct-2009:  - Released 0.8.0
+  23-Feb-2010:  - Released 0.8.0
   19-Feb-2010:  - CVE-2009-3736: use libltdl on host if existing and fall 
                   back using convenienve libltdl (with a config warning)
                 - updated libtool version
