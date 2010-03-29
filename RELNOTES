@@ -10,6 +10,7 @@ Upgrade Notes 0.8.0 to 0.8.1:
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
    masquerading firewall
+ - basic support for SIP TCP transport
  - Support for PRACK messages (RFC3262)
  - Support for UPDATE messages (RFC3311)
  - SIP UDP and TCP supported
