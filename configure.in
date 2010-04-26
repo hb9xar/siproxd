@@ -127,12 +127,14 @@ dnl Substitute LTDLINCL and LIBLTDL in the Makefiles
 dnl this is only done if no native libltdl is found.
 
 if test "x$use_native_ltdl" = "xyes"; then
+   true;
    LIBS="$LIBS -lltdl";
 else
+   true;
    AC_SUBST(LTDLINCL)
    AC_SUBST(LIBLTDL)
-   AC_CONFIG_SUBDIRS(libltdl)
 fi
+AC_CONFIG_SUBDIRS(libltdl)
 
 
 dnl **********************************************
