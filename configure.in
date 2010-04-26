@@ -47,6 +47,9 @@ dnl				--disable-shared to be set as well (plugins will
 dnl				be statically linked into siproxd)
 dnl	19-Feb-2010	tries	CVE-2009-3736: use libltdl on host if existing
 dnl				and fall back using convenienve libltdl (WARN)
+dnl	26-Apr-2010	tries	Fresh building from distribuion TAR did fail if
+dnl				the host-installed libltdl lib is used (and not the
+dnl				convenience lib)
 dnl
 dnl
 
@@ -108,6 +111,9 @@ AC_CHECK_LIB(ltdl, lt_dlopen, [
 
 if test "x$use_native_ltdl" = "xno"; then
    AC_LIBLTDL_CONVENIENCE
+   AM_CONDITIONAL(use_convenience_ltdl,true)
+else
+   AM_CONDITIONAL(use_convenience_ltdl,false)
 fi
 
 dnl

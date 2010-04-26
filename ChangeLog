@@ -1,5 +1,7 @@
 0.8.1
 =====
+  26-Apr-2010:  - Clean building from distribuion TAR did fail if the host
+                  installed libltdl lib was used (and not the convenience lib)
   29-Mar-2010:  - fix: siproxd could crash when trying to rewrite a malformed
                   SIP message. (thank you, Lucas)
 
