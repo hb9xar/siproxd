@@ -425,7 +425,7 @@ int main (int argc, char *argv[])
       sts=osip_message_init(&ticket.sipmsg);
       ticket.sipmsg->message=NULL;
       if (sts != 0) {
-         ERROR("osip_message_init() failed... this is not good");
+         ERROR("osip_message_init() failed, sts=%i... this is not good", sts);
          continue; /* skip, there are no resources to free */
       }
 
@@ -436,7 +436,7 @@ int main (int argc, char *argv[])
        */
       sts=sip_message_parse(ticket.sipmsg, buff, buflen);
       if (sts != 0) {
-         ERROR("sip_message_parse() failed... this is not good");
+         ERROR("sip_message_parse() failed, sts=%i... this is not good", sts);
          DUMP_BUFFER(-1, buff, buflen);
          goto end_loop; /* skip and free resources */
       }
@@ -446,7 +446,7 @@ int main (int argc, char *argv[])
        */
       sts=security_check_sip(&ticket);
       if (sts != STS_SUCCESS) {
-         ERROR("security_check_sip() failed... this is not good");
+         ERROR("security_check_sip() failed, sts=%i... this is not good", sts);
          DUMP_BUFFER(-1, buff, buflen);
          goto end_loop; /* skip and free resources */
       }
