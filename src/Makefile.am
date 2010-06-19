@@ -19,7 +19,11 @@
 #
 
 
-AM_CFLAGS = -Wall -D_GNU_SOURCE \
+if use_convenience_ltdl
+   LTDLDEF = -DLTDL_CONVLIB
+endif
+
+AM_CFLAGS = -Wall -D_GNU_SOURCE $(LTDLDEF) \
             -DBUILDSTR="\"`cat .buildno`\""
 
 #

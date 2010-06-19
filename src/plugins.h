@@ -20,8 +20,13 @@
 
 /* $Id$ */
 
-/* fetch local version of ltdl */
-#include "../libltdl/ltdl.h"
+#ifdef LTDL_CONVLIB
+   /* fetch local version of ltdl */
+   #include "../libltdl/ltdl.h"
+#else
+   /* fetch system version of libltdl */
+   #include <ltdl.h>
+#endif
 
 
 /* Plugins must return STS_SUCCESS / SUCCESS_FAILURE */
