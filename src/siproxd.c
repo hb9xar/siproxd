@@ -384,7 +384,7 @@ int main (int argc, char *argv[])
        * got input, process
        */
       buflen = (size_t)sts;
-      DEBUGC(DBCLASS_BABBLE,"received %i bytes of data", buflen);
+      DEBUGC(DBCLASS_BABBLE,"received %zd bytes of data", buflen);
       ticket.direction=0;
       buff[buflen]='\0';
 
