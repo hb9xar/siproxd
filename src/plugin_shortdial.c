@@ -136,7 +136,7 @@ static int plugin_shortdial(sip_ticket_t *ticket) {
       return STS_SUCCESS; /* ignore */
 
    shortcut_no = atoi(&(req_url->username[1]));
-   if ((shortcut_no <= 0) || (shortcut_no >= LONG_MAX)) return STS_SUCCESS; /* not a number */
+   if ((shortcut_no <= 0) || (shortcut_no >= INT_MAX)) return STS_SUCCESS; /* not a number */
 
    /* requested number is not defined (out of range) */
    if (shortcut_no > plugin_cfg.shortdial_entry.used) {
