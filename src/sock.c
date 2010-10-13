@@ -724,7 +724,7 @@ static int tcp_connect(struct sockaddr_in dst_addr) {
       return -1;
    }
 
-   sts=connect(sock, &dst_addr, sizeof(struct sockaddr_in));
+   sts=connect(sock, (struct sockaddr *)&dst_addr, sizeof(struct sockaddr_in));
    if ((sts == -1 ) && (errno == EINPROGRESS)) {
       /* if non-blocking connect(), wait until connection 
          successful, discarded or timeout */
@@ -750,11 +750,11 @@ static int tcp_connect(struct sockaddr_in dst_addr) {
          } else if (sts > 0) {
             /* fd available for write */
             int valopt;
-            int optlen=sizeof(valopt);
+            socklen_t optlen=sizeof(valopt);
 
             /* get error status from delayed connect() */
             if (getsockopt(sock, SOL_SOCKET, SO_ERROR, 
-                           (void*)(&valopt), &optlen) < 0) {
+                           &valopt, &optlen) < 0) {
                ERROR("getsockopt(SO_ERROR) failed: %s",strerror(errno));
                close(sock);
                return -1;
