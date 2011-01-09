@@ -81,7 +81,6 @@ static cfgopts_t main_cfg_opts[] = {
    { "default_expires",     TYP_INT4,   &configuration.default_expires,		{DEFAULT_EXPIRES, NULL} },
    { "autosave_registrations",TYP_INT4, &configuration.autosave_registrations,	{0, NULL} },
    { "ua_string",           TYP_STRING, &configuration.ua_string,		{0, NULL} },
-   { "ua_string",           TYP_STRING, &configuration.ua_string,		{0, "foobar"} },
    { "use_rport",           TYP_INT4,   &configuration.use_rport,		{0, NULL} },
    { "obscure_loops",       TYP_INT4,   &configuration.obscure_loops,		{0, NULL} },
    { "plugindir",           TYP_STRING, &configuration.plugin_dir,		{0, NULL} },

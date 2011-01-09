@@ -1,6 +1,7 @@
 0.8.1
 =====
   09-Jan-2011:  - use CFLAGS -Wall only with GCC compiler
+                - fixed UA masquerading which was always set ("foobar")
   14-Oct-2010:  - fixed a number of compiler warnings (by Norm Brandinger)
                   [3086593,3086371,3086351]
   03-Oct-2010:  - use getifaddrs() to get the IP address of local interfaces.
