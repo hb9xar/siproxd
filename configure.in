@@ -93,8 +93,39 @@ AM_CONDITIONAL(have_docbook2pdf,test "$docbook2pdf" = "yes")
 AC_CHECK_PROG(docbook2html,docbook2html,yes,)
 AM_CONDITIONAL(have_docbook2html,test "$docbook2html" = "yes")
 
+
 dnl **********************************************
-dnl prepare libtool
+dnl * Location of libraries / headerfiles
+dnl **********************************************
+dnl
+dnl    --with-extra-includes
+dnl    --with-extra-libs
+dnl
+AC_ARG_WITH(extra-includes,
+   [  --with-extra-includes=DIR   adds non standard include paths],
+   extra_includes="$withval" )
+AC_SUBST(extra_includes)
+AC_MSG_CHECKING("extra includes")
+AC_MSG_RESULT($extra_includes)
+
+AC_ARG_WITH(extra-libs,
+   [  --with-extra-libs=DIR       adds non standard library paths],
+   extra_libs="$withval" )
+AC_SUBST(extra_libs)
+AC_MSG_CHECKING("extra libs")
+AC_MSG_RESULT($extra_libs)
+
+for each in $extra_includes; do
+   CPPFLAGS="$CPPFLAGS -I$each";
+done
+
+for each in $extra_libs; do
+   LIBS="$LIBS -L$each";
+done
+
+
+dnl **********************************************
+dnl prepare libtool (ltdl)
 dnl **********************************************
 dnl
 dnl We require the ltdl (libtool portable dynamic loader)
@@ -139,37 +170,6 @@ AC_CONFIG_SUBDIRS(libltdl)
 
 
 dnl **********************************************
-dnl * Location of libraries / headerfiles
-dnl **********************************************
-
-dnl
-dnl    --with-extra-includes
-dnl    --with-extra-libs
-dnl
-AC_ARG_WITH(extra-includes,
-   [  --with-extra-includes=DIR   adds non standard include paths],
-   extra_includes="$withval" )
-AC_SUBST(extra_includes)
-AC_MSG_CHECKING("extra includes")
-AC_MSG_RESULT($extra_includes)
-
-AC_ARG_WITH(extra-libs,
-   [  --with-extra-libs=DIR       adds non standard library paths],
-   extra_libs="$withval" )
-AC_SUBST(extra_libs)
-AC_MSG_CHECKING("extra libs")
-AC_MSG_RESULT($extra_libs)
-
-for each in $extra_includes; do
-   CPPFLAGS="$CPPFLAGS -I$each";
-done
-
-for each in $extra_libs; do
-   LIBS="$LIBS -L$each";
-done
-
-
-dnl **********************************************
 dnl * Building doc
 dnl **********************************************
 
@@ -199,7 +199,6 @@ dnl
 dnl **********************************************
 dnl * Selection of static build variants
 dnl **********************************************
-
 dnl
 dnl    --enable-static-libosip2
 dnl

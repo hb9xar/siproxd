@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2008  Hans Carlos Hofmann <labtop-carlos@hchs.de>,
+    Copyright (C) 2006-2011  Hans Carlos Hofmann <labtop-carlos@hchs.de>,
                              Thomas Ries <tries@gmx.net>
 
     This file is part of Siproxd.
@@ -93,7 +93,7 @@ void dejitter_delayedsendto(int s, const void *msg, size_t len, int flags,
                             const struct timeval *current_tv,
                             rtp_proxytable_t *errret, int nolock) {
    rtp_delayed_message *m;
-   rtp_delayed_message **linkin;
+   rtp_delayed_message *linkin;
 
    if (!free_memory) send_top_of_que(nolock);
 
@@ -113,13 +113,13 @@ void dejitter_delayedsendto(int s, const void *msg, size_t len, int flags,
       msg_que = m;
       send_top_of_que(nolock);
    } else {
-      linkin = &msg_que;
-      while ((*linkin != NULL) &&
-             (cmp_time_values(&((*linkin)->transm_time),tv) < 0)) {
-         linkin = (rtp_delayed_message **)&((*linkin)->next);
+      linkin = msg_que;
+      while ((linkin != NULL) &&
+             (cmp_time_values(&(linkin->transm_time),tv) < 0)) {
+         linkin = linkin->next;
       }
-      m->next = *linkin;
-      *linkin = m;
+      m->next = linkin;
+      linkin = m;
    }
 }
 
@@ -127,19 +127,19 @@ void dejitter_delayedsendto(int s, const void *msg, size_t len, int flags,
  * Cancel a message
  */
 void dejitter_cancel(rtp_proxytable_t *dropentry) {
-   rtp_delayed_message **linkout;
+   rtp_delayed_message *linkout;
    rtp_delayed_message *m;
 
-   linkout = &msg_que;
+   linkout = msg_que;
 
-   while (*linkout != NULL) {
-      if ((*linkout)->errret == dropentry) {
-         m = *linkout;
-         *linkout = m->next;
+   while (linkout != NULL) {
+      if (linkout->errret == dropentry) {
+         m = linkout;
+         linkout = m->next;
          m->next = free_memory;
          free_memory = m;
       } else {
-         linkout = (rtp_delayed_message **)&((*linkout)->next);
+         linkout = linkout->next;
       }
    }
 }
@@ -392,7 +392,7 @@ static void send_top_of_que(int nolock) {
          if ((sts == -1) && (m->errret != NULL) && (errno != ECONNREFUSED)) {
             osip_call_id_t callid;
 
-            ERROR("sendto() [%s:%i size=%i] delayed call failed: %s",
+            ERROR("sendto() [%s:%i size=%zd] delayed call failed: %s",
                   utils_inet_ntoa(m->errret->remote_ipaddr),
                   m->errret->remote_port, m->message_len, strerror(errno));
 
