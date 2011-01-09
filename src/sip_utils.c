@@ -428,7 +428,7 @@ int is_sipuri_local (sip_ticket_t *ticket) {
       /* need name resolution */
       sts=get_ip_by_host(sip->req_uri->host, &addr_uri);
       if (sts == STS_FAILURE) {
-         DEBUGC(DBCLASS_PROXY, "sip_gen_response: cannot resolve via [%s]",
+         DEBUGC(DBCLASS_PROXY, "sip_gen_response: cannot resolve request uri [%s]",
                 sip->req_uri->host);
          return STS_FALSE;
       }

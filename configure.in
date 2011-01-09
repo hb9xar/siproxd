@@ -50,6 +50,7 @@ dnl				and fall back using convenienve libltdl (WARN)
 dnl	26-Apr-2010	tries	Fresh building from distribuion TAR did fail if
 dnl				the host-installed libltdl lib is used (and not the
 dnl				convenience lib)
+dnl	09-Jan-2011	tries	use CFLAGS -Wall only with GCC compiler
 dnl
 dnl
 
@@ -231,6 +232,17 @@ dnl
       AC_MSG_RESULT($enableval), AC_MSG_RESULT(no))
    if test "x$dmalloc" = "xyes"; then
       CFLAGS="$CFLAGS -DDMALLOC ";LIBS="-ldmallocth $LIBS";
+   fi
+
+
+dnl
+dnl Use -Wall if we have gcc.
+dnl
+   if test "x$GCC" = "xyes"; then
+      case " $CFLAGS " in
+         *[\ ]-Wall[\ ]*) ;;
+         *) CFLAGS="$CFLAGS -Wall" ;;
+      esac
    fi
 
 
@@ -471,6 +483,7 @@ ACX_WHICH_GETHOSTBYNAME_R()
 AC_CHECK_FUNCS(getopt_long setsid syslog)
 AC_CHECK_FUNCS(getuid setuid getgid setgid getpwnam chroot)
 AC_CHECK_FUNCS(socket bind select read send sendto fcntl)
+AC_CHECK_FUNCS(getifaddrs)
 AC_CHECK_FUNCS(strcmp strcasecmp)
 AC_CHECK_FUNCS(strncpy strchr strstr sprintf vfprintf vsnprintf)
 AC_CHECK_FUNCS(listen accept)

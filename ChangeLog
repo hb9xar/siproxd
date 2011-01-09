@@ -1,5 +1,10 @@
 0.8.1
 =====
+  09-Jan-2011:  - use CFLAGS -Wall only with GCC compiler
+  14-Oct-2010:  - fixed a number of compiler warnings (by Norm Brandinger)
+                  [3086593,3086371,3086351]
+  03-Oct-2010:  - use getifaddrs() to get the IP address of local interfaces.
+                  This seems to be required with FreeeBSD jails.
   19-Jun-2010:  - fix: include correct ltdl.h for system & convenience libltdl
   26-Apr-2010:  - Clean building from distribuion TAR did fail if the host
                   installed libltdl lib was used (and not the convenience lib)
