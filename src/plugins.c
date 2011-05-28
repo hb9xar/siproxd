@@ -208,7 +208,7 @@ int call_plugins(int stage, sip_ticket_t *ticket) {
                if (sts == STS_SIP_SENT) {
                   DEBUGC(DBCLASS_PLUGIN, "call_plugins: PLUGIN_DETERMINE_TARGET "
                          "prematurely ending plugin processing in module "
-                         "%s sts=STS_SIP_SENT", cur->desc);
+                         "%s sts=STS_SIP_SENT", cur->name);
                   return sts;
                }
                break;

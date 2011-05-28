@@ -34,13 +34,15 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_logcall.la \
 			plugin_defaulttarget.la \
 			plugin_fix_bogus_via.la \
-			plugin_stun.la
+			plugin_stun.la \
+			plugin_prefix.la
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
 			-dlopen plugin_logcall.la \
 			-dlopen plugin_defaulttarget.la \
 			-dlopen plugin_fix_bogus_via.la \
-			-dlopen plugin_stun.la
+			-dlopen plugin_stun.la \
+			-dlopen plugin_prefix.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
@@ -59,6 +61,9 @@ plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_stun_la_SOURCES = plugin_stun.c
 plugin_stun_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_prefix_la_SOURCES = plugin_prefix.c
+plugin_prefix_la_LDFLAGS = -module -avoid-version -shrext '.so'
 
 
 #
