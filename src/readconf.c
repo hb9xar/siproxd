@@ -64,11 +64,12 @@ int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
    int i;
    char tmp[256];
    const char *completion[] = {
-	"%s/.%src",		/* this one is special... (idx=0)*/
-	SIPROXDCONFPATH "/%s.conf",
-	"/etc/%s.conf",
-	"/usr/etc/%s.conf",
-	"/usr/local/etc/%s.conf",
+	"%s/.%src",			/* 0: this one is special... */
+	SIPROXDCONFPATH "/%s.conf",	/* 1 */
+	"/etc/%s.conf",			/* 2 */
+	"/etc/%s/%s.conf",		/* 3: this one, too */
+	"/usr/etc/%s.conf",		/* 5 */
+	"/usr/local/etc/%s.conf",	/* 6 */
 	NULL };
 
 
@@ -83,12 +84,16 @@ int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
       for (i=0; completion[i]!=NULL; i++) {
 	 switch (i) {
 	 case 0:
-            sprintf(tmp,completion[i],getenv("HOME"),name);
+            snprintf(tmp,sizeof(tmp),completion[i],getenv("HOME"),name);
+	    break;
+	 case 3:
+	    snprintf(tmp,sizeof(tmp),completion[i],name,name);
 	    break;
 	 default:
-            sprintf(tmp,completion[i],name);
+            snprintf(tmp,sizeof(tmp),completion[i],name);
 	    break;
 	 }
+	 tmp[sizeof(tmp)-1]='\0';
 	 DEBUGC(DBCLASS_CONFIG,"... trying %s",tmp);
          configfile = fopen(tmp,"r");
 	 if (configfile==NULL) continue;

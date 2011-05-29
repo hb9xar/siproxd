@@ -1,5 +1,7 @@
 0.8.1
 =====
+  29-May-2011:  - added search path "/etc/siproxd/siproxd.conf" to default
+                  search path for config files (SuSE)
   09-Jan-2011:  - use CFLAGS -Wall only with GCC compiler
                 - fixed UA masquerading which was always set ("foobar")
                 - fixed more compiler warnings [3086381]
