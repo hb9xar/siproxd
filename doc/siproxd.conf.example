@@ -320,6 +320,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_defaulttarget.la
 #load_plugin=plugin_fix_bogus_via.la
 #load_plugin=plugin_stun.la
+#load_plugin=plugin_prefix.la
 
 
 ######################################################################
@@ -379,3 +380,10 @@ plugin_stun_port = 3478
 # period in seconds to request IP info from STUN server
 plugin_stun_period = 300
 
+
+######################################################################
+# Plugin_prefix
+#
+# unconditionally prefixes all outgoing calls with the
+# "akey" prefix specified below.
+plugin_prefix_akey = 0
