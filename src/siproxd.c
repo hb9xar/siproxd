@@ -97,7 +97,7 @@ FILE *siproxd_passwordfile;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2005 Thomas Ries\n"
+PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2011 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
 #ifdef  HAVE_GETOPT_LONG

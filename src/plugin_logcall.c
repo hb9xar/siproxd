@@ -74,6 +74,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    osip_message_t *request;
    osip_uri_t *from_url = NULL;
    osip_uri_t *to_url   = NULL;
+   osip_uri_t *req_uri = NULL;
    char *to_username =NULL;
    char *to_host = NULL;
    char *from_username =NULL;
@@ -81,6 +82,8 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    char *call_type = NULL;
 
    request=ticket->sipmsg;
+   req_uri = request->req_uri;
+
    /* From: 1st preference is From header, then try contact header */
    if (request->from->url) {
       from_url = request->from->url;
@@ -112,12 +115,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    }
 
    if (call_type) {
-      INFO("%s Call: %s@%s -> %s@%s",
+      INFO("%s Call: %s@%s -> %s@%s [Req: %s@%s]",
            call_type,
            from_username ? from_username: "*NULL*",
            from_host     ? from_host    : "*NULL*",
            to_username   ? to_username  : "*NULL*",
-           to_host       ? to_host      : "*NULL*");
+           to_host       ? to_host      : "*NULL*",
+           (req_uri && req_uri->username) ? req_uri->username : "*NULL*",
+           (req_uri && req_uri->host)     ? req_uri->host     : "*NULL*"
+           );
    }
 
    return STS_SUCCESS;
