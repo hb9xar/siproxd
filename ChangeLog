@@ -1,5 +1,7 @@
 0.8.1
 =====
+  01-Jun-2011:  - new plugin_prefix: unconditionally prefixes outgoing
+                  calls with a configurable prefix string
   29-May-2011:  - added search path "/etc/siproxd/siproxd.conf" to default
                   search path for config files (SuSE)
   09-Jan-2011:  - use CFLAGS -Wall only with GCC compiler
