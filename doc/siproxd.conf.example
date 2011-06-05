@@ -3,7 +3,7 @@
 #
 # !! This is a sample file, adapt it to your needs before using it !!
 #
-# !! Strings MUST NOT contain spaces !!
+# !! Strings may contain spaces (since 0.8.1)
 #
 
 ######################################################################

@@ -149,7 +149,7 @@ int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
  *                         with "plugin_xxx", skip the rest.
  *                         PLugins set this to load their scope
  *                         of config options
- * filter = ""           - read main configuration, skipp everything
+ * filter = ""           - read main configuration, skip everything
  *                         starting with "plugin_" (hardwired).
  *
  * RETURNS
@@ -203,7 +203,7 @@ static int parse_config (FILE *configfile, cfgopts_t configoptions[],
        *                         with "plugin_xxx", skip the rest.
        *                         PLugins set this to load their scope
        *                         of config options
-       * filter = ""           - read main configuration, skipp everything
+       * filter = ""           - read main configuration, skip everything
        *                         starting with "plugin_" (hardwired).
        */
       if (filter) {
@@ -263,19 +263,25 @@ static int parse_config (FILE *configfile, cfgopts_t configoptions[],
 	    // String
 	    //
 	    case TYP_STRING:
-	         /* the %as within sscanf seems to be not too portable.
-                  * it is supposed to allocate the memory
+	         /* the %as within sscanf is not portable (%as is 
+                  * supposed to allocate the memory within sscanf)
                   * num=sscanf(ptr,"%as",(char**)configoptions[k].dest);
                   */
 
 		 /* figure out the amount of space we need */
-	         len=strlen(ptr)+1; /* include terminating zero!*/
-                 tmpptr=(char*)malloc(len);
-                 memcpy(configoptions[k].dest, &tmpptr, sizeof(tmpptr));
-	         num=sscanf(ptr,"%s",tmpptr);
-                 DEBUGC(DBCLASS_BABBLE,"STRING=%s",
-                         *(char**)configoptions[k].dest);
-	      break;	    
+		 len=strlen(ptr)+1; /* include terminating zero!*/
+		 tmpptr=(char*)malloc(len);
+		 memcpy(configoptions[k].dest, &tmpptr, sizeof(tmpptr));
+		 /* get full string, until a "#" or end of line */
+		 num=sscanf(ptr,"%[^#]",tmpptr);
+		 tmpptr[len-1]='\0';
+		 /* strip trailing spaces */
+		 i = strlen(tmpptr);
+		 do {i--;} while (i>0 && tmpptr[i] == ' ');
+		 tmpptr[i+1]='\0';
+		 DEBUGC(DBCLASS_BABBLE,"STRING=\"%s\"",
+		         *(char**)configoptions[k].dest);
+	      break;
 
 	    //
 	    // String array
@@ -283,17 +289,23 @@ static int parse_config (FILE *configfile, cfgopts_t configoptions[],
 	    case TYP_STRINGA:
             {
 		 /* figure out the amount of space we need */
-                 char **dst;
-                 int used=((stringa_t*)(configoptions[k].dest))->used;
-		 // do I hace space left?
-                 if (used<=CFG_STRARR_SIZE){
-	            len=strlen(ptr)+1; /* include terminating zero!*/
-                    tmpptr=(char*)malloc(len);
+		 char **dst;
+		 int used=((stringa_t*)(configoptions[k].dest))->used;
+		 /* do I hace space left? */
+		 if (used<=CFG_STRARR_SIZE){
+		    len=strlen(ptr)+1; /* include terminating zero!*/
+		    tmpptr=(char*)malloc(len);
 		    dst=&((stringa_t*)(configoptions[k].dest))->
-                         string[used];
-                    memcpy(dst, &tmpptr, sizeof(tmpptr));
-	            num=sscanf(ptr,"%s",tmpptr);
-		    DEBUGC(DBCLASS_BABBLE,"STRINGA[%i]=%s", used, (char*) (
+		         string[used];
+		    memcpy(dst, &tmpptr, sizeof(tmpptr));
+		    /* get full string, until a "#" or end of line */
+		    num=sscanf(ptr,"%[^#]",tmpptr);
+		    tmpptr[len-1]='\0';
+		    /* strip trailing spaces */
+		    i = strlen(tmpptr);
+		    do {i--;} while (i>0 && tmpptr[i] == ' ');
+		    tmpptr[i+1]='\0';
+		    DEBUGC(DBCLASS_BABBLE,"STRINGA[%i]=\"%s\"", used, (char*) (
 			   ((stringa_t*)(configoptions[k].dest))->string[used]) );
 		    ((stringa_t*)(configoptions[k].dest))->used++;
                  } else {
