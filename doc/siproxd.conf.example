@@ -375,7 +375,7 @@ plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 # Uses an external STUN server to determine the public IP
 # address of siproxd. Useful for "in-front-of-NAT-router"
 # scenarios.
-plugin_stun_server = stun.ekiga.net
+plugin_stun_server = stun.xten.com
 plugin_stun_port = 3478
 # period in seconds to request IP info from STUN server
 plugin_stun_period = 300

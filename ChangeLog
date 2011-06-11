@@ -1,5 +1,7 @@
 0.8.1
 =====
+  11-Jun-2011:  - other stun server in example config file and
+                  reworked some stun code.
   05-Jun-2011:  - readconf: allow spaces within string values.
                   Note that leading and trailing spaces are removed.
   01-Jun-2011:  - new plugin_prefix: unconditionally prefixes outgoing

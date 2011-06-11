@@ -38,7 +38,6 @@
 #include "plugins.h"
 #include "log.h"
 
-
 static char const ident[]="$Id$";
 
 /* Plug-in identification */
@@ -118,7 +117,12 @@ store IP
 int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    static time_t next_stun_send=0;
    static int rq_pending=0; /* !=0 if waiting for response (ongoing dialog) */
-   static char stun_transaction_id[STUN_TID_SIZE];
+   
+   static union {
+      char stun_transaction_id[STUN_TID_SIZE];
+      uint16_t  port;
+   } u;
+
    time_t now;
    int sts;
 
@@ -136,11 +140,11 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
             /* allocate transaction ID if a new STUN transaction */
             if (rq_pending == 0) {
-               sts = stun_new_transaction_id(stun_transaction_id);
+               sts = stun_new_transaction_id(u.stun_transaction_id);
             }
 
             /* send STUN BIND request */
-            sts = stun_send_request(stun_transaction_id);
+            sts = stun_send_request(u.stun_transaction_id);
 
             rq_pending=1;
             /* 10 seconds T/O to receive answer until retrying */
@@ -152,7 +156,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
          /* raw UDP packet: ticket->raw_buffer, len: ticket->raw_buffer_len */
          sts = stun_validate_response(ticket->raw_buffer, 
                                       ticket->raw_buffer_len,
-                                      stun_transaction_id);
+                                      u.stun_transaction_id);
          if (sts == STS_SUCCESS) {
             /* is a valid response to our last STUN request */
             /* This is about what we get:
@@ -179,7 +183,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
             int len=ticket->raw_buffer_len;
             char *buffer=ticket->raw_buffer;
             int iptype;
-            int port;
+            uint16_t port;
             unsigned char ip[4];
             char ipstring[IPSTRING_SIZE];
             int got_address=0;
@@ -240,11 +244,13 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
                      port=*((int*)&buffer[i+2]) & 0x0000ffff;
                      /* XOR the port with start of TID */
-                     port = htons(port ^ *((short int*)stun_transaction_id));
+//                     port = port ^ *((short int*)stun_transaction_id);
+                     port = port ^ u.port;
+                     port = htons(port);
                      memcpy(ip,&buffer[i+4], 4);
                      /* XOR the IP with start of TID */
                      for (j=0; j<4; j++) { 
-                        ip[j]=ip[j] ^ stun_transaction_id[j];
+                        ip[j]=ip[j] ^ u.stun_transaction_id[j];
                      }
                      DEBUGC(DBCLASS_BABBLE,"STUN: public IP %u.%u.%u.%u:%i",
                             ip[0], ip[1], ip[2], ip[3], port);
@@ -342,7 +348,7 @@ static int stun_validate_response(char *buffer, int len, char *tid){
    }
 
    if (memcmp(&buffer[4], tid, STUN_TID_SIZE) != 0) {
-      DEBUGC(DBCLASS_BABBLE,"stun_validate_response: wrono STUN response (TID)");
+      DEBUGC(DBCLASS_BABBLE,"stun_validate_response: wrong STUN response (TID)");
       return STS_FAILURE;
    }
 
@@ -354,7 +360,7 @@ static int stun_send_request(char *tid){
    struct in_addr addr;
    int sts;
    char stun_rq[28];	/*&&& testing */
-   int size=28;
+   size_t size=28;
 
    /* name resolution */
    if (utils_inet_aton(plugin_cfg.server, &addr) == 0)
