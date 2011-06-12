@@ -475,7 +475,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    }
 
    i=0; /* use "found" marker */
-   for (ifa = ifa_list; ifa->ifa_next; ifa = ifa->ifa_next) {
+   for (ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
       DEBUGC(DBCLASS_BABBLE,"getifaddrs - %s / %s, ifa_addr=%p, addrfamily=%i",
              ifname, ifa->ifa_name,ifa->ifa_addr,
              (ifa->ifa_addr)?ifa->ifa_addr->sa_family:-1);
@@ -485,18 +485,14 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
           strcmp(ifa->ifa_name, ifname) == 0) {
          /* found the entry */
          i=1;
-/*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&1 ifname=0x%p",ifname);
          memcpy(&ifaddr, &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr, sizeof(struct in_addr));
-/*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&2 ifname=0x%p",ifname);
          ifflags=ifa->ifa_flags;
          DEBUGC(DBCLASS_BABBLE,"getifaddrs - MATCH, sin_addr=%s",
                 utils_inet_ntoa(ifaddr));
          break;
       }
    }
-/*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&4 ifname=0x%p",ifname);
    freeifaddrs(ifa_list);
-/*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&5 ifname=0x%p",ifname);
 
    if (i==0) {
       DEBUGC(DBCLASS_DNS,"Interface %s not found.", ifname);
