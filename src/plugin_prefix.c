@@ -50,7 +50,7 @@ static char const ident[]="$Id$";
 
 /* Plug-in identification */
 static char name[]="plugin_prefix";
-static char desc[]="Adda a dial-prefix as defined in config file";
+static char desc[]="Adds a dial-prefix as defined in config file";
 
 /* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
