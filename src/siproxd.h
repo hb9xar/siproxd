@@ -103,6 +103,7 @@ struct siproxd_config {
    int   tcp_timeout;
    int   tcp_connect_timeout;
    int   tcp_keepalive;
+   int   thread_stack_size;
 };
 
 /*

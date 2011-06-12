@@ -92,6 +92,8 @@ int rtp_relay_init( void ) {
    int sts;
    int arg=0;
    struct sigaction sigact;
+   pthread_attr_t attr;
+   size_t stacksize;
 
 #ifdef USE_DEJITTER
    dejitter_init();
@@ -113,8 +115,28 @@ int rtp_relay_init( void ) {
    sigact.sa_flags=0;
    sigaction(SIGALRM, &sigact, NULL);
 
+   pthread_attr_init(&attr);
+   pthread_attr_init(&attr);
+   pthread_attr_getstacksize (&attr, &stacksize);
+   INFO("Current thread stacksize is %i kB",stacksize/1024);   
+
+   /* experimental feature:
+    * reduce the thread stack size to reduce the overall
+    * memory footprint of siproxd on embedded systems
+    *
+    * Use at your own risk! 
+    * Too small stack size may lead to unexplainable crashes!
+    * Improper use may make siproxd eat your dog and vandalize
+    * your garden.
+    */
+   if (configuration.thread_stack_size > 0) {
+      stacksize = configuration.thread_stack_size*1024;
+      pthread_attr_setstacksize (&attr, stacksize);
+      INFO("Setting new thread stacksize to %i kB",stacksize/1024);   
+   }
+
    DEBUGC(DBCLASS_RTP,"create thread");
-   sts=pthread_create(&rtpproxy_tid, NULL, rtpproxy_main, (void *)&arg);
+   sts=pthread_create(&rtpproxy_tid, &attr, rtpproxy_main, (void *)&arg);
    DEBUGC(DBCLASS_RTP,"created, sts=%i", sts);
 
    /* set realtime scheduling - if started by root */

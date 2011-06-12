@@ -82,6 +82,20 @@ user = nobody
 #chrootjail = /var/lib/siproxd/
 
 ######################################################################
+# Memory settings
+#
+# THREAD_STACK_SIZE IS AN EXPERIMENTAL FEATURE!
+# It may be used to reduce the stack size allocated
+# by pthreads. This may reduce the overall memory footprint
+# of siproxd and could be helpful on embedded systems.
+# If you don't know what I'm saying above, do not enable this setting!
+# USE AT YOUR OWN RISK! 
+# Too small stack size may lead to unexplainable crashes!
+# Improper use may make siproxd eat your dog and vandalize
+# your garden.
+#thread_stack_size = 512
+
+######################################################################
 # Registration file:
 #   Where to store the current registrations.
 #   An empty value means we do not save registrations. Make sure that

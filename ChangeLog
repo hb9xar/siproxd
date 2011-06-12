@@ -2,6 +2,7 @@
 =====
   12-Jun-2011:  - one-off in get_ip_by_ifname(), last interface in chain
                   was not considered in matching.
+                - Pthread stack size made adjustable (thread_stack_size)
   11-Jun-2011:  - other stun server in example config file and
                   reworked some stun code.
   05-Jun-2011:  - readconf: allow spaces within string values.

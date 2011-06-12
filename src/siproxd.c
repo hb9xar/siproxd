@@ -89,6 +89,7 @@ static cfgopts_t main_cfg_opts[] = {
    { "tcp_timeout",         TYP_INT4,   &configuration.tcp_timeout,		{TCP_IDLE_TO, NULL} },
    { "tcp_connect_timeout", TYP_INT4,   &configuration.tcp_connect_timeout,	{TCP_CONNECT_TO, NULL} },
    { "tcp_keepalive",       TYP_INT4,   &configuration.tcp_keepalive,		{0, NULL} },
+   { "thread_stack_size",   TYP_INT4,   &configuration.thread_stack_size,	{0, NULL} },
    {0, 0, 0}
 };
 
