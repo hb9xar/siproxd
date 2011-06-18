@@ -35,14 +35,16 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_defaulttarget.la \
 			plugin_fix_bogus_via.la \
 			plugin_stun.la \
-			plugin_prefix.la
+			plugin_prefix.la \
+			plugin_regex.la
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
 			-dlopen plugin_logcall.la \
 			-dlopen plugin_defaulttarget.la \
 			-dlopen plugin_fix_bogus_via.la \
 			-dlopen plugin_stun.la \
-			-dlopen plugin_prefix.la
+			-dlopen plugin_prefix.la \
+			-dlopen plugin_regex.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
@@ -64,6 +66,9 @@ plugin_stun_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_prefix_la_SOURCES = plugin_prefix.c
 plugin_prefix_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_regex_la_SOURCES = plugin_regex.c
+plugin_regex_la_LDFLAGS = -module -avoid-version -shrext '.so'
 
 
 #
@@ -78,7 +83,7 @@ siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
 		  rtpproxy_relay.c accessctl.c route_processing.c \
 		  security.c auth.c fwapi.c resolve.c \
-		  dejitter.c plugins.c
+		  dejitter.c plugins.c redirect_cache.c
 #		  addrcache.c
 
 

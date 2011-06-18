@@ -1,5 +1,9 @@
 0.8.1
 =====
+  17-Jun-2011:  - plugin_prefix: correct handling of outgoing ACKs
+                  (could lead to calls being aborted by one side)
+                - generic set of "redirect cache" that can be used by
+                  plugins to keep track of Call-IDs when doing "302 Moved"
   12-Jun-2011:  - one-off in get_ip_by_ifname(), last interface in chain
                   was not considered in matching.
                 - Pthread stack size made adjustable (thread_stack_size)
