@@ -45,6 +45,7 @@
 
 #include "siproxd.h"
 #include "plugins.h"
+#include "redirect_cache.h"
 #include "log.h"
 
 static char const ident[]="$Id$";
@@ -56,7 +57,6 @@ static char desc[]="Adds a dial-prefix as defined in config file";
 /* constants */
 #define REDIRECTED_TAG "redirected"
 #define REDIRECTED_VAL "prefix"
-#define CACHE_TIMEOUT  20
 
 /* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
@@ -75,24 +75,13 @@ static cfgopts_t plugin_cfg_opts[] = {
 
 
 /* local storage needed by plugin */
-/* Call-ID cache, single linked list, dynamically alocated elements */
-typedef struct {
-    void            *next;
-    osip_call_id_t  *call_id;
-    time_t          ts;
-} redirected_cache_element_t;
-
-/* The Queue Head is static */
+/* Redirect Cache: Queue Head is static */
 static redirected_cache_element_t redirected_cache;
 
 
 /* local prototypes */
 static int plugin_prefix_redirect(sip_ticket_t *ticket);
 static int plugin_prefix(sip_ticket_t *ticket);
-static int add_to_redirected_cache(sip_ticket_t *ticket);
-static int is_in_redirected_cache(sip_ticket_t *ticket);
-static int expire_redirected_cache(void);
-
 
 /* 
  * Plugin API functions code
@@ -158,7 +147,7 @@ static int plugin_prefix(sip_ticket_t *ticket) {
       return STS_SUCCESS;
 
    /* expire old cache entries */
-   expire_redirected_cache();
+   expire_redirected_cache(&redirected_cache);
 
    /* REQ URI with username must exist, prefix string must exist */
    if (!req_url || !req_url->username || !plugin_cfg.prefix_akey)
@@ -205,7 +194,7 @@ static int plugin_prefix(sip_ticket_t *ticket) {
     * Only consume such ACKs that are part of such a dialog.
     */
    else if (MSG_IS_ACK(ticket->sipmsg)) {
-      if (is_in_redirected_cache(ticket) == STS_TRUE) {
+      if (is_in_redirected_cache(&redirected_cache, ticket) == STS_TRUE) {
 	 DEBUGC(DBCLASS_PLUGIN,"processing ACK (consume it)");
 	 sts=STS_SIP_SENT; /* eat up the ACK that was directed to myself */
       }
@@ -223,8 +212,6 @@ static int plugin_prefix_redirect(sip_ticket_t *ticket) {
    int  i;
    size_t username_len;
    osip_contact_t *contact = NULL;
-
-   add_to_redirected_cache(ticket);
 
    /* including \0 + leading character(s) */
    username_len=strlen(to_user) + strlen(plugin_cfg.prefix_akey) + 1;
@@ -272,92 +259,8 @@ static int plugin_prefix_redirect(sip_ticket_t *ticket) {
    contact->url->username=new_to_user;
 
    /* sent redirect message back to local client */
+   add_to_redirected_cache(&redirected_cache, ticket);
    sip_gen_response(ticket, 302 /*Moved temporarily*/);
 
    return STS_SIP_SENT;
-}
-
-/*
- * cache handling
- */
-static int add_to_redirected_cache(sip_ticket_t *ticket) {
-   redirected_cache_element_t *e;
-   DEBUGC(DBCLASS_PLUGIN, "entered add_to_redirected_cache()");
-   
-   /* allocate */
-   e=malloc(sizeof(redirected_cache_element_t));
-   if (e == NULL) {
-       ERROR("out of memory");
-       return  STS_FAILURE;
-   }
-
-   /* populate element */
-   e->next = NULL;
-   e->ts   = time(NULL);
-   osip_call_id_clone(ticket->sipmsg->call_id, &(e->call_id));
-
-   /* add to head of queue */
-   e->next = redirected_cache.next;
-   redirected_cache.next = e;
-
-   DEBUGC(DBCLASS_PLUGIN, "left add_to_redirected_cache()");
-   return STS_SUCCESS;
-}
-
-static int is_in_redirected_cache(sip_ticket_t *ticket) {
-   redirected_cache_element_t *p, *p_prev;
-
-   DEBUGC(DBCLASS_BABBLE, "entered is_in_redirected_cache");
-   /* iterate through queue */
-   p_prev=NULL;
-   for (p=&redirected_cache; p; p=p->next) {
-      DEBUGC(DBCLASS_BABBLE, "l: p=%p, p->next=%p", p, p->next);
-      if ( (p != &redirected_cache) && (p_prev != NULL) ) {
-         if (compare_callid(ticket->sipmsg->call_id, p->call_id) == STS_SUCCESS) {
-            DEBUGC(DBCLASS_BABBLE, "remove p=%p", p);
-            /* remove from queue */
-            p_prev->next = p->next;
-            free(p);
-            DEBUGC(DBCLASS_BABBLE, "left is_in_redirected_cache - FOUND");
-            return STS_TRUE;
-         } /* if compare_callid */
-      }
-      p_prev = p;
-   } /* for */
-   DEBUGC(DBCLASS_BABBLE, "left is_in_redirected_cache - NOT FOUND");
-   return STS_FALSE;
-}
-
-/*
- * Run through the whole Call-Id cache and remove
- * expired elements.
- */
-static int expire_redirected_cache(void) {
-   redirected_cache_element_t *p, *p_prev;
-   time_t now;
-
-   DEBUGC(DBCLASS_BABBLE, "entered expire_redirected_cache");
-   now = time(NULL);
-
-   /* iterate through queue */
-   p_prev=NULL;
-   for (p=&redirected_cache; p; p=p->next) {
-      DEBUGC(DBCLASS_BABBLE, "1: p=%p, p->next=%p", p, p->next);
-      if ( (p != &redirected_cache) && (p_prev != NULL) ) {
-         DEBUGC(DBCLASS_BABBLE,"ts:%i, now:%i", (int)p->ts, (int)now);
-         if ((p->ts + CACHE_TIMEOUT) < now) {
-            DEBUGC(DBCLASS_BABBLE, "remove p=%p", p);
-            /* remove from queue */
-            p_prev->next = p->next;
-            free(p);
-            /* the current element is being removed and invalidated,
-             * set the iteration pointer to a valid element. */
-            p = p_prev;
-         } /* if timeout */
-         DEBUGC(DBCLASS_BABBLE, "2: p=%p, p->next=%p", p, p->next);
-      }
-      p_prev = p;
-   } /* for */
-   DEBUGC(DBCLASS_BABBLE, "left expire_redirected_cache");
-   return STS_FALSE;
 }
