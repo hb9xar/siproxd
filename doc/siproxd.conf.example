@@ -91,8 +91,6 @@ user = nobody
 # If you don't know what I'm saying above, do not enable this setting!
 # USE AT YOUR OWN RISK! 
 # Too small stack size may lead to unexplainable crashes!
-# Improper use may make siproxd eat your dog and vandalize
-# your garden.
 #thread_stack_size = 512
 
 ######################################################################
@@ -335,6 +333,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_fix_bogus_via.la
 #load_plugin=plugin_stun.la
 #load_plugin=plugin_prefix.la
+#load_plugin=plugin_regex.la
 
 
 ######################################################################
@@ -394,10 +393,31 @@ plugin_stun_port = 3478
 # period in seconds to request IP info from STUN server
 plugin_stun_period = 300
 
-
 ######################################################################
 # Plugin_prefix
 #
 # unconditionally prefixes all outgoing calls with the
 # "akey" prefix specified below.
 plugin_prefix_akey = 0
+
+######################################################################
+# Plugin_regex
+#
+# Applies an extended regular expression to the 'To' URI. A typical
+# SIP URI looks like (port number is optional):
+# sip:12345@some.provider.net
+# sips:12345@some.provider.net:5061
+#
+# Backreferences \1 .. \9 are supported. 
+#
+plugin_regex_desc    = Test Regex 1
+plugin_regex_pattern = ^sip:00
+plugin_regex_replace = +
+
+plugin_regex_desc    = Test Regex 2
+plugin_regex_pattern = ^sip:01
+plugin_regex_replace = +a
+
+plugin_regex_desc    = Test Regex 3
+plugin_regex_pattern = ^(sips?):01
+plugin_regex_replace = \1:001

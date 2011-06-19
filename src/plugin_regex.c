@@ -60,12 +60,14 @@ extern struct siproxd_config configuration;
 
 /* plugin configuration storage */
 static struct plugin_config {
+   stringa_t regex_desc;
    stringa_t regex_pattern;
    stringa_t regex_replace;
 } plugin_cfg;
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
+   { "plugin_regex_desc",  TYP_STRINGA,&plugin_cfg.regex_desc,	{0, NULL} },
    { "plugin_regex_pattern",  TYP_STRINGA,&plugin_cfg.regex_pattern,	{0, NULL} },
    { "plugin_regex_replace",  TYP_STRINGA,&plugin_cfg.regex_replace,	{0, NULL} },
    {0, 0, 0}
@@ -103,7 +105,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
       return STS_FAILURE;
    }
    
-   return plugin_regex_init();;
+   return plugin_regex_init();
 }
 
 /* Processing */
@@ -138,11 +140,19 @@ int plugin_regex_init(void) {
       return STS_FAILURE;
    }
 
+   if (plugin_cfg.regex_pattern.used != plugin_cfg.regex_desc.used) {
+      ERROR("Plugin '%s': number of search patterns (%i) and number of "
+            "descriptions (%i) differ!", name,
+            plugin_cfg.regex_pattern.used, plugin_cfg.regex_desc.used);
+      return STS_FAILURE;
+   }
+
    /* allocate space for regexes and compile them */
    num_entries = plugin_cfg.regex_pattern.used;
    re = malloc(num_entries*sizeof(re[0]));
    for (i=0; i < num_entries; i++) {
-      sts = regcomp (&re[i], plugin_cfg.regex_pattern.string[i], REG_ICASE);
+      sts = regcomp (&re[i], plugin_cfg.regex_pattern.string[i],
+                     REG_ICASE|REG_EXTENDED);
       if (sts != 0) {
          regerror(sts, &re[i], errbuf, sizeof(errbuf));
          ERROR("Regular expression [%s] failed to compile: %s", 
@@ -240,56 +250,67 @@ static int plugin_regex_process(sip_ticket_t *ticket) {
 /* private plugin code */
 static int plugin_regex_redirect(sip_ticket_t *ticket) {
    osip_uri_t *to_url=ticket->sipmsg->to->url;
-   char *to_user=to_url->username;
-   char *new_to_user=NULL;
+   char *url_string=NULL;
+   osip_uri_t *new_to_url;
    int  i, sts;
-   size_t username_len;
    osip_contact_t *contact = NULL;
    /* character workspaces for regex */
    #define WORKSPACE_SIZE 128
    static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
 
-/* perform search and replace of the regexes, first match hits */
-for (i = 0; i < plugin_cfg.regex_pattern.used; i++) {
-   regmatch_t *pmatch = NULL;
-   pmatch = rmatch(to_user, WORKSPACE_SIZE, &re[i]);
-   if (pmatch == NULL) continue; /* no match, next */
-   /* have a match, do the replacement */
-   strncpy (in, to_user, WORKSPACE_SIZE);
-   in[WORKSPACE_SIZE]='\0';
-   strncpy (rp, plugin_cfg.regex_replace.string[i], WORKSPACE_SIZE);
-   rp[WORKSPACE_SIZE]='\0';
-   
-   sts = rreplace(in, WORKSPACE_SIZE, &re[i], pmatch, rp);
-   if (sts != STS_SUCCESS) {
-      ERROR("regex replace failed: pattern:[%s] replace:[%s]",
-            plugin_cfg.regex_pattern.string[i],
-	    plugin_cfg.regex_replace.string[i]);
+   /* do apply to full To URI... */
+   sts = osip_uri_to_str(to_url, &url_string);
+   if (sts != 0) {
+      ERROR("osip_uri_to_str() failed");
       return STS_FAILURE;
    }
-   break;
-}
-if (i >= plugin_cfg.regex_pattern.used) {
-   // no match
-   return STS_SUCCESS;
-}
+   DEBUGC(DBCLASS_BABBLE, "To URI string: [%s]", url_string);
 
-// in: contains the new string
+   /* perform search and replace of the regexes, first match hits */
+   for (i = 0; i < plugin_cfg.regex_pattern.used; i++) {
+      regmatch_t *pmatch = NULL;
+      pmatch = rmatch(url_string, WORKSPACE_SIZE, &re[i]);
+      if (pmatch == NULL) continue; /* no match, next */
 
-   /* including \0 + leading character(s) */
-   username_len=strlen(in) + 1;
+      /* have a match, do the replacement */
+      INFO("Matched rexec rule: %s",plugin_cfg.regex_desc.string[i] );
+      strncpy (in, url_string, WORKSPACE_SIZE);
+      in[WORKSPACE_SIZE]='\0';
+      strncpy (rp, plugin_cfg.regex_replace.string[i], WORKSPACE_SIZE);
+      rp[WORKSPACE_SIZE]='\0';
 
-   new_to_user = osip_malloc(username_len); /* *_len excluding \0 */
-   if (!new_to_user) return STS_SUCCESS;
+      sts = rreplace(in, WORKSPACE_SIZE, &re[i], pmatch, rp);
+      if (sts != STS_SUCCESS) {
+         ERROR("regex replace failed: pattern:[%s] replace:[%s]",
+               plugin_cfg.regex_pattern.string[i],
+               plugin_cfg.regex_replace.string[i]);
+         osip_free(url_string);
+         return STS_FAILURE;
+      }
+      /* only do first match */
+      break;
+   }
+   if (i >= plugin_cfg.regex_pattern.used) {
+      /* no match */
+      osip_free(url_string);
+      return STS_SUCCESS;
+   }
+   /* in: contains the new string */
 
-   /* only copy the part that really belongs to the username */
-   snprintf(new_to_user, username_len, "%s", in );
+   sts = osip_uri_init(&new_to_url);
+   if (sts != 0) {
+      ERROR("Unable to initialize URI");
+      osip_free(url_string);
+      return STS_FAILURE;
+   }
 
-   /* strncpy may not terminate - do it manually to be sure */
-   new_to_user[username_len-1]='\0';
-
-
-
+   sts = osip_uri_parse(new_to_url, in);
+   if (sts != 0) {
+      ERROR("Unable to parse To URI: %s", in);
+      osip_uri_free(new_to_url);
+      osip_free(url_string);
+      return STS_FAILURE;
+   }
 
    /* use a "302 Moved temporarily" response back to the client */
    /* new target is within the Contact Header */
@@ -305,12 +326,11 @@ if (i >= plugin_cfg.regex_pattern.used) {
 
    /* insert one new Contact header containing the new target address */
    osip_contact_init(&contact);
-   osip_uri_clone(to_url, &contact->url);
    osip_list_add(&(ticket->sipmsg->contacts),contact,0);
    
-   /* USER part is always present, put new_to_user in contact URL */
-   osip_free(contact->url->username);
-   contact->url->username=new_to_user;
+   /* link the new_to_url into the Contact list */
+   contact->url = new_to_url;
+   new_to_url = NULL;
 
    /*
     * Add the 'REDIRECTED_TAG=REDIRECTED_VAL' parameter to URI. Required to figure out
@@ -321,12 +341,14 @@ if (i >= plugin_cfg.regex_pattern.used) {
    osip_uri_param_add(&(contact->url->url_params), osip_strdup(REDIRECTED_TAG), 
                       osip_strdup(REDIRECTED_VAL));
 
-   INFO("redirecting %s -> %s", to_user, new_to_user);
+   INFO("redirecting %s -> %s", url_string, in);
 
    /* sent redirect message back to local client */
    add_to_redirected_cache(&redirected_cache, ticket);
    sip_gen_response(ticket, 302 /*Moved temporarily*/);
 
+   /* release resources and return */
+   osip_free(url_string);
    return STS_SIP_SENT;
 }
 
@@ -353,10 +375,8 @@ regmatch_t * rmatch (char *buf, int size, regex_t *re) {
 
    /* perform the match */
    if (regexec (re, buf, NMATCHES, pm, 0)) {
-      DEBUGC(DBCLASS_PLUGIN,"no match found.");
       return NULL;
    }
-   DEBUGC(DBCLASS_PLUGIN,"match found.");
    return &pm[0];
 }
 

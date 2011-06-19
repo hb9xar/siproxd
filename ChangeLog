@@ -1,5 +1,8 @@
 0.8.1
 =====
+  19-Jun-2011:  - new plugin_regex: apply an extended regular expression
+                  to the SIP 'To' URI and rewrite the target (outgoing
+                  calls only)
   17-Jun-2011:  - plugin_prefix: correct handling of outgoing ACKs
                   (could lead to calls being aborted by one side)
                 - generic set of "redirect cache" that can be used by
