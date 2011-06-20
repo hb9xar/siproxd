@@ -1,5 +1,6 @@
 0.8.1
 =====
+  20-Jun-2011:  - removed obsolete files: addrcache.[ch]
   19-Jun-2011:  - new plugin_regex: apply an extended regular expression
                   to the SIP 'To' URI and rewrite the target (outgoing
                   calls only)
