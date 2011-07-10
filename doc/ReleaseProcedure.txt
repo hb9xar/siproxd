@@ -18,11 +18,17 @@ Make the release:
 - calculate MD5 checksum, sha256 (shasum -a256) & GPG
 - update RELNOTES with checksums
 - check in outstanding changes
-- create CVS tag (e.g. $ cvs rtag rel_0_5_7 siproxd)
+- create SVN tag
+  $ svn cp svn://easytux.ch/siproxd/trunk \
+  svn://easytux.ch/siproxd/tags/rel_0_8_1
 - publish on SF.net
+  publish RELNOTES as README file on sf.net
 - publish on freshmeat.net
-- copy RELNOTES to SF web page
-- copy html documentation to SF web page
+- SF Webpage:
+  - copy html documentation to SF web page
+  - set current.inc to new version SF 
+  - text/RELNOTES
+  - create a news entry
 
 Open new working release:
 - change version number in configure.in
