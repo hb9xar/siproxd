@@ -1,16 +1,11 @@
-Release Notes for siproxd-0.8.1
+Release Notes for siproxd-0.8.2
 ===============================
 
-Major changes since 0.8.0:
- - new Plugins:
-   plugin_prefix: add a prefix on outgoing calls
-   plugin_regex: regular expression rewriting (To header) for outgoing calls
- - adjustable pthrad stack size (smaller memory footprint on small
-   embedded systems like OpenWRT routers)
- - plus various bugfixes
+Major changes since 0.8.1:
+ - 
 
-Upgrade Notes 0.8.0 to 0.8.1:
- - merge your configuration file siproxd.conf (new config options)
+Upgrade Notes 0.8.1 to 0.8.2:
+ - 
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -126,18 +121,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.8.1.tar.gz archive:
-MD5 Hash:	1a6f9d13aeb2d650375c9a346ac6cbaf
-SHA-256 Hash:	df2df04faf5bdb4980cbdfd5516a47898fc47ca1ebc2c628aa48305b20a09dad
+Signatures for siproxd-0.8.2.tar.gz archive:
+MD5 Hash:	
+SHA-256 Hash:	
 
 GnuPG signature:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-
-iD8DBQBOGgSbB2xLpFxU+GURAt/gAJ9uWS01n7Tr7G7HlX8Zp8+W33OYZACfX69S
-mTpcbCWOxuoKDp5R3GWZ+zg=
-=BFqD
------END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
