@@ -2,10 +2,15 @@ Release Notes for siproxd-0.8.1
 ===============================
 
 Major changes since 0.8.0:
- - 
+ - new Plugins:
+   plugin_prefix: add a prefix on outgoing calls
+   plugin_regex: regular expression rewriting (To header) for outgoing calls
+ - adjustable pthrad stack size (smaller memory footprint on small
+   embedded systems like OpenWRT routers)
+ - plus various bugfixes
 
 Upgrade Notes 0.8.0 to 0.8.1:
- - 
+ - merge your configuration file siproxd.conf (new config options)
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
@@ -19,10 +24,8 @@ General Overview:
  - Access control (IP based) for incoming traffic
  - Proxy Authentication for registration of local clients (User Agents)
    with individual passwords for each user
- - May be used as pure Outbound proxy (registration of local UAs
+ - May be used as pure outbound proxy (registration of local UAs
    to a 3rd party registrar)
- - Fli4l OPT_SIP (still experimental) available, check
-   http://home.arcor.de/jsffm/fli4l/
  - runs on various operating systems (see below)
  - Full duplex RTP data stream proxy for *incoming* and *outgoing*
    audio data - no firewall masquerading entries needed
@@ -51,12 +54,11 @@ Requirements:
 
 Mainly tested on:
 - CentOS 5, 32bit Linux 
-  This is my main development and testing environment. Other platforms
+  This is the main development and testing environment. Other platforms
   are not extensively tested.
 
 Builds on (tested by dev-team or reported to build):
-- Linux:	Fedora
-		CentOS/RedHat
+- Linux:	CentOS/RedHat EL
 (		Fedora 64bit		)*
 (		WRT54g (133mhz mipsel router))*
 (- FreeBSD:	FreeBSD 4.10-BETA	)*
@@ -67,9 +69,9 @@ Builds on (tested by dev-team or reported to build):
 * Note: As the compile farm of sourceforge.net has been discontinued our
         building test possibilities are now very limited. Currently
         no explicit testing for systems/distributions other than
-        Fedora/CentOS (x86 architecture) is made. We'll be looking into
+        CentOS/RHEL (x86 architecture) is made. We'll be looking into
         possibilities to perform some broader testing in future.
-        Of course, external help will be welcome :-)
+        Of course, external testers are welcome :-)
 
 Reported interoperability with softphones:
  - Grandstream BudgeTone-100 series
@@ -83,12 +85,10 @@ Reported interoperability with softphones:
  - FreePBX
 
 Reported interoperability with SIP service providers:
- - Sipphone	(http://www.sipphone.com)
  - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
  - Sipcall.ch	(Swiss VoIP provider)
  - Ekiga
- - Gizmo	(actually sipphone.com)
 
 
  If you have siproxd successfully running with another SIP phone
@@ -127,10 +127,17 @@ distribution I'd be happy to get a short notice.
 
 -----
 Signatures for siproxd-0.8.1.tar.gz archive:
-MD5 Hash:	
-SHA-256 Hash:	
+MD5 Hash:	1a6f9d13aeb2d650375c9a346ac6cbaf
+SHA-256 Hash:	df2df04faf5bdb4980cbdfd5516a47898fc47ca1ebc2c628aa48305b20a09dad
 
 GnuPG signature:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQBOGgSbB2xLpFxU+GURAt/gAJ9uWS01n7Tr7G7HlX8Zp8+W33OYZACfX69S
+mTpcbCWOxuoKDp5R3GWZ+zg=
+=BFqD
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
