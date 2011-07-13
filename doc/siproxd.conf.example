@@ -193,7 +193,7 @@ tcp_timeout = 600
 tcp_connect_timeout = 500
 #
 # TCP keepalive period
-#    For TCP SIP signalling, if > 0 empty SIP packets will be sent
+#    For TCP SIP signalling: if > 0 empty SIP packets will be sent
 #    every 'n' seconds to keep the connection alive. Default is off.
 #
 tcp_keepalive = 20
