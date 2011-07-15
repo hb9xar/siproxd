@@ -411,13 +411,13 @@ plugin_prefix_akey = 0
 # Backreferences \1 .. \9 are supported. 
 #
 plugin_regex_desc    = Test Regex 1
-plugin_regex_pattern = ^sip:00
-plugin_regex_replace = +
+plugin_regex_pattern = ^(sips?:)00
+plugin_regex_replace = \1+
 
 plugin_regex_desc    = Test Regex 2
-plugin_regex_pattern = ^sip:01
-plugin_regex_replace = +a
+plugin_regex_pattern = ^(sips?:)01
+plugin_regex_replace = \1+a
 
 plugin_regex_desc    = Test Regex 3
-plugin_regex_pattern = ^(sips?):01
+plugin_regex_pattern = ^(sips?:)01
 plugin_regex_replace = \1:001
