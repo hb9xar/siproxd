@@ -51,6 +51,8 @@ dnl	26-Apr-2010	tries	Fresh building from distribuion TAR did fail if
 dnl				the host-installed libltdl lib is used (and not the
 dnl				convenience lib)
 dnl	09-Jan-2011	tries	use CFLAGS -Wall only with GCC compiler
+dnl	15-Sep-2011	tries	added --with-included-libtool to force the
+dnl				use of the included libltdl
 dnl
 dnl
 
@@ -140,6 +142,11 @@ AC_CHECK_LIB(ltdl, lt_dlopen, [
    echo "*** WARNING: no native libltdl found, using convenience libltdl!";
    use_native_ltdl="no";
 ],)
+
+AC_ARG_WITH(included-libtool,
+   [  --with-included-libtool     force the use of included libltdl (libtool)],
+   use_native_ltdl="no";echo "*** FORCED to use included convenience libltdl",
+   )
 
 if test "x$use_native_ltdl" = "xno"; then
    AC_LIBLTDL_CONVENIENCE

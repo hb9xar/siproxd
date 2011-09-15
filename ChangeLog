@@ -1,6 +1,7 @@
 0.8.2
 =====
-
+  10-Jul-2011:  - Added --with-included-libtool to configure to allow
+                  forcing the use of the included libltdl
 
 0.8.1
 =====
