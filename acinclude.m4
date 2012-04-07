@@ -58,7 +58,7 @@ acx_pthread_ok=no
 # First of all, check if the user has set any of the PTHREAD_LIBS,
 # etcetera environment variables, and if threads linking works using
 # them:
-if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
+if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS$PTHREAD_LDFLAGS" != x; then
         save_CFLAGS="$CFLAGS"
         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
         save_LDFLAGS="$LDFLAGS"

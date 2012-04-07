@@ -29,6 +29,12 @@
 #endif
 
 
+///* libtool 2.2 / 2.4 */
+#ifndef lt__PROGRAM__LTX_preloaded_symbols
+#define lt__PROGRAM__LTX_preloaded_symbols lt_libltdl_LTX_preloaded_symbols
+//extern const void *lt_preloaded_symbols[];
+#endif
+
 /* Plugins must return STS_SUCCESS / SUCCESS_FAILURE */
 
 

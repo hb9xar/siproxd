@@ -1,5 +1,6 @@
 0.8.2
 =====
+  07-Apr-2012:  - Some compatibility hack with newer libtool versions
   10-Jul-2011:  - Added --with-included-libtool to configure to allow
                   forcing the use of the included libltdl
 
