@@ -124,7 +124,8 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
       if (plugin_cfg.log) {
          osip_uri_t *to_url=ticket->sipmsg->to->url;
          osip_uri_t *from_url=ticket->sipmsg->from->url;
-         INFO("Unknown Target (from: %s@%s), redirecting %s@%s -> %s",
+         INFO("Unknown Target [rcvd IP=%s:%u], From: %s@%s, redirecting To: %s@%s -> %s",
+              utils_inet_ntoa(ticket->from.sin_addr),ntohs(ticket->from.sin_port),
               from_url->username? from_url->username:"*NULL*",
               from_url->host?     from_url->host:    "*NULL*",
               to_url->username?   to_url->username:"*NULL*",
