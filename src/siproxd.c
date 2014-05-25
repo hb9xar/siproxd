@@ -408,7 +408,7 @@ int main (int argc, char *argv[])
       /*
        * integrity checks
        */
-      sts=security_check_raw(buff, buflen);
+      sts=security_check_raw(ticket.raw_buffer, ticket.raw_buffer_len);
       if (sts != STS_SUCCESS) {
          DEBUGC(DBCLASS_SIP,"security check (raw) failed");
          continue; /* there are no resources to free */
@@ -417,7 +417,7 @@ int main (int argc, char *argv[])
       /*
        * Hacks to fix-up some broken headers
        */
-      sts=sip_fixup_asterisk(buff, &buflen);
+      sts=sip_fixup_asterisk(ticket.raw_buffer, &ticket.raw_buffer_len);
 
       /*
        * init sip_msg
@@ -434,10 +434,10 @@ int main (int argc, char *argv[])
        * Proxy Behavior - Request Validation - Reasonable Syntax
        * (parse the received message)
        */
-      sts=sip_message_parse(ticket.sipmsg, buff, buflen);
+      sts=sip_message_parse(ticket.sipmsg, ticket.raw_buffer, ticket.raw_buffer_len);
       if (sts != 0) {
          ERROR("sip_message_parse() failed, sts=%i... this is not good", sts);
-         DUMP_BUFFER(-1, buff, buflen);
+         DUMP_BUFFER(-1, ticket.raw_buffer, ticket.raw_buffer_len);
          goto end_loop; /* skip and free resources */
       }
 
@@ -447,7 +447,7 @@ int main (int argc, char *argv[])
       sts=security_check_sip(&ticket);
       if (sts != STS_SUCCESS) {
          ERROR("security_check_sip() failed, sts=%i... this is not good", sts);
-         DUMP_BUFFER(-1, buff, buflen);
+         DUMP_BUFFER(-1, ticket.raw_buffer, ticket.raw_buffer_len);
          goto end_loop; /* skip and free resources */
       }
 

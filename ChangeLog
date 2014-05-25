@@ -1,5 +1,8 @@
 0.8.2
 =====
+  25-May-2014:  - PLUGIN_PROCESS_RAW: properly deal with the situation if a
+                  RAW plugin modifies the message lengh.
+  11-Feb-2013:  - plugin_defaulttarget: add "received from" IP to logging
   07-Apr-2012:  - Some compatibility hack with newer libtool versions
   10-Jul-2011:  - Added --with-included-libtool to configure to allow
                   forcing the use of the included libltdl
