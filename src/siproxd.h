@@ -125,7 +125,7 @@ typedef struct {
  */
 typedef struct {
    char *raw_buffer;		/* raw UDP packet */
-   int  raw_buffer_len;		/* length of raw data */
+   size_t  raw_buffer_len;		/* length of raw data */
    osip_message_t *sipmsg;	/* SIP */
    struct sockaddr_in from;	/* received from */
 #define PROTO_UNKN -1

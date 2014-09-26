@@ -1,5 +1,6 @@
 0.8.2
 =====
+  26-Sep-2014:  - fixed some #include and data-type issues.
   25-May-2014:  - PLUGIN_PROCESS_RAW: properly deal with the situation if a
                   RAW plugin modifies the message lengh.
   11-Feb-2013:  - plugin_defaulttarget: add "received from" IP to logging

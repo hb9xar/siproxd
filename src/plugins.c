@@ -19,10 +19,14 @@
 */
 
 #include "config.h"
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include <osipparser2/osip_parser.h>
 
