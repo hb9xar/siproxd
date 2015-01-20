@@ -430,5 +430,5 @@ plugin_regex_replace = \1:001
 # May be used to workaround IP fragmentation by removing "unimportant"
 # SIP headers - this is clearly a ugly hack but sometimes saves on
 # from headache.
-plugin_stripheader_remove = Accept
+plugin_stripheader_remove = Allow
 plugin_stripheader_remove = User-Agent
