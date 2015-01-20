@@ -45,7 +45,7 @@
 #include "redirect_cache.h"
 #include "log.h"
 
-static char const ident[]="$Id: plugin_regex.c 471 2011-05-28 10:03:49Z hb9xar $";
+static char const ident[]="$Id$";
 
 /* Plug-in identification */
 static char name[]="plugin_regex";

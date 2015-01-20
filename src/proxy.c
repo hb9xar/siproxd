@@ -1153,7 +1153,7 @@ if (configuration.debuglevel)
    sprintf(clen,"%ld",(long)buflen);
    sts = osip_message_set_content_length(mymsg, clen);
 
-   /* free old body */
+   /* free new body string*/
    osip_free(buff);
 
 if (configuration.debuglevel)
