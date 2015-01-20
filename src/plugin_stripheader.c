@@ -94,18 +94,56 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    /* stage contains the PLUGIN_* value - the stage of SIP processing. */
    int i;
    int pos;
-   osip_header_t *h;
+
+
 
    for (i=0; i<plugin_cfg.header_remove.used; i++) {
-      DEBUGC(DBCLASS_PLUGIN, "%s: looking for header [%s]", name, 
-             plugin_cfg.header_remove.string[i]);
+      DEBUGC(DBCLASS_PLUGIN, "%s: looking for header [%s], entry=%i", name, 
+             plugin_cfg.header_remove.string[i], i);
 
-      while ((pos = osip_message_header_get_byname(ticket->sipmsg, 
-                plugin_cfg.header_remove.string[i], 0, &h)) != -1) {
-          DEBUGC(DBCLASS_PLUGIN, "%s: removing header pos=%i, name=%s, val=%s", name, 
-                 pos, h->hname, h->hvalue);
-          osip_list_remove(&ticket->sipmsg->headers, pos);
-          osip_header_free(h);
+#if 0
+   int j=0;
+osip_header_t *tmp;
+
+DEBUGC(DBCLASS_PLUGIN, "%s: header list size=%i", name,
+       osip_list_size(&ticket->sipmsg->headers));
+
+
+
+	while (osip_list_size(&ticket->sipmsg->headers) > j) {
+		tmp = (osip_header_t *) osip_list_get(&ticket->sipmsg->headers, j);
+DEBUGC(DBCLASS_PLUGIN, "%s: header list j=%i, hname=%s, hvalue=%s", name,
+       j, tmp->hname, tmp->hvalue);
+//		if (osip_strcasecmp(tmp->hname, hname) == 0) {
+//			*dest = tmp;
+//			return i;
+//		}
+		j++;
+	}
+#endif
+
+      /* special case Allow header */
+      if (strcasecmp(plugin_cfg.header_remove.string[i], "allow") == 0) {
+         osip_allow_t *allow=NULL;
+         while ((pos = osip_message_get_allow(ticket->sipmsg, 
+                       0, &allow)) != -1) {
+             DEBUGC(DBCLASS_PLUGIN, "%s: removing Allow header pos=%i, val=%s", name, 
+                    pos, allow->value);
+             osip_list_remove(&ticket->sipmsg->allows, pos);
+             osip_allow_free(allow);
+             allow=NULL;
+          }
+
+      /* generic headers */
+      } else {
+         osip_header_t *h=NULL;
+         while ((pos = osip_message_header_get_byname(ticket->sipmsg, 
+                   plugin_cfg.header_remove.string[i], 0, &h)) != -1) {
+             DEBUGC(DBCLASS_PLUGIN, "%s: removing header pos=%i, name=%s, val=%s", name, 
+                    pos, h->hname, h->hvalue);
+             osip_list_remove(&ticket->sipmsg->headers, pos);
+             osip_header_free(h);
+         }
       }
    }
 
