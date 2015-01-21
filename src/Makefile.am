@@ -37,6 +37,7 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_stun.la \
 			plugin_prefix.la \
 			plugin_regex.la \
+			plugin_codecfilter.la \
 			plugin_stripheader.la
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
@@ -46,6 +47,7 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_stun.la \
 			-dlopen plugin_prefix.la \
 			-dlopen plugin_regex.la \
+			-dlopen plugin_codecfilter.la \
 			-dlopen plugin_stripheader.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
@@ -71,6 +73,9 @@ plugin_prefix_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_regex_la_SOURCES = plugin_regex.c
 plugin_regex_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_codecfilter_la_SOURCES = plugin_codecfilter.c
+plugin_codecfilter_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_stripheader_la_SOURCES = plugin_stripheader.c
 plugin_stripheader_la_LDFLAGS = -module -avoid-version -shrext '.so'
