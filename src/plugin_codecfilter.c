@@ -59,10 +59,8 @@ static cfgopts_t plugin_cfg_opts[] = {
    {0, 0, 0}
 };
 
-#if 0
 /* Prototypes */
-static int sip_filter_sdp(sip_ticket_t *ticket);
-#endif
+static int sdp_filter_codec(sdp_message_t *sdp);
 
 /* 
  * Initialization.
@@ -104,22 +102,8 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    char *buff;
    size_t buflen;
    char clen[8]; /* content length: probably never more than 7 digits !*/
-   int i;
-
    osip_body_t *body;
-
    sdp_message_t  *sdp;
-   char *sdp_media;
-   int media_stream_no;
-
-   char *payload;
-   int payload_mediatype;
-   int payload_no;
-
-   sdp_attribute_t *sdp_attr;
-   int attr_mediatype;
-   int media_attr_no;
-   int skip_media_attr_inc;
 
 DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
 
@@ -149,6 +133,68 @@ DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
    buff=NULL;
 
 
+   // do the magic...
+   sdp_filter_codec(sdp);
+
+
+   /* remove old body */
+   sts = osip_list_remove(&(ticket->sipmsg->bodies), 0);
+   osip_body_free(body);
+   body=NULL;
+
+   /* dump new body */
+   sdp_message_to_str(sdp, &buff);
+   buflen=strlen(buff);
+
+   /* free sdp structure */
+   sdp_message_free(sdp);
+
+   /* include new body */
+   sip_message_set_body(ticket->sipmsg, buff, buflen);
+   if (sts != 0) {
+      ERROR("%s: unable to sip_message_set_body body", name);
+   }
+
+   /* free content length resource and include new one*/
+   osip_content_length_free(ticket->sipmsg->content_length);
+   ticket->sipmsg->content_length=NULL;
+   sprintf(clen,"%ld",(long)buflen);
+   sts = osip_message_set_content_length(ticket->sipmsg, clen);
+
+   /* free new body string*/
+   osip_free(buff);
+
+
+DEBUGC(DBCLASS_PLUGIN, "%s: exit", name);
+   return STS_SUCCESS;
+}
+
+/*
+ * De-Initialization.
+ * Called during shutdown of siproxd. Gives the plugin the chance
+ * to clean up its mess (e.g. dynamic memory allocation, database
+ * connections, whatever the plugin messes around with)
+ */
+int  PLUGIN_END(plugin_def_t *plugin_def){
+   INFO("%s ends here", name);
+   return STS_SUCCESS;
+}
+
+/*--------------------------------------------------------------------*/
+static int sdp_filter_codec(sdp_message_t *sdp) {
+   int sts;
+   int i;
+   char *sdp_media;
+   int media_stream_no;
+
+   char *payload;
+   int payload_mediatype;
+   int payload_no;
+
+   sdp_attribute_t *sdp_attr;
+   int attr_mediatype;
+   int media_attr_no;
+   int skip_media_attr_inc;
 
    media_stream_no=0;
    while ((sdp_media=sdp_message_m_media_get(sdp, media_stream_no))) {
@@ -227,88 +273,5 @@ DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
 
 
 
-//better:
-//&&&
-// while (next media_attribute) {
-//   if match with exclusion config
-//     get media type
-//     remove media attribute
-//     while (next media description)
-//       if match on removed media type
-//         remove media type from media description
-
-
-   /* remove old body */
-   sts = osip_list_remove(&(ticket->sipmsg->bodies), 0);
-   osip_body_free(body);
-   body=NULL;
-
-   /* dump new body */
-   sdp_message_to_str(sdp, &buff);
-   buflen=strlen(buff);
-
-   /* free sdp structure */
-   sdp_message_free(sdp);
-
-   /* include new body */
-   sip_message_set_body(ticket->sipmsg, buff, buflen);
-   if (sts != 0) {
-      ERROR("%s: unable to sip_message_set_body body", name);
-   }
-
-   /* free content length resource and include new one*/
-   osip_content_length_free(ticket->sipmsg->content_length);
-   ticket->sipmsg->content_length=NULL;
-   sprintf(clen,"%ld",(long)buflen);
-   sts = osip_message_set_content_length(ticket->sipmsg, clen);
-
-   /* free new body string*/
-   osip_free(buff);
-
-
-DEBUGC(DBCLASS_PLUGIN, "%s: exit", name);
    return STS_SUCCESS;
 }
-
-/*
- * De-Initialization.
- * Called during shutdown of siproxd. Gives the plugin the chance
- * to clean up its mess (e.g. dynamic memory allocation, database
- * connections, whatever the plugin messes around with)
- */
-int  PLUGIN_END(plugin_def_t *plugin_def){
-   INFO("%s ends here", name);
-   return STS_SUCCESS;
-}
-
-#if 0
-/*--------------------------------------------------------------------*/
-static int sip_filter_sdp(sip_ticket_t *ticket) {
-   sdp_media_t *sdp_media;
-
-   osip_via_t *via;
-
-   if((via = osip_list_get(&(ticket->sipmsg->vias), 0)) != NULL) {
-      /* clone Via header */
-
-      /* set new IP (from IP) */
-      osip_free(via->host);
-      via->host=osip_malloc(IPSTRING_SIZE);
-      snprintf(via->host, IPSTRING_SIZE, "%s",
-               utils_inet_ntoa(ticket->from.sin_addr));
-      via->host[IPSTRING_SIZE-1] ='\0';
-
-      /* set new port number */
-      osip_free(via->port);
-      via->port=osip_malloc(6); /* 5 digits + \0 */
-      snprintf(via->port, 5, "%u", ntohs(ticket->from.sin_port));
-      via->port[5-1] ='\0';
-
-      DEBUGC(DBCLASS_PLUGIN, "%s:  -> %s:%s", name,
-             via->host, via->port);
-
-   }
-
-   return STS_SUCCESS;
-}
-#endif
