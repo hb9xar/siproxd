@@ -105,12 +105,39 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    osip_body_t *body;
    sdp_message_t  *sdp;
 
+   int content_length;
+   osip_content_type_t *content_type;
+
 DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
 
+   // do we have a payload at all (content)?
+   content_length=0;
+   if (ticket->sipmsg && ticket->sipmsg->content_length 
+       && ticket->sipmsg->content_length->value) {
+      sts=sscanf(ticket->sipmsg->content_length->value, "%i", &content_length);
+   }
+   content_type=osip_message_get_content_type(ticket->sipmsg);
+   if ((content_length == 0) || (content_type == NULL) 
+       || (content_type->type == NULL) || (content_type->subtype == NULL)) {
+      DEBUGC(DBCLASS_PLUGIN, "%s: no content", name);
+      return STS_SUCCESS;
+   }
+
+   // check content type (must be "application/sdp")
+   if ((strncmp(content_type->type, "application", sizeof("application")) != 0)
+       || (strncmp(content_type->subtype, "sdp", sizeof("sdp")) != 0)) {
+      DEBUGC(DBCLASS_PLUGIN, "%s: unsupported content-type %s/%s", name,
+             content_type->type, content_type->subtype);
+      return STS_SUCCESS;
+   }
+
+   DEBUGC(DBCLASS_PLUGIN, "%s: content-type %s/%s, size=%i", name, 
+          content_type->type, content_type->subtype, content_length);
+
+   // get and parse body into sdp structure
    sts = osip_message_get_body(ticket->sipmsg, 0, &body);
    if (sts != 0) {
-      DEBUGC(DBCLASS_PLUGIN, "%s: rewrite_invitation_body: "
-                            "no body found in message", name);
+      DEBUGC(DBCLASS_PLUGIN, "%s: no body found in message", name);
       return STS_SUCCESS;
    }
 
