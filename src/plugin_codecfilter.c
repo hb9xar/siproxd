@@ -225,10 +225,12 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
                          sdp_attr->a_att_value, media_attr_no);
 
                   // remove media attribute (a)
-                  // libosip bug?? -> loops Do it manually then...
+                  // libosip bug?? -> the following coda causes a loop inside libosip2.
+                  // Do it manually then...
                   //if (sdp_message_a_attribute_del_at_index(sdp, media_stream_no, sdp_attr->a_att_field, media_attr_no) != OSIP_SUCCESS) {
                   //   ERROR("%s: sdp_message_a_attribute_del() failed", name);
                   //}
+                  // So do it manually then...
                   {
                   sdp_media_t *med;
                   sdp_attribute_t *attr;
