@@ -335,6 +335,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_prefix.la
 #load_plugin=plugin_regex.la
 #load_plugin=plugin_stripheader.la
+#load_plugin=plugin_codecfilter.la
 
 
 ######################################################################
@@ -389,7 +390,7 @@ plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 # Uses an external STUN server to determine the public IP
 # address of siproxd. Useful for "in-front-of-NAT-router"
 # scenarios.
-plugin_stun_server = stun.xten.com
+plugin_stun_server = stun.stunprotocol.org
 plugin_stun_port = 3478
 # period in seconds to request IP info from STUN server
 plugin_stun_period = 300
@@ -432,3 +433,11 @@ plugin_regex_replace = \1:001
 # from headache.
 plugin_stripheader_remove = Allow
 plugin_stripheader_remove = User-Agent
+
+######################################################################
+# Plugin_codecfilter
+#
+plugin_codecfilter_blacklist = G722
+plugin_codecfilter_blacklist = G726
+plugin_codecfilter_blacklist = G729
+plugin_codecfilter_blacklist = GSM
