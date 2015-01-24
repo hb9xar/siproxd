@@ -437,6 +437,13 @@ plugin_stripheader_remove = User-Agent
 ######################################################################
 # Plugin_codecfilter
 #
+# Removes blacklisted (plugin_codecfilter_blacklist) codecs 
+# from any passing SDP payload in both (incoming and outgoing)
+# directions. This allows the proxy to force the exclusion of
+# particular codecs in the negotiation between a local UA and a 
+# remote side.
+# The match is done as case-insensitive substring match. The config 
+# string "726" would match the codecs "G726-32/800", "g726", etc.
 plugin_codecfilter_blacklist = G722
 plugin_codecfilter_blacklist = G726
 plugin_codecfilter_blacklist = G729

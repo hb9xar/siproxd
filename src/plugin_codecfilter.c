@@ -48,13 +48,11 @@ extern struct siproxd_config configuration;
 /* plugin configuration storage */
 static struct plugin_config {
    char *codec;
-   stringa_t codec_whitelist;
    stringa_t codec_blacklist;
 } plugin_cfg;
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_codecfilter_whitelist",      TYP_STRINGA, &plugin_cfg.codec_whitelist,	{0, NULL} },
    { "plugin_codecfilter_blacklist",      TYP_STRINGA, &plugin_cfg.codec_blacklist,	{0, NULL} },
    {0, 0, 0}
 };
@@ -101,21 +99,24 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    int sts;
    char *buff;
    size_t buflen;
-   char clen[8]; /* content length: probably never more than 7 digits !*/
    osip_body_t *body;
    sdp_message_t  *sdp;
-
    int content_length;
    osip_content_type_t *content_type;
+   char clen[8]; /* content length: probably never more than 7 digits !*/
 
-DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
+   //
+   // check that we have the expected payload "application/sdp"
+   //
 
-   // do we have a payload at all (content)?
+   // get content length
    content_length=0;
    if (ticket->sipmsg && ticket->sipmsg->content_length 
        && ticket->sipmsg->content_length->value) {
       sts=sscanf(ticket->sipmsg->content_length->value, "%i", &content_length);
    }
+
+   // check if we have a content type defined and that payload length >0
    content_type=osip_message_get_content_type(ticket->sipmsg);
    if ((content_length == 0) || (content_type == NULL) 
        || (content_type->type == NULL) || (content_type->subtype == NULL)) {
@@ -123,7 +124,7 @@ DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
       return STS_SUCCESS;
    }
 
-   // check content type (must be "application/sdp")
+   // check content type: must be "application/sdp"
    if ((strncmp(content_type->type, "application", sizeof("application")) != 0)
        || (strncmp(content_type->subtype, "sdp", sizeof("sdp")) != 0)) {
       DEBUGC(DBCLASS_PLUGIN, "%s: unsupported content-type %s/%s", name,
@@ -134,65 +135,80 @@ DEBUGC(DBCLASS_PLUGIN, "%s: entered", name);
    DEBUGC(DBCLASS_PLUGIN, "%s: content-type %s/%s, size=%i", name, 
           content_type->type, content_type->subtype, content_length);
 
-   // get and parse body into sdp structure
+   //
+   // parse the payload
+   //
+
+   // get a pointer to the payload of the SIP packet
    sts = osip_message_get_body(ticket->sipmsg, 0, &body);
    if (sts != 0) {
       DEBUGC(DBCLASS_PLUGIN, "%s: no body found in message", name);
       return STS_SUCCESS;
    }
-
+   // dump it into a buffer
    sts = sip_body_to_str(body, &buff, &buflen);
    if (sts != 0) {
-      ERROR("%s: unable to sip_body_to_str", name);
-      return STS_FAILURE;
+      WARN("%s: unable to sip_body_to_str", name);
+      return STS_SUCCESS;
    }
-
+   // and parse it into an SDP structure
    sts = sdp_message_init(&sdp);
    sts = sdp_message_parse (sdp, buff);
    if (sts != 0) {
-      ERROR("%s: unable to sdp_message_parse body", name);
+      WARN("%s: unable to sdp_message_parse() body", name);
       DUMP_BUFFER(-1, buff, buflen);
       osip_free(buff);
+      buff=NULL;
       sdp_message_free(sdp);
       return STS_SUCCESS;
    }
    osip_free(buff);
    buff=NULL;
 
-
-   // do the magic...
+   //
+   // now do the codec filtering magic...
    sdp_filter_codec(sdp);
 
-
-   /* remove old body */
+   //
+   // replace the original payload with the new modified payload
+   //
+   
+   // remove old body from SIP packet
    sts = osip_list_remove(&(ticket->sipmsg->bodies), 0);
    osip_body_free(body);
    body=NULL;
 
-   /* dump new body */
+   // dump new body to buffer
    sdp_message_to_str(sdp, &buff);
    buflen=strlen(buff);
 
-   /* free sdp structure */
+   // free sdp structure (no longer needed)
    sdp_message_free(sdp);
+   sdp=NULL;
 
-   /* include new body */
-   sip_message_set_body(ticket->sipmsg, buff, buflen);
+   // put new body into SIP message
+   sts=sip_message_set_body(ticket->sipmsg, buff, buflen);
    if (sts != 0) {
       ERROR("%s: unable to sip_message_set_body body", name);
+      DUMP_BUFFER(-1, buff, buflen);
+      buflen=0;
    }
+   // free buffer
+   osip_free(buff);
+   buff=NULL;
 
-   /* free content length resource and include new one*/
+   //
+   // set new content length
+   //
+
+   // remove old content leght field
    osip_content_length_free(ticket->sipmsg->content_length);
    ticket->sipmsg->content_length=NULL;
+
+   // set new content length
    sprintf(clen,"%ld",(long)buflen);
    sts = osip_message_set_content_length(ticket->sipmsg, clen);
 
-   /* free new body string*/
-   osip_free(buff);
-
-
-DEBUGC(DBCLASS_PLUGIN, "%s: exit", name);
    return STS_SUCCESS;
 }
 
@@ -213,94 +229,113 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
    int i;
    char *sdp_media;
    int media_stream_no;
-
+   // SDP payload list processing
    char *payload;
    int payload_mediatype;
    int payload_no;
-
+   // SDP attribute list processing
    sdp_attribute_t *sdp_attr;
    int attr_mediatype;
    int media_attr_no;
-   int skip_media_attr_inc;
+   int skip_media_attr_inc=0;
 
+   //
+   // loop through all media descriptions (normal phone call has 1 stream, a video call
+   // may have multiple streams)
+   //
    media_stream_no=0;
    while ((sdp_media=sdp_message_m_media_get(sdp, media_stream_no))) {
-      DEBUGC(DBCLASS_PLUGIN, "%s: m:%i", name, media_stream_no);
 
-      payload_no=0;
-      while ((payload=sdp_message_m_payload_get(sdp, media_stream_no, payload_no))) {
-         DEBUGC(DBCLASS_PLUGIN, " +-- p:%s", payload);
-         payload_no++;
-      }
-
+      //
+      // loop through all media attributes of this media stream
+      //
       media_attr_no=0;
       while ((sdp_attr=sdp_message_attribute_get(sdp, media_stream_no, media_attr_no))) {
-         DEBUGC(DBCLASS_PLUGIN, "     Attr m:%i, a=%i", media_stream_no, media_attr_no);
+         DEBUGC(DBCLASS_PLUGIN, "  +--Attr m:%i, a=%i", media_stream_no, media_attr_no);
+         // check if attribute field and value exist
          if (sdp_attr->a_att_field && sdp_attr->a_att_value) {
+            // fetch the media type value (first number field in value)
             attr_mediatype=0;
             sts=sscanf(sdp_attr->a_att_value, "%i", &attr_mediatype);
-
-            DEBUGC(DBCLASS_PLUGIN, "     Attr field=%s, val=%s [MT=%i]", 
+            DEBUGC(DBCLASS_PLUGIN, "     +--Attr field=%s, val=%s [MT=%i]", 
                    sdp_attr->a_att_field, sdp_attr->a_att_value, attr_mediatype);
 
-
-            /* search for match */
+            //
+            // loop through all configured "blacklisted" media strings
+            // and look for a match
+            //
             for (i=0; i<plugin_cfg.codec_blacklist.used; i++) {
+               // do an *case-insensitive* *substring* match
                if (strcasestr(sdp_attr->a_att_value, plugin_cfg.codec_blacklist.string[i])) {
-                  /* match, need to remove this codec */
-                  DEBUGC(DBCLASS_PLUGIN, "%s: *** REMOVE media attr [%s] at attrpos=%i", name, 
+                  // match, need to remove this codec
+                  DEBUGC(DBCLASS_PLUGIN, "%s: blacklisted - removing media attr [%s] at attrpos=%i", name, 
                          sdp_attr->a_att_value, media_attr_no);
 
+                  //
                   // remove media attribute (a)
-                  // libosip bug?? -> the following coda causes a loop inside libosip2.
-                  // Do it manually then...
+                  //
+                  
+                  // libosip bug?? -> the following coda causes an infinite loop inside libosip2.
                   //if (sdp_message_a_attribute_del_at_index(sdp, media_stream_no, sdp_attr->a_att_field, media_attr_no) != OSIP_SUCCESS) {
                   //   ERROR("%s: sdp_message_a_attribute_del() failed", name);
                   //}
-                  // So do it manually then...
+
+                  // #&%+!@ -> So it manually...
                   {
-                  sdp_media_t *med;
-                  sdp_attribute_t *attr;
-                  med = (sdp_media_t *) osip_list_get(&sdp->m_medias, media_stream_no);
+                     sdp_media_t *med;
+                     sdp_attribute_t *attr;
+                     med = (sdp_media_t *) osip_list_get(&sdp->m_medias, media_stream_no);
 
-                  if ((attr = osip_list_get(&med->a_attributes, media_attr_no)) != NULL) {
-                     osip_list_remove(&med->a_attributes, media_attr_no);
-                     sdp_attribute_free(attr);
-                     attr=NULL;
-                     skip_media_attr_inc=1;
-                  }
+                     if ((attr = osip_list_get(&med->a_attributes, media_attr_no)) != NULL) {
+                        osip_list_remove(&med->a_attributes, media_attr_no);
+                        sdp_attribute_free(attr);
+                        attr=NULL;
+                        // as I have removed the current attribute, all other
+                        // attributes are shifted one down, so for the next iteration
+                        // I must not increment the index or I will skip one attribute
+                        skip_media_attr_inc=1;
+                     }
                   }
 
-                  // find corresponding (m) payload
+                  //
+                  // find corresponding (m) payload and remove it as well$
+                  //
+                  
+                  // loop through all payloads of the current media description
                   payload_no=0;
                   while ((payload=sdp_message_m_payload_get(sdp, media_stream_no, payload_no))) {
+                     // extract the media type from the payload
                      payload_mediatype=0;
                      sts=sscanf(payload, "%i", &payload_mediatype);
-                     DEBUGC(DBCLASS_PLUGIN, " +-- p:%s [%i]", payload, payload_mediatype);
+                     DEBUGC(DBCLASS_PLUGIN, "     +-- payload:%s MT=%i", payload, payload_mediatype);
+                     // medfia type matches?
                      if (payload_mediatype == attr_mediatype) {
-                        DEBUGC(DBCLASS_PLUGIN, "%s: *** REMOVE media format %i at stream=%i, pos=%i", name, 
+                        DEBUGC(DBCLASS_PLUGIN, "%s: blacklisted - removing media format %i at stream=%i, pos=%i", name, 
                                payload_mediatype, media_stream_no, payload_no);
-
                         // remove (m) playload in media description
                         if (sdp_message_m_payload_del(sdp, media_stream_no, payload_no) != OSIP_SUCCESS) {
                            ERROR("%s: sdp_message_a_attribute_del() failed", name);
                         }
                      } else {
+                        // increment index only if the current payload has not been removed
+                        // as all other medias would have shifted down.
                         payload_no++;
                      }
                   } /* while playload */
                } /* if match with config blacklist */
             } /* for codec_blacklist */
+         } /* if attribute field and value exist */
 
+         // increment index only of the current media attribute has not been deleted
+         if (skip_media_attr_inc == 0) {
+            media_attr_no++;
+         } else {
+            skip_media_attr_inc=0;
          }
-         if (skip_media_attr_inc == 0) {media_attr_no++;}
-         skip_media_attr_inc=0;
-      } /* while sdp_message_attribute_get */
 
+      } /* while sdp_message_attribute_get */
       media_stream_no++;
    } /* while sdp_message_m_media_get */
-
-
 
    return STS_SUCCESS;
 }
