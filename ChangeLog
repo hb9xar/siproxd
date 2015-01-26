@@ -1,5 +1,9 @@
 0.8.2
 =====
+  26-Jan-2015:  - added plugin_codecfilter (remove particular codecs in SDP
+                  payloads)
+  20-Jan-2015:  - added plugin_stripheader (remove particular SIP headers 
+                  from message)
   26-Sep-2014:  - fixed some #include and data-type issues.
   25-May-2014:  - PLUGIN_PROCESS_RAW: properly deal with the situation if a
                   RAW plugin modifies the message lengh.
