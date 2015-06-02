@@ -324,5 +324,11 @@ A: Siproxd itself does not include support for such a thing. However what
    copy the second siproxd config file in place and restart siproxd.
    Active registrations are not lost, as siproxd does save them at exit.
 
+---------------------------------------------------------------------------
+Q: Scalability of siproxd?
+
+A: I practice, stable operation of siproxd installations with more than 
+   600 VoIP Accounts and more than 60 concurrent calls are being reported.
+   Multiple instances of siproxd may be run on the same server.
 
 

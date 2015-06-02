@@ -270,7 +270,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       return STS_FAILURE;
    }
 
-   DEBUGC(DBCLASS_PROXY, "comparing urls: %s:%s@%s -> %s:%s@%s",
+   DEBUGC(DBCLASS_BABBLE, "comparing urls: %s:%s@%s -> %s:%s@%s",
          (url1->scheme)   ? url1->scheme :   "(null)",
          (url1->username) ? url1->username : "(null)",
          (url1->host)     ? url1->host :     "(null)",
@@ -281,7 +281,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    /* compare SCHEME (if present) case INsensitive */
    if (url1->scheme && url2->scheme) {
       if (osip_strcasecmp(url1->scheme, url2->scheme) != 0) {
-         DEBUGC(DBCLASS_PROXY, "compare_url: scheme mismatch");
+         DEBUGC(DBCLASS_BABBLE, "compare_url: scheme mismatch");
          return STS_FAILURE;
       }
    } else {
@@ -291,11 +291,11 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    /* compare username (if present) case sensitive */
    if (url1->username && url2->username) {
       if (strcmp(url1->username, url2->username) != 0) {
-         DEBUGC(DBCLASS_PROXY, "compare_url: username mismatch");
+         DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch");
          return STS_FAILURE;
       }
    } else {
-      DEBUGC(DBCLASS_PROXY, "compare_url: NULL username - ignoring");
+      DEBUGC(DBCLASS_BABBLE, "compare_url: NULL username - ignoring");
    }
 
 
@@ -308,26 +308,26 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    /* get the IP addresses from the (possible) hostnames */
    sts1=get_ip_by_host(url1->host, &addr1);
    if (sts1 == STS_FAILURE) {
-      DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
+      DEBUGC(DBCLASS_BABBLE, "compare_url: cannot resolve host [%s]",
              url1->host);
    }
 
    sts2=get_ip_by_host(url2->host, &addr2);
    if (sts2 == STS_FAILURE) {
-      DEBUGC(DBCLASS_PROXY, "compare_url: cannot resolve host [%s]",
+      DEBUGC(DBCLASS_BABBLE, "compare_url: cannot resolve host [%s]",
              url2->host);
    }
 
    if ((sts1 == STS_SUCCESS) && (sts2 == STS_SUCCESS)) {
       /* compare IP addresses */
       if (memcmp(&addr1, &addr2, sizeof(addr1))!=0) {
-         DEBUGC(DBCLASS_PROXY, "compare_url: IP mismatch");
+         DEBUGC(DBCLASS_BABBLE, "compare_url: IP mismatch");
          return STS_FAILURE;
       }
    } else {
       /* compare hostname strings case INsensitive */
       if (osip_strcasecmp(url1->host, url2->host) != 0) {
-         DEBUGC(DBCLASS_PROXY, "compare_url: host name mismatch");
+         DEBUGC(DBCLASS_BABBLE, "compare_url: host name mismatch");
          return STS_FAILURE;
       }
    }
@@ -1014,7 +1014,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
              urlmap[i].true_url->host);
       } else {
-         DEBUGC(DBCLASS_SIP, "sip_find_direction: reghost:%s ip:%s",
+         DEBUGC(DBCLASS_BABBLE, "sip_find_direction: reghost:%s ip:%s",
                 urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
          if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
             if (MSG_IS_REQUEST(ticket->sipmsg)) {
@@ -1133,7 +1133,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
                   port_ua=atoi(urlmap[i].true_url->port);
                if ((port_ua<=0) || (port_ua>65535)) port_ua=SIP_PORT;
 
-               DEBUGC(DBCLASS_SIP, "sip_find_direction: checking for registered "
+               DEBUGC(DBCLASS_BABBLE, "sip_find_direction: checking for registered "
                       "host [%s:%i] <-> [%s:%i]",
                       urlmap[i].true_url->host, port_ua,
                       via->host, port_via);
@@ -1182,6 +1182,13 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 
    ticket->direction=type;
    if (urlidx) *urlidx=i;
+
+   DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, urlmap %i, "
+                       "trueurl [%s:%s] / masqurl [%s:%s] / regurl [%s:%s]",
+                       type, i,
+                       urlmap[i].true_url->host, urlmap[i].true_url->port,
+                       urlmap[i].masq_url->host, urlmap[i].masq_url->port,
+                       urlmap[i].reg_url->host, urlmap[i].reg_url->port);
    return STS_SUCCESS;
 }
 

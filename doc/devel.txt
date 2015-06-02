@@ -9,3 +9,19 @@ FreeBSD:
 - #include <netinet/in.h>
   before 
   #include <arpa/inet.h>
+
+
+---
+Weiterleitungen:
+
+Supported Header entfernen -> Weiterleitungen gehen nicht mehr.
+
+Supported: 100rel -> muss entfernt werden, da easybell ein Problem mit PRACK hat
+
+Supported: replaces sollte nicht entfernt werden damit Weiterleitungen
+funktionieren.
+
+-> Prugin Remove ausbauen, damit auch gezieht Header/key Paare entfernt werden
+koennen und nicht nur komplette HEader.
+
+-> Analog zu Codec Removal

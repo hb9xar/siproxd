@@ -130,7 +130,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
             idx=i;
             break;
          }
-         DEBUGC(DBCLASS_DNS, "DNS lookup - from cache: %s -> %s",
+         DEBUGC(DBCLASS_BABBLE, "DNS lookup - from cache: %s -> %s",
                 hostname, utils_inet_ntoa(*addr));
          return STS_SUCCESS;
       }
