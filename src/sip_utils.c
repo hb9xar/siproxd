@@ -1181,14 +1181,19 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    }
 
    ticket->direction=type;
-   if (urlidx) *urlidx=i;
 
-   DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, urlmap %i, "
-                       "trueurl [%s:%s] / masqurl [%s:%s] / regurl [%s:%s]",
-                       type, i,
-                       urlmap[i].true_url->host, urlmap[i].true_url->port,
-                       urlmap[i].masq_url->host, urlmap[i].masq_url->port,
-                       urlmap[i].reg_url->host, urlmap[i].reg_url->port);
+   if (i < URLMAP_SIZE) {
+      if (urlidx) *urlidx=i;
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, urlmap %i, "
+                          "trueurl [%s:%s] / masqurl [%s:%s] / regurl [%s:%s]",
+                          type, i,
+                          urlmap[i].true_url->host, urlmap[i].true_url->port,
+                          urlmap[i].masq_url->host, urlmap[i].masq_url->port,
+                          urlmap[i].reg_url->host, urlmap[i].reg_url->port);
+   } else {
+      if (urlidx) *urlidx=-1;
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, not found in URLMAP", type);
+   }
    return STS_SUCCESS;
 }
 
