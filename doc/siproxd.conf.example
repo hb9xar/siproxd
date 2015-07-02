@@ -431,8 +431,14 @@ plugin_regex_replace = \1:001
 # May be used to workaround IP fragmentation by removing "unimportant"
 # SIP headers - this is clearly a ugly hack but sometimes saves on
 # from headache.
+# Format is <header>[:<value>], the :<value> part is optional - if not 
+# present the full header will be removed.
+#
+# remove entire header (all values attached to this header)
 plugin_stripheader_remove = Allow
 plugin_stripheader_remove = User-Agent
+# remove only a particular value from a header (no spaces allowed)
+plugin_stripheader_remove = Supported:100rel
 
 ######################################################################
 # Plugin_codecfilter

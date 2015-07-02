@@ -94,56 +94,88 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    /* stage contains the PLUGIN_* value - the stage of SIP processing. */
    int i;
    int pos;
+   char *header_remove=NULL;
+   char *header_remove_args=NULL;
+   int dlc=65535; /* deadlock counter... - just a life insurance */
 
 
 
    for (i=0; i<plugin_cfg.header_remove.used; i++) {
       DEBUGC(DBCLASS_PLUGIN, "%s: looking for header [%s], entry=%i", name, 
              plugin_cfg.header_remove.string[i], i);
+      if (strchr(plugin_cfg.header_remove.string[i],':')) {
+          int len=strchr(plugin_cfg.header_remove.string[i],':') - plugin_cfg.header_remove.string[i];
+          header_remove = strndup(plugin_cfg.header_remove.string[i], len);
+          header_remove_args = strdup(strchr(plugin_cfg.header_remove.string[i],':')+1);
+     } else {
+          header_remove = strdup(plugin_cfg.header_remove.string[i]);
+      }
 
-#if 0
-   int j=0;
-osip_header_t *tmp;
-
-DEBUGC(DBCLASS_PLUGIN, "%s: header list size=%i", name,
-       osip_list_size(&ticket->sipmsg->headers));
-
-
-
-	while (osip_list_size(&ticket->sipmsg->headers) > j) {
-		tmp = (osip_header_t *) osip_list_get(&ticket->sipmsg->headers, j);
-DEBUGC(DBCLASS_PLUGIN, "%s: header list j=%i, hname=%s, hvalue=%s", name,
-       j, tmp->hname, tmp->hvalue);
-//		if (osip_strcasecmp(tmp->hname, hname) == 0) {
-//			*dest = tmp;
-//			return i;
-//		}
-		j++;
-	}
-#endif
 
       /* special case Allow header */
-      if (strcasecmp(plugin_cfg.header_remove.string[i], "allow") == 0) {
+      if (strcasecmp(header_remove, "allow") == 0) {
          osip_allow_t *allow=NULL;
+         pos=0;
          while ((pos = osip_message_get_allow(ticket->sipmsg, 
-                       0, &allow)) != -1) {
-             DEBUGC(DBCLASS_PLUGIN, "%s: removing Allow header pos=%i, val=%s", name, 
-                    pos, allow->value);
-             osip_list_remove(&ticket->sipmsg->allows, pos);
-             osip_allow_free(allow);
-             allow=NULL;
+                       pos, &allow)) != -1) {
+             if (--dlc <= 0) { ERROR("deadlock counter has triggered. Likely a bug in code."); return STS_FAILURE;}
+             if (header_remove_args == NULL) {
+                /* remova all values for header */
+                DEBUGC(DBCLASS_PLUGIN, "%s: removing Allow header pos=%i, val=%s", name, 
+                       pos, allow->value);
+                osip_list_remove(&ticket->sipmsg->allows, pos);
+                osip_allow_free(allow);
+                allow=NULL;
+             } else {
+                /* remove only values "header_remove_args" */
+                if (osip_strcasecmp(header_remove_args, allow->value) == 0) {
+                   DEBUGC(DBCLASS_PLUGIN, "%s: removing Allow header value pos=%i, val=%s", name, 
+                          pos, allow->value);
+                   osip_list_remove(&ticket->sipmsg->allows, pos);
+                   osip_allow_free(allow);
+                   allow=NULL;
+                } else {
+                   pos++;
+                }
+             }
           }
 
       /* generic headers */
       } else {
          osip_header_t *h=NULL;
+         pos=0;
          while ((pos = osip_message_header_get_byname(ticket->sipmsg, 
-                   plugin_cfg.header_remove.string[i], 0, &h)) != -1) {
-             DEBUGC(DBCLASS_PLUGIN, "%s: removing header pos=%i, name=%s, val=%s", name, 
-                    pos, h->hname, h->hvalue);
-             osip_list_remove(&ticket->sipmsg->headers, pos);
-             osip_header_free(h);
+                   header_remove, pos, &h)) != -1) {
+             if (--dlc <= 0) { ERROR("deadlock counter has triggered. Likely a bug in code."); return STS_FAILURE;}
+             if (header_remove_args == NULL) {
+                /* remova all values for header */
+                DEBUGC(DBCLASS_PLUGIN, "%s: removing header pos=%i, name=%s, val=%s", name, 
+                       pos, h->hname, h->hvalue);
+                osip_list_remove(&ticket->sipmsg->headers, pos);
+                osip_header_free(h);
+             } else {
+                /* remove only values "header_remove_args" */
+                if (osip_strcasecmp(header_remove_args, h->hvalue) == 0) {
+                   DEBUGC(DBCLASS_PLUGIN, "%s: removing header value pos=%i, name=%s, val=%s", name, 
+                          pos, h->hname, h->hvalue);
+                   osip_list_remove(&ticket->sipmsg->headers, pos);
+                   osip_header_free(h);
+                   h=NULL;
+                } else {
+                   pos++;
+                }
+             } // if header_remove_args
          }
+      }
+
+      /* free resources */
+      if (header_remove_args) {
+         free (header_remove_args);
+         header_remove_args = NULL;
+      }
+      if (header_remove) {
+         free (header_remove);
+         header_remove = NULL;
       }
    }
 
