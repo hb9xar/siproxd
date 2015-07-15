@@ -55,7 +55,7 @@ extern int errno;
 void register_init(void) {
    FILE *stream;
    int sts, i;
-   size_t len;
+//   size_t len;
    char buff[128];
    char *c;
 
@@ -73,42 +73,40 @@ void register_init(void) {
          WARN("registration file not found, starting with empty table");
       } else {
          /* read the url table from file */
+         DEBUGC(DBCLASS_REG,"loading registration table");
          for (i=0;i < URLMAP_SIZE; i++) {
             c=fgets(buff, sizeof(buff), stream);
-            sts=sscanf(buff, "***:%i:%i", &urlmap[i].active, &urlmap[i].expires);
+            sts=sscanf(buff, "****:%i:%i", &urlmap[i].active, &urlmap[i].expires);
             if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
-               osip_uri_init(&urlmap[i].true_url);
-               osip_uri_init(&urlmap[i].masq_url);
-               osip_uri_init(&urlmap[i].reg_url);
-
                #define R(X) {\
-               c=fgets(buff, sizeof(buff), stream);\
-               buff[sizeof(buff)-1]='\0';\
-               if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
-               if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
-               if (strlen(buff) > 0) {\
-                  len  = strlen(buff);\
-                  X    =(char*)malloc(len+1);\
-                  sts=sscanf(buff,"%s",X);\
-                  if (sts == 0) break;\
-               } else {\
-                  X = NULL;\
-               }\
+               sts=osip_uri_init(&X); \
+               if (sts == 0) { \
+                  c=fgets(buff, sizeof(buff), stream);\
+                  buff[sizeof(buff)-1]='\0';\
+                  if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
+                  if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
+                  if (strlen(buff) > 0) {\
+                     sts = osip_uri_parse(X, buff); \
+                     if (sts != 0) { \
+                        ERROR("Unable to parse To URI: %s", buff); \
+                        osip_uri_free(X); \
+                        X = NULL; \
+                     } \
+                  } else { \
+                     DEBUGC(DBCLASS_BABBLE, "empty URI"); \
+                     osip_uri_free(X); \
+                     X = NULL; \
+                  } \
+               } else { \
+                  ERROR("Unable to initialize URI structure"); \
+               } \
                }
 
-               R(urlmap[i].true_url->scheme);
-               R(urlmap[i].true_url->username);
-               R(urlmap[i].true_url->host);
-               R(urlmap[i].true_url->port);
-               R(urlmap[i].masq_url->scheme);
-               R(urlmap[i].masq_url->username);
-               R(urlmap[i].masq_url->host);
-               R(urlmap[i].masq_url->port);
-               R(urlmap[i].reg_url->scheme);
-               R(urlmap[i].reg_url->username);
-               R(urlmap[i].reg_url->host);
-               R(urlmap[i].reg_url->port);
+               R(urlmap[i].true_url);
+               R(urlmap[i].masq_url);
+               R(urlmap[i].reg_url);
+
             }
          }
          fclose(stream);
@@ -152,22 +150,22 @@ void register_save(void) {
       }
 
       for (i=0;i < URLMAP_SIZE; i++) {
-         fprintf(stream, "***:%i:%i\n", urlmap[i].active, urlmap[i].expires);
+         fprintf(stream, "****:%i:%i\n", urlmap[i].active, urlmap[i].expires);
          if (urlmap[i].active) {
-            #define W(X) fprintf(stream, "%s\n", (X)? X:"");
+            #define W(X) { \
+            char *tmp=NULL; \
+            osip_uri_to_str(X, &tmp); \
+            fprintf(stream, "%s\n", (tmp)? tmp:""); \
+            if (tmp) osip_free(tmp); \
+            }
 
-            W(urlmap[i].true_url->scheme);
-            W(urlmap[i].true_url->username);
-            W(urlmap[i].true_url->host);
-            W(urlmap[i].true_url->port);
-            W(urlmap[i].masq_url->scheme);
-            W(urlmap[i].masq_url->username);
-            W(urlmap[i].masq_url->host);
-            W(urlmap[i].masq_url->port);
-            W(urlmap[i].reg_url->scheme);
-            W(urlmap[i].reg_url->username);
-            W(urlmap[i].reg_url->host);
-            W(urlmap[i].reg_url->port);
+            // true_url
+            W(urlmap[i].true_url);
+            // masq_url
+            W(urlmap[i].masq_url);
+            // reg_url
+            W(urlmap[i].reg_url);
+
          }
       }
       fclose(stream);

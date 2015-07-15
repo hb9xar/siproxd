@@ -80,7 +80,6 @@ int proxy_request (sip_ticket_t *ticket) {
    int sts;
    int type;
    struct in_addr sendto_addr;
-   osip_uri_t *url;
    int port;
    char *buffer;
    size_t buflen;
@@ -127,9 +126,6 @@ int proxy_request (sip_ticket_t *ticket) {
     * Proxy Behavior - Request Forwarding - Make a copy
     */
    /* nothing to do here, copy is ready in 'request'*/
-
-   /* get destination address */
-   url=osip_message_get_uri(request);
 
    switch (type) {
   /*
@@ -197,8 +193,8 @@ sts=sip_obscure_callid(ticket);
 	    request->sip_method? request->sip_method:"*NULL*",
 	    request->from->url->username? request->from->url->username:"*NULL*",
 	    request->from->url->host? request->from->url->host : "*NULL*",
-	    url->username? url->username : "*NULL*",
-	    url->host? url->host : "*NULL*");
+	    request->req_uri->username? request->req_uri->username : "*NULL*",
+	    request->req_uri->host? request->req_uri->host : "*NULL*");
 
          sip_gen_response(ticket, 403 /*forbidden*/);
 
@@ -238,8 +234,8 @@ sts=sip_obscure_callid(ticket);
            request->sip_method? request->sip_method:"*NULL*",
 	   request->from->url->username? request->from->url->username:"*NULL*",
 	   request->from->url->host? request->from->url->host : "*NULL*",
-	   url->username? url->username : "*NULL*",
-	   url->host? url->host : "*NULL*");
+	   request->req_uri->username? request->req_uri->username : "*NULL*",
+	   request->req_uri->host? request->req_uri->host : "*NULL*");
 
 /*
  * we may end up here for two reasons:
@@ -383,21 +379,21 @@ In a first implementation we may just try to get the lowest priority,
 max weighted '_sip._udp.domain' entry and port number.
 No load balancing and no failover are supported with this.
 &&&*/
-      sts = get_ip_by_host(url->host, &sendto_addr);
+      sts = get_ip_by_host(request->req_uri->host, &sendto_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
-                url->host);
+                request->req_uri->host);
          return STS_FAILURE;
       }
 
-      if (url->port) {
-         port=atoi(url->port);
+      if (request->req_uri->port) {
+         port=atoi(request->req_uri->port);
          if ((port<=0) || (port>65535)) port=SIP_PORT;
       } else {
          port=SIP_PORT;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have SIP URI to %s:%i",
-             url->host, port);
+             request->req_uri->host, port);
    }
 
    /*
@@ -1190,6 +1186,9 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    char *host;
    char *port;
    osip_uri_t *url;
+   int sts;
+   char *tmp1=NULL;
+   char *tmp2=NULL;
 
    if ((idx >= URLMAP_SIZE) || (idx < 0)) {
       WARN("proxy_rewrite_request_uri: called with invalid index");
@@ -1199,6 +1198,7 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    DEBUGC(DBCLASS_PROXY,"rewriting incoming Request URI");
    url=osip_message_get_uri(mymsg);
 
+#if 0
    /* set the true scheme */
    if (url->scheme) {osip_free(url->scheme);url->scheme=NULL;}
    if (urlmap[idx].true_url->scheme) {
@@ -1244,6 +1244,21 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
       port[strlen(urlmap[idx].true_url->port)]='\0';
       osip_uri_set_port(url, port);
    }
+#else
+   osip_uri_to_str(url, &tmp1);
+   osip_uri_to_str(urlmap[idx].true_url, &tmp2);
+   DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: %s -> %s", tmp1, tmp2);
+
+   osip_uri_free(url);
+   url=NULL;
+   osip_message_set_uri(mymsg, url);
+   sts = osip_uri_clone(urlmap[idx].true_url, &url);
+   if (sts != 0) {
+      ERROR("osip_uri_clone failed");
+   }
+   osip_message_set_uri(mymsg, url);
+#endif
+
    return STS_SUCCESS;
 }
 
