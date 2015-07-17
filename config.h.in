@@ -262,6 +262,9 @@
 /* Version number of package */
 #undef VERSION
 
+/* ltdl workaround for undefined reference linking error */
+#undef WITH_LTDL_FIX
+
 /* building on BSD platform */
 #undef _BSD
 
