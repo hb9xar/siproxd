@@ -53,6 +53,7 @@ dnl				convenience lib)
 dnl	09-Jan-2011	tries	use CFLAGS -Wall only with GCC compiler
 dnl	15-Sep-2011	tries	added --with-included-libtool to force the
 dnl				use of the included libltdl
+dnl	17-Jul-2015	tries	added --with-ltdl-fix
 dnl
 dnl
 
@@ -111,7 +112,7 @@ AC_MSG_CHECKING("extra includes")
 AC_MSG_RESULT($extra_includes)
 
 AC_ARG_WITH(extra-libs,
-   [  --with-extra-libs=DIR       adds non standard library paths],
+   [  --with-extra-libs=DIR   adds non standard library paths],
    extra_libs="$withval" )
 AC_SUBST(extra_libs)
 AC_MSG_CHECKING("extra libs")
@@ -144,8 +145,14 @@ AC_CHECK_LIB(ltdl, lt_dlopen, [
 ],)
 
 AC_ARG_WITH(included-libtool,
-   [  --with-included-libtool     force the use of included libltdl (libtool)],
+   [  --with-included-libtool force the use of included libltdl (libtool)],
    use_native_ltdl="no";echo "*** FORCED to use included convenience libltdl",
+   )
+
+AC_ARG_WITH(ltdl-fix,
+   [  --with-ltdl-fix         work around broken ltdl versions (fix linking
+                          error "undefined reference to lt__PROGRAM..."],
+   AC_DEFINE(WITH_LTDL_FIX,,[ltdl workaround for undefined reference linking error]),
    )
 
 if test "x$use_native_ltdl" = "xno"; then
@@ -187,7 +194,7 @@ dnl
    build_docs="yes";
    AC_MSG_CHECKING(build documentation)
    AC_ARG_ENABLE(doc,
-      [  --disable-doc               build pdf/html doc (default=enabled)],
+      [  --disable-doc           build pdf/html doc (default=enabled)],
       if test "x$enableval" = "xno"; then
          build_docs="no";
       fi
@@ -233,7 +240,7 @@ dnl    --enable-dmalloc
 dnl
    AC_MSG_CHECKING(building with DMALLOC support)
    AC_ARG_ENABLE(dmalloc,
-      [  --enable-dmalloc            build with DMALLOC support],
+      [  --enable-dmalloc        build with DMALLOC support],
       dmalloc="$enableval";
       AC_MSG_RESULT($enableval), AC_MSG_RESULT(no))
    if test "x$dmalloc" = "xyes"; then

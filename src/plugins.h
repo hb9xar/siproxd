@@ -28,12 +28,16 @@
    #include <ltdl.h>
 #endif
 
-
-///* libtool 2.2 / 2.4 */
+#if WITH_LTDL_FIX
+/* workaround for some broken libtool 2.2.6 (and others?) versions 
+ * that cause an 
+ * undefined reference to `lt__PROGRAM__LTX_preloaded_symbols'
+ * error during linking state */
 #ifndef lt__PROGRAM__LTX_preloaded_symbols
 #define lt__PROGRAM__LTX_preloaded_symbols lt_libltdl_LTX_preloaded_symbols
 //extern const void *lt_preloaded_symbols[];
 #endif
+#endif 
 
 /* Plugins must return STS_SUCCESS / SUCCESS_FAILURE */
 
