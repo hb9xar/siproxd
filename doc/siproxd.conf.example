@@ -393,7 +393,7 @@ plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 # responses, causing the received SIP response to be discarded by
 # any SIP client that properly checks the Via chain.
 # DTAG_networks: Network where DTAG messages are received from.
-plugin_fix_DTAG_networks = 217.0.23.100/24
+plugin_fix_DTAG_networks = 217.0.23.100/32
 
 ######################################################################
 # Plugin_stun

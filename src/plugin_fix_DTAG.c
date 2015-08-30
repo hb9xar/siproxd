@@ -56,7 +56,7 @@ static cfgopts_t plugin_cfg_opts[] = {
 };
 
 /* Prototypes */
-static int sip_patch_topvia(sip_ticket_t *ticket);
+static int sip_fix_topvia(sip_ticket_t *ticket);
 
 
 /* 
@@ -101,28 +101,34 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
    type = ticket->direction;
 
-   /* Incoming SIP response? */
 DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
-   if (type == RESTYP_INCOMING) {
 
+   /* Incoming SIP response? */
+   if (type == RESTYP_INCOMING) {
+      /* a Via header needs to be present in response */
       if((via = osip_list_get(&(ticket->sipmsg->vias), 0)) == NULL) {
          WARN("no Via header found in incoming SIP message");
          return STS_SUCCESS;
       }
 
-      get_ip_by_host(via->host, &(from.sin_addr));
-
       /* check for Via IP in configured range */
+      get_ip_by_host(via->host, &(from.sin_addr));
       if ((plugin_cfg.networks != NULL) &&
           (strcmp(plugin_cfg.networks, "") !=0) &&
+          (process_aclist(plugin_cfg.networks, ticket->from) == STS_SUCCESS) &&
           (process_aclist(plugin_cfg.networks, from) == STS_SUCCESS)) {
-         /* is in list, patch Via header */
+
+         /* VIA & Sender IP are in list, fix Via header */
          DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: replacing a bogus via");
-         if (sip_patch_topvia(ticket) == STS_FAILURE) {
+
+         if (sip_fix_topvia(ticket) == STS_FAILURE) {
             ERROR("patching inbound Via failed!");
          }
+      } else {
+         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: not match, returning.");
       }
-   }
+      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: done");
+  }
    return STS_SUCCESS;
 }
 
@@ -138,29 +144,30 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
 }
 
 /*--------------------------------------------------------------------*/
-static int sip_patch_topvia(sip_ticket_t *ticket) {
+static int sip_fix_topvia(sip_ticket_t *ticket) {
    osip_via_t *via;
    int sts;
 
    if((via = osip_list_get(&(ticket->sipmsg->vias), 0)) != NULL) {
-      // 1) check that via header matches criteria (is not local)
-      if (! is_via_local(via)) {
-         // 2) remove broken via header
-         sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
-         osip_via_free (via);
-         via = NULL;
+      /* 1) IP of Via has been checked beforehand. */
 
-         // 3) add my via header
-         if (ticket->direction == RESTYP_INCOMING) {
-            sts = sip_add_myvia(ticket, IF_OUTBOUND);
-            if (sts == STS_FAILURE) {
-               ERROR("adding my outbound via failed!");
-            }
-         } else {
-            sts = sip_add_myvia(ticket, IF_INBOUND);
-            if (sts == STS_FAILURE) {
-               ERROR("adding my inbound via failed!");
-            }
+      /* 2) remove broken via header */
+      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: removing topmost via");
+      sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
+      osip_via_free (via);
+      via = NULL;
+
+      /* 3) add my via header */
+      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: adding new via");
+      if (ticket->direction == RESTYP_INCOMING) {
+         sts = sip_add_myvia(ticket, IF_OUTBOUND);
+         if (sts == STS_FAILURE) {
+            ERROR("adding my outbound via failed!");
+         }
+      } else {
+         sts = sip_add_myvia(ticket, IF_INBOUND);
+         if (sts == STS_FAILURE) {
+            ERROR("adding my inbound via failed!");
          }
       }
    }

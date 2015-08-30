@@ -168,8 +168,12 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
 			    (long)ntohl(from.sin_addr.s_addr) & bitmask);
 
       if ( (ntohl(inaddr.s_addr) & bitmask) == 
-           (ntohl(from.sin_addr.s_addr) & bitmask) ) return STS_SUCCESS;
+           (ntohl(from.sin_addr.s_addr) & bitmask) ) {
+         DEBUGC(DBCLASS_ACCESS, "process_aclist: MATCH");
+         return STS_SUCCESS;
+      }
    }
 
+   DEBUGC(DBCLASS_ACCESS, "process_aclist: no match");
    return STS_FAILURE;
 }

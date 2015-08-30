@@ -486,6 +486,16 @@ int proxy_response (sip_ticket_t *ticket) {
    response=ticket->sipmsg;
 
    /*
+    * figure out if this is an request coming from the outside
+    * world to one of our registered clients
+    */
+   sip_find_direction(ticket, NULL);
+   type = ticket->direction;
+
+   /* Call Plugins for stage: PLUGIN_PRE_PROXY */
+   sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
+
+   /*
     * RFC 3261, Section 16.7 step 3
     * Proxy Behavior - Response Processing - Remove my Via header field value
     */
@@ -495,16 +505,6 @@ int proxy_response (sip_ticket_t *ticket) {
       DEBUGC(DBCLASS_PROXY,"not addressed to my VIA, ignoring response");
       return STS_FAILURE;
    }
-
-   /*
-    * figure out if this is an request coming from the outside
-    * world to one of our registered clients
-    */
-   sip_find_direction(ticket, NULL);
-   type = ticket->direction;
-
-   /* Call Plugins for stage: PLUGIN_PRE_PROXY */
-   sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
 
 /*
  * ok, we got a response that we are allowed to process.
