@@ -331,6 +331,7 @@ plugindir=/usr/lib/siproxd/
 load_plugin=plugin_logcall.la
 #load_plugin=plugin_defaulttarget.la
 #load_plugin=plugin_fix_bogus_via.la
+#load_plugin=plugin_fix_DTAG.la
 #load_plugin=plugin_stun.la
 #load_plugin=plugin_prefix.la
 #load_plugin=plugin_regex.la
@@ -383,6 +384,16 @@ plugin_defaulttarget_target = sip:internal@dddd:port
 # part of the list below, it will be replaced by the IP where the
 # SIP message has been received from.
 plugin_fix_bogus_via_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+
+######################################################################
+# Plugin_fix_DTAG
+#
+# This plugin attempts to work-around some SIP issues with
+# T-ONLINE SIP (as of 2015). T-Online.de sends broken Via headers in 
+# responses, causing the received SIP response to be discarded by
+# any SIP client that properly checks the Via chain.
+# DTAG_networks: Network where DTAG messages are received from.
+plugin_fix_DTAG_networks = 217.0.23.100/24
 
 ######################################################################
 # Plugin_stun

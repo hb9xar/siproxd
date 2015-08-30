@@ -34,6 +34,7 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_logcall.la \
 			plugin_defaulttarget.la \
 			plugin_fix_bogus_via.la \
+			plugin_fix_DTAG.la \
 			plugin_stun.la \
 			plugin_prefix.la \
 			plugin_regex.la \
@@ -44,6 +45,7 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_logcall.la \
 			-dlopen plugin_defaulttarget.la \
 			-dlopen plugin_fix_bogus_via.la \
+			-dlopen plugin_fix_DTAG.la \
 			-dlopen plugin_stun.la \
 			-dlopen plugin_prefix.la \
 			-dlopen plugin_regex.la \
@@ -64,6 +66,9 @@ plugin_defaulttarget_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_fix_bogus_via_la_SOURCES = plugin_fix_bogus_via.c
 plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_fix_DTAG_la_SOURCES = plugin_fix_DTAG.c
+plugin_fix_DTAG_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_stun_la_SOURCES = plugin_stun.c
 plugin_stun_la_LDFLAGS = -module -avoid-version -shrext '.so'
