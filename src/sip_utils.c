@@ -1098,22 +1098,32 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * inserted by myself
     */
    if ((type == DIRTYP_UNKNOWN) && 
-       (!osip_list_eol(&(response->vias), 0))) {
+       (!osip_list_eol(&(response->vias), 1))) {
       if (MSG_IS_RESPONSE(ticket->sipmsg)) {
          osip_via_t *via;
          struct in_addr addr_via, addr_myself;
          int port_via, port_ua;
 
-         /* get the via address */
-         via = (osip_via_t *) osip_list_get (&(response->vias), 0);
-         DEBUGC(DBCLASS_SIP, "sip_find_direction: check via [%s] for "
-                "registered UA",via->host);
-         sts=get_ip_by_host(via->host, &addr_via);
-         if (sts == STS_FAILURE) {
-            DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve VIA [%s]",
-                   via->host);
+         /* get the via address :
+          * topmost via (pos 0) still is my own via (not yet removed)
+          * next vi a(pos 1) may be local UA via
+          */
+         via = (osip_via_t *) osip_list_get (&(response->vias), 1);
+         if (via) {
+            DEBUGC(DBCLASS_SIP, "sip_find_direction: check via [%s] for "
+                   "registered UA",via->host);
+            sts=get_ip_by_host(via->host, &addr_via);
+            if (sts == STS_FAILURE) {
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve VIA [%s]",
+                      via->host);
+            }
          } else {
+            DEBUGC(DBCLASS_SIP, "sip_find_direction: no second via in list");
+            sts = STS_FAILURE;
+         }
 
+
+         if (sts == STS_SUCCESS) {
             for (i=0; i<URLMAP_SIZE; i++) {
                if (urlmap[i].active == 0) continue;
                /* incoming response (1st via in list points to a registered UA) */

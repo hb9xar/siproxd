@@ -112,6 +112,8 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
       }
 
       /* check for Via IP in configured range */
+      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: processing VIA host [%s]",
+             via->host);
       get_ip_by_host(via->host, &(from.sin_addr));
       if ((plugin_cfg.networks != NULL) &&
           (strcmp(plugin_cfg.networks, "") !=0) &&
