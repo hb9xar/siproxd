@@ -113,7 +113,8 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
    int i, sts;
    int lastentry;
    char *p1, *p2;
-   char address[32]; /* dotted decimal IP - max 15 chars*/
+   char address[HOSTNAME_SIZE+1]; /* dotted decimal IP - max 15 chars */
+                                  /* or hostname*/
    char mask[8];     /* mask - max 2 digits */
    int  mask_int;
    struct in_addr inaddr;
