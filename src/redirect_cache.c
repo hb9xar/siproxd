@@ -35,7 +35,7 @@
 #include "redirect_cache.h"
 #include "log.h"
 
-static char const ident[]="$Id: plugin_prefix.c 484 2011-06-17 16:15:41Z hb9xar $";
+static char const ident[]="$Id$";
 
 #define CACHE_TIMEOUT  20
 

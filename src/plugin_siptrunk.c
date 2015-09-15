@@ -19,7 +19,7 @@
 */
 
 /* must be defined before including <plugin.h> */
-#define PLUGIN_NAME	plugin_fix_DTAG
+#define PLUGIN_NAME	plugin_siptrunk
 
 #include "config.h"
 
@@ -38,26 +38,60 @@
 static char const ident[]="$Id$";
 
 /* Plug-in identification */
-static char name[]="plugin_fix_DTAG";
-static char desc[]="Fixes issues with DTAG (t-online.de) broken SIP headers";
+static char name[]="plugin_siptrunk";
+static char desc[]="Handles SIP trunks with multiple numbers on same SIP account";
 
 /* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
 
 /* plugin configuration storage */
 static struct plugin_config {
-   char *networks;
+   stringa_t trunk_name;
+   stringa_t trunk_account;
+   stringa_t trunk_numbers;
 } plugin_cfg;
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_fix_DTAG_networks",      TYP_STRING, &plugin_cfg.networks,	{0, NULL} },
+   { "plugin_siptrunk_name",     TYP_STRINGA,&plugin_cfg.trunk_name,	{0, NULL} },
+   { "plugin_siptrunk_account",  TYP_STRINGA,&plugin_cfg.trunk_account,	{0, NULL} },
+   { "plugin_siptrunk_numbers",  TYP_STRINGA,&plugin_cfg.trunk_numbers,	{0, NULL} },
    {0, 0, 0}
 };
 
 /* Prototypes */
 static int sip_fix_topvia(sip_ticket_t *ticket);
 
+/*&&&+++
+1) register
+  - nothing to to
+2) outgoing calls
+  - nothing to do. Should be able to figure out direction by
+    Contact header, via header
+3) incoming call
+  * need matching of incoming DID number to trunk account
+    - SIP URI
+    - To: Header
+  How do I pass on that matched information?
+  ? rewriting To: header?
+  ? rewriting SIP URI?
+  ? new metadata in ticket structure?
+Need to provide info for sip_find_direction() -nope, this has been processed
+(and failed) before the plugin. I need to provide the correct drection value in
+the ticket.
+Then with an Route header I may set the next Hop (to the internal UA). I need to
+access the registration database to get the associated IP address with the
+account...
+Unfortunately, the route header processing is only done for OUTGOING requests.
+
+Probably should try with rewritung the SIP URI to the account name. However this
+is bad bcoz if destroys the DID number information in the request URI.
+
+I may need some next hop override that a plugin can use to force the next hop,
+no matter what...
+
+
+&&&---*/
 
 /* 
  * Initialization.
@@ -85,7 +119,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
       return STS_FAILURE;
    }
 
-   INFO("plugin_fix_DTAG is initialized");
+   INFO("plugin_siptrunk is initialized");
    return STS_SUCCESS;
 }
 
@@ -101,7 +135,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
    type = ticket->direction;
 
-DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
+DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: type=%i", type);
 
    /* Incoming SIP response? */
    if (type == RESTYP_INCOMING) {
@@ -112,7 +146,7 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
       }
 
       /* check for Via IP in configured range */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: processing VIA host [%s]",
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing VIA host [%s]",
              via->host);
       get_ip_by_host(via->host, &(from.sin_addr));
       if ((plugin_cfg.networks != NULL) &&
@@ -121,15 +155,15 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
           (process_aclist(plugin_cfg.networks, from) == STS_SUCCESS)) {
 
          /* VIA & Sender IP are in list, fix Via header */
-         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: replacing a bogus via");
+         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: replacing a bogus via");
 
          if (sip_fix_topvia(ticket) == STS_FAILURE) {
             ERROR("patching inbound Via failed!");
          }
       } else {
-         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: not match, returning.");
+         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: not match, returning.");
       }
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: done");
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: done");
   }
    return STS_SUCCESS;
 }
@@ -141,7 +175,7 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: type=%i", type);
  * connections, whatever the plugin messes around with)
  */
 int  PLUGIN_END(plugin_def_t *plugin_def){
-   INFO("plugin_fix_DTAG ends here");
+   INFO("plugin_siptrunk ends here");
    return STS_SUCCESS;
 }
 
@@ -154,13 +188,13 @@ static int sip_fix_topvia(sip_ticket_t *ticket) {
       /* 1) IP of Via has been checked beforehand. */
 
       /* 2) remove broken via header */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: removing topmost via");
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: removing topmost via");
       sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
       osip_via_free (via);
       via = NULL;
 
       /* 3) add my via header */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_DTAG: adding new via");
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: adding new via");
       if (ticket->direction == RESTYP_INCOMING) {
          sts = sip_add_myvia(ticket, IF_OUTBOUND);
          if (sts == STS_FAILURE) {

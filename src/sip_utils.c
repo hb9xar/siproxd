@@ -967,7 +967,7 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
 
 
 /*
- * SIP_IS_OUTGOING
+ * SIP_FIND_DIRECTION
  *
  * Figures out if this is an outgoing or incoming request/response.
  * The direction is stored in the ticket->direction property.
@@ -992,14 +992,19 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    ticket->direction = DIRTYP_UNKNOWN;
 
    /* Search order is as follows:
-    * - "from" IP address one of our registered local UAs
-    * - "To:" SIP header (Request) directed to internal UA
+    * - "from" IP address is one of our registered local UAs
+    *   => OUTGOING
+    * - "Req: To:" SIP header (Request) directed to internal UA
     *   or
-    *   "From:" SIP header (Response) coming from internal UA
-    * - SIP URI matches one of the registered local UAs
-    * - for Responses: check for bottommost "Via:" header to be
+    *   Resp: "From:" SIP header (Response) coming from internal UA
+    *   => INCOMING
+    * - Req: SIP URI matches one of the registered local UAs
+    *   => INCOMING
+    * - Resp: check for bottommost "Via:" header to be
     *   one of our registered local UA IPs
-    * - "from" IP == 127.0.0.1 || inbound_IP || outbound IP 
+    *   => INCOMING
+    * - "from" IP == (127.0.0.1 | inbound_IP | outbound IP)
+    *   => OUTGOING
     *
     * The first successful match is taken.
     */
