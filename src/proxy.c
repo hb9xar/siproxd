@@ -114,11 +114,11 @@ int proxy_request (sip_ticket_t *ticket) {
     * by doing a lookup in the registration table.
     */
    sip_find_direction(ticket, &i);
-   type = ticket->direction;
 
    /* Call Plugins for stage: PLUGIN_PRE_PROXY */
    sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
 
+   type = ticket->direction;
    /*
     * RFC 3261, Section 16.6 step 1
     * Proxy Behavior - Request Forwarding - Make a copy
@@ -140,7 +140,10 @@ int proxy_request (sip_ticket_t *ticket) {
        * (rewrite request URI to point to the real host)
        */
       /* 'i' still holds the valid index into the URLMAP table */
-      proxy_rewrite_request_uri(request, i);
+DEBUGC(DBCLASS_PROXY,"index i=%i",i);
+      if ((i>=0) && (i < URLMAP_SIZE)) {
+         proxy_rewrite_request_uri(request, i);
+      }
 
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
@@ -495,11 +498,11 @@ int proxy_response (sip_ticket_t *ticket) {
     * world to one of our registered clients
     */
    sip_find_direction(ticket, NULL);
-   type = ticket->direction;
 
    /* Call Plugins for stage: PLUGIN_PRE_PROXY */
    sts = call_plugins(PLUGIN_PRE_PROXY, ticket);
 
+   type = ticket->direction;
    /*
     * RFC 3261, Section 16.7 step 3
     * Proxy Behavior - Response Processing - Remove my Via header field value

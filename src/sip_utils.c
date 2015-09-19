@@ -1192,6 +1192,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    if (type == DIRTYP_UNKNOWN) {
       DEBUGC(DBCLASS_SIP, "sip_find_direction: unable to determine "
                           "direction of SIP packet");
+      if (urlidx) *urlidx=-1;
       return STS_FAILURE;
    }
 

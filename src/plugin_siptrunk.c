@@ -118,7 +118,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
 
    /* Execution mask - during what stages of SIP processing shall
     * the plugin be called. */
-   plugin_def->exe_mask=PLUGIN_PRE_PROXY;
+   plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET; //PLUGIN_PRE_PROXY;
 
    /* read the config file */
    if (read_config(configuration.configfile,
@@ -204,6 +204,9 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
    /* plugin loaded and not configured, return with success */
    if (plugin_cfg.trunk_numbers_regex.used==0) return STS_SUCCESS;
 
+   if (ticket->direction == DIRTYP_UNKNOWN) {
+      sip_find_direction(ticket, NULL);
+   }
 
    DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: type=%i", ticket->direction);
    DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: next hop was %s:%i",
@@ -211,10 +214,11 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
           ticket->next_hop.sin_port);
 
    /* SIP request? && direction undetermined? */
-   if (MSG_IS_REQUEST(ticket->sipmsg)) {
-//   if ((ticket->direction == DIRTYP_UNKNOWN) 
-//        && MSG_IS_REQUEST(ticket->sipmsg)) {
+   if ((ticket->direction == DIRTYP_UNKNOWN) 
+        && MSG_IS_REQUEST(ticket->sipmsg)) {
       DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing REQ w/ DIRTYP_UNKNOWN");
+      DEBUGC(DBCLASS_PLUGIN, "&&&1: req_uri [%s]", ticket->sipmsg->req_uri->username);
+      DEBUGC(DBCLASS_PLUGIN, "&&&1: to_url [%s]", ticket->sipmsg->to->url->username);
 
       /* get REQ URI & To URI from headers */
       req_url=osip_message_get_uri(ticket->sipmsg);
@@ -223,7 +227,8 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
       }
 
       /* check To: URI */
-      to_url=osip_to_get_url(ticket->sipmsg);
+//&&&broken:      to_url=osip_to_get_url(ticket->sipmsg);
+      to_url=ticket->sipmsg->to->url;
       if (to_url && to_url->username) {
          DEBUGC(DBCLASS_BABBLE, "To: header: [%s]", to_url->username);
       }
