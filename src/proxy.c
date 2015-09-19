@@ -391,13 +391,12 @@ No load balancing and no failover are supported with this.
          return STS_FAILURE;
       }
 
+      ticket->next_hop.sin_port=SIP_PORT;
       if (request->req_uri->port) {
          ticket->next_hop.sin_port=atoi(request->req_uri->port);
-         if (ticket->next_hop.sin_port != 0) {
+         if (ticket->next_hop.sin_port == 0) {
             ticket->next_hop.sin_port=SIP_PORT;
          }
-      } else {
-         ticket->next_hop.sin_port=SIP_PORT;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have SIP URI to %s:%i",
              utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
@@ -723,13 +722,12 @@ sts=sip_obscure_callid(ticket);
          return STS_FAILURE;
       }
 
+      ticket->next_hop.sin_port=SIP_PORT;
       if (via->port) {
          ticket->next_hop.sin_port=atoi(via->port);
-         if (ticket->next_hop.sin_port != 0) {
-            ticket->next_hop.sin_port=SIP_PORT;
+         if (ticket->next_hop.sin_port == 0) {
+            ticket->next_hop.sin_port=ticket->next_hop.sin_port;
          }
-      } else {
-         ticket->next_hop.sin_port=SIP_PORT;
       }
    }
 
