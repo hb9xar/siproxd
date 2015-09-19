@@ -20,11 +20,17 @@
 */
 #include "config.h"
 
+#include <stdio.h>
 #include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#include <time.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <osipparser2/osip_parser.h>
 #include "siproxd.h"
@@ -161,7 +167,7 @@ void dejitter_flush(struct timeval *current_tv, int nolock) {
  * Delay of next transmission
  */
 int dejitter_delay_of_next_tx(struct timeval *tv,struct timeval *current_tv) {
-   struct timezone tz ;
+   struct timezone tz;
 
    if (msg_que) {
       gettimeofday(current_tv,&tz);
