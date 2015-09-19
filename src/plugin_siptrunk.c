@@ -67,7 +67,7 @@ static regex_t *re;
 /* Prototypes */
 static int plugin_siptrunk_init(void);
 static int plugin_siptrunk_process(sip_ticket_t *ticket);
-static regmatch_t * rmatch (char *buf, int size, regex_t *re);
+static regmatch_t * rmatch (char *buf, regex_t *re);
 //static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp);
 
 
@@ -197,14 +197,9 @@ static int plugin_siptrunk_init(void) {
 static int plugin_siptrunk_process(sip_ticket_t *ticket) {
    int sts=STS_SUCCESS;
    int i, j;
-   osip_uri_t *req_url;
-   osip_uri_t *to_url;
-   osip_uri_t *url;
-//   char *req_url_string=NULL;
-//   char *to_url_string=NULL;
-
-   #define WORKSPACE_SIZE 128
-//   static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
+   osip_uri_t *req_url = NULL;
+   osip_uri_t *to_url = NULL;
+   osip_uri_t *url = NULL;
 
    /* plugin loaded and not configured, return with success */
    if (plugin_cfg.trunk_numbers_regex.used==0) return STS_SUCCESS;
@@ -221,6 +216,17 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
 //        && MSG_IS_REQUEST(ticket->sipmsg)) {
       DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing REQ w/ DIRTYP_UNKNOWN");
 
+      /* get REQ URI & To URI from headers */
+      req_url=osip_message_get_uri(ticket->sipmsg);
+      if (req_url && req_url->username) {
+         DEBUGC(DBCLASS_BABBLE, "Request URI: [%s]", req_url->username);
+      }
+
+      /* check To: URI */
+      to_url=osip_to_get_url(ticket->sipmsg);
+      if (to_url && to_url->username) {
+         DEBUGC(DBCLASS_BABBLE, "To: header: [%s]", to_url->username);
+      }
 
       /* Loop through config array */
       for (i = 0; i < plugin_cfg.trunk_numbers_regex.used; i++) {
@@ -228,17 +234,13 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
          regmatch_t *pmatch_to  = NULL;
 
          /* check SIP URI */
-         req_url=osip_message_get_uri(ticket->sipmsg);
          if (req_url && req_url->username) {
-            DEBUGC(DBCLASS_BABBLE, "Request URI: [%s]", req_url->username);
-            pmatch_uri = rmatch(req_url->username, WORKSPACE_SIZE, &re[i]);
+            pmatch_uri = rmatch(req_url->username, &re[i]);
          }
 
          /* check To: URI */
-         to_url=osip_to_get_url(ticket->sipmsg);
          if (to_url && to_url->username) {
-            DEBUGC(DBCLASS_BABBLE, "To: header: [%s]", to_url->username);
-            pmatch_uri = rmatch(to_url->username, WORKSPACE_SIZE, &re[i]);
+            pmatch_uri = rmatch(to_url->username, &re[i]);
          }
 
          if ((pmatch_uri == NULL) && (pmatch_to == NULL)) continue;
@@ -253,13 +255,20 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
 
          /* prepare URL structure for compare) */
          osip_uri_init(&url);
-         osip_uri_parse(url, plugin_cfg.trunk_account.string[i]);
+         sts = osip_uri_parse(url, plugin_cfg.trunk_account.string[i]);
+         if (sts != 0) {
+            WARN("parsing plugin_siptrunk_account [%s] failed.", 
+                 plugin_cfg.trunk_account.string[i]);
+            continue;
+         }
 
          /* search for an Account entry in registration DB */
          for (j=0; j<URLMAP_SIZE; j++){
             if (urlmap[j].active == 0) continue;
 
             if (compare_url(url, urlmap[j].reg_url) == STS_SUCCESS) {
+               DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: found registered client, idx=%i",j);
+
                /* set ticket->direction == REQTYP_INCOMING */
                ticket->direction = REQTYP_INCOMING;
 
@@ -284,12 +293,13 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
             }
          
          }
-         osip_uri_free(url);
+         if (url) {osip_uri_free(url);}
 
 
          /* only do first match, then break */
          break;
-      } /* end for */
+      } /* end for i */
+
 
       if (i >= plugin_cfg.trunk_numbers_regex.used) {
          DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: no match");
@@ -324,7 +334,7 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
  * if a match is actually there.
  */
 #define NMATCHES 10
-static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
+static regmatch_t * rmatch (char *buf, regex_t *re) {
    static regmatch_t pm[NMATCHES]; /* regoff_t is int so size is int */
 
    /* perform the match */
