@@ -337,6 +337,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_regex.la
 #load_plugin=plugin_stripheader.la
 #load_plugin=plugin_codecfilter.la
+#load_plugin=plugin_siptrunk.la
 
 
 ######################################################################
@@ -465,3 +466,27 @@ plugin_codecfilter_blacklist = G722
 plugin_codecfilter_blacklist = G726
 plugin_codecfilter_blacklist = G729
 plugin_codecfilter_blacklist = GSM
+
+######################################################################
+# Plugin_siptrunk
+#
+# Plugin to handle SIP Trunks where using *one* single SIP account a
+# whole number block is routed. This means asn incoming INVITE does carry
+# the target number (in SIP URI or To: header field) but does not really
+# carry any clear indications to which account it belongs to.
+# Thus, we need some help - a mapping of the number blocks used in a SIP
+# trunk and the corresponding SIP account (as used during REGISTER)
+#
+# ..._name:          any name, pure documentation
+# ..._account:       SIP account in the form of 'sip:user@host',
+#                    identical as used for registration.
+# ..._numbers_regex: REGEX that matches the whole number block associated
+#                    with this account
+#
+# NOTE: plugin_siptrunk is mutually exclusive with plugin_defaulttarget!
+#       if the defaulttartet 'plugin is also active, then all incoming calls 
+#       on SIP trunks will be redirected to the default target.
+#
+#plugin_siptrunk_name = Example Trunk, 555-123100 ... 555-123112
+#plugin_siptrunk_account = sip:user@sip.example.org
+#plugin_siptrunk_numbers_regex = ^555123(10[0-9]|11[012])$

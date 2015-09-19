@@ -217,8 +217,6 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
    if ((ticket->direction == DIRTYP_UNKNOWN) 
         && MSG_IS_REQUEST(ticket->sipmsg)) {
       DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing REQ w/ DIRTYP_UNKNOWN");
-      DEBUGC(DBCLASS_PLUGIN, "&&&1: req_uri [%s]", ticket->sipmsg->req_uri->username);
-      DEBUGC(DBCLASS_PLUGIN, "&&&1: to_url [%s]", ticket->sipmsg->to->url->username);
 
       /* get REQ URI & To URI from headers */
       req_url=osip_message_get_uri(ticket->sipmsg);
