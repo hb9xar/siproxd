@@ -44,6 +44,7 @@ static char desc[]="Handles SIP trunks with multiple numbers on same SIP account
 
 /* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
+extern struct urlmap_s urlmap[];		/* URL mapping table     */
 
 /* plugin configuration storage */
 static struct plugin_config {
@@ -54,8 +55,8 @@ static struct plugin_config {
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_siptrunk_name",     TYP_STRINGA,&plugin_cfg.trunk_name,	{0, NULL} },
-   { "plugin_siptrunk_account",  TYP_STRINGA,&plugin_cfg.trunk_account,	{0, NULL} },
+   { "plugin_siptrunk_name",          TYP_STRINGA,&plugin_cfg.trunk_name,	{0, NULL} },
+   { "plugin_siptrunk_account",       TYP_STRINGA,&plugin_cfg.trunk_account,	{0, NULL} },
    { "plugin_siptrunk_numbers_regex", TYP_STRINGA,&plugin_cfg.trunk_numbers_regex,	{0, NULL} },
    {0, 0, 0}
 };
@@ -189,13 +190,19 @@ static int plugin_siptrunk_init(void) {
          retsts = STS_FAILURE;
       }
    }
-   
+   DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: %i regular expressions compiled", i);
    return retsts;
 }
 
 static int plugin_siptrunk_process(sip_ticket_t *ticket) {
-//   int sts=STS_SUCCESS;
-   int i;
+   int sts=STS_SUCCESS;
+   int i, j;
+   osip_uri_t *req_url;
+   osip_uri_t *to_url;
+   osip_uri_t *url;
+//   char *req_url_string=NULL;
+//   char *to_url_string=NULL;
+
    #define WORKSPACE_SIZE 128
 //   static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
 
@@ -208,32 +215,85 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
           utils_inet_ntoa(ticket->next_hop.sin_addr),
           ticket->next_hop.sin_port);
 
-#if 0
    /* SIP request? && direction undetermined? */
-   if ((ticket->direction == DIRTYP_UNKNOWN) 
-        && MSG_IS_REQUEST(ticket->sipmsg)) {
-      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing DIRTYP_UNKNOWN REQ...");
-  
-   // Loop through config array
-   for (i = 0; i < plugin_cfg.trunk_numbers_regex.used; i++) {
-      regmatch_t *pmatch = NULL;
+   if (MSG_IS_REQUEST(ticket->sipmsg)) {
+//   if ((ticket->direction == DIRTYP_UNKNOWN) 
+//        && MSG_IS_REQUEST(ticket->sipmsg)) {
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing REQ w/ DIRTYP_UNKNOWN");
 
-   //    and check for regex match in To: header (or SIP URI?)
-   //    if regex match, assume incoming request
-      pmatch = rmatch(url_string, WORKSPACE_SIZE, &re[i]);
-      if (pmatch == NULL) continue; /* no match, next */
 
-      /* have a match */
-   //       set ticket->direction == REQTYPE_INCOMING
-   //       eval next_hop (lookup internal UA) and set 
-// lookup internal target by account name from registration DB
-   //       - ticket->next_hop.sin_addr
-   //       - ticket->next_hop.sin_port
-DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: matched trunk on rule [%s]", 
-       plugin_cfg.trunk_numbers_regex.string[i] );
-      /* only do first match, then break */
-      break;
-   }
+      /* Loop through config array */
+      for (i = 0; i < plugin_cfg.trunk_numbers_regex.used; i++) {
+         regmatch_t *pmatch_uri = NULL;
+         regmatch_t *pmatch_to  = NULL;
+
+         /* check SIP URI */
+         req_url=osip_message_get_uri(ticket->sipmsg);
+         if (req_url && req_url->username) {
+            DEBUGC(DBCLASS_BABBLE, "Request URI: [%s]", req_url->username);
+            pmatch_uri = rmatch(req_url->username, WORKSPACE_SIZE, &re[i]);
+         }
+
+         /* check To: URI */
+         to_url=osip_to_get_url(ticket->sipmsg);
+         if (to_url && to_url->username) {
+            DEBUGC(DBCLASS_BABBLE, "To: header: [%s]", to_url->username);
+            pmatch_uri = rmatch(to_url->username, WORKSPACE_SIZE, &re[i]);
+         }
+
+         if ((pmatch_uri == NULL) && (pmatch_to == NULL)) continue;
+
+         /* have a match */
+         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: matched trunk on rule %i [%s]",
+                i, plugin_cfg.trunk_numbers_regex.string[i] );
+         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: Trunk [%s], Account [%s]",
+                plugin_cfg.trunk_name.string[i], 
+                plugin_cfg.trunk_account.string[i]);
+
+
+         /* prepare URL structure for compare) */
+         osip_uri_init(&url);
+         osip_uri_parse(url, plugin_cfg.trunk_account.string[i]);
+
+         /* search for an Account entry in registration DB */
+         for (j=0; j<URLMAP_SIZE; j++){
+            if (urlmap[j].active == 0) continue;
+
+            if (compare_url(url, urlmap[j].reg_url) == STS_SUCCESS) {
+               /* set ticket->direction == REQTYP_INCOMING */
+               ticket->direction = REQTYP_INCOMING;
+
+               /* set next jop host & port */
+               sts = get_ip_by_host(osip_uri_get_host(urlmap[j].true_url), 
+                                    &ticket->next_hop.sin_addr);
+               if (sts == STS_FAILURE) {
+                  DEBUGC(DBCLASS_PROXY, "plugin_siptrunk: cannot resolve URI [%s]",
+                         osip_uri_get_host(urlmap[j].true_url));
+                  return STS_FAILURE;
+               }
+
+               ticket->next_hop.sin_port=SIP_PORT;
+               if (osip_uri_get_port(urlmap[j].true_url)) {
+                  ticket->next_hop.sin_port=atoi(osip_uri_get_port(urlmap[j].true_url));
+                  if (ticket->next_hop.sin_port == 0) {
+                     ticket->next_hop.sin_port=SIP_PORT;
+                  }
+               }
+
+               break;
+            }
+         
+         }
+         osip_uri_free(url);
+
+
+         /* only do first match, then break */
+         break;
+      } /* end for */
+
+      if (i >= plugin_cfg.trunk_numbers_regex.used) {
+         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: no match");
+      }
 
       DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: next hop is now %s:%i",
              utils_inet_ntoa(ticket->next_hop.sin_addr),
@@ -242,7 +302,7 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: matched trunk on rule [%s]",
    } else {
       DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: not processing SIP message");
    }
-#endif
+   DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: exit");
    return STS_SUCCESS;
 }
 

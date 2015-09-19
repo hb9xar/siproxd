@@ -67,7 +67,7 @@ static struct plugin_config {
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_regex_desc",  TYP_STRINGA,&plugin_cfg.regex_desc,	{0, NULL} },
+   { "plugin_regex_desc",     TYP_STRINGA,&plugin_cfg.regex_desc,	{0, NULL} },
    { "plugin_regex_pattern",  TYP_STRINGA,&plugin_cfg.regex_pattern,	{0, NULL} },
    { "plugin_regex_replace",  TYP_STRINGA,&plugin_cfg.regex_replace,	{0, NULL} },
    {0, 0, 0}
