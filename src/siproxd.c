@@ -386,6 +386,7 @@ int main (int argc, char *argv[])
       buflen = (size_t)sts;
       DEBUGC(DBCLASS_BABBLE,"received %zd bytes of data", buflen);
       ticket.direction=0;
+      memset(&ticket.next_hop, 0, sizeof(ticket.next_hop));
       buff[buflen]='\0';
 
       /* pointers in ticket to raw message */

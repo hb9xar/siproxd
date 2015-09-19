@@ -79,8 +79,6 @@ int proxy_request (sip_ticket_t *ticket) {
    int i;
    int sts;
    int type;
-   struct in_addr sendto_addr;
-   int port;
    char *buffer;
    size_t buflen;
    osip_message_t *request;
@@ -345,30 +343,37 @@ sts=sip_obscure_callid(ticket);
     * Proxy Behavior - Determine Next-Hop Address
     */
 /*&&&& priority probably should be:
- * 1) Route header
- * 2) fixed outbound proxy
- * 3) SIP URI
+ * 1) an already defined next-hop in ticket->next_hop
+ * 2) Route header
+ * 3) fixed outbound proxy
+ * 4) SIP URI
  */
+ 
+   /* predefined next-hop present? */
+   if (is_empty_sockaddr(&ticket->next_hop) == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "proxy_request: pre-set next-hop: %s:%i",
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    /*
     * Route present?
     * If so, fetch address from topmost Route: header and remove it.
     */
-   if ((type == REQTYP_OUTGOING) && 
+   } else if ((type == REQTYP_OUTGOING) && 
               (!osip_list_eol(&(request->routes), 0))) {
-      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
+      sts=route_determine_nexthop(ticket, &ticket->next_hop.sin_addr, 
+                                  &ticket->next_hop.sin_port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: route_determine_nexthop failed");
          return STS_FAILURE;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have Route header to %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    /*
     * fixed or domain outbound proxy defined ?
     */
    } else if ((type == REQTYP_OUTGOING) &&
-       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
+       (sip_find_outbound_proxy(ticket, &ticket->next_hop.sin_addr, &ticket->next_hop.sin_port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_request: have outbound proxy %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    /*
     * destination from SIP URI
     */
@@ -379,7 +384,7 @@ In a first implementation we may just try to get the lowest priority,
 max weighted '_sip._udp.domain' entry and port number.
 No load balancing and no failover are supported with this.
 &&&*/
-      sts = get_ip_by_host(request->req_uri->host, &sendto_addr);
+      sts = get_ip_by_host(request->req_uri->host, &ticket->next_hop.sin_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",
                 request->req_uri->host);
@@ -387,13 +392,15 @@ No load balancing and no failover are supported with this.
       }
 
       if (request->req_uri->port) {
-         port=atoi(request->req_uri->port);
-         if ((port<=0) || (port>65535)) port=SIP_PORT;
+         ticket->next_hop.sin_port=atoi(request->req_uri->port);
+         if (ticket->next_hop.sin_port != 0) {
+            ticket->next_hop.sin_port=SIP_PORT;
+         }
       } else {
-         port=SIP_PORT;
+         ticket->next_hop.sin_port=SIP_PORT;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_request: have SIP URI to %s:%i",
-             request->req_uri->host, port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    }
 
    /*
@@ -432,7 +439,8 @@ No load balancing and no failover are supported with this.
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, ticket->protocol, buffer, buflen);
+   sipsock_send(ticket->next_hop.sin_addr, ticket->next_hop.sin_port, 
+                ticket->protocol, buffer, buflen);
    osip_free (buffer);
 
   /*
@@ -469,9 +477,7 @@ No load balancing and no failover are supported with this.
 int proxy_response (sip_ticket_t *ticket) {
    int sts;
    int type;
-   struct in_addr sendto_addr;
    osip_via_t *via;
-   int port;
    char *buffer;
    size_t buflen;
    osip_message_t *response;
@@ -663,38 +669,45 @@ sts=sip_obscure_callid(ticket);
     * Determine Next-Hop Address
     */
 /*&&&& priority probably should be:
- * 0) rport=;received= header (TCP only for now)
- * 1) Route header
- * 2) fixed outbound proxy
- * 3) Via header
+ * 1) an already defined next-hop in ticket->next_hop
+ * 2) rport=;received= header (TCP only for now)
+ * 3) Route header
+ * 4) fixed outbound proxy
+ * 5) Via header
  */
+   /* predefined next-hop present? */
+   if (is_empty_sockaddr(&ticket->next_hop) == STS_FAILURE) {
+      DEBUGC(DBCLASS_PROXY, "proxy_request: pre-set next-hop: %s:%i",
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    /*
     * IF TCP, check for rport=x;received=y parameters in VIA
     */
-   if ((ticket->protocol == PROTO_TCP) && 
-       (sip_get_received_param(ticket,  &sendto_addr, &port) == STS_SUCCESS)) {
+   } else if ((ticket->protocol == PROTO_TCP) && 
+       (sip_get_received_param(ticket,  &ticket->next_hop.sin_addr, &ticket->next_hop.sin_port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_response: have received/rport to %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr),
+             ticket->next_hop.sin_port);
    /*
     * Route present?
     * If so, fetch address from topmost Route: header and remove it.
     */
    } else if ((type == RESTYP_OUTGOING) && 
               (!osip_list_eol(&(response->routes), 0))) {
-      sts=route_determine_nexthop(ticket, &sendto_addr, &port);
+      sts=route_determine_nexthop(ticket, &ticket->next_hop.sin_addr, &ticket->next_hop.sin_port);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_response: route_determine_nexthop failed");
          return STS_FAILURE;
       }
       DEBUGC(DBCLASS_PROXY, "proxy_response: have Route header to %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr),
+             ticket->next_hop.sin_port);
    /*
     * check if we need to send to an outbound proxy
     */
    } else if ((type == RESTYP_OUTGOING) &&
-       (sip_find_outbound_proxy(ticket, &sendto_addr, &port) == STS_SUCCESS)) {
+       (sip_find_outbound_proxy(ticket, &ticket->next_hop.sin_addr, &ticket->next_hop.sin_port) == STS_SUCCESS)) {
       DEBUGC(DBCLASS_PROXY, "proxy_response: have outbound proxy %s:%i",
-             utils_inet_ntoa(sendto_addr), port);
+             utils_inet_ntoa(ticket->next_hop.sin_addr), ticket->next_hop.sin_port);
    } else {
       /* get target address and port from VIA header */
       via = (osip_via_t *) osip_list_get (&(response->vias), 0);
@@ -703,7 +716,7 @@ sts=sip_obscure_callid(ticket);
          return STS_FAILURE;
       }
 
-      sts = get_ip_by_host(via->host, &sendto_addr);
+      sts = get_ip_by_host(via->host, &ticket->next_hop.sin_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_response: cannot resolve VIA [%s]",
                 via->host);
@@ -711,10 +724,12 @@ sts=sip_obscure_callid(ticket);
       }
 
       if (via->port) {
-         port=atoi(via->port);
-         if ((port<=0) || (port>65535)) port=SIP_PORT;
+         ticket->next_hop.sin_port=atoi(via->port);
+         if (ticket->next_hop.sin_port != 0) {
+            ticket->next_hop.sin_port=SIP_PORT;
+         }
       } else {
-         port=SIP_PORT;
+         ticket->next_hop.sin_port=SIP_PORT;
       }
    }
 
@@ -730,7 +745,7 @@ sts=sip_obscure_callid(ticket);
       return STS_FAILURE;
    }
 
-   sipsock_send(sendto_addr, port, ticket->protocol, buffer, buflen);
+   sipsock_send(ticket->next_hop.sin_addr, ticket->next_hop.sin_port, ticket->protocol, buffer, buflen);
    osip_free (buffer);
    return STS_SUCCESS;
 }

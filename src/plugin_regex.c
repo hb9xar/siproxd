@@ -83,8 +83,8 @@ static redirected_cache_element_t redirected_cache;
 static int plugin_regex_init(void);
 static int plugin_regex_process(sip_ticket_t *ticket);
 static int plugin_regex_redirect(sip_ticket_t *ticket);
-regmatch_t * rmatch (char *buf, int size, regex_t *re);
-int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp);
+static regmatch_t * rmatch (char *buf, int size, regex_t *re);
+static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp);
 
 
 /* 
@@ -124,7 +124,7 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
 /*
  * Workload code
  */
-int plugin_regex_init(void) {
+static int plugin_regex_init(void) {
    int i;
    int sts, retsts;
    int num_entries;
@@ -370,7 +370,7 @@ static int plugin_regex_redirect(sip_ticket_t *ticket) {
  * if a match is actually there.
  */
 #define NMATCHES 10
-regmatch_t * rmatch (char *buf, int size, regex_t *re) {
+static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
    static regmatch_t pm[NMATCHES]; /* regoff_t is int so size is int */
 
    /* perform the match */
@@ -380,7 +380,7 @@ regmatch_t * rmatch (char *buf, int size, regex_t *re) {
    return &pm[0];
 }
 
-int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
+static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
    char *pos;
    int sub, so, n;
 

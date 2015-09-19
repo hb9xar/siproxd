@@ -365,7 +365,7 @@ int route_purge_recordroute(sip_ticket_t *ticket){
  *	STS_SUCCESS on success
  */
 int route_determine_nexthop(sip_ticket_t *ticket,
-                            struct in_addr *dest, int *port){
+                            struct in_addr *dest, in_port_t *port){
    int sts;
    osip_message_t *mymsg=ticket->sipmsg;
    osip_route_t *route=NULL;

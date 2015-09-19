@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <regex.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -48,19 +49,26 @@ extern struct siproxd_config configuration;
 static struct plugin_config {
    stringa_t trunk_name;
    stringa_t trunk_account;
-   stringa_t trunk_numbers;
+   stringa_t trunk_numbers_regex;
 } plugin_cfg;
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
    { "plugin_siptrunk_name",     TYP_STRINGA,&plugin_cfg.trunk_name,	{0, NULL} },
    { "plugin_siptrunk_account",  TYP_STRINGA,&plugin_cfg.trunk_account,	{0, NULL} },
-   { "plugin_siptrunk_numbers",  TYP_STRINGA,&plugin_cfg.trunk_numbers,	{0, NULL} },
+   { "plugin_siptrunk_numbers_regex", TYP_STRINGA,&plugin_cfg.trunk_numbers_regex,	{0, NULL} },
    {0, 0, 0}
 };
 
+/* local storage needed for regular expression handling */
+static regex_t *re;
+
 /* Prototypes */
-static int sip_fix_topvia(sip_ticket_t *ticket);
+static int plugin_siptrunk_init(void);
+static int plugin_siptrunk_process(sip_ticket_t *ticket);
+static regmatch_t * rmatch (char *buf, int size, regex_t *re);
+//static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp);
+
 
 /*&&&+++
 1) register
@@ -119,8 +127,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
       return STS_FAILURE;
    }
 
-   INFO("plugin_siptrunk is initialized");
-   return STS_SUCCESS;
+   return plugin_siptrunk_init();
 }
 
 /*
@@ -129,43 +136,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
  */
 int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    /* stage contains the PLUGIN_* value - the stage of SIP processing. */
-   int type;
-   osip_via_t *via;
-   struct sockaddr_in from;
-
-   type = ticket->direction;
-
-DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: type=%i", type);
-
-   /* Incoming SIP response? */
-   if (type == RESTYP_INCOMING) {
-      /* a Via header needs to be present in response */
-      if((via = osip_list_get(&(ticket->sipmsg->vias), 0)) == NULL) {
-         WARN("no Via header found in incoming SIP message");
-         return STS_SUCCESS;
-      }
-
-      /* check for Via IP in configured range */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing VIA host [%s]",
-             via->host);
-      get_ip_by_host(via->host, &(from.sin_addr));
-      if ((plugin_cfg.networks != NULL) &&
-          (strcmp(plugin_cfg.networks, "") !=0) &&
-          (process_aclist(plugin_cfg.networks, ticket->from) == STS_SUCCESS) &&
-          (process_aclist(plugin_cfg.networks, from) == STS_SUCCESS)) {
-
-         /* VIA & Sender IP are in list, fix Via header */
-         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: replacing a bogus via");
-
-         if (sip_fix_topvia(ticket) == STS_FAILURE) {
-            ERROR("patching inbound Via failed!");
-         }
-      } else {
-         DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: not match, returning.");
-      }
-      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: done");
-  }
-   return STS_SUCCESS;
+   return plugin_siptrunk_process(ticket);
 }
 
 /*
@@ -175,39 +146,165 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: type=%i", type);
  * connections, whatever the plugin messes around with)
  */
 int  PLUGIN_END(plugin_def_t *plugin_def){
-   INFO("plugin_siptrunk ends here");
    return STS_SUCCESS;
 }
 
 /*--------------------------------------------------------------------*/
-static int sip_fix_topvia(sip_ticket_t *ticket) {
-   osip_via_t *via;
-   int sts;
+/*
+ * Workload code
+ */
+static int plugin_siptrunk_init(void) {
+   int i;
+   int sts, retsts;
+   int num_entries;
+   char errbuf[256];
 
-   if((via = osip_list_get(&(ticket->sipmsg->vias), 0)) != NULL) {
-      /* 1) IP of Via has been checked beforehand. */
+   retsts = STS_SUCCESS;
 
-      /* 2) remove broken via header */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: removing topmost via");
-      sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
-      osip_via_free (via);
-      via = NULL;
-
-      /* 3) add my via header */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: adding new via");
-      if (ticket->direction == RESTYP_INCOMING) {
-         sts = sip_add_myvia(ticket, IF_OUTBOUND);
-         if (sts == STS_FAILURE) {
-            ERROR("adding my outbound via failed!");
-         }
-      } else {
-         sts = sip_add_myvia(ticket, IF_INBOUND);
-         if (sts == STS_FAILURE) {
-            ERROR("adding my inbound via failed!");
-         }
-      }
+   /* check for equal entries of trunk_name and trunk_account */
+   if (plugin_cfg.trunk_name.used != plugin_cfg.trunk_account.used) {
+      ERROR("Plugin '%s': number of trunks (%i) and number of "
+            "accounts (%i) differ!", name,
+            plugin_cfg.trunk_name.used, plugin_cfg.trunk_account.used);
+      return STS_FAILURE;
    }
 
+   if (plugin_cfg.trunk_name.used != plugin_cfg.trunk_numbers_regex.used) {
+      ERROR("Plugin '%s': number of trunks (%i) and number of "
+            "number blocks (%i) differ!", name,
+            plugin_cfg.trunk_name.used, plugin_cfg.trunk_numbers_regex.used);
+      return STS_FAILURE;
+   }
+
+   /* allocate space for regexes and compile them */
+   num_entries = plugin_cfg.trunk_numbers_regex.used;
+   re = malloc(num_entries*sizeof(re[0]));
+   for (i=0; i < num_entries; i++) {
+      sts = regcomp (&re[i], plugin_cfg.trunk_numbers_regex.string[i],
+                     REG_ICASE|REG_EXTENDED);
+      if (sts != 0) {
+         regerror(sts, &re[i], errbuf, sizeof(errbuf));
+         ERROR("Regular expression [%s] failed to compile: %s", 
+               plugin_cfg.trunk_numbers_regex.string[i], errbuf);
+         retsts = STS_FAILURE;
+      }
+   }
+   
+   return retsts;
+}
+
+static int plugin_siptrunk_process(sip_ticket_t *ticket) {
+//   int sts=STS_SUCCESS;
+   int i;
+   #define WORKSPACE_SIZE 128
+//   static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
+
+   /* plugin loaded and not configured, return with success */
+   if (plugin_cfg.trunk_numbers_regex.used==0) return STS_SUCCESS;
+
+
+   DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: type=%i", ticket->direction);
+   DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: next hop was %s:%i",
+          utils_inet_ntoa(ticket->next_hop.sin_addr),
+          ticket->next_hop.sin_port);
+
+#if 0
+   /* SIP request? && direction undetermined? */
+   if ((ticket->direction == DIRTYP_UNKNOWN) 
+        && MSG_IS_REQUEST(ticket->sipmsg)) {
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: processing DIRTYP_UNKNOWN REQ...");
+  
+   // Loop through config array
+   for (i = 0; i < plugin_cfg.trunk_numbers_regex.used; i++) {
+      regmatch_t *pmatch = NULL;
+
+   //    and check for regex match in To: header (or SIP URI?)
+   //    if regex match, assume incoming request
+      pmatch = rmatch(url_string, WORKSPACE_SIZE, &re[i]);
+      if (pmatch == NULL) continue; /* no match, next */
+
+      /* have a match */
+   //       set ticket->direction == REQTYPE_INCOMING
+   //       eval next_hop (lookup internal UA) and set 
+// lookup internal target by account name from registration DB
+   //       - ticket->next_hop.sin_addr
+   //       - ticket->next_hop.sin_port
+DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: matched trunk on rule [%s]", 
+       plugin_cfg.trunk_numbers_regex.string[i] );
+      /* only do first match, then break */
+      break;
+   }
+
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: next hop is now %s:%i",
+             utils_inet_ntoa(ticket->next_hop.sin_addr),
+             ticket->next_hop.sin_port);
+ 
+   } else {
+      DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: not processing SIP message");
+   }
+#endif
    return STS_SUCCESS;
 }
 
+/*
+ * This regex replacement code has been proudly borrowed from
+ * http://www.daniweb.com/software-development/c/code/216955#
+ *
+ * buf: input string + output result
+ * rp: replacement string, will be destroyed during processing!
+ * size: size of buf and rp
+ * re: regex to process
+ *
+ * rmatch() performs the initial regexec match, and if a match is found
+ * it returns a pointer to the regmatch array which contains the result
+ * of the match.
+ * Afterwards rreplace() is to be called, providing this regmatch array.
+ *
+ * This eliminates the need to copy the 'rp' string before knowing
+ * if a match is actually there.
+ */
+#define NMATCHES 10
+static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
+   static regmatch_t pm[NMATCHES]; /* regoff_t is int so size is int */
+
+   /* perform the match */
+   if (regexec (re, buf, NMATCHES, pm, 0)) {
+      return NULL;
+   }
+   return &pm[0];
+}
+
+#if 0
+static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
+   char *pos;
+   int sub, so, n;
+
+   /* match(es) found: */
+   for (pos = rp; *pos; pos++) {
+      /* back references \1 ... \9: expand them in 'rp' */
+      if (*pos == '\\' && *(pos + 1) > '0' && *(pos + 1) <= '9') {
+         so = pmatch[*(pos + 1) - 48].rm_so;	/* pmatch[1..9] */
+         n = pmatch[*(pos + 1) - 48].rm_eo - so;
+         if (so < 0 || strlen (rp) + n - 1 > size) return STS_FAILURE;
+         memmove (pos + n, pos + 2, strlen (pos) - 1);
+         memmove (pos, buf + so, n);
+         pos = pos + n - 2;
+      }
+   }
+
+   sub = pmatch[1].rm_so; /* no repeated replace when sub >= 0 */
+   /* and replace rp in the input buffer */
+   for (pos = buf; !regexec (re, pos, 1, pmatch, 0); ) {
+      n = pmatch[0].rm_eo - pmatch[0].rm_so;
+      pos += pmatch[0].rm_so;
+      if (strlen (buf) - n + strlen (rp) > size) {
+         return STS_FAILURE;
+      }
+      memmove (pos + strlen (rp), pos + n, strlen (pos) - n + 1);
+      memmove (pos, rp, strlen (rp));
+      pos += strlen (rp);
+      if (sub >= 0) break;
+   }
+   return STS_SUCCESS;
+}
+#endif

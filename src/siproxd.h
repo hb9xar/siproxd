@@ -138,6 +138,7 @@ typedef struct {
 #define RESTYP_INCOMING		3
 #define RESTYP_OUTGOING		4
    int direction;		/* direction as determined by proxy */
+   struct sockaddr_in next_hop;	/* next hop as determined by plugin or proxy */
 } sip_ticket_t;
 
 
@@ -191,7 +192,7 @@ int route_add_recordroute(sip_ticket_t *ticket);			/*X*/
 int route_purge_recordroute(sip_ticket_t *ticket);			/*X*/
 int route_postprocess(sip_ticket_t *ticket);				/*X*/
 int route_determine_nexthop(sip_ticket_t *ticket,
-                            struct in_addr *dest, int *port);		/*X*/
+                            struct in_addr *dest, in_port_t *port);	/*X*/
 
 /* utils.c */
 int  get_ip_by_host(char *hostname, struct in_addr *addr);		/*X*/
@@ -203,6 +204,7 @@ char *utils_inet_ntoa(struct in_addr in);
 int  utils_inet_aton(const char *cp, struct in_addr *inp);
 int  createpidfile(char *pidfilename);					/*X*/
 int  compare_client_id(client_id_t cid1, client_id_t cid2);		/*X*/
+int  is_empty_sockaddr(struct sockaddr_in *sockaddr);			/*X*/
 
 /* sip_utils.c */
 osip_message_t * msg_make_template_reply (sip_ticket_t *ticket, int code);
@@ -217,13 +219,13 @@ int  sip_del_myvia (sip_ticket_t *ticket);				/*X*/
 int  sip_rewrite_contact (sip_ticket_t *ticket, int direction);		/*X*/
 int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id);		/*X*/
 int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
-                             int *port);				/*X*/
+                             in_port_t *port);				/*X*/
 int  sip_find_direction(sip_ticket_t *ticket, int *urlidx);		/*X*/
 int  sip_fixup_asterisk(char *buff, size_t *buflen);			/*X*/
 int  sip_obscure_callid(sip_ticket_t *ticket);				/*X*/
 int  sip_add_received_param(sip_ticket_t *ticket);			/*X*/
 int  sip_get_received_param(sip_ticket_t *ticket,
-                            struct in_addr *dest, int *port);		/*X*/
+                            struct in_addr *dest, in_port_t *port);	/*X*/
 
 /* readconf.c */
 int  read_config(char *name, int search, cfgopts_t cfgopts[], char *filter); /*X*/

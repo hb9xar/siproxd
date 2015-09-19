@@ -678,3 +678,17 @@ int  compare_client_id(client_id_t cid1, client_id_t cid2) {
    DEBUGC(DBCLASS_BABBLE, "compare_client_id: no match");
    return STS_FAILURE;
 }
+
+
+/*
+ * check a sockaddr_in structure for bein zero / non-zero
+ */
+int  is_empty_sockaddr(struct sockaddr_in *sockaddr) {
+   int i;
+   char *p=(char*)sockaddr;
+
+   for (i=0; i < sizeof(struct sockaddr_in); i++) {
+      if (p[i] != 0x00) { return STS_FAILURE; }
+   }
+   return STS_SUCCESS;
+}

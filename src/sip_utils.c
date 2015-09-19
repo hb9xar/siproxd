@@ -883,7 +883,7 @@ int  sip_calculate_branch_id (sip_ticket_t *ticket, char *id) {
  *	STS_FAILURE if no outbound proxy to be used
  */
 int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
-                             int *port) {
+                             in_port_t *port) {
    int i, sts;
    char *domain=NULL;
    osip_message_t *sipmsg;
@@ -1450,7 +1450,7 @@ int sip_add_received_param(sip_ticket_t *ticket){
  *	STS_SUCCESS on success
  */
 int  sip_get_received_param(sip_ticket_t *ticket,
-                            struct in_addr *dest, int *port) {
+                            struct in_addr *dest, in_port_t *port) {
    osip_via_t *via;
    osip_generic_param_t *received=NULL;
    osip_generic_param_t *rport=NULL;
