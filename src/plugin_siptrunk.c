@@ -118,7 +118,7 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
 
    /* Execution mask - during what stages of SIP processing shall
     * the plugin be called. */
-   plugin_def->exe_mask=PLUGIN_DETERMINE_TARGET; //PLUGIN_PRE_PROXY;
+   plugin_def->exe_mask=PLUGIN_PRE_PROXY;
 
    /* read the config file */
    if (read_config(configuration.configfile,
