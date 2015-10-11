@@ -1,6 +1,7 @@
 0.8.2
 =====
-  xx-Sep-2015:  - working on plugin_siptrunk: a plugin to support SIP
+  11-Oct-2015:  - performance improvement in DNS lookup/caching
+  20-Sep-2015:  - added plugin_siptrunk: a plugin to support SIP
                   trunks with multiple numbers within the same SIP account.
   12-Sep-2015:  - added plugin_fix_DTAG: workaround for Deutsche Telekom AG
                   SIP service which has a broken Via Header handling in some

@@ -94,6 +94,14 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
       return STS_FAILURE;
    }
 
+   /* check if passed string is already a plain IPv4 address */
+   if (utils_inet_aton(hostname, addr) > 0) {
+      /* is a plain IPv4 string - return the result directly, no lookup and cache */ 
+      DEBUGC(DBCLASS_BABBLE, "DNS lookup - shortcut, hostname is IP string [%s] -> [%s]",
+             hostname, utils_inet_ntoa(*addr));
+      return STS_SUCCESS;
+   }
+
    /* first time: initialize DNS cache */
    if (cache_initialized == 0) {
       DEBUGC(DBCLASS_DNS, "initializing DNS cache (%i entries)", DNS_CACHE_SIZE);
@@ -607,7 +615,7 @@ char *utils_inet_ntoa(struct in_addr in) {
  * implements an inet_aton()
  *
  * converts the string in *cp and stores it into inp
- * Returns != 0 on success
+ * Returns > 0 on success
  */
 int  utils_inet_aton(const char *cp, struct in_addr *inp) {
 #if defined(HAVE_INET_PTON)
