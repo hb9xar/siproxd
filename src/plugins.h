@@ -28,7 +28,7 @@
    #include <ltdl.h>
 #endif
 
-#if WITH_LTDL_FIX
+#ifdef WITH_LTDL_FIX
 /* workaround for some broken libtool 2.2.6 (and others?) versions 
  * that cause an 
  * undefined reference to `lt__PROGRAM__LTX_preloaded_symbols'
