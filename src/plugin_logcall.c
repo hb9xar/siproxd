@@ -115,14 +115,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    }
 
    if (call_type) {
-      INFO("%s Call: %s@%s -> %s@%s [Req: %s@%s]",
+      INFO("%s Call: %s@%s -> %s@%s [Req: %s@%s] [IP: %s:%u]",
            call_type,
            from_username ? from_username: "*NULL*",
            from_host     ? from_host    : "*NULL*",
            to_username   ? to_username  : "*NULL*",
            to_host       ? to_host      : "*NULL*",
            (req_uri && req_uri->username) ? req_uri->username : "*NULL*",
-           (req_uri && req_uri->host)     ? req_uri->host     : "*NULL*"
+           (req_uri && req_uri->host)     ? req_uri->host     : "*NULL*",
+           utils_inet_ntoa(ticket->from.sin_addr),ntohs(ticket->from.sin_port)
            );
    }
 
