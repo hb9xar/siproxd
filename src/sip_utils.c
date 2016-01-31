@@ -670,6 +670,16 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
              (compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
       }
 
+      /* NOTE:
+         It has been observed with some UAs (e.g. Fritzbox) that when receiving
+         an anonymous call (call with supressed CLID) these UAs do send a *modified*
+         Contact header (compared to the Contact used in REGISTER).
+         This confuses siproxd as now masquerading cannot match the Contact Header
+         with the URLMAP table.
+         -> see plugin_fix_fbox_anoncall that tries to work around things by
+         detecting this and restoring the "sane" Contact header.
+      /*
+
       /* found a mapping entry */
       if (i<URLMAP_SIZE) {
          char *tmp;

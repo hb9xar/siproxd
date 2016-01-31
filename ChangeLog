@@ -1,5 +1,8 @@
 0.8.2
 =====
+  30-Jan-2016:  - added plugin_fix_fbox_anoncall: a plugin to work around
+                  some quirks from Fritzboxes when receiving anonymous calls
+                  (calls with supressed CLID). Might also work for other UAs.
   11-Oct-2015:  - performance improvement in DNS lookup/caching
   20-Sep-2015:  - added plugin_siptrunk: a plugin to support SIP
                   trunks with multiple numbers within the same SIP account.
