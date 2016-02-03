@@ -107,21 +107,24 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
    type = ticket->direction;
 
-DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
+   DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
 
    /* Outgoing SIP response? - may also need to process outgoing SIP requests - */
    if ((type == RESTYP_OUTGOING) || (type == REQTYP_OUTGOING)) {
       /* a Contact header needs to be present in response */
       osip_message_get_contact(ticket->sipmsg, 0, &contact);
       if(contact == NULL) {
-         DEBUGC(DBCLASS_PLUGIN, "no Contact header found in outgoing SIP message");
+         DEBUGC(DBCLASS_PLUGIN, "no Contact header found in SIP message");
          return STS_SUCCESS;
       }
       if(contact->url == NULL) {
-         DEBUGC(DBCLASS_PLUGIN, "no Contact->Url header found in outgoing SIP message");
+         DEBUGC(DBCLASS_PLUGIN, "no Contact->url header found in SIP message");
          return STS_SUCCESS;
       }
-
+      if (contact->url->host == NULL) {
+         DEBUGC(DBCLASS_PLUGIN, "no Contact->url->host header found in SIP message");
+         return STS_SUCCESS;
+      }
 
 
 /* 
@@ -158,6 +161,7 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
             param_match=0;
             
             if (urlmap[idx].active == 0) continue;
+            if (urlmap[idx].true_url == NULL) continue;
 
             /* outgoing response - only look for true_url */
             /* 1) check host, skip of no match */
@@ -167,18 +171,28 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
                   continue;
                }
             }
+            DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: idx=%i, IP/Host match [%s]", 
+                   idx, contact->url->host);
 
             /* 2) check username match */
             if (contact->url->username && urlmap[idx].true_url->username) {
+               DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: check username: "
+                      "contact->url->username [%s] <-> true_url->username [%s]",
+                      contact->url->username, urlmap[idx].true_url->username);
               if (osip_strcasecmp(contact->url->username, urlmap[idx].true_url->username) == 0) {
                  /* MATCH, all OK - return */
                  user_match=1;
+                 DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: username matches");
                  break;
               }
+            } else {
+               DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL username: "
+                      "contact->username 0x%p <-> true_url->username 0x%p",
+                      contact->url->username, urlmap[idx].true_url->username);
             }
 
             /* 3) check param field ("uniq=" param)*/
-            if (contact->url && urlmap[idx].true_url) {
+            {
                int sts1, sts2;
                osip_uri_param_t *p1=NULL, *p2=NULL;
 
@@ -186,12 +200,28 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
                sts2=osip_uri_param_get_byname(&(urlmap[idx].true_url->url_params), "uniq", &p2);
                if ( ((sts1 == OSIP_SUCCESS) && (sts2 == OSIP_SUCCESS)) &&
                      (p1 && p2) &&
-                     (p1->gname && p2->gname && p1->gvalue && p2->gvalue) &&
-                     (osip_strcasecmp(p1->gname, p2->gname) == 0) &&
-                     (osip_strcasecmp(p1->gvalue, p2->gvalue) == 0) ) {
-                  /* MATCH */
-                  param_match=1;
-                  param_match_idx=idx;
+                     (p1->gname && p2->gname && p1->gvalue && p2->gvalue) ) {
+                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: check param: "
+                         "contact-> [%s]=[%s] <-> true_url->[%s]=[%s]",
+                         p1->gname, p1->gvalue, p2->gname, p2->gvalue);
+
+                  if ((osip_strcasecmp(p1->gname, p2->gname) == 0) &&
+                        (osip_strcasecmp(p1->gvalue, p2->gvalue) == 0) ) {
+                     /* MATCH */
+                     param_match=1;
+                     param_match_idx=idx;
+                     DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: uniq param matches");
+                  }
+               } else {
+                  if (p1 && p2) {
+                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL param fields: "
+                         "contact-> 0x%p=0x%p <-> true_url->0x%p=0x%p",
+                         p1->gname, p1->gvalue, p2->gname, p2->gvalue);
+                  } else {
+                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL param: "
+                         "contact->param 0x%p <-> true_url->param 0x%p",
+                         p1, p2);
+                  }
                }
             }
                
@@ -205,9 +235,9 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
 
          /* no partial match (no host, or no user / no param match) */
          if (param_match == 0) {
-            WARN("Bogus outgoing response Contact header from [%s], unable to sanitize!",
-                 utils_inet_ntoa(ticket->from.sin_addr));
-            return STS_FAILURE;
+            DEBUGC(DBCLASS_PLUGIN, "Bogus outgoing response Contact header from [%s], "
+                   "unable to sanitize!", utils_inet_ntoa(ticket->from.sin_addr));
+            return STS_SUCCESS;
          }
 
          /* param_match - replace the username part from [param_match_idx] -> Contact */
@@ -224,7 +254,7 @@ DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
          DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: no IP match, returning.");
       }
       DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: done");
-   } // if (type == RESTYP_OUTGOING)
+   } // if (type == ..
    return STS_SUCCESS;
 }
 

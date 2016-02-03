@@ -97,8 +97,8 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
    /* check if passed string is already a plain IPv4 address */
    if (utils_inet_aton(hostname, addr) > 0) {
       /* is a plain IPv4 string - return the result directly, no lookup and cache */ 
-      DEBUGC(DBCLASS_BABBLE, "DNS lookup - shortcut, hostname is IP string [%s] -> [%s]",
-             hostname, utils_inet_ntoa(*addr));
+//      DEBUGC(DBCLASS_BABBLE, "DNS lookup - shortcut, hostname is IP string [%s] -> [%s]",
+//             hostname, utils_inet_ntoa(*addr));
       return STS_SUCCESS;
    }
 

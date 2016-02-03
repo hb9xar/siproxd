@@ -270,6 +270,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       return STS_FAILURE;
    }
 
+#if 0
    DEBUGC(DBCLASS_BABBLE, "comparing urls: %s:%s@%s -> %s:%s@%s",
          (url1->scheme)   ? url1->scheme :   "(null)",
          (url1->username) ? url1->username : "(null)",
@@ -277,6 +278,7 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
          (url2->scheme)   ? url2->scheme :   "(null)",
          (url2->username) ? url2->username : "(null)",
          (url2->host)     ? url2->host :     "(null)");
+#endif
 
    /* compare SCHEME (if present) case INsensitive */
    if (url1->scheme && url2->scheme) {
@@ -291,11 +293,11 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    /* compare username (if present) case sensitive */
    if (url1->username && url2->username) {
       if (strcmp(url1->username, url2->username) != 0) {
-         DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch");
+//         DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch");
          return STS_FAILURE;
       }
    } else {
-      DEBUGC(DBCLASS_BABBLE, "compare_url: NULL username - ignoring");
+//      DEBUGC(DBCLASS_BABBLE, "compare_url: NULL username - ignoring");
    }
 
 
@@ -661,6 +663,10 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
       if (contact == NULL) break;
       if (contact->url == NULL) continue;
 
+      DEBUGC(DBCLASS_PROXY, "trying to rewriting Contact header %s@%s",
+             (contact->url->username)? contact->url->username : "*NULL*",
+             (contact->url->host)? contact->url->host : "*NULL*");
+
       /* search for an entry */
       for (i=0;i<URLMAP_SIZE;i++){
          if (urlmap[i].active == 0) continue;
@@ -669,16 +675,6 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
          if ((direction == DIR_INCOMING) &&
              (compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
       }
-
-      /* NOTE:
-         It has been observed with some UAs (e.g. Fritzbox) that when receiving
-         an anonymous call (call with supressed CLID) these UAs do send a *modified*
-         Contact header (compared to the Contact used in REGISTER).
-         This confuses siproxd as now masquerading cannot match the Contact Header
-         with the URLMAP table.
-         -> see plugin_fix_fbox_anoncall that tries to work around things by
-         detecting this and restoring the "sane" Contact header.
-      /*
 
       /* found a mapping entry */
       if (i<URLMAP_SIZE) {
@@ -721,6 +717,32 @@ int sip_rewrite_contact (sip_ticket_t *ticket, int direction) {
 
          osip_list_add(&(sip_msg->contacts),contact,j);
          replaced=1;
+      } else {
+#if 1
+         /* FALLBACK - some devices send crappy Contact headers that
+          * are completely different from the Contact used in REGISTER.
+          * This is a hack-around, trying *somehow* to produce a "meaningful"
+          * masqueraded contact header (at least it does point back to the proxy
+          * and not into some RFC1918 network).
+          */
+         if (direction == DIR_OUTGOING) {
+            DEBUGC(DBCLASS_PROXY, "outgoing: no match - fallback to plain proxy IP");
+            struct in_addr addr;
+            if (get_interface_ip(IF_OUTBOUND, &addr) == STS_SUCCESS) {
+               char *myaddr;
+               myaddr=utils_inet_ntoa(addr);
+
+               /* Host */
+               osip_free(contact->url->host);
+               contact->url->host = osip_strdup(myaddr);
+               /* Port */
+               contact->url->port=realloc(contact->url->port, 16);
+               sprintf(contact->url->port, "%i", configuration.sip_listen_port);
+
+               replaced=1;
+            }
+         } // if direction
+#endif
       }
 
    } /* for j */
@@ -941,7 +963,7 @@ int  sip_find_outbound_proxy(sip_ticket_t *ticket, struct in_addr *addr,
                return STS_FAILURE;
             }
             *port=atoi(configuration.outbound_proxy_domain_port.string[i]);
-            if ((*port<=0) || (*port>65535)) *port=SIP_PORT;
+//            if ((*port<=0) || (*port>65535)) *port=SIP_PORT;
 
             return STS_SUCCESS;
 
@@ -1029,8 +1051,8 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
              urlmap[i].true_url->host);
       } else {
-         DEBUGC(DBCLASS_BABBLE, "sip_find_direction: reghost:%s ip:%s",
-                urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
+//         DEBUGC(DBCLASS_BABBLE, "sip_find_direction: reghost:%s ip:%s",
+//                urlmap[i].true_url->host, utils_inet_ntoa(from->sin_addr));
          if (memcmp(&tmp_addr, &from->sin_addr, sizeof(tmp_addr)) == 0) {
             if (MSG_IS_REQUEST(ticket->sipmsg)) {
                type=REQTYP_OUTGOING;
@@ -1480,7 +1502,7 @@ int  sip_get_received_param(sip_ticket_t *ticket,
       
       /* fetch the port number */
       *port = atoi(rport->gvalue);
-      if ((*port <=0) || (*port >=65536)) return STS_FAILURE;
+//      if ((*port <=0) || (*port >=65536)) return STS_FAILURE;
 
       /* If TCP, then validate first if an existing connection is in the cache.
        * If not, do not use this - a new conection must be established! */
