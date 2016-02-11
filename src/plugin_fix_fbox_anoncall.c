@@ -104,10 +104,11 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    int param_match_idx=0;
    int user_match=0;
    int param_match=0;
+   char *tmp=NULL;
 
    type = ticket->direction;
 
-   DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: type=%i", type);
+   DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS entered: type=%i", type);
 
    /* Outgoing SIP response? - may also need to process outgoing SIP requests - */
    if ((type == RESTYP_OUTGOING) || (type == REQTYP_OUTGOING)) {
@@ -147,13 +148,13 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 */
 
       /* check for sender IP is in configured range */
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: processing from host [%s]",
+      DEBUGC(DBCLASS_PLUGIN, "processing from host [%s]",
              utils_inet_ntoa(ticket->from.sin_addr));
       if ((plugin_cfg.networks != NULL) &&
           (strcmp(plugin_cfg.networks, "") !=0) &&
           (process_aclist(plugin_cfg.networks, ticket->from) == STS_SUCCESS)) {
          /* Sender IP is in list, fix check and fix Contact header */
-         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: checking for bogus Contact header");
+         DEBUGC(DBCLASS_PLUGIN, "checking for bogus Contact header");
 
          /* loop through urlmap table */
          for (idx=0; idx<URLMAP_SIZE; idx++){
@@ -171,22 +172,30 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                   continue;
                }
             }
-            DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: idx=%i, IP/Host match [%s]", 
+            DEBUGC(DBCLASS_PLUGIN, "idx=%i, IP/Host match [%s]", 
                    idx, contact->url->host);
+            osip_uri_to_str(contact->url, &tmp); \
+            DEBUGC(DBCLASS_PLUGIN, "   contact->url=[%s]", (tmp)? tmp: "NULL");
+            if (tmp) osip_free(tmp);
+            tmp = NULL;
+            osip_uri_to_str(urlmap[idx].true_url, &tmp); \
+            DEBUGC(DBCLASS_PLUGIN, "   urlmap[%i]->true_url=[%s]", idx, (tmp)? tmp: "NULL");
+            if (tmp) osip_free(tmp);
+            tmp = NULL;
 
             /* 2) check username match */
             if (contact->url->username && urlmap[idx].true_url->username) {
-               DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: check username: "
+               DEBUGC(DBCLASS_PLUGIN, "check username: "
                       "contact->url->username [%s] <-> true_url->username [%s]",
                       contact->url->username, urlmap[idx].true_url->username);
               if (osip_strcasecmp(contact->url->username, urlmap[idx].true_url->username) == 0) {
                  /* MATCH, all OK - return */
                  user_match=1;
-                 DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: username matches");
+                 DEBUGC(DBCLASS_PLUGIN, "username matches");
                  break;
               }
             } else {
-               DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL username: "
+               DEBUGC(DBCLASS_PLUGIN, "NULL username: "
                       "contact->username 0x%p <-> true_url->username 0x%p",
                       contact->url->username, urlmap[idx].true_url->username);
             }
@@ -201,7 +210,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                if ( ((sts1 == OSIP_SUCCESS) && (sts2 == OSIP_SUCCESS)) &&
                      (p1 && p2) &&
                      (p1->gname && p2->gname && p1->gvalue && p2->gvalue) ) {
-                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: check param: "
+                  DEBUGC(DBCLASS_PLUGIN, "check param: "
                          "contact-> [%s]=[%s] <-> true_url->[%s]=[%s]",
                          p1->gname, p1->gvalue, p2->gname, p2->gvalue);
 
@@ -210,15 +219,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                      /* MATCH */
                      param_match=1;
                      param_match_idx=idx;
-                     DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: uniq param matches");
+                     DEBUGC(DBCLASS_PLUGIN, "uniq param matches");
                   }
                } else {
                   if (p1 && p2) {
-                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL param fields: "
+                  DEBUGC(DBCLASS_PLUGIN, "NULL 'uniq' param fields: "
                          "contact-> 0x%p=0x%p <-> true_url->0x%p=0x%p",
                          p1->gname, p1->gvalue, p2->gname, p2->gvalue);
                   } else {
-                  DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: NULL param: "
+                  DEBUGC(DBCLASS_PLUGIN, "NULL 'uniq' param: "
                          "contact->param 0x%p <-> true_url->param 0x%p",
                          p1, p2);
                   }
@@ -229,13 +238,13 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
          /* full match (host & user) */
          if (user_match == 1) {
-            DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: got a user@host match - OK");
+            DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS exit: got a user@host match - OK");
             return STS_SUCCESS;
          }
 
          /* no partial match (no host, or no user / no param match) */
          if (param_match == 0) {
-            DEBUGC(DBCLASS_PLUGIN, "Bogus outgoing response Contact header from [%s], "
+            DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS exit: bogus outgoing response Contact header from [%s], "
                    "unable to sanitize!", utils_inet_ntoa(ticket->from.sin_addr));
             return STS_SUCCESS;
          }
@@ -246,15 +255,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
          osip_uri_set_username(contact->url, 
                                osip_strdup(urlmap[param_match_idx].true_url->username));
 
-         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: sanitized Contact from [%s]",
+         DEBUGC(DBCLASS_PLUGIN, "sanitized Contact from [%s]",
                 utils_inet_ntoa(ticket->from.sin_addr));
 
 
       } else {
-         DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: no IP match, returning.");
+         DEBUGC(DBCLASS_PLUGIN, "no aclist IP match, returning.");
       }
-      DEBUGC(DBCLASS_PLUGIN, "plugin_fix_fbox_anoncall: done");
    } // if (type == ..
+   DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS exit");
    return STS_SUCCESS;
 }
 
