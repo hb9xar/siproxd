@@ -158,9 +158,6 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
          /* loop through urlmap table */
          for (idx=0; idx<URLMAP_SIZE; idx++){
-            user_match=0;
-            param_match=0;
-            
             if (urlmap[idx].active == 0) continue;
             if (urlmap[idx].true_url == NULL) continue;
 

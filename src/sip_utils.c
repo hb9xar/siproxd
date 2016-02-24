@@ -1023,6 +1023,8 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 
    ticket->direction = DIRTYP_UNKNOWN;
 
+   DEBUGC(DBCLASS_SIP, "sip_find_direction: beginning search");
+
    /* Search order is as follows:
     * - "from" IP address is one of our registered local UAs
     *   => OUTGOING
@@ -1062,6 +1064,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
             break;
          }
       }
+   }
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no OUTGOING found");
    }
 
 
@@ -1105,6 +1110,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          } /* is request */
       } /* for i */
    } /* if type == DIRTYP_UNKNOWN */
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING (To:) found");
+   }
 
 
    /*
@@ -1124,6 +1132,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          }
       } /* for i */
    } /* if type == DIRTYP_UNKNOWN */
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING RQ (SIP URI) found");
+   }
 
 
    /* &&&& Open Issue &&&&
@@ -1131,7 +1142,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     * (e.g 1393xxx@proxy01.sipphone.com for calls made sipphone -> FWD)
     * How can we deal with this? Should I take into consideration the 'Via'
     * headers? This is the only clue I have, pointing to the *real* UA.
-    * Maybe I should put in a 'siproxd' ftag value to recognize it as a header
+    * Maybe I should put in a 'siproxd' flag value to recognize it as a header
     * inserted by myself
     */
    if ((type == DIRTYP_UNKNOWN) && 
@@ -1194,6 +1205,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          }
       } /* is response */
    } /* if type == DIRTYP_UNKNOWN */
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING RS (via header) found");
+   }
 
 
    /*
@@ -1219,7 +1233,10 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
 	 }
       }
    } /* if type == DIRTYP_UNKNOWN */
-
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING (redirected) found");
+   }
+   
 
    if (type == DIRTYP_UNKNOWN) {
       DEBUGC(DBCLASS_SIP, "sip_find_direction: unable to determine "

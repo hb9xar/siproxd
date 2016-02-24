@@ -1,5 +1,7 @@
 0.8.2
 =====
+  24-Feb-2016:  - plugin_fix_fbox_anoncall: improved matching and rewriting
+                  (="fixing") Contact header on anonymous calls.
   30-Jan-2016:  - added plugin_fix_fbox_anoncall: a plugin to work around
                   some quirks from Fritzboxes when receiving anonymous calls
                   (calls with supressed CLID). Might also work for other UAs.
