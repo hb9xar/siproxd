@@ -1,5 +1,6 @@
 0.8.2
 =====
+  16-Apr-2016:  - Released 0.8.2
   24-Feb-2016:  - plugin_fix_fbox_anoncall: improved matching and rewriting
                   (="fixing") Contact header on anonymous calls.
   30-Jan-2016:  - added plugin_fix_fbox_anoncall: a plugin to work around

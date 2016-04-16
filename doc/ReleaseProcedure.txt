@@ -16,6 +16,9 @@ Make the release:
   - Linux 64bit
 - $ make dist
 - calculate MD5 checksum, sha256 (shasum -a256) & GPG
+  $ gpg  --armor  --detach-sig siproxd-0.8.2.tar.gz
+  $ gpg --verify siproxd-0.8.2.tar.gz.asc siproxd-0.8.2.tar.gz
+
 - update RELNOTES with checksums
 - check in outstanding changes
 - create SVN tag

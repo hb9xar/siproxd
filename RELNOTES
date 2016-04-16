@@ -1,16 +1,59 @@
 Release Notes for siproxd-0.8.2
 ===============================
 
+A long time has gone by since the last official siproxd release.
+But development has not stood still. Behind the curtains of public
+releases work has continued and some exiting new features have been
+implemented.
+
+All this work in progress between public releases has been and is
+available in the daily code snapshots available for download.
+But now - finally - it is time for another public release.
+
+
 Major changes since 0.8.1:
- - 
+ - We do now support dealing with anonymous calls. Some UAs (Fritzboxes 
+   and possibly other UAs as well) do behave in an interresting way if
+   receiving an anonymous call (CLID supressed by caller), casuing the call 
+   to be dropped after 20...30 seconds.
+ - Support for SIP Trunks - we do now supoprts SIP Trunks where a whole 
+   DID number block is attached to one single SIP account.
+ - Various interoperability issues have been resolved, check the list of 
+   new plugins below.
+ - And of course various bugfixes have been implemented.
+ 
+ New plugins:
+ - plugin_stripheader
+   Allows to strip particular headers from SIP messages. Useful if your 
+   provider chokes on some headers included by your local UA.
+ - plugin_codecfilter
+   Allows blacklisting of codecs and removes those from any passing SDP 
+   payload in both (incoming and outgoing) directions. This allows the 
+   proxy to force the exclusion of particular codecs in the negotiation 
+   between a local UA and a remote side.
+ - plugin_siptrunk
+   Plugin to handle SIP Trunks where using *one* single SIP account a
+   whole number block is routed. Please read the comments in the config
+   file section.
+ - plugin_fix_DTAG
+   This plugin attempts to work-around some SIP issues with
+   T-ONLINE SIP (as of 2015). T-Online.de sends broken Via headers in 
+   responses, causing the received SIP response to be discarded by
+   any SIP client that properly checks the Via chain.
+ - plugin_fix_fbox_anoncall
+   This plugin attempts to work-around some SIP issues with
+   Fritzbox devices and anonymous calls. Fritzbox devices do change their
+   Contact header when answering an anonymous call (supressed CLID) - this
+   in turn confuses siproxd. This plugin attempts to work around this by
+   sanitizing the Contact Header before processing.
 
 Upgrade Notes 0.8.1 to 0.8.2:
- - 
+ - Merge the configuration file
 
 General Overview:
  - SIP (RFC3261) Proxy for SIP based softphones hidden behind a
    masquerading firewall
- - basic support for SIP TCP transport
+ - plugin system allows loading extensions to accomplish various tasks
  - Support for PRACK messages (RFC3262)
  - Support for UPDATE messages (RFC3311)
  - SIP UDP and TCP supported
@@ -48,27 +91,28 @@ Requirements:
  - libosip2 (3.x.x)
 
 Mainly tested on:
-- CentOS 5, 32bit Linux 
+- CentOS
   This is the main development and testing environment. Other platforms
   are not extensively tested.
 
 Builds on (tested by dev-team or reported to build):
-- Linux:	CentOS/RedHat EL
-(		Fedora 64bit		)*
-(		WRT54g (133mhz mipsel router))*
-(- FreeBSD:	FreeBSD 4.10-BETA	)*
-(- OpenBSD:	OpenBSD 3.4 GENERIC#18	)*
-(- SunOS:	SunOS 5.9		)*
-(- Mac OS X:	Darwin 6.8		)*
+- Linux:	CentOS/RedHat
+- FreeBSD:	FreeBSD 10.1
 
-* Note: As the compile farm of sourceforge.net has been discontinued our
-        building test possibilities are now very limited. Currently
-        no explicit testing for systems/distributions other than
-        CentOS/RHEL (x86 architecture) is made. We'll be looking into
-        possibilities to perform some broader testing in future.
-        Of course, external testers are welcome :-)
+Note: A current siproxd version for pfsense (2.2.x - FreeBSD 10 based) 
+      can be provided, please contact the author. Only i386 and amd64 
+      Plattform!
+
+Note: As the compile farm of sourceforge.net has been discontinued our
+      building test possibilities are now somehow limited. Currently
+      no explicit testing for systems/distributions other than
+      CentOS/RHEL (x86 architecture) is made. We'll be looking into
+      possibilities to perform some broader testing in future.
+      Of course, external testers are welcome :-)
 
 Reported interoperability with softphones:
+ - SNOM series
+ - Fritzbox UAs
  - Grandstream BudgeTone-100 series
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
@@ -84,6 +128,8 @@ Reported interoperability with SIP service providers:
  - Stanaphone	(SIP Gateway to PSTN)
  - Sipcall.ch	(Swiss VoIP provider)
  - Ekiga
+ - DTAG (Deutsche Telecom AG) -> requires plugin_fix_DTAG to work around
+                                 some issues with this provider
 
 
  If you have siproxd successfully running with another SIP phone
@@ -100,14 +146,6 @@ Known interoperability issues with SIP service providers:
 			to avoid this issue as callcentric does not comply
 			with the SIP specification.
 
- - asterisk PBX		Asterisk has an issue finding the proper peer
-			if multiple peers originate from the same IP/port
-			tuple (a is the case if multiple phones are proxied
-			via siproxd to the same asterisk instance).
-			This is caused by the SIP implementation in 
-			asterisk (chan_sip).
-			Note: This seems to be no longer valid with
-			      asterisk version 1.6 and up.
 
 
 Known bugs:
@@ -122,10 +160,17 @@ distribution I'd be happy to get a short notice.
 
 -----
 Signatures for siproxd-0.8.2.tar.gz archive:
-MD5 Hash:	
-SHA-256 Hash:	
+MD5 Hash:	e3ec83f66ac880717c98512d89613f42
+SHA-256 Hash:	526ce491b0cc189e2766c62432aff3ebb995e551d7261ea32c02a90c7bf7ccd0
 
 GnuPG signature:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQBXEkUcB2xLpFxU+GURAtYbAJ9uvXnWCdLcynwL1uMV47zXnE8TxwCeO3XP
+LIkQWYi9K9c4NhU3TkCm9rw=
+=qqti
+-----END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
