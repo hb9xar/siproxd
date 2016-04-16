@@ -18,7 +18,6 @@ Make the release:
 - calculate MD5 checksum, sha256 (shasum -a256) & GPG
   $ gpg  --armor  --detach-sig siproxd-0.8.2.tar.gz
   $ gpg --verify siproxd-0.8.2.tar.gz.asc siproxd-0.8.2.tar.gz
-
 - update RELNOTES with checksums
 - check in outstanding changes
 - create SVN tag
@@ -26,12 +25,14 @@ Make the release:
   svn://easytux.ch/siproxd/tags/rel_0_8_1
 - publish on SF.net
   publish RELNOTES as README file on sf.net
-- publish on freshmeat.net
+[- publish on freshmeat.net << DOWN]
 - SF Webpage:
   - copy html documentation to SF web page
   - set current.inc to new version SF 
   - text/RELNOTES
   - create a news entry
+- Mailinglist announcement
+
 
 Open new working release:
 - change version number in configure.in

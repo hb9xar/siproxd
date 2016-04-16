@@ -24,7 +24,8 @@ if use_convenience_ltdl
 endif
 
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \
-            -DBUILDSTR="\"`cat .buildno`\""
+            -DBUILDSTR="\"`cat .buildno`\"" \
+            -DBUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
 
 #
 # Plugin modules, installed in "pkglib" directory ($prefix/lib/siproxd/)

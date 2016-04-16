@@ -98,7 +98,10 @@ FILE *siproxd_passwordfile;
 
 /* -h help option text */
 static const char str_helpmsg[] =
-PACKAGE "-" VERSION "-" BUILDSTR " (c) 2002-2011 Thomas Ries\n"
+PACKAGE "-" VERSION "-" BUILDSTR "\n" \
+"Build date: " BUILDDATE "\n" \
+"Plattform:  " UNAME "\n" \
+"(c) 2002-2016 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
 #ifdef  HAVE_GETOPT_LONG
@@ -230,7 +233,7 @@ int main (int argc, char *argv[])
 /*
  * Init stuff
  */
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" "UNAME" starting up");
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" "BUILDDATE" "UNAME" starting up");
 
    /* read the config file */
    if (read_config(configfile, config_search, main_cfg_opts, "") == STS_FAILURE) {
@@ -341,7 +344,7 @@ int main (int argc, char *argv[])
  */
    log_set_silence(configuration.silence_log);
 
-   INFO(PACKAGE"-"VERSION"-"BUILDSTR" "UNAME" started");
+   INFO(PACKAGE"-"VERSION"-"BUILDSTR" "BUILDDATE" "UNAME" started");
 
 /*****************************
  * Main loop

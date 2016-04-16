@@ -1,53 +1,16 @@
-Release Notes for siproxd-0.8.2
+Release Notes for siproxd-0.8.3
 ===============================
 
-A long time has gone by since the last official siproxd release.
-But development has not stood still. Behind the curtains of public
-releases work has continued and some exiting new features have been
-implemented.
-
-All this work in progress between public releases has been and is
-available in the daily code snapshots available for download.
-But now - finally - it is time for another public release.
 
 
-Major changes since 0.8.1:
- - We do now support dealing with anonymous calls. Some UAs (Fritzboxes 
-   and possibly other UAs as well) do behave in an interresting way if
-   receiving an anonymous call (CLID supressed by caller), casuing the call 
-   to be dropped after 20...30 seconds.
- - Support for SIP Trunks - we do now supoprts SIP Trunks where a whole 
-   DID number block is attached to one single SIP account.
- - Various interoperability issues have been resolved, check the list of 
-   new plugins below.
- - And of course various bugfixes have been implemented.
- 
+Major changes since 0.8.2:
+ - 
+
+
  New plugins:
- - plugin_stripheader
-   Allows to strip particular headers from SIP messages. Useful if your 
-   provider chokes on some headers included by your local UA.
- - plugin_codecfilter
-   Allows blacklisting of codecs and removes those from any passing SDP 
-   payload in both (incoming and outgoing) directions. This allows the 
-   proxy to force the exclusion of particular codecs in the negotiation 
-   between a local UA and a remote side.
- - plugin_siptrunk
-   Plugin to handle SIP Trunks where using *one* single SIP account a
-   whole number block is routed. Please read the comments in the config
-   file section.
- - plugin_fix_DTAG
-   This plugin attempts to work-around some SIP issues with
-   T-ONLINE SIP (as of 2015). T-Online.de sends broken Via headers in 
-   responses, causing the received SIP response to be discarded by
-   any SIP client that properly checks the Via chain.
- - plugin_fix_fbox_anoncall
-   This plugin attempts to work-around some SIP issues with
-   Fritzbox devices and anonymous calls. Fritzbox devices do change their
-   Contact header when answering an anonymous call (supressed CLID) - this
-   in turn confuses siproxd. This plugin attempts to work around this by
-   sanitizing the Contact Header before processing.
 
-Upgrade Notes 0.8.1 to 0.8.2:
+
+Upgrade Notes 0.8.2 to 0.8.3:
  - Merge the configuration file
 
 General Overview:
@@ -57,7 +20,7 @@ General Overview:
  - Support for PRACK messages (RFC3262)
  - Support for UPDATE messages (RFC3311)
  - SIP UDP and TCP supported
- - Works with "dial-up" conenctions (dynamic IP addresses)
+ - Works with "dial-up" connections (dynamic IP addresses)
  - Multiple local users/hosts can be masqueraded simultaneously
  - Access control (IP based) for incoming traffic
  - Proxy Authentication for registration of local clients (User Agents)
@@ -68,13 +31,13 @@ General Overview:
  - Full duplex RTP data stream proxy for *incoming* and *outgoing*
    audio data - no firewall masquerading entries needed
  - Port range to be used for RTP traffic is configurable
-   (-> easy to set up apropriate firewall rules for RTP traffic)
+   (-> easy to set up appropriate firewall rules for RTP traffic)
  - RTP proxy can handle multiple RTP streams (eg. audio + video)
    within a single SIP session.
  - Symmetric RTP support
- - Symmetric SIP signalling support
+ - Symmetric SIP signaling support
  - Supports running in a chroot jail and changing user-ID after startup
- - All configuration done via one simple ascii configuration file
+ - All configuration done via one simple ASCII configuration file
  - Logging to syslog in daemon mode
  - RPM package (Spec file)
  - The host part of UA registration entries can be masqueraded
@@ -84,6 +47,48 @@ General Overview:
  - Can run "in front of" a NAT router.(in the local LAN segment)
  - supports "Short-Dials"
  - configurable RFC3581 (rport) support for sent SIP packets
+
+Plugins:
+ - plugin_fix_fbox_anoncall
+   This plugin attempts to work-around some SIP issues with
+   Fritzbox devices and anonymous calls. Fritzbox devices do change their
+   Contact header when answering an anonymous call (suppressed CLID) - this
+   in turn confuses siproxd. This plugin attempts to work around this by
+   sanitizing the Contact Header before processing.
+ - plugin_siptrunk
+   Plugin to handle SIP Trunks where using *one* single SIP account a
+   whole number block is routed. Please read the comments in the config
+   file section.
+ - plugin_codecfilter
+   Allows blacklisting of codecs and removes those from any passing SDP 
+   payload in both (incoming and outgoing) directions. This allows the 
+   proxy to force the exclusion of particular codecs in the negotiation 
+   between a local UA and a remote side.
+ - plugin_stripheader
+   Allows to strip particular headers from SIP messages. Useful if your 
+   provider chokes on some headers included by your local UA.
+ - plugin_regex
+   Applies an extended regular expression to the 'To' URI.
+ - plugin_prefix
+   Unconditionally prefixes all outgoing calls with a prefix.
+ - plugin_stun
+   Uses an external STUN server to determine the public IP
+   address of siproxd. Useful for "in-front-of-NAT-router"
+   scenarios.
+ - plugin_fix_DTAG
+   This plugin attempts to work-around some SIP issues with
+   T-ONLINE SIP (as of 2015). T-Online.de sends broken Via headers in 
+   responses, causing the received SIP response to be discarded by
+   any SIP client that properly checks the Via chain.
+ - plugin_fix_bogus_via
+   Incoming (from public network) SIP messages are checked for broken
+   SIP Via headers. If the IP address in the latest Via Header is
+   part of the list below, it will be replaced by the IP where the
+   SIP message has been received from.
+ - plugin_shortdial
+   Quick Dial (Short Dial)
+   Ability to define quick dial numbers that can be accessed by
+   dialing e.g. "*01" from a local phone.
 
 Requirements:
  - pthreads (Linux)
@@ -137,7 +142,7 @@ Reported interoperability with SIP service providers:
  the list.
 
 Known interoperability issues with SIP service providers:
- - callcentric.com	(afaik callcentric fails with "500 network failure"
+ - callcentric.com	(AFAIK callcentric fails with "500 network failure"
  			during REGISTER if more than one Via header is
 			present in a SIP packet. Having multiple Via headers
 			is completely in compliance with RFC3261. This might
@@ -159,18 +164,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.8.2.tar.gz archive:
-MD5 Hash:	e3ec83f66ac880717c98512d89613f42
-SHA-256 Hash:	526ce491b0cc189e2766c62432aff3ebb995e551d7261ea32c02a90c7bf7ccd0
+Signatures for siproxd-0.8.3.tar.gz archive:
+MD5 Hash:	
+SHA-256 Hash:	
 
 GnuPG signature:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-
-iD8DBQBXEkUcB2xLpFxU+GURAtYbAJ9uvXnWCdLcynwL1uMV47zXnE8TxwCeO3XP
-LIkQWYi9K9c4NhU3TkCm9rw=
-=qqti
------END PGP SIGNATURE-----
 
 
 GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
