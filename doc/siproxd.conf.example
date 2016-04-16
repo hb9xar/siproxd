@@ -340,6 +340,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_siptrunk.la
 #load_plugin=plugin_fix_fbox_anoncall.la
 
+
 ######################################################################
 # Plugin_demo
 #
@@ -499,6 +500,6 @@ plugin_codecfilter_blacklist = GSM
 # Contact header when answering an anonymous call (supressed CLID) - this
 # in turn confuses siproxd. This plugin attempts to work around this by
 # sanitizing the Contact Header before processing.
-# DTAG_networks: Local Networks where such Fritzboxes are located. Only SIP 
+# anoncall_networks: Local Networks where such Fritzboxes are located. Only SIP 
 # messages originating in those ranges will be sanitized.
-plugin_fix_fbox_anoncall_networks = 217.0.23.100/32,91.121.209.194/32,81.221.125.10/32
+plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
