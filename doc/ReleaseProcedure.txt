@@ -32,7 +32,7 @@ Make the release:
   - text/RELNOTES
   - create a news entry
 - Mailinglist announcement
-
+- News announcement on SF.net
 
 Open new working release:
 - change version number in configure.in

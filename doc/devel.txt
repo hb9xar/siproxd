@@ -25,3 +25,8 @@ funktionieren.
 koennen und nicht nur komplette HEader.
 
 -> Analog zu Codec Removal
+
+####
+https://www.paypal.com/cgi-bin/webscr?item_name=Donation+to+siproxd+-+SIP+proxy%2Fmasquerading+daemon&cmd=_donations&business=tries%40gmx.net
+https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=2DN95JCWC2JLS&lc=CH&item_name=Siproxd&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted
+

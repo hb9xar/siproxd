@@ -80,6 +80,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    char *from_username =NULL;
    char *from_host = NULL;
    char *call_type = NULL;
+   osip_call_id_t *call_id=NULL;
 
    request=ticket->sipmsg;
    req_uri = request->req_uri;
@@ -105,17 +106,22 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 
    /* INVITE */
    if (MSG_IS_INVITE(request)) {
-      if (ticket->direction==REQTYP_INCOMING) call_type="Incoming";
-      else call_type="Outgoing";
+      if (ticket->direction==REQTYP_INCOMING) call_type="Incoming (INVITE)";
+      else call_type="Outgoing (INVITE)";
    /* BYE / CANCEL */
    } else if (MSG_IS_ACK(request)) {
-      call_type="ACK";
-   } else if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
-      call_type="Ending";
+      call_type="Acknowledging (ACK)";
+   } else if (MSG_IS_BYE(request)) {
+      call_type="Ending (BYE)";
+   } else if (MSG_IS_CANCEL(request)) {
+      call_type="Ending (CANCEL)";
    }
 
+   /* Call-ID */
+   call_id = osip_message_get_call_id(request);
+
    if (call_type) {
-      INFO("%s Call: %s@%s -> %s@%s [Req: %s@%s] [IP: %s:%u]",
+      INFO("%s Call: %s@%s -> %s@%s [Req: %s@%s] [IP: %s:%u] [CID: %s@%s]",
            call_type,
            from_username ? from_username: "*NULL*",
            from_host     ? from_host    : "*NULL*",
@@ -123,7 +129,9 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
            to_host       ? to_host      : "*NULL*",
            (req_uri && req_uri->username) ? req_uri->username : "*NULL*",
            (req_uri && req_uri->host)     ? req_uri->host     : "*NULL*",
-           utils_inet_ntoa(ticket->from.sin_addr),ntohs(ticket->from.sin_port)
+           utils_inet_ntoa(ticket->from.sin_addr),ntohs(ticket->from.sin_port),
+           (call_id && call_id->number)   ? call_id->number : "*NULL*",
+           (call_id && call_id->host)     ? call_id->host : "*NULL*"
            );
    }
 
