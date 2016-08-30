@@ -441,8 +441,8 @@ static void *rtpproxy_main(void *arg) {
              * This allows silence (no data) on one direction without breaking
              * the connection after the RTP timeout */
             rtp_proxytable[i].timestamp=current_tv.tv_sec;
-            if (rtp_proxytable[i].opposite_entry > 0) {
-               rtp_proxytable[rtp_proxytable[i].opposite_entry-1].timestamp=
+            if (rtp_proxytable[i].opposite_entry >= 0) {
+               rtp_proxytable[rtp_proxytable[i].opposite_entry].timestamp=
                   current_tv.tv_sec;
             }
          } /* if */
@@ -930,8 +930,8 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                    rtp_proxytable[i].remote_ipaddr,
                    rtp_proxytable[i].remote_port + 1);
          /* clean up */
-         if (rtp_proxytable[i].opposite_entry) {
-            rtp_proxytable[rtp_proxytable[i].opposite_entry-1].opposite_entry=0;
+         if (rtp_proxytable[i].opposite_entry >= 0) {
+            rtp_proxytable[rtp_proxytable[i].opposite_entry].opposite_entry=-1;
          }
          memset(&rtp_proxytable[i], 0, sizeof(rtp_proxytable[0]));
          got_match=1;
@@ -1078,8 +1078,8 @@ static int match_socket (int rtp_proxytable_idx) {
          strcpy(remip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].remote_ipaddr));
          strcpy(lclip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr));
 
-         rtp_proxytable[rtp_proxytable_idx].opposite_entry=j+1;
-         rtp_proxytable[j].opposite_entry=rtp_proxytable_idx+1;
+         rtp_proxytable[rtp_proxytable_idx].opposite_entry=j;
+         rtp_proxytable[j].opposite_entry=rtp_proxytable_idx;
 
          DEBUGC(DBCLASS_RTP, "connected entry %i (fd=%i, %s:%i->%s:%i) <-> entry %i (fd=%i, %s:%i->%s:%i)",
                              j, rtp_proxytable[j].rtp_rx_sock,

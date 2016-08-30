@@ -58,7 +58,7 @@ typedef struct {
    struct in_addr remote_ipaddr;		/* remote IP */
    int  remote_port;				/* remote port */
    time_t timestamp;				/* last 'stream alive' TS */
-   int  opposite_entry;				/* 1 based!! index of opposite entry */
+   int  opposite_entry;				/* 0 based index of opposite entry */
 } rtp_proxytable_t;
 
 /*
