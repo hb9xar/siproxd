@@ -45,6 +45,10 @@
 /*
  * Processing stages for Plugins
  */
+/* NOOP */
+/* No activation */
+#define PLUGIN_NOOP		0x00000000
+
 /* get cyclic trigger */
 /* NO ticket is present (ticket = NULL pointer) */
 #define PLUGIN_TIMER		0x00000001
@@ -53,7 +57,7 @@
 /* may end the current SIP processing in siproxd by returning STS_FALSE *
  * may be used to intercept other traffic on SIP port */
 /* ticket with NO sipmsg is present (ticket.sipmsg = NULL pointer) */
-#define PLUGIN_PROCESS_RAW	0x00000005
+#define PLUGIN_PROCESS_RAW	0x00000008
 
 /*--------- below here a valid sip message (ticket->sipmsg) is present ---*/
 

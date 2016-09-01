@@ -42,7 +42,8 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_codecfilter.la \
 			plugin_stripheader.la \
 			plugin_siptrunk.la \
-			plugin_fix_fbox_anoncall.la
+			plugin_fix_fbox_anoncall.la \
+			plugin_stats.la
 
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
@@ -56,7 +57,8 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_codecfilter.la \
 			-dlopen plugin_stripheader.la \
 			-dlopen plugin_siptrunk.la \
-			-dlopen plugin_fix_fbox_anoncall.la
+			-dlopen plugin_fix_fbox_anoncall.la \
+			-dlopen plugin_stats.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
@@ -96,6 +98,9 @@ plugin_siptrunk_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_fix_fbox_anoncall_la_SOURCES = plugin_fix_fbox_anoncall.c
 plugin_fix_fbox_anoncall_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_stats_la_SOURCES = plugin_stats.c
+plugin_stats_la_LDFLAGS = -module -avoid-version -shrext '.so'
 
 
 #
