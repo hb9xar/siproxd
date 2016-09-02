@@ -197,6 +197,9 @@ static void stats_sighandler(int sig) {
    return;
 }
 
+/*
+ * qsort compare function
+ */
 static int stats_compare(const void *p1, const void *p2) {
    int i1;
    int i2;
@@ -207,6 +210,7 @@ static int stats_compare(const void *p1, const void *p2) {
 
    i1=*(int*)p1;
    i2=*(int*)p2;
+DEBUGC(DBCLASS_PLUGIN,"sort: i1=%i, i=%i", i1, i2);
 
    // sort by (1)client-id, (2)call-id, (3)stream number
 
@@ -214,35 +218,150 @@ static int stats_compare(const void *p1, const void *p2) {
    sts = memcmp(&rtp_proxytable[i1].client_id, 
                 &rtp_proxytable[i2].client_id, 
                 sizeof(client_id_t));
+DEBUGC(DBCLASS_PLUGIN,"sort: memcmp client_id=%i", sts);
    if (sts != 0) return sts;
 
    // check call-id host
    sts = memcmp(&rtp_proxytable[i1].callid_host, 
                 &rtp_proxytable[i2].callid_host, 
-                sizeof(CALLIDHOST_SIZE));
+                CALLIDHOST_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"sort: memcmp callid_host=%i", sts);
    if (sts != 0) return sts;
 
    // check call-id number
    sts = memcmp(&rtp_proxytable[i1].callid_number, 
                 &rtp_proxytable[i2].callid_number, 
-                sizeof(CALLIDNUM_SIZE));
+                CALLIDNUM_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"sort: memcmp callid_number=%i", sts);
    if (sts != 0) return sts;
 
    // check media stream number
-   if (rtp_proxytable[i1].media_stream_no < rtp_proxytable[i2].media_stream_no) return -1;
-   if (rtp_proxytable[i1].media_stream_no > rtp_proxytable[i2].media_stream_no) return 1;
-   
-   return 0;
+   sts=0;
+   if (rtp_proxytable[i1].media_stream_no < rtp_proxytable[i2].media_stream_no) {
+      sts=-1;
+   } else if (rtp_proxytable[i1].media_stream_no > rtp_proxytable[i2].media_stream_no) {
+      sts=1;
+   }
+
+DEBUGC(DBCLASS_PLUGIN,"sort: cmp media_stream_no=%i", sts);
+   return sts;
 }
 
+/*
+ * prepare and sort statistics data
+ */
 static void stats_prepare(void) {
    int i;
    int j=0;
    int sts;
 
+#define TESTING 0
+#if TESTING
+{
+int k=RTPPROXY_SIZE/2;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-Id");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number2");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_INCOMING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=1;
+rtp_proxytable[k].timestamp=1472844291;
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-Id");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number2");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_OUTGOING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=2;
+rtp_proxytable[k].timestamp=1472844291;
+
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-Id");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number1");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host2");
+rtp_proxytable[k].direction=DIR_INCOMING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=1;
+rtp_proxytable[k].timestamp=1472844291;
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-Id");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number1");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host2");
+rtp_proxytable[k].direction=DIR_OUTGOING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=2;
+rtp_proxytable[k].timestamp=1472844291;
+
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-02");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_INCOMING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=1;
+rtp_proxytable[k].timestamp=1472848291;
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "Client-02");
+strcpy(rtp_proxytable[k].callid_number, "CallID-Number");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_OUTGOING;
+rtp_proxytable[k].call_direction=DIR_INCOMING;
+rtp_proxytable[k].media_stream_no=2;
+rtp_proxytable[k].timestamp=1472848291;
+
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "ABC-02");
+strcpy(rtp_proxytable[k].callid_number, "XXX02-Number");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_INCOMING;
+rtp_proxytable[k].call_direction=DIR_OUTGOING;
+rtp_proxytable[k].media_stream_no=1;
+rtp_proxytable[k].timestamp=1472848291;
+k++;
+rtp_proxytable[k].rtp_rx_sock=555;
+strcpy(rtp_proxytable[k].client_id.idstring, "ABC-02");
+strcpy(rtp_proxytable[k].callid_number, "XXX02-Number");
+strcpy(rtp_proxytable[k].callid_host, "CallID-Host");
+rtp_proxytable[k].direction=DIR_OUTGOING;
+rtp_proxytable[k].call_direction=DIR_OUTGOING;
+rtp_proxytable[k].media_stream_no=2;
+rtp_proxytable[k].timestamp=1472848291;
+
+
+#if 0
+typedef struct {
+   int  rtp_rx_sock;				/* rx socket (0 -> free slot)*/
+   int  rtp_tx_sock;				/* tx socket */
+   int  rtp_con_rx_sock;			/* rx socket rtcp */
+   int  rtp_con_tx_sock;			/* tx socket rtcp */
+   char callid_number[CALLIDNUM_SIZE];		/* call ID */
+   char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
+   client_id_t client_id;
+   int  direction;				/* Direction of RTP stream */
+   int  call_direction;				/* Direction of Call DIR_x */
+   int  media_stream_no;
+   timecontrol_t tc;				/* de-jitter feature */
+   struct in_addr local_ipaddr;			/* local IP */
+   int  local_port;				/* local allocated port */
+   struct in_addr remote_ipaddr;		/* remote IP */
+   int  remote_port;				/* remote port */
+   time_t timestamp;				/* last 'stream alive' TS */
+   int  opposite_entry;				/* 0 based index of opposite entry */
+#endif
+}
+#endif
+
    // loop through rtp_proxytable and populate idx_to_rtp_proxytable
    for (i=0; i < RTPPROXY_SIZE; i++) {
       if (rtp_proxytable[i].rtp_rx_sock) {
+DEBUGC(DBCLASS_PLUGIN,"populate: rtpproxytable[%i] -> idx[%i]", i, j);
          idx_to_rtp_proxytable[j++] = i;
       }
    }
@@ -260,30 +379,35 @@ static void stats_prepare(void) {
    stats_num_reg_clients=0;
 
    for (i=0; i < j; i++) {
+DEBUGC(DBCLASS_PLUGIN,"calculate: idx[%i] -> rtpproxytable[%i]", i, idx_to_rtp_proxytable[i]);
       // each entry -> +1 stream
       stats_num_streams++;
 
       if (i>0) {
+         if (i == 1) { stats_num_calls++; stats_num_act_clients++;}
          // change of call-id? -> +1 call
          // check call-id host
-         sts = memcmp(&rtp_proxytable[i].callid_host, 
-                      &rtp_proxytable[i-1].callid_host, 
-                      sizeof(CALLIDHOST_SIZE));
-         if (sts != 0) {
+         sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].callid_host, 
+                      &rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_host, 
+                      CALLIDHOST_SIZE);
+ DEBUGC(DBCLASS_PLUGIN,"calc: memcmp callid_host=%i", sts);
+        if (sts != 0) {
             stats_num_calls++;
          } else {
             // check call-id number
-            sts = memcmp(&rtp_proxytable[i].callid_number, 
-                         &rtp_proxytable[i-1].callid_number, 
-                         sizeof(CALLIDNUM_SIZE));
+            sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].callid_number, 
+                         &rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_number, 
+                         CALLIDNUM_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"calc: memcmp callid_number=%i", sts);
             if (sts != 0) {
                stats_num_calls++;
             }
          }
          // change of client-id -> +1 client
-         sts = memcmp(&rtp_proxytable[i].client_id, 
-                      &rtp_proxytable[i-1].client_id, 
+         sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].client_id, 
+                      &rtp_proxytable[idx_to_rtp_proxytable[i-1]].client_id, 
                       sizeof(client_id_t));
+DEBUGC(DBCLASS_PLUGIN,"calc: memcmp client_id=%i", sts);
          if (sts != 0) {
             stats_num_act_clients++;
          }
@@ -297,18 +421,19 @@ static void stats_prepare(void) {
 }
 
 static void stats_to_syslog(void) {
-   INFO("RTP-STATS: %i active Streams, %i active Calls, %i active Clients, %i registered Clients", 
+   INFO("STATS: %i active Streams, %i active Calls, %i active Clients, %i registered Clients", 
         stats_num_streams, stats_num_calls, stats_num_act_clients, stats_num_reg_clients);
 }
 
 static void stats_to_file(void) {
    int i;
+   int ii;
    FILE *stream;
    char remip[16];
    char lclip[16];
 
    if (plugin_cfg.filename) {
-      DEBUGC(DBCLASS_REG,"opening stats file for write");
+      DEBUGC(DBCLASS_PLUGIN,"opening stats file for write");
       /* write urlmap back to file */
       stream = fopen(plugin_cfg.filename, "w+");
       if (!stream) {
@@ -325,29 +450,35 @@ static void stats_to_file(void) {
       }
 
       // write header
-      fprintf(stream, "RTP-STATS\n---------\n");
-//      fprintf(stream, "%i active Streams\n", stats_num_streams);
-//      fprintf(stream, "%i active Calls\n", stats_num_calls);
-//      fprintf(stream, "%i active Clients\n", stats_num_act_clients);
-//      fprintf(stream, "%i registered Clients\n\n", stats_num_reg_clients);
-
-      fprintf(stream, "active Streams:     %6i\n", stats_num_streams);
-      fprintf(stream, "active Calls:       %6i\n", stats_num_calls);
+      fprintf(stream, "Summary\n-------\n");
+ 
+      fprintf(stream, "registered Clients: %6i\n", stats_num_reg_clients);
       fprintf(stream, "active Clients:     %6i\n", stats_num_act_clients);
-      fprintf(stream, "registered Clients: %6i\n\n", stats_num_reg_clients);
+      fprintf(stream, "active Calls:       %6i\n", stats_num_calls);
+      fprintf(stream, "active Streams:     %6i\n\n", stats_num_streams);
 
-      fprintf(stream, "Client-Id;Call-Id;Direction;local IP; remote IP\n");
+#if 0
+//&&& future feature:
+      fprintf(stream, "Registered Clients\n------------------\n");
+// loop through urlmap and write out stuff. needs sorting, too :-/
+#endif
+
+
+      fprintf(stream, "RTP-Details\n-----------\n");
+      fprintf(stream, "Header; Client-Id; Call-Id; Call Direction; Stream Direction; local IP; remote IP\n");
 
       for (i=0; i < RTPPROXY_SIZE; i++) {
-         if (idx_to_rtp_proxytable[i] < 0) break;
+         ii=idx_to_rtp_proxytable[i];
+         if (ii < 0) break;
 
-           fprintf(stream, "%s;", rtp_proxytable[i].client_id.idstring);
-           fprintf(stream, "%s@%s;", rtp_proxytable[i].callid_number, rtp_proxytable[i].callid_host);
-           fprintf(stream, "%s;\n", (rtp_proxytable[i].direction==DIR_INCOMING)? "Incoming":"Outgoing");
-           strcpy(lclip, utils_inet_ntoa(rtp_proxytable[i].local_ipaddr));
+           fprintf(stream, "Data;%s;", rtp_proxytable[ii].client_id.idstring);
+           fprintf(stream, "%s@%s;", rtp_proxytable[ii].callid_number, rtp_proxytable[ii].callid_host);
+           fprintf(stream, "%s;", (rtp_proxytable[ii].call_direction==DIR_INCOMING)? "Incoming":"Outgoing");
+           fprintf(stream, "%s;", (rtp_proxytable[ii].direction==DIR_INCOMING)? "Incoming":"Outgoing");
+           strcpy(lclip, utils_inet_ntoa(rtp_proxytable[ii].local_ipaddr));
            fprintf(stream, "%s;", lclip);
-           strcpy(remip, utils_inet_ntoa(rtp_proxytable[i].remote_ipaddr));
-           fprintf(stream, "%s;", remip);
+           strcpy(remip, utils_inet_ntoa(rtp_proxytable[ii].remote_ipaddr));
+           fprintf(stream, "%s", remip);
            fprintf(stream, "\n");
 
 //  - # of RTP streams
@@ -356,7 +487,7 @@ static void stats_to_file(void) {
 
       }
       fclose(stream);
-      DEBUGC(DBCLASS_REG,"closed stats file");
+      DEBUGC(DBCLASS_PLUGIN,"closed stats file");
    } else {
       ERROR("no statistics file name given, disabling statistics");
       plugin_cfg.to_file = 0;

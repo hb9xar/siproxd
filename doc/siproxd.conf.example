@@ -339,6 +339,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_codecfilter.la
 #load_plugin=plugin_siptrunk.la
 #load_plugin=plugin_fix_fbox_anoncall.la
+#load_plugin=plugin_stats.la
 
 
 ######################################################################
@@ -503,3 +504,18 @@ plugin_codecfilter_blacklist = GSM
 # anoncall_networks: Local Networks where such Fritzboxes are located. Only SIP 
 # messages originating in those ranges will be sanitized.
 plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
+
+######################################################################
+# Plugin_stats
+#
+# This plugin does write statistics info about currently active RTP streams.
+# It can either be triggered by sendin a signal SIGUSR1 and/or periodically
+# every n seconds (rounded up to 5 seconds).
+#
+# ..._to_syslog:     0: disabled, -1 only by SIGUSR1, >0 every 'n' seconds
+# ..._to_file:       0: disabled, -1 only by SIGUSR1, >0 every 'n' seconds
+# ..._filename:      where to write the file. Siproxd mus have write access.
+#
+#plugin_stats_to_syslog = 300
+#plugin_stats_to_file = 300
+#plugin_stats_filename = /var/lib/siproxd/siproxd_stats

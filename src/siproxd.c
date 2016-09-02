@@ -171,6 +171,9 @@ int main (int argc, char *argv[])
    if (sigaction(SIGPIPE, &act, NULL)) {
       ERROR("Failed to install SIGPIPE handler");
    }
+   if (sigaction(SIGHUP, &act, NULL)) {
+      ERROR("Failed to install SIGHUP handler");
+   }
 
 
 /*

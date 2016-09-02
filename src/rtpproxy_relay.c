@@ -894,7 +894,11 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
          ((media_stream_no < 0) ||
           (media_stream_no == rtp_proxytable[i].media_stream_no))) {
          /* close RTP sockets */
-         sts = close(rtp_proxytable[i].rtp_rx_sock);
+         if (rtp_proxytable[i].rtp_rx_sock > 0) {
+            sts = close(rtp_proxytable[i].rtp_rx_sock);
+         } else {
+            sts=0;
+         }
          DEBUGC(DBCLASS_RTP,"closed socket %i for RTP stream "
                 "%s:%s == %s:%s  (idx=%i) sts=%i",
                 rtp_proxytable[i].rtp_rx_sock,
@@ -914,7 +918,11 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
                    rtp_proxytable[i].remote_ipaddr,
                    rtp_proxytable[i].remote_port);
          /* close RTCP socket */
-         sts = close(rtp_proxytable[i].rtp_con_rx_sock);
+         if (rtp_proxytable[i].rtp_con_rx_sock > 0) {
+            sts = close(rtp_proxytable[i].rtp_con_rx_sock);
+         } else {
+            sts=0;
+         }
          DEBUGC(DBCLASS_RTP,"closed socket %i for RTCP stream sts=%i",
                 rtp_proxytable[i].rtp_con_rx_sock, sts);
          if (sts < 0) {

@@ -1,7 +1,11 @@
 0.8.3dev
 ========
+<<<<<<< .mine
+  02-Aug-2016:  - rtpproxy_relay: more robustness when closing sockets.
+  31-Aug-2016:  - plugin_stats: write some statistics about currently active calls
+  30-Aug-2016:  - rtpproxy.h: rtp_proxytable_t.opposite_entry has been
+                  changed to zero-based index (was 1 based before)
   25-Aug-2016:  - more info in plugin_logcall (add CID)
-
 
 0.8.2
 =====
