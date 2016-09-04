@@ -118,7 +118,7 @@ int rtp_relay_init( void ) {
    pthread_attr_init(&attr);
    pthread_attr_init(&attr);
    pthread_attr_getstacksize (&attr, &stacksize);
-   INFO("Current thread stacksize is %i kB",stacksize/1024);   
+   INFO("Current thread stacksize is %lu kB",(stacksize/1024));
 
    /* experimental feature:
     * reduce the thread stack size to reduce the overall
