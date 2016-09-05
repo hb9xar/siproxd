@@ -118,7 +118,7 @@ int rtp_relay_init( void ) {
    pthread_attr_init(&attr);
    pthread_attr_init(&attr);
    pthread_attr_getstacksize (&attr, &stacksize);
-   INFO("Current thread stacksize is %lu kB",(stacksize/1024));
+   INFO("Current thread stacksize is %u kB",(stacksize/1024));
 
    /* experimental feature:
     * reduce the thread stack size to reduce the overall
@@ -132,7 +132,7 @@ int rtp_relay_init( void ) {
    if (configuration.thread_stack_size > 0) {
       stacksize = configuration.thread_stack_size*1024;
       pthread_attr_setstacksize (&attr, stacksize);
-      INFO("Setting new thread stacksize to %i kB",stacksize/1024);   
+      INFO("Setting new thread stacksize to %u kB",stacksize/1024);
    }
 
    DEBUGC(DBCLASS_RTP,"create thread");

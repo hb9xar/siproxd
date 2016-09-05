@@ -215,24 +215,24 @@ DEBUGC(DBCLASS_PLUGIN,"sort: i1=%i, i=%i", i1, i2);
    // sort by (1)client-id, (2)call-id, (3)stream number
 
    // check client-id
-   sts = memcmp(&rtp_proxytable[i1].client_id, 
-                &rtp_proxytable[i2].client_id, 
-                sizeof(client_id_t));
-DEBUGC(DBCLASS_PLUGIN,"sort: memcmp client_id=%i", sts);
+   sts = strncmp(rtp_proxytable[i1].client_id.idstring, 
+                 rtp_proxytable[i2].client_id.idstring, 
+                 CLIENT_ID_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"sort: strncmp client_id=%i", sts);
    if (sts != 0) return sts;
 
    // check call-id host
-   sts = memcmp(&rtp_proxytable[i1].callid_host, 
-                &rtp_proxytable[i2].callid_host, 
-                CALLIDHOST_SIZE);
-DEBUGC(DBCLASS_PLUGIN,"sort: memcmp callid_host=%i", sts);
+   sts = strncmp(rtp_proxytable[i1].callid_host, 
+                 rtp_proxytable[i2].callid_host, 
+                 CALLIDHOST_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"sort: strncmp callid_host=%i", sts);
    if (sts != 0) return sts;
 
    // check call-id number
-   sts = memcmp(&rtp_proxytable[i1].callid_number, 
-                &rtp_proxytable[i2].callid_number, 
-                CALLIDNUM_SIZE);
-DEBUGC(DBCLASS_PLUGIN,"sort: memcmp callid_number=%i", sts);
+   sts = strncmp(rtp_proxytable[i1].callid_number, 
+                 rtp_proxytable[i2].callid_number, 
+                 CALLIDNUM_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"sort: strncmp callid_number=%i", sts);
    if (sts != 0) return sts;
 
    // check media stream number
@@ -387,27 +387,28 @@ DEBUGC(DBCLASS_PLUGIN,"calculate: idx[%i] -> rtpproxytable[%i]", i, idx_to_rtp_p
          if (i == 1) { stats_num_calls++; stats_num_act_clients++;}
          // change of call-id? -> +1 call
          // check call-id host
-         sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].callid_host, 
-                      &rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_host, 
-                      CALLIDHOST_SIZE);
- DEBUGC(DBCLASS_PLUGIN,"calc: memcmp callid_host=%i", sts);
-        if (sts != 0) {
+         sts = strncmp(rtp_proxytable[idx_to_rtp_proxytable[i]].callid_host, 
+                       rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_host, 
+                       CALLIDHOST_SIZE);
+ DEBUGC(DBCLASS_PLUGIN,"calc: strncmp callid_host=%i", sts);
+         if (sts != 0) {
             stats_num_calls++;
          } else {
             // check call-id number
-            sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].callid_number, 
-                         &rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_number, 
-                         CALLIDNUM_SIZE);
-DEBUGC(DBCLASS_PLUGIN,"calc: memcmp callid_number=%i", sts);
+            sts = strncmp(rtp_proxytable[idx_to_rtp_proxytable[i]].callid_number, 
+                          rtp_proxytable[idx_to_rtp_proxytable[i-1]].callid_number, 
+                          CALLIDNUM_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"calc: strncmp callid_number=%i", sts);
             if (sts != 0) {
                stats_num_calls++;
             }
          }
+         //&&& use client_id.idstring only, otherwise wrong counting...
          // change of client-id -> +1 client
-         sts = memcmp(&rtp_proxytable[idx_to_rtp_proxytable[i]].client_id, 
-                      &rtp_proxytable[idx_to_rtp_proxytable[i-1]].client_id, 
-                      sizeof(client_id_t));
-DEBUGC(DBCLASS_PLUGIN,"calc: memcmp client_id=%i", sts);
+         sts = strncmp(rtp_proxytable[idx_to_rtp_proxytable[i]].client_id.idstring, 
+                       rtp_proxytable[idx_to_rtp_proxytable[i-1]].client_id.idstring, 
+                       CLIENT_ID_SIZE);
+DEBUGC(DBCLASS_PLUGIN,"calc: strncmp client_id=%i", sts);
          if (sts != 0) {
             stats_num_act_clients++;
          }
@@ -431,6 +432,7 @@ static void stats_to_file(void) {
    FILE *stream;
    char remip[16];
    char lclip[16];
+   time_t now;
 
    if (plugin_cfg.filename) {
       DEBUGC(DBCLASS_PLUGIN,"opening stats file for write");
@@ -450,8 +452,10 @@ static void stats_to_file(void) {
       }
 
       // write header
+      time(&now);
+      fprintf(stream, "Date: %s\n", asctime(localtime(&now)));
       fprintf(stream, "Summary\n-------\n");
- 
+
       fprintf(stream, "registered Clients: %6i\n", stats_num_reg_clients);
       fprintf(stream, "active Clients:     %6i\n", stats_num_act_clients);
       fprintf(stream, "active Calls:       %6i\n", stats_num_calls);
