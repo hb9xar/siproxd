@@ -431,7 +431,8 @@ static void stats_to_file(void) {
 
       // write header
       time(&now);
-      fprintf(stream, "Date: %s, PID: %i\n", asctime(localtime(&now)), getpid());
+      fprintf(stream, "Date: %s", asctime(localtime(&now)));
+      fprintf(stream, "PID:  %i\n", getpid());
 
       fprintf(stream, "\nSummary\n-------\n");
       fprintf(stream, "registered Clients: %6i\n", stats_num_reg_clients);
