@@ -69,39 +69,7 @@ static regex_t *re;
 static int plugin_siptrunk_init(void);
 static int plugin_siptrunk_process(sip_ticket_t *ticket);
 static regmatch_t * rmatch (char *buf, regex_t *re);
-//static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp);
 
-
-/*&&&+++
-1) register
-  - nothing to to
-2) outgoing calls
-  - nothing to do. Should be able to figure out direction by
-    Contact header, via header
-3) incoming call
-  * need matching of incoming DID number to trunk account
-    - SIP URI
-    - To: Header
-  How do I pass on that matched information?
-  ? rewriting To: header?
-  ? rewriting SIP URI?
-  ? new metadata in ticket structure?
-Need to provide info for sip_find_direction() -nope, this has been processed
-(and failed) before the plugin. I need to provide the correct drection value in
-the ticket.
-Then with an Route header I may set the next Hop (to the internal UA). I need to
-access the registration database to get the associated IP address with the
-account...
-Unfortunately, the route header processing is only done for OUTGOING requests.
-
-Probably should try with rewritung the SIP URI to the account name. However this
-is bad bcoz if destroys the DID number information in the request URI.
-
-I may need some next hop override that a plugin can use to force the next hop,
-no matter what...
-
-
-&&&---*/
 
 /* 
  * Initialization.
@@ -226,7 +194,6 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
       }
 
       /* check To: URI */
-//&&&broken:      to_url=osip_to_get_url(ticket->sipmsg);
       to_url=ticket->sipmsg->to->url;
       if (to_url && to_url->username) {
          DEBUGC(DBCLASS_BABBLE, "To: header: [%s]", to_url->username);
@@ -244,7 +211,7 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
 
          /* check To: URI */
          if (to_url && to_url->username) {
-            pmatch_uri = rmatch(to_url->username, &re[i]);
+            pmatch_to = rmatch(to_url->username, &re[i]);
          }
 
          if ((pmatch_uri == NULL) && (pmatch_to == NULL)) continue;
@@ -332,7 +299,6 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
  * rmatch() performs the initial regexec match, and if a match is found
  * it returns a pointer to the regmatch array which contains the result
  * of the match.
- * Afterwards rreplace() is to be called, providing this regmatch array.
  *
  * This eliminates the need to copy the 'rp' string before knowing
  * if a match is actually there.
@@ -347,38 +313,3 @@ static regmatch_t * rmatch (char *buf, regex_t *re) {
    }
    return &pm[0];
 }
-
-#if 0
-static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
-   char *pos;
-   int sub, so, n;
-
-   /* match(es) found: */
-   for (pos = rp; *pos; pos++) {
-      /* back references \1 ... \9: expand them in 'rp' */
-      if (*pos == '\\' && *(pos + 1) > '0' && *(pos + 1) <= '9') {
-         so = pmatch[*(pos + 1) - 48].rm_so;	/* pmatch[1..9] */
-         n = pmatch[*(pos + 1) - 48].rm_eo - so;
-         if (so < 0 || strlen (rp) + n - 1 > size) return STS_FAILURE;
-         memmove (pos + n, pos + 2, strlen (pos) - 1);
-         memmove (pos, buf + so, n);
-         pos = pos + n - 2;
-      }
-   }
-
-   sub = pmatch[1].rm_so; /* no repeated replace when sub >= 0 */
-   /* and replace rp in the input buffer */
-   for (pos = buf; !regexec (re, pos, 1, pmatch, 0); ) {
-      n = pmatch[0].rm_eo - pmatch[0].rm_so;
-      pos += pmatch[0].rm_so;
-      if (strlen (buf) - n + strlen (rp) > size) {
-         return STS_FAILURE;
-      }
-      memmove (pos + strlen (rp), pos + n, strlen (pos) - n + 1);
-      memmove (pos, rp, strlen (rp));
-      pos += strlen (rp);
-      if (sub >= 0) break;
-   }
-   return STS_SUCCESS;
-}
-#endif
