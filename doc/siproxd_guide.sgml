@@ -723,7 +723,7 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
                     <para>Fixes broken VIA headers on incoming calls.
                     </para></listitem>
           <listitem><para><filename>plugin_stun</filename></para>
-                    <para>Cyclically checks with an STUN server for
+                    <para>Periodically checks with an STUN server for
                       the public IP address of siproxd.
                     </para></listitem>
         </orderedlist>
