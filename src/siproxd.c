@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -354,6 +355,7 @@ int main (int argc, char *argv[])
  *****************************/
    while (!exit_program) {
 
+      memset(&ticket, 0, sizeof(sip_ticket_t));
       while ((sts = sipsock_waitfordata(buff, sizeof(buff)-1,
                                     &ticket.from, &ticket.protocol)) <=0 ) {
 
@@ -392,6 +394,7 @@ int main (int argc, char *argv[])
       buflen = (size_t)sts;
       DEBUGC(DBCLASS_BABBLE,"received %zd bytes of data", buflen);
       ticket.direction=0;
+      ticket.timestamp=time(NULL);
       memset(&ticket.next_hop, 0, sizeof(ticket.next_hop));
       buff[buflen]='\0';
 

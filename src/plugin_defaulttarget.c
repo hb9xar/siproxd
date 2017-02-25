@@ -162,6 +162,7 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
 }
 
 
+/*--------------------------------------------------------------------*/
 /* private plugin code */
 static int plugin_defaulttarget_redirect(sip_ticket_t *ticket) {
    int i;
