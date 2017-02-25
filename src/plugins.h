@@ -62,7 +62,7 @@
 /*--------- below here a valid sip message (ticket->sipmsg) is present ---*/
 
 /* Validation of SIP packet */
-/* may end the current SIP processing in siproxd by returning STS_FALSE *
+/* may end the current SIP processing in siproxd by returning STS_FALSE/STS_FAILURE *
  * may be used to intercept other traffic on SIP port */
 #define PLUGIN_VALIDATE		0x00000010	
 
@@ -95,7 +95,7 @@ typedef struct {
    lt_ptr dlhandle;	/* handle returned by dlopen() */
 } plugin_def_t;
 
-#define SIPROXD_API_VERSION	0x0101
+#define SIPROXD_API_VERSION	0x0102
 
 
 /* The plugin must provide the following entry points */
