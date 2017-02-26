@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002-2009  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2017  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
@@ -24,6 +24,7 @@ if use_convenience_ltdl
 endif
 
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \
+            -Werror-implicit-function-declaration \
             -DBUILDSTR="\"`cat .buildno`\"" \
             -DBUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
 
@@ -43,7 +44,8 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_stripheader.la \
 			plugin_siptrunk.la \
 			plugin_fix_fbox_anoncall.la \
-			plugin_stats.la
+			plugin_stats.la \
+			plugin_blacklist.la
 
 DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_shortdial.la \
@@ -58,7 +60,8 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_stripheader.la \
 			-dlopen plugin_siptrunk.la \
 			-dlopen plugin_fix_fbox_anoncall.la \
-			-dlopen plugin_stats.la
+			-dlopen plugin_stats.la \
+			-dlopen plugin_blacklist.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
 plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
@@ -101,6 +104,9 @@ plugin_fix_fbox_anoncall_la_LDFLAGS = -module -avoid-version -shrext '.so'
 #
 plugin_stats_la_SOURCES = plugin_stats.c
 plugin_stats_la_LDFLAGS = -module -avoid-version -shrext '.so'
+#
+plugin_blacklist_la_SOURCES = plugin_blacklist.c
+plugin_blacklist_la_LDFLAGS = -module -avoid-version -shrext '.so' -lsqlite3
 
 
 #
