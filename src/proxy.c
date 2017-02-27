@@ -1213,6 +1213,8 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
    osip_uri_to_str(url, &tmp1);
    osip_uri_to_str(urlmap[idx].true_url, &tmp2);
    DEBUGC(DBCLASS_BABBLE,"proxy_rewrite_request_uri: %s -> %s", tmp1, tmp2);
+   if (tmp1) osip_free(tmp1);
+   if (tmp2) osip_free(tmp2);
 
    osip_uri_free(url);
    url=NULL;
