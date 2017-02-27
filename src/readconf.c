@@ -159,21 +159,24 @@ int read_config(char *name, int search, cfgopts_t cfgopts[], char *filter) {
 static int parse_config (FILE *configfile, cfgopts_t configoptions[],
                          char *filter) {
    char buff[1024];
-   char *ptr;
+   char *ptr=NULL;
    int i, k;
    int num;
    size_t len;
-   char *tmpptr;
-   char *eqsign;
+   char *tmpptr=NULL;
+   char *eqsign=NULL;
 
    while (fgets(buff,sizeof(buff),configfile) != NULL) {
       /* life insurance */
       buff[sizeof(buff)-1]='\0';
 
       /* strip New line & CR if present */
+      len=strlen(buff);
       for (i=1; i<=2; i++) {
-         if ((buff[strlen(buff)-i]=='\n') || (buff[strlen(buff)-i]=='\r')) {
-            buff[strlen(buff)-i]='\0';
+         k=len-i;
+         if (k<0) { k=0; }
+         if ((buff[k]=='\n') || (buff[k]=='\r')) {
+            buff[k]='\0';
          }
       }
 
