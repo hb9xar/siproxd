@@ -116,6 +116,16 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
  * connections, whatever the plugin messes around with)
  */
 int  PLUGIN_END(plugin_def_t *plugin_def){
+   int i;
+   int num_entries;
+
+   /* free space for regexes */
+   num_entries = plugin_cfg.trunk_numbers_regex.used;
+   for (i=0; i < num_entries; i++) {
+      regfree(&re[i]);
+   }
+   free(re);
+
    return STS_SUCCESS;
 }
 
