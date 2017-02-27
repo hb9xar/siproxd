@@ -23,7 +23,6 @@
 
 #include "config.h"
 
-#include <time.h>
 #include <string.h>
 #include <sqlite3.h>
 
@@ -55,16 +54,18 @@ extern struct siproxd_config configuration;
 static struct plugin_config {
    char *dbpath;	/* path to sqlite DB file (/var/lib/siproxd/bl.db */
    int  block_mode;	/* 0: no, 1: IP based, 2: IP & SIP-user */ 
-   int  block_duration; /* in seconds, 0: forever, dont' expire */ 
-   int  block_hitcount; /* required attempts until blocked */ 
+   int  simulate;	/* 0: no, 1: don't block, just log */ 
+   int  duration;	/* in seconds, 0: forever, dont' expire */ 
+   int  hitcount;	/* required attempts until blocked */ 
 } plugin_cfg;
 
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
-   { "plugin_blacklist_dbpath",		TYP_STRING, &plugin_cfg.dbpath,         {0, "/var/lib/siproxd/blacklist.sqlite"} },
-   { "plugin_blacklist_mode",		TYP_INT4,   &plugin_cfg.block_mode,     {0, NULL} },
-   { "plugin_blacklist_duration",	TYP_INT4,   &plugin_cfg.block_duration, {3600, NULL} },
-   { "plugin_blacklist_hitcount",	TYP_INT4,   &plugin_cfg.block_hitcount, {10, NULL} },
+   { "plugin_blacklist_dbpath",		TYP_STRING, &plugin_cfg.dbpath,	{0, "/var/lib/siproxd/blacklist.sqlite"} },
+   { "plugin_blacklist_mode",		TYP_INT4,   &plugin_cfg.block_mode,	{0, NULL} },
+   { "plugin_blacklist_simulate",	TYP_INT4,   &plugin_cfg.simulate,	{0, NULL} },
+   { "plugin_blacklist_duration",	TYP_INT4,   &plugin_cfg.duration,	{3600, NULL} },
+   { "plugin_blacklist_hitcount",	TYP_INT4,   &plugin_cfg.hitcount,	{10, NULL} },
    {0, 0, 0}
 };
 
@@ -83,9 +84,18 @@ static sql_statement_t sql_statement[] = {
    {  0, NULL, "SELECT count(id) from blacklist WHERE ip=?001 and sipuri=?002 AND failcount>?003;" },
    {  1, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
    /* blacklist_update_fail() */
-   {  2, NULL, "INSERT OR IGNORE INTO blacklist (ip, sipuri, failcount, lastseen, lastfail) VALUES (?001, ?002, 0, ?003, ?003);" },
+   {  2, NULL, "INSERT OR IGNORE INTO blacklist (ip, sipuri) VALUES (?001, ?002);" },
    {  3, NULL, "UPDATE OR IGNORE blacklist SET failcount=failcount+1, lastseen=?003, lastfail=?003 WHERE ip=?001 and sipuri=?002;" },
+   {  4, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
+   {  5, NULL, "UPDATE OR IGNORE blacklist SET failcount=0, lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
 };
+#define SQL_CHECK_1		0
+#define SQL_CHECK_2		1
+
+#define SQL_UPDATE_FAIL_1	2	/* insert new record to DB */
+#define SQL_UPDATE_FAIL_2	3	/* increment failcount */
+#define SQL_UPDATE_FAIL_3	4	/* just update lastseen */
+#define SQL_UPDATE_FAIL_4	5	/* reset failcount upon successful registration */
 
 /* string magic in C preprocessor */
 #define xstr(s) str(s)
@@ -128,10 +138,10 @@ blacklist
 static int blacklist_check(sip_ticket_t *ticket);
 static int blacklist_update_fail(sip_ticket_t *ticket);
 static int blacklist_expire(sip_ticket_t *ticket);
-
-static int blacklist_sqlite_begin(void);
-static int blacklist_sqlite_end(void);
-static int blacklict_exec_prep_query_int(sqlite3_stmt *stmt1, int *retval);
+/* helpers */
+static int sqlite_begin(void);
+static int sqlite_end(void);
+static int sqlite_exec_stmt_int(sql_statement_t *sql_statement, int *retval);
 
 /* 
  * Initialization.
@@ -159,12 +169,10 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
       return STS_FAILURE;
    }
 
-   if (blacklist_sqlite_begin() != STS_SUCCESS) {
+   if (sqlite_begin() != STS_SUCCESS) {
       return STS_FAILURE;
    }
 
-
-blacklist_check(NULL);
    INFO("plugin_blacklist is initialized (sqlite version %s)", sqlite3_libversion());
    return STS_SUCCESS;
 }
@@ -177,6 +185,11 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    int sts;
    /* stage contains the PLUGIN_* value - the stage of SIP processing. */
    DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: processing - stage %i",stage);
+   DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: MSG_IS_REQUEST %i",MSG_IS_REQUEST(ticket->sipmsg));
+   DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: MSG_IS_RESPONSE %i",MSG_IS_RESPONSE(ticket->sipmsg));
+   DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: MSG_IS_REGISTER %i",MSG_IS_REGISTER(ticket->sipmsg));
+   DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: MSG_IS_RESPONSE_FOR(REGISTER) %i",MSG_IS_RESPONSE_FOR(ticket->sipmsg,"REGISTER"));
+   DEBUGC(DBCLASS_BABBLE, "plugin_blacklist: MSG_IS_STATUS_4XX %i",MSG_IS_STATUS_4XX(ticket->sipmsg));
 
    if ((stage == PLUGIN_VALIDATE) 
        && MSG_IS_REQUEST(ticket->sipmsg)) {
@@ -186,7 +199,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
       }
    } else if ((stage == PLUGIN_POST_PROXY) 
               && MSG_IS_RESPONSE(ticket->sipmsg)
-              && MSG_IS_REGISTER(ticket->sipmsg)) {
+              && MSG_IS_RESPONSE_FOR(ticket->sipmsg, "REGISTER")) {
       sts = blacklist_update_fail(ticket);
    }
 
@@ -202,7 +215,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
 int  PLUGIN_END(plugin_def_t *plugin_def){
    int sts;
 
-   sts = blacklist_sqlite_end();
+   sts = sqlite_end();
 
    INFO("plugin_blacklist ends here");
    return STS_SUCCESS;
@@ -212,48 +225,27 @@ int  PLUGIN_END(plugin_def_t *plugin_def){
 /* private plugin code */
 static int blacklist_check(sip_ticket_t *ticket) {
    int sts;
-   sqlite3_stmt *stmt1 = sql_statement[0].stmt;
-   sqlite3_stmt *stmt2 = sql_statement[1].stmt;
+   int retval=0;
+   sql_statement_t *sql_stmt = NULL;
 
    DEBUGC(DBCLASS_BABBLE, "entering blacklist_check");
 
    /* bind */
-   sts = sqlite3_bind_text(stmt1, 001, "1.2.3.4", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_text(stmt1, 002, "foo@bar.org", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_int(stmt1,  003, plugin_cfg.block_hitcount);
+   sql_stmt = &sql_statement[SQL_CHECK_1];
+   sts = sqlite3_bind_text(sql_stmt->stmt, 001, "1.2.3.4", -1, SQLITE_TRANSIENT);
+   sts = sqlite3_bind_text(sql_stmt->stmt, 002, "foo@bar.org", -1, SQLITE_TRANSIENT);
+   sts = sqlite3_bind_int(sql_stmt->stmt,  003, plugin_cfg.hitcount);
    /* execute & eval result */
-   do {
-      sts = sqlite3_step(stmt1);
-      if (sts == SQLITE_ROW) {
-         INFO("Blacklist Lookup returned %i matches", sqlite3_column_int(stmt1, 0));
-      }
-   } while (sts == SQLITE_ROW);
-   if ( sts == SQLITE_ERROR) {
-      sts = sqlite3_reset(stmt1);
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   } else if ( sts != SQLITE_DONE ) {
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   }
-   /* cleanup */
-   sts = sqlite3_reset(stmt1);
-
+   sts = sqlite_exec_stmt_int(sql_stmt, &retval);
+   sql_stmt = NULL;
 
    /* bind */
-   sts = sqlite3_bind_text(stmt2, 001, "1.2.3.4", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_text(stmt2, 002, "foo@bar.org", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_int(stmt2,  003, time(NULL));
-   /* execute & eval result */
-   do {
-      sts = sqlite3_step(stmt2);
-   } while (sts == SQLITE_ROW);
-   if ( sts == SQLITE_ERROR) {
-      sts = sqlite3_reset(stmt2);
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   } else if ( sts != SQLITE_DONE ) {
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   }
-   /* cleanup */
-   sts = sqlite3_reset(stmt2);
+   sql_stmt = &sql_statement[SQL_CHECK_2];
+   sts = sqlite3_bind_text(sql_stmt->stmt, 001, "1.2.3.4", -1, SQLITE_TRANSIENT);
+   sts = sqlite3_bind_text(sql_stmt->stmt, 002, "foo@bar.org", -1, SQLITE_TRANSIENT);
+   sts = sqlite3_bind_int(sql_stmt->stmt,  003, ticket->timestamp);
+   sts = sqlite_exec_stmt_int(sql_stmt, &retval);
+   sql_stmt = NULL;
 
 // not present in 3.3.6   sts = sqlite3_clear_bindings(stmt1);
 
@@ -283,51 +275,45 @@ static int blacklist_check(sip_ticket_t *ticket) {
 
 static int blacklist_update_fail(sip_ticket_t *ticket) {
    int sts;
-   sqlite3_stmt *stmt11 = sql_statement[2].stmt;
-   sqlite3_stmt *stmt12 = sql_statement[3].stmt;
+   int retval=0;
+   sql_statement_t *sql_stmt = NULL;
 
    DEBUGC(DBCLASS_BABBLE, "entering blacklist_update_fail");
 
-
-   /* bind */
-   //&&& fetch UAC IP from telegram
-   //&&& fetch SIP URI (contact?) from telegram
-   sts = sqlite3_bind_text(stmt11, 001, "1.2.3.4", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_text(stmt11, 002, "foo@bar.org", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_int(stmt11,  003, time(NULL));
-   /* execute & eval result */
-   do {
-      sts = sqlite3_step(stmt11);
-   } while (sts == SQLITE_ROW);
-   if ( sts == SQLITE_ERROR) {
-      sts = sqlite3_reset(stmt11);
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   } else if ( sts != SQLITE_DONE ) {
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
+   if (MSG_IS_STATUS_4XX(ticket->sipmsg)) {
+      /* bind */
+      sql_stmt = &sql_statement[SQL_UPDATE_FAIL_1];
+      //&&& fetch UAC IP from telegram
+      //&&& fetch SIP URI (contact?) from telegram
+      sts = sqlite3_bind_text(sql_stmt->stmt, 001, "1.2.3.41", -1, SQLITE_TRANSIENT);
+      sts = sqlite3_bind_text(sql_stmt->stmt, 002, "foo@bar.org", -1, SQLITE_TRANSIENT);
+      sts = sqlite_exec_stmt_int(sql_stmt, &retval);
+      sql_stmt = NULL;
    }
-   /* cleanup */
-   sts = sqlite3_reset(stmt11);
 
 
-   /* bind */
-   //&&& fetch UAC IP from telegram
-   //&&& fetch SIP URI (contact?) from telegram
-   sts = sqlite3_bind_text(stmt12, 001, "1.2.3.4", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_text(stmt12, 002, "foo@bar.org", -1, SQLITE_STATIC);
-   sts = sqlite3_bind_int(stmt12,  003, time(NULL));
-   /* execute & eval result */
-   do {
-      sts = sqlite3_step(stmt12);
-   } while (sts == SQLITE_ROW);
-   if ( sts == SQLITE_ERROR) {
-      sts = sqlite3_reset(stmt12);
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
-   } else if ( sts != SQLITE_DONE ) {
-      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
+   sql_stmt = NULL;
+   if (MSG_IS_STATUS_4XX(ticket->sipmsg)) {
+      /* REGISTER 4xx failure: increment error counter */
+      sql_stmt = &sql_statement[SQL_UPDATE_FAIL_2];
+   } else if (MSG_IS_STATUS_2XX(ticket->sipmsg)) {
+      /* REGISTER 2xx success: set error counter to 0 */
+      sql_stmt = &sql_statement[SQL_UPDATE_FAIL_4];
+   } else {
+      /* update last-seen */
+      sql_stmt = &sql_statement[SQL_UPDATE_FAIL_3];
    }
-   /* cleanup */
-   sts = sqlite3_reset(stmt12);
-
+   if (sql_stmt) {
+      /* bind */
+      //&&& fetch UAC IP from telegram
+      //&&& fetch SIP URI (contact?) from telegram
+      sts = sqlite3_bind_text(sql_stmt->stmt, 001, "1.2.3.41", -1, SQLITE_TRANSIENT);
+      sts = sqlite3_bind_text(sql_stmt->stmt, 002, "foo@bar.org", -1, SQLITE_TRANSIENT);
+      sts = sqlite3_bind_int(sql_stmt->stmt,  003, ticket->timestamp);
+      /* execute query */
+      sts = sqlite_exec_stmt_int(sql_stmt, &retval);
+      sql_stmt = NULL;
+   }
 
    /* INSERT OR IGNORE records to DB: IP, sipuri */
    /* UPDATE records failcount=failcount+1, lastseen=now, lastfail=now */
@@ -351,7 +337,7 @@ static int blacklist_expire(sip_ticket_t *ticket) {
 
 /*--------------------------------------------------------------------*/
 /* helper functions */
-static int blacklist_sqlite_begin(void){
+static int sqlite_begin(void){
    int sts;
    int i;
    char *zErrMsg = NULL;
@@ -409,7 +395,7 @@ static int blacklist_sqlite_begin(void){
    return STS_SUCCESS;
 }
 
-static int blacklist_sqlite_end(void){
+static int sqlite_end(void){
    int sts;
    int i;
    char *zErrMsg = NULL;
@@ -436,7 +422,30 @@ static int blacklist_sqlite_end(void){
    return STS_SUCCESS;
 }
 
-static int blacklict_exec_prep_query_int(sqlite3_stmt *stmt1, int *retval){
+static int sqlite_exec_stmt_int(sql_statement_t *sql_statement, int *retval){
+   int sts;
+
+   /* execute & eval result */
+   DEBUGC(DBCLASS_BABBLE, "executing query [%s]", sql_statement->sql_query);
+   do {
+      sts = sqlite3_step(sql_statement->stmt);
+      if (sts == SQLITE_ROW) {
+         if (retval != NULL) {
+            *retval = sqlite3_column_int(sql_statement->stmt, 0);
+            DEBUGC(DBCLASS_BABBLE, "sqlite_exec_stmt_int: query returned INT %i", *retval);
+         }
+      }
+   } while (sts == SQLITE_ROW);
+   if ( sts == SQLITE_ERROR) {
+      sts = sqlite3_reset(sql_statement->stmt);
+      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
+   } else if ( sts != SQLITE_DONE ) {
+      ERROR("SQL step error [%i]: %s\n", sts, sqlite3_errmsg(db));
+   }
+   /* cleanup */
+   sts = sqlite3_reset(sql_statement->stmt);
+
+   return STS_SUCCESS;
 }
 
 //&&& implement cache of open REGISTER requests, only honor failed REGISTERS responses where a
