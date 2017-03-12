@@ -81,17 +81,17 @@ typedef struct {
 
 static sql_statement_t sql_statement[] = {
    /* blacklist_check() */
-   {  0, NULL, "SELECT count(id) from blacklist WHERE ip=?001 and sipuri=?002 AND failcount>?003;" },
+   {  0, NULL, "SELECT count(id) from blacklist WHERE ip=?001 and sipuri=?002 AND (type =1 or failcount>?003);" },
    {  1, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
    {  2, NULL, "INSERT OR REPLACE INTO requests (timestamp, ip, sipuri, callid) VALUES (?001, ?002, ?003, ?004);" },
    /* blacklist_update() */
    {  3, NULL, "DELETE FROM requests WHERE timestamp<?001;" },
    {  4, NULL, "SELECT count(id) from requests WHERE ip=?001 and sipuri=?002 AND callid=?003;" },
    {  5, NULL, "INSERT OR IGNORE INTO blacklist (ip, sipuri) VALUES (?001, ?002);" },
-   {  6, NULL, "UPDATE OR IGNORE blacklist SET failcount=failcount+1, lastseen=?003, lastfail=?003 WHERE ip=?001 and sipuri=?002;" },
+   {  6, NULL, "UPDATE OR IGNORE blacklist SET failcount=failcount+1, lastseen=?003, lastfail=?003 WHERE type=0 and ip=?001 and sipuri=?002;" },
    {  7, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
-   {  8, NULL, "UPDATE OR IGNORE blacklist SET failcount=0, lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
-   {  9, NULL, "UPDATE OR IGNORE blacklist SET failcount=0 WHERE failcount<?001 and lastseen<?002;" },
+   {  8, NULL, "UPDATE OR IGNORE blacklist SET failcount=0, lastseen=?003 WHERE type=0 and ip=?001 and sipuri=?002;" },
+   {  9, NULL, "UPDATE OR IGNORE blacklist SET failcount=0 WHERE type=0 and failcount<?001 and lastseen<?002;" },
 };
 #define SQL_CHECK_1	0
 #define SQL_CHECK_2	1
@@ -300,15 +300,17 @@ static int blacklist_check(sip_ticket_t *ticket) {
       sql_stmt = NULL;
    }
 
-   /* free resources */
-   osip_free(from);
-
    // not present in sqlite 3.3.6   sts = sqlite3_clear_bindings(stmt1);
 
    if (retval > 0) {
       DEBUGC(DBCLASS_BABBLE, "leaving blacklist_check, UAC is blocked");
+      INFO ("UAC with IP %s [%s] is blocked", srcip, from);
+      osip_free(from);
       return STS_FAILURE;
    }
+
+   /* free resources */
+   osip_free(from);
 
    DEBUGC(DBCLASS_BABBLE, "leaving blacklist_check, UAC is permittet");
    return STS_SUCCESS;
@@ -416,6 +418,7 @@ static int blacklist_update(sip_ticket_t *ticket) {
    DEBUGC(DBCLASS_BABBLE, "leaving blacklist_update");
    return STS_SUCCESS;
 }
+
 
 static int blacklist_expire(sip_ticket_t *ticket) {
 //   int sts;
