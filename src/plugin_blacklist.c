@@ -53,7 +53,7 @@ extern struct siproxd_config configuration;
 /* plugin configuration storage */
 static struct plugin_config {
    char *dbpath;	/* path to sqlite DB file (/var/lib/siproxd/bl.db */
-   int  block_mode;	/* 0: no, 1: IP based, 2: IP & SIP-user */ 
+//   int  block_mode;	/* 0: no, 1: IP based, 2: IP & SIP-user */ 
    int  simulate;	/* 0: no, 1: don't block, just log */ 
    int  duration;	/* in seconds, 0: forever, dont' expire */ 
    int  hitcount;	/* required attempts until blocked */ 
@@ -62,7 +62,7 @@ static struct plugin_config {
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
    { "plugin_blacklist_dbpath",		TYP_STRING, &plugin_cfg.dbpath,	{0, "/var/lib/siproxd/blacklist.sqlite"} },
-   { "plugin_blacklist_mode",		TYP_INT4,   &plugin_cfg.block_mode,	{2, NULL} },
+//   { "plugin_blacklist_mode",		TYP_INT4,   &plugin_cfg.block_mode,	{2, NULL} },
    { "plugin_blacklist_simulate",	TYP_INT4,   &plugin_cfg.simulate,	{0, NULL} },
    { "plugin_blacklist_duration",	TYP_INT4,   &plugin_cfg.duration,	{3600, NULL} },
    { "plugin_blacklist_hitcount",	TYP_INT4,   &plugin_cfg.hitcount,	{10, NULL} },
@@ -81,12 +81,12 @@ typedef struct {
 
 static sql_statement_t sql_statement[] = {
    /* blacklist_check() */
-   {  0, NULL, "SELECT count(id) from blacklist WHERE ip=?001 and sipuri=?002 AND (type =1 or failcount>?003);" },
+   {  0, NULL, "SELECT count(*) from blacklist WHERE ip=?001 and sipuri=?002 AND (type=1 or failcount>?003);" },
    {  1, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
    {  2, NULL, "INSERT OR REPLACE INTO requests (timestamp, ip, sipuri, callid) VALUES (?001, ?002, ?003, ?004);" },
    /* blacklist_update() */
    {  3, NULL, "DELETE FROM requests WHERE timestamp<?001;" },
-   {  4, NULL, "SELECT count(id) from requests WHERE ip=?001 and sipuri=?002 AND callid=?003;" },
+   {  4, NULL, "SELECT count(*) from requests WHERE ip=?001 and sipuri=?002 AND callid=?003;" },
    {  5, NULL, "INSERT OR IGNORE INTO blacklist (ip, sipuri) VALUES (?001, ?002);" },
    {  6, NULL, "UPDATE OR IGNORE blacklist SET failcount=failcount+1, lastseen=?003, lastfail=?003 WHERE type=0 and ip=?001 and sipuri=?002;" },
    {  7, NULL, "UPDATE OR IGNORE blacklist SET lastseen=?003 WHERE ip=?001 and sipuri=?002;" },
@@ -120,7 +120,6 @@ static sql_statement_t sql_statement[] = {
 	    ");" \
 	"CREATE TABLE IF NOT EXISTS "\
 	    "blacklist ( "\
-		"id INTEGER PRIMARY KEY AUTOINCREMENT, "\
 		"type INTEGER DEFAULT 0, "\
 		"ip VARCHAR(" xstr(IPSTRING_SIZE) "), "\
 		"sipuri VARCHAR(" xstr(USERNAME_SIZE) "), "\
@@ -131,7 +130,6 @@ static sql_statement_t sql_statement[] = {
 	    ");" \
 	"CREATE TABLE IF NOT EXISTS "\
 	    "requests ( "\
-		"id INTEGER PRIMARY KEY AUTOINCREMENT, "\
 		"timestamp INTEGER DEFAULT 0, "\
 		"ip VARCHAR(" xstr(IPSTRING_SIZE) "), "\
 		"sipuri VARCHAR(" xstr(USERNAME_SIZE) "), "\
@@ -142,7 +140,6 @@ static sql_statement_t sql_statement[] = {
 /* tables
 control
 blacklist
-    - id
     - type	0: automatic entry, 1: manual entry (manually added to DB, will not expire)
     - ip	IP address of source (xxx.xxx.xxx.xxx)
     - sipuri	SIP authentication username

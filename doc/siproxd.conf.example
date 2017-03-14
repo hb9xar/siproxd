@@ -314,6 +314,10 @@ debug_port = 0
 #outbound_domain_name = freenet.de
 #outbound_domain_host = proxy.for.domain.freende.de
 #outbound_domain_port = 5060
+#
+outbound_domain_name = easybell.de
+outbound_domain_host = sip.easybell.de
+outbound_domain_port = 5060
 
 
 ######################################################################
@@ -519,3 +523,29 @@ plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
 #plugin_stats_to_syslog = 300
 #plugin_stats_to_file = 300
 #plugin_stats_filename = /var/lib/siproxd/siproxd_stats
+
+######################################################################
+# Plugin_blacklist
+#
+# This plugin maintains count of failed REGISTER attempts of
+# individual local UACs (clients) and does block outgoing requests
+# from such a UAC once a limit /hitcount) has been reached. The 
+# duration of the block is configurable. It is required that a blocked
+# UAC does *not* send any packets that are going to be blocked
+# during the duration to recover (the UAC must remain silent during 
+# this period)
+#
+# ..._dbpath:        path where to locate the database
+# ..._mode:          0: no block, 1: IP based, 2: IP and SIP-user based
+# ..._simulate:      0: block UACs once the failure count limit has been reached
+#                    1: simulate, only log but don't block
+# ..._duration:      block duration in seconds, 0: forever
+# ..._hitcount:      required failed REGISTER attempts until blocked.
+#
+plugin_blacklist_dbpath = /var/lib/siproxd/blacklist.sqlite
+//plugin_blacklist_mode = 0
+plugin_blacklist_simulate = 0
+plugin_blacklist_duration = 3600
+plugin_blacklist_hitcount = 10
+
+
