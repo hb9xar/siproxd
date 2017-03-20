@@ -267,7 +267,7 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
             //
             for (i=0; i<plugin_cfg.codec_blacklist.used; i++) {
                // do an *case-insensitive* *substring* match
-               if (strcasestr(sdp_attr->a_att_value, plugin_cfg.codec_blacklist.string[i])) {
+/*&&&*/               if (strcasestr(sdp_attr->a_att_value, plugin_cfg.codec_blacklist.string[i])) {
                   // match, need to remove this codec
                   DEBUGC(DBCLASS_PLUGIN, "%s: blacklisted - removing media attr [%s] at attrpos=%i", name, 
                          sdp_attr->a_att_value, media_attr_no);
@@ -289,7 +289,7 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
 
                      if ((attr = osip_list_get(&med->a_attributes, media_attr_no)) != NULL) {
                         osip_list_remove(&med->a_attributes, media_attr_no);
-                        sdp_attribute_free(attr);
+/*&&&*/                        sdp_attribute_free(attr);
                         attr=NULL;
                         // as I have removed the current attribute, all other
                         // attributes are shifted one down, so for the next iteration
