@@ -254,6 +254,7 @@ static int blacklist_check(sip_ticket_t *ticket) {
    osip_uri_t *from_url = NULL;
    char *from=NULL;
    char *call_id=ticket->sipmsg->call_id->number;
+   osip_authorization_t *auth=NULL;
 
 
    DEBUGC(DBCLASS_BABBLE, "entering blacklist_check");
@@ -293,6 +294,13 @@ static int blacklist_check(sip_ticket_t *ticket) {
    sql_stmt = NULL;
 
    if (MSG_IS_REGISTER(ticket->sipmsg)) {
+      /* Disarm initial REGISTER requests that carry no Authentication header data. */
+      /* So if no Auth Header is present, then set CALL-Id=<empty> */
+      if (osip_message_get_authorization(ticket->sipmsg, 0, &auth) < 0) {
+         DEBUGC(DBCLASS_BABBLE, "REGISTER without Auth data");
+         call_id="";
+      }
+
       /* Query 3: UPDATE OR IGNORE REGISTER request into requests DB */
       /* bind */
       sql_stmt = &sql_statement[SQL_CHECK_3];
@@ -328,7 +336,7 @@ static int blacklist_check(sip_ticket_t *ticket) {
    /* free resources */
    osip_free(from);
 
-   DEBUGC(DBCLASS_BABBLE, "leaving blacklist_check, UAC is permittet");
+   DEBUGC(DBCLASS_BABBLE, "leaving blacklist_check, UAC is permitted");
    return STS_SUCCESS;
 }
 
