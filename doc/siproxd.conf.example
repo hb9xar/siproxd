@@ -530,15 +530,15 @@ plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
 #
 # This plugin maintains count of failed REGISTER attempts of
 # individual local UACs (clients) and does block outgoing requests
-# from such a UAC once a limit (hitcount) has been reached. The 
+# from such a UAC once a limit /hitcount) has been reached. The 
 # duration of the block is configurable. It is required that a blocked
 # UAC does *not* send any packets that are going to be blocked
-# during the recovery duration the UAC must remain silent during 
+# during the duration to recover (the UAC must remain silent during 
 # this period).
 #
 # ...dbpath:          path where the database is located
 # ...mode:            0: no block, 1: IP based, 2: IP and SIP-user based
-# ...simulate:        0: block UACs once the failure limit is reached
+# ...simulate:        0: block UACs once the failure count limit has been reached
 #                     1: simulate, only log but don't block
 # ...duration:        block duration in seconds, 0: forever
 # ...hitcount:        required failed REGISTER attempts until blocked.

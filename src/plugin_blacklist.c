@@ -151,6 +151,11 @@ blacklist
     - failcount	count of failed attempts
     - lastfail	UNIX timestamp of last failure activity (last failed auth)
     - lastseen	UNIX timestamp of last activity
+requests
+    - timestamp	timestamp of outgoing REGISTER request
+    - ip	IP address of source (xxx.xxx.xxx.xxx)
+    - sipuri	SIP authentication username
+    - callid	SIP CallID of REGISTER request
 */
 
 
