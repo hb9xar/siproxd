@@ -54,33 +54,23 @@ dnl	09-Jan-2011	tries	use CFLAGS -Wall only with GCC compiler
 dnl	15-Sep-2011	tries	added --with-included-libtool to force the
 dnl				use of the included libltdl
 dnl	17-Jul-2015	tries	added --with-ltdl-fix
+dnl	28-May-2017	tries	going for CentOS7 as development platform,
+dnl				lots of cleanup needed for autoconf (2.69),
+dnl				automake (1.13.4), libtool/libltdl (2.4.2)
 dnl
 dnl
 
-dnl Process this file with autoconf to produce a configure script.
-AC_INIT(src/siproxd.c)
 
-dnl ******************************************************************
+dnl Version Number
+AC_INIT([siproxd], [0.8.3dev])
 
-dnl
-dnl Release Version
-dnl
-SPD_MAJOR_VERSION=0
-SPD_MINOR_VERSION=8
-SPD_MICRO_VERSION=3dev
-
-SPD_VERSION=$SPD_MAJOR_VERSION.$SPD_MINOR_VERSION.$SPD_MICRO_VERSION
-
-dnl *********************************************************************
-
-
-dnl
-dnl Initialize automake stuff
-dnl
+dnl Initialize autoconf / automake stuff
+AC_CONFIG_SRCDIR([src/siproxd.c])
 AC_CONFIG_AUX_DIR(scripts)
 AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(siproxd, $SPD_VERSION)
+AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE
 
 
 dnl
@@ -133,54 +123,39 @@ dnl **********************************************
 dnl
 dnl We require the ltdl (libtool portable dynamic loader)
 dnl for our plugins. As this would require the automake/libtool
-dnl packages to be present we include that library with
+dnl packages to be present we optinally include that library with
 dnl the siproxd package as so called "convenience library"
+
 dnl
-AC_CHECK_LIB(ltdl, lt_dlopen, [
-   echo "Good: native libltdl found, using it.";
-   use_native_ltdl="yes";
-],[
-   echo "*** WARNING: no native libltdl found, using convenience libltdl!";
-   use_native_ltdl="no";
-],)
+dnl Configure libtool
+AC_PROG_LIBTOOL
+LT_CONFIG_LTDL_DIR([libltdl])
+LT_INIT([dlopen])
+LTDL_INIT([recursive])
+AC_CONFIG_FILES([libltdl/Makefile])
 
-AC_ARG_WITH(included-libtool,
-   [  --with-included-libtool force the use of included libltdl (libtool)],
-   use_native_ltdl="no";echo "*** FORCED to use included convenience libltdl",
-   )
+AC_MSG_CHECKING(using system provided libltdl)
+if test yes = "$with_included_ltdl"; then
+   AC_MSG_RESULT([no, using included libltdl])
+   echo "*** WARNING: using convenience libltdl!";
+else
+   AC_MSG_RESULT([yes, using system provided libltdl])
+fi
 
+
+if test yes != "$with_included_ltdl"; then
 AC_ARG_WITH(ltdl-fix,
    [  --with-ltdl-fix         work around broken ltdl versions (fix linking
                           error "undefined reference to lt__PROGRAM..."],
    AC_DEFINE(WITH_LTDL_FIX,,[ltdl workaround for undefined reference linking error]),
    )
-
-if test "x$use_native_ltdl" = "xno"; then
-   AC_LIBLTDL_CONVENIENCE
-   AM_CONDITIONAL(use_convenience_ltdl,true)
-else
-   AM_CONDITIONAL(use_convenience_ltdl,false)
 fi
 
-dnl
-dnl Check for dlopen support
-AC_LIBTOOL_DLOPEN
-dnl
-dnl Configure libtool
-AC_PROG_LIBTOOL
-dnl
-dnl Substitute LTDLINCL and LIBLTDL in the Makefiles
-dnl this is only done if no native libltdl is found.
-
-if test "x$use_native_ltdl" = "xyes"; then
-   true;
-   LIBS="$LIBS -lltdl";
-else
-   true;
-   AC_SUBST(LTDLINCL)
-   AC_SUBST(LIBLTDL)
-fi
-AC_CONFIG_SUBDIRS(libltdl)
+AC_CHECK_DECL(lt_preloaded_symbols,,[AC_DEFINE(LTDL_FIX2,,[lt_preloaded_symbols undefined])],
+    [[$ac_includes_default]
+    [#include <ltdl.h>]
+    ]
+)
 
 
 dnl **********************************************

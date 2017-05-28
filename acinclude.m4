@@ -337,14 +337,15 @@ AC_MSG_CHECKING(libosip2 version > 3.0.0)
 
 dnl check if contacts member is a structure with nb_elt (ok) or a
 dnl pointer to the structure (bad)
-AC_COMPILE_IFELSE([
+AC_COMPILE_IFELSE(
+[AC_LANG_SOURCE([
   #include <osipparser2/osip_parser.h>
   main() {
   osip_message_t t;
   int  e;
   e=t.contacts.nb_elt;
   }
-],acx_check_libosip_version=ok, )
+  ])],acx_check_libosip_version=ok, )
 
 if test $acx_check_libosip_version = fail; then
   echo "*** ERROR: libosip2-3.x.x is required!";exit 1;

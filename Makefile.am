@@ -19,11 +19,10 @@
 #
 
 
-if use_convenience_ltdl
-   OPT_LTDL_DIR = libltdl
-endif
+OPT_LTDL_DIR = libltdl
 
 SUBDIRS = $(OPT_LTDL_DIR) src doc scripts contrib
-INCLUDES = $(LTDLINCL)
+#&&&INCLUDES = $(LTDLINCL)
+ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = TODO RELNOTES siproxd.spec autogen.sh

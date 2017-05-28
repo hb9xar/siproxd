@@ -67,7 +67,7 @@ int load_plugins (void) {
    func_plugin_end_t plugin_end         = NULL;
 
    /* initialize the libtool dynamic loader */
-   LTDL_SET_PRELOADED_SYMBOLS();
+//   LTDL_SET_PRELOADED_SYMBOLS();
    sts = lt_dlinit();
    if (sts != 0) {
       ERROR("ltdl (libtool dynamic loader) initialization failed.");

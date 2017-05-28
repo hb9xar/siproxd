@@ -19,14 +19,12 @@
 #
 
 
-if use_convenience_ltdl
-   LTDLDEF = -DLTDL_CONVLIB
-endif
-
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \
             -Werror-implicit-function-declaration \
             -DBUILDSTR="\"`cat .buildno`\"" \
             -DBUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+#&&&INCLUDES = $(LTDLINCL)
+AM_CPPFLAGS = $(LTDLINCL)
 
 #
 # Plugin modules, installed in "pkglib" directory ($prefix/lib/siproxd/)
@@ -64,50 +62,50 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_blacklist.la
 #
 plugin_demo_la_SOURCES = plugin_demo.c
-plugin_demo_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_demo_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_shortdial_la_SOURCES = plugin_shortdial.c
-plugin_shortdial_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_shortdial_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_logcall_la_SOURCES = plugin_logcall.c
-plugin_logcall_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_logcall_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_defaulttarget_la_SOURCES = plugin_defaulttarget.c
-plugin_defaulttarget_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_defaulttarget_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_fix_bogus_via_la_SOURCES = plugin_fix_bogus_via.c
-plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_fix_bogus_via_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_fix_DTAG_la_SOURCES = plugin_fix_DTAG.c
-plugin_fix_DTAG_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_fix_DTAG_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_stun_la_SOURCES = plugin_stun.c
-plugin_stun_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_stun_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_prefix_la_SOURCES = plugin_prefix.c
-plugin_prefix_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_prefix_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_regex_la_SOURCES = plugin_regex.c
-plugin_regex_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_regex_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_codecfilter_la_SOURCES = plugin_codecfilter.c
-plugin_codecfilter_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_codecfilter_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_stripheader_la_SOURCES = plugin_stripheader.c
-plugin_stripheader_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_stripheader_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_siptrunk_la_SOURCES = plugin_siptrunk.c
-plugin_siptrunk_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_siptrunk_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_fix_fbox_anoncall_la_SOURCES = plugin_fix_fbox_anoncall.c
-plugin_fix_fbox_anoncall_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_fix_fbox_anoncall_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_stats_la_SOURCES = plugin_stats.c
-plugin_stats_la_LDFLAGS = -module -avoid-version -shrext '.so'
+plugin_stats_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_blacklist_la_SOURCES = plugin_blacklist.c
-plugin_blacklist_la_LDFLAGS = -module -avoid-version -shrext '.so' -lsqlite3
-
+plugin_blacklist_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
+plugin_blacklist_la_LIBADD  = -lsqlite3
 
 #
 # Siproxd itself
@@ -115,8 +113,9 @@ plugin_blacklist_la_LDFLAGS = -module -avoid-version -shrext '.so' -lsqlite3
 #  else Cygwin goes beserk when building...)
 #
 sbin_PROGRAMS = siproxd
-siproxd_LDFLAGS=-export-dynamic
-siproxd_LDADD = $(LIBLTDL) $(DLOPENPLUGINS)
+siproxd_LDFLAGS = -export-dynamic
+#&&&siproxd_LDADD = $(LIBLTDL) $(DLOPENPLUGINS)
+siproxd_LDADD = $(LIBLTDL)
 siproxd_SOURCES = siproxd.c proxy.c register.c sock.c utils.c \
 		  sip_utils.c sip_layer.c log.c readconf.c rtpproxy.c \
 		  rtpproxy_relay.c accessctl.c route_processing.c \

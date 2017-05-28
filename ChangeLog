@@ -1,5 +1,8 @@
 0.8.3dev
 ========
+  28-May-2017:  - updated autogen/automake/libtool/libltdl to a recent
+                  version. Personal note: libtool/libltr is a steaming 
+                  pile of fertilizer - a voodoo driven toolbox
   16-Apr-2017:  - plugin_blacklist: new plugin to block UACs that cause
                   excessive failures durign REGISTER attempts.
   27-Feb-2017:  - improved memory behavior of some plugins during shutdown

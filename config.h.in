@@ -1,10 +1,34 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* use custom firewall control module */
 #undef CUSTOM_FWMODULE
 
 /* Define to 1 if you have the `accept' function. */
 #undef HAVE_ACCEPT
+
+/* Define to 1 if you have the `argz_add' function. */
+#undef HAVE_ARGZ_ADD
+
+/* Define to 1 if you have the `argz_append' function. */
+#undef HAVE_ARGZ_APPEND
+
+/* Define to 1 if you have the `argz_count' function. */
+#undef HAVE_ARGZ_COUNT
+
+/* Define to 1 if you have the `argz_create_sep' function. */
+#undef HAVE_ARGZ_CREATE_SEP
+
+/* Define to 1 if you have the <argz.h> header file. */
+#undef HAVE_ARGZ_H
+
+/* Define to 1 if you have the `argz_insert' function. */
+#undef HAVE_ARGZ_INSERT
+
+/* Define to 1 if you have the `argz_next' function. */
+#undef HAVE_ARGZ_NEXT
+
+/* Define to 1 if you have the `argz_stringify' function. */
+#undef HAVE_ARGZ_STRINGIFY
 
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
@@ -15,14 +39,42 @@
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
+/* Define to 1 if you have the `closedir' function. */
+#undef HAVE_CLOSEDIR
+
+/* Define to 1 if you have the declaration of `cygwin_conv_path', and to 0 if
+   you don't. */
+#undef HAVE_DECL_CYGWIN_CONV_PATH
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
+/* Define if you have the GNU dld library. */
+#undef HAVE_DLD
+
+/* Define to 1 if you have the <dld.h> header file. */
+#undef HAVE_DLD_H
+
+/* Define to 1 if you have the `dlerror' function. */
+#undef HAVE_DLERROR
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <dl.h> header file. */
+#undef HAVE_DL_H
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
+/* Define if you have the _dyld_func_lookup function. */
+#undef HAVE_DYLD
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
+
+/* Define to 1 if the system has the type `error_t'. */
+#undef HAVE_ERROR_T
 
 /* Define to 1 if you have the `fcntl' function. */
 #undef HAVE_FCNTL
@@ -78,6 +130,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define if you have the libdl library or equivalent. */
+#undef HAVE_LIBDL
+
+/* Define if libdlloader will be built on this platform */
+#undef HAVE_LIBDLLOADER
+
 /* Define to 1 if you have the `osip2' library (-losip2). */
 #undef HAVE_LIBOSIP2
 
@@ -90,6 +148,9 @@
 /* Define to 1 if you have the `listen' function. */
 #undef HAVE_LISTEN
 
+/* Define this if a modern libltdl is already installed */
+#undef HAVE_LTDL
+
 /* Define to 1 if you have the `lt_dlclose' function. */
 #undef HAVE_LT_DLCLOSE
 
@@ -99,14 +160,23 @@
 /* Define to 1 if you have the `lt_dlsym' function. */
 #undef HAVE_LT_DLSYM
 
+/* Define to 1 if you have the <mach-o/dyld.h> header file. */
+#undef HAVE_MACH_O_DYLD_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
+/* Define to 1 if you have the `opendir' function. */
+#undef HAVE_OPENDIR
+
 /* Define to 1 if you have the `osip_MD5Init' function. */
 #undef HAVE_OSIP_MD5INIT
+
+/* Define if libtool can extract symbol lists from object files. */
+#undef HAVE_PRELOADED_SYMBOLS
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
@@ -119,6 +189,9 @@
 
 /* Define to 1 if you have the `read' function. */
 #undef HAVE_READ
+
+/* Define to 1 if you have the `readdir' function. */
+#undef HAVE_READDIR
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
@@ -146,6 +219,9 @@
 
 /* Define to 1 if you have the `setuid' function. */
 #undef HAVE_SETUID
+
+/* Define if you have the shl_load function. */
+#undef HAVE_SHL_LOAD
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
@@ -183,6 +259,12 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
 /* Define to 1 if you have the `strncpy' function. */
 #undef HAVE_STRNCPY
 
@@ -191,6 +273,9 @@
 
 /* Define to 1 if you have the `syslog' function. */
 #undef HAVE_SYSLOG
+
+/* Define to 1 if you have the <sys/dl.h> header file. */
+#undef HAVE_SYS_DL_H
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
@@ -219,6 +304,41 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
+/* This value is set to 1 to indicate that the system argz facility works */
+#undef HAVE_WORKING_ARGZ
+
+/* Define if the OS needs help to load dependent libraries for dlopen(). */
+#undef LTDL_DLOPEN_DEPLIBS
+
+/* lt_preloaded_symbols undefined */
+#undef LTDL_FIX2
+
+/* Define to the system default library search path. */
+#undef LT_DLSEARCH_PATH
+
+/* The archive extension */
+#undef LT_LIBEXT
+
+/* The archive prefix */
+#undef LT_LIBPREFIX
+
+/* Define to the extension used for runtime loadable modules, say, ".so". */
+#undef LT_MODULE_EXT
+
+/* Define to the name of the environment variable that determines the run-time
+   module search path. */
+#undef LT_MODULE_PATH_VAR
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Define to the shared library suffix, say, ".dylib". */
+#undef LT_SHARED_EXT
+
+/* Define if dlsym() requires a leading underscore in symbol names. */
+#undef NEED_USCORE
+
 /* Name of package */
 #undef PACKAGE
 
@@ -233,6 +353,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -295,8 +418,14 @@
 /* building on unknown platform */
 #undef _UNKNOWN
 
+/* Define so that glibc/gnulib argp.h does not typedef error_t. */
+#undef __error_t_defined
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
+
+/* Define to a type to use for `error_t' if it is not otherwise available. */
+#undef error_t
 
 /* function osip_MD5Final */
 #undef osip_MD5Final
@@ -310,7 +439,7 @@
 /* type osip_MD5_CTX */
 #undef osip_MD5_CTX
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* typedef socklen_t available */
