@@ -28,6 +28,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <sys/time.h>
 #include <syslog.h>
 
 #include <errno.h>
@@ -224,15 +225,17 @@ void log_tcp_connect(void) {
 static void output_to_stderr(const char *label, va_list ap, char *file,
                              int line, const char *format) {
    va_list ap_copy;
-   time_t t;
+   int sts;
+   struct timeval tv;
    struct tm *tim;
 
    if (!log_to_stderr) return;
 
-   time(&t);
-   tim = localtime(&t);
-   fprintf(stderr, "%2.2i:%2.2i:%2.2i %s%s:%i ", tim->tm_hour,
-           tim->tm_min, tim->tm_sec, label, file, line);
+   sts = gettimeofday(&tv, NULL);
+   tim = localtime(&(tv.tv_sec));
+   fprintf(stderr, "%2.2i:%2.2i:%2.2i.%3.3i %s%s:%i ", 
+           tim->tm_hour, tim->tm_min, tim->tm_sec, 
+           (int)(tv.tv_usec/1000), label, file, line);
    va_copy(ap_copy, ap);
    vfprintf(stderr, format, ap_copy);
    va_end(ap_copy);
@@ -256,17 +259,18 @@ static void output_to_syslog(const char *label, int level, va_list ap,
 static void output_to_TCP(const char *label, va_list ap, char *file,
                           int line, const char *format) {
    va_list ap_copy;
-   time_t t;
+   int sts;
+   struct timeval tv;
    struct tm *tim;
    char outbuf[256];
-   int sts;
 
    if (debug_fd <= 0) return;
 
-   time(&t);
-   tim=localtime(&t);
-   snprintf(outbuf, sizeof(outbuf), "%2.2i:%2.2i:%2.2i %s%s:%i ",
-            tim->tm_hour, tim->tm_min, tim->tm_sec, label, file, line);
+   sts = gettimeofday(&tv, NULL);
+   tim = localtime(&(tv.tv_sec));
+   snprintf(outbuf, sizeof(outbuf), "%2.2i:%2.2i:%2.2i.%3.3i %s%s:%i ",
+            tim->tm_hour, tim->tm_min, tim->tm_sec, 
+            (int)(tv.tv_usec/1000), label, file, line);
    sts=write(debug_fd, outbuf, strlen(outbuf));
    va_copy(ap_copy, ap);
    vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
