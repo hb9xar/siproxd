@@ -537,7 +537,7 @@ plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
 # this period).
 #
 # ...dbpath:          path where the database is located
-# ...mode:            0: no block, 1: IP based, 2: IP and SIP-user based
+# ...db_sync_mode:    SQLite "PRAGMA SYNCHRONOUS" setting (OFF|NORMAL|FULL)
 # ...simulate:        0: block UACs once the failure count limit has been reached
 #                     1: simulate, only log but don't block
 # ...duration:        block duration in seconds, 0: forever
@@ -547,7 +547,7 @@ plugin_fix_fbox_anoncall_networks = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/20
 #                     ignored for blacklisting
 #
 plugin_blacklist_dbpath = /var/lib/siproxd/blacklist.sqlite
-//plugin_blacklist_mode = 0
+#plugin_blacklist_db_sync_mode = OFF
 plugin_blacklist_simulate = 0
 plugin_blacklist_duration = 3600
 plugin_blacklist_hitcount = 10

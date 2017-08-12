@@ -57,6 +57,7 @@ extern struct siproxd_config configuration;
 /* plugin configuration storage */
 static struct plugin_config {
    char *dbpath;	/* path to sqlite DB file (/var/lib/siproxd/bl.db */
+   char *db_sync_mode;	/* SQListe synchronous mode (FULL(def), NORMAL, OFF) */
 //   int  block_mode;	/* 0: no, 1: IP based, 2: IP & SIP-user */ 
    int  simulate;	/* 0: no, 1: don't block, just log */ 
    int  duration;	/* in seconds, 0: forever, dont' expire */ 
@@ -67,6 +68,7 @@ static struct plugin_config {
 /* Instructions for config parser */
 static cfgopts_t plugin_cfg_opts[] = {
    { "plugin_blacklist_dbpath",		TYP_STRING, &plugin_cfg.dbpath,	{0, "/var/lib/siproxd/blacklist.sqlite"} },
+   { "plugin_blacklist_db_sync_mode",	TYP_STRING, &plugin_cfg.db_sync_mode,	{0, "OFF"} },
 //   { "plugin_blacklist_mode",		TYP_INT4,   &plugin_cfg.block_mode,	{2, NULL} },
    { "plugin_blacklist_simulate",	TYP_INT4,   &plugin_cfg.simulate,	{0, NULL} },
    { "plugin_blacklist_duration",	TYP_INT4,   &plugin_cfg.duration,	{3600, NULL} },
@@ -175,6 +177,9 @@ static int sqlite_begin(void);
 static int sqlite_end(void);
 static int sqlite_exec_stmt_none(sql_statement_t *sql_statement);
 static int sqlite_exec_stmt_int(sql_statement_t *sql_statement, int *retval);
+static int sqlite_begin_transaction(void);
+static int sqlite_end_transaction(void);
+
 
 /* 
  * Initialization.
@@ -294,6 +299,8 @@ static int blacklist_check(sip_ticket_t *ticket) {
 
    DEBUGC(DBCLASS_BABBLE,"checking user %s from IP %s (Call-Id=[%s])",from, srcip, call_id);
 
+   sqlite_begin_transaction();
+
    /* Query 1: SELECT for blacklisted entries */
    /* bind */
    sql_stmt = &sql_statement[SQL_CHECK_1];
@@ -364,6 +371,8 @@ static int blacklist_check(sip_ticket_t *ticket) {
       sql_stmt = NULL;
    }
 
+   sqlite_end_transaction();
+
    // not present in sqlite 3.3.6   sts = sqlite3_clear_bindings(stmt1);
 
    if ((retval > 0) && (plugin_cfg.simulate==0)) {
@@ -395,16 +404,6 @@ static int blacklist_update(sip_ticket_t *ticket) {
 
    DEBUGC(DBCLASS_BABBLE, "entering blacklist_update");
 
-   /* Query 1: remove old records (> register_window seconds) */
-   /* bind */
-   sql_stmt = &sql_statement[SQL_UPDATE_1];
-   sts = sqlite3_bind_int(sql_stmt->stmt,  001, ticket->timestamp - plugin_cfg.register_window);
-   if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
-   /* execute & eval result */
-   sts = sqlite_exec_stmt_none(sql_stmt);
-   if( sts != STS_SUCCESS ){ WARN("sqlite_exec_stmt_none failed with %i", sts); }
-   sql_stmt = NULL;
-
    /* get target IP address as string */
    dstip=utils_inet_ntoa(ticket->next_hop.sin_addr);
 
@@ -419,6 +418,18 @@ static int blacklist_update(sip_ticket_t *ticket) {
 
 
    DEBUGC(DBCLASS_BABBLE,"checking user %s at IP %s (Call-Id=[%s])",from, dstip, call_id);
+
+   sqlite_begin_transaction();
+
+   /* Query 1: remove old records (> register_window seconds) */
+   /* bind */
+   sql_stmt = &sql_statement[SQL_UPDATE_1];
+   sts = sqlite3_bind_int(sql_stmt->stmt,  001, ticket->timestamp - plugin_cfg.register_window);
+   if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
+   /* execute & eval result */
+   sts = sqlite_exec_stmt_none(sql_stmt);
+   if( sts != STS_SUCCESS ){ WARN("sqlite_exec_stmt_none failed with %i", sts); }
+   sql_stmt = NULL;
 
    /* Query 2: check if this REGISTER response has a known record in the requests table */
    /* bind */
@@ -484,6 +495,8 @@ static int blacklist_update(sip_ticket_t *ticket) {
 
    } /* if Q2 true */
 
+   sqlite_end_transaction();
+
    /* free resources */
    osip_free(from);
 
@@ -503,6 +516,8 @@ static int blacklist_expire(sip_ticket_t *ticket) {
 
    /* set failcount=0 for all records where last_seen is older than block_period */
    /* or remove records */
+
+   sqlite_begin_transaction();
 
    /* expire old blacklist records (if config.duration > 0)*/
    if (plugin_cfg.duration > 0) {
@@ -531,6 +546,7 @@ static int blacklist_expire(sip_ticket_t *ticket) {
    if( sts != STS_SUCCESS ){ WARN("sqlite_exec_stmt_int failed with %i", sts); }
    sql_stmt = NULL;
 
+   sqlite_end_transaction();
 
    DEBUGC(DBCLASS_BABBLE, "leaving blacklist_expire");
    return STS_SUCCESS;
@@ -543,6 +559,8 @@ static int sqlite_begin(void){
    int sts;
    int i;
    char *zErrMsg = NULL;
+   char sql[64];
+
 
    /* open the database */
    sts = sqlite3_open(plugin_cfg.dbpath, &db);
@@ -561,7 +579,18 @@ static int sqlite_begin(void){
       return STS_FAILURE;
    }
 
-   /* write check (DB update) */
+   /* switch to nosync mode (async r/w) */
+   strcpy(sql, "PRAGMA synchronous = ");
+   strcat(sql, plugin_cfg.db_sync_mode);
+   sts = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
+   if( sts != SQLITE_OK ){
+      ERROR( "SQL exec error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+      sqlite3_close(db);
+      return STS_FAILURE;
+   }
+
+   /* perform write check (DB update) */
 #define DB_SQL_STARTUP \
 	"INSERT OR IGNORE INTO control (action, count) VALUES ('bl_started', 0); "\
 	"UPDATE control set count = count + 1, time  =  datetime('now') where action ='bl_started';"
@@ -620,6 +649,35 @@ static int sqlite_end(void){
    }
 
    sqlite3_close(db);
+
+   return STS_SUCCESS;
+}
+
+static int sqlite_begin_transaction(void){
+   int sts;
+   char *zErrMsg = NULL;
+
+   DEBUGC(DBCLASS_BABBLE, "SQLite: begin transaction");
+   sts = sqlite3_exec(db, "BEGIN TRANSACTION", NULL, 0, &zErrMsg);
+   if( sts != SQLITE_OK ){
+      ERROR( "SQL exec error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }
+
+   return STS_SUCCESS;
+}
+
+static int sqlite_end_transaction(void){
+   int sts;
+   char *zErrMsg = NULL;
+
+   DEBUGC(DBCLASS_BABBLE, "SQLite: end transaction - begin");
+   sts = sqlite3_exec(db, "END TRANSACTION", NULL, 0, &zErrMsg);
+   if( sts != SQLITE_OK ){
+      ERROR( "SQL exec error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   }
+   DEBUGC(DBCLASS_BABBLE, "SQLite: end transaction - done");
 
    return STS_SUCCESS;
 }
