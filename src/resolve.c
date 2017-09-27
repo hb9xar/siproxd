@@ -28,8 +28,10 @@
 #include <arpa/nameser_compat.h>
 #endif
 
+#include <stdio.h>
 #include <resolv.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "log.h"
 
