@@ -1025,6 +1025,9 @@ static void rtpproxy_kill( void ) {
          sts = rtp_relay_stop_fwd(&cid, rtp_proxytable[i].direction,
                                   rtp_proxytable[i].media_stream_no,
                                   LOCK_FDSET);
+         if (sts != STS_SUCCESS) {
+            DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd did return error");
+         }
       }
    }
    

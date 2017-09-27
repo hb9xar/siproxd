@@ -232,6 +232,11 @@ static void output_to_stderr(const char *label, va_list ap, char *file,
    if (!log_to_stderr) return;
 
    sts = gettimeofday(&tv, NULL);
+   if (sts != 0) {
+      tv.tv_sec=0;
+      tv.tv_usec=0;
+   }
+
    tim = localtime(&(tv.tv_sec));
    fprintf(stderr, "%2.2i:%2.2i:%2.2i.%3.3i %s%s:%i ", 
            tim->tm_hour, tim->tm_min, tim->tm_sec, 
@@ -267,6 +272,10 @@ static void output_to_TCP(const char *label, va_list ap, char *file,
    if (debug_fd <= 0) return;
 
    sts = gettimeofday(&tv, NULL);
+   if (sts != 0) {
+      tv.tv_sec=0;
+      tv.tv_usec=0;
+   }
    tim = localtime(&(tv.tv_sec));
    snprintf(outbuf, sizeof(outbuf), "%2.2i:%2.2i:%2.2i.%3.3i %s%s:%i ",
             tim->tm_hour, tim->tm_min, tim->tm_sec, 
@@ -374,6 +383,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    if (debug_fd > 0) {
       snprintf(outbuf, sizeof(outbuf) ,"---BUFFER DUMP follows---\n");
       sts=write(debug_fd, outbuf, strlen(outbuf));
+      if (sts < 0) {
+         ERROR("write returned error [%i:%s]",errno, strerror(errno));
+      }
    }
 
    for (i=0; i<length; i+=16) {
@@ -392,6 +404,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
          snprintf(outbuf, sizeof(outbuf) ,"  %-47.47s %-16.16s\n",
                   tmplin1, tmplin2);
          sts=write(debug_fd, outbuf, strlen(outbuf));
+         if (sts < 0) {
+            ERROR("write returned error [%i:%s]",errno, strerror(errno));
+         }
       }
    }
 
@@ -402,6 +417,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    if (debug_fd > 0) {
       snprintf(outbuf, sizeof(outbuf) ,"---end of BUFFER DUMP---\n");
       sts=write(debug_fd, outbuf, strlen(outbuf));
+      if (sts < 0) {
+         ERROR("write returned error [%i:%s]",errno, strerror(errno));
+      }
    }
    pthread_mutex_unlock(&log_mutex);
 

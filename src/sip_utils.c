@@ -615,7 +615,6 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
  */
 int sip_del_myvia (sip_ticket_t *ticket) {
    osip_via_t *via;
-   int sts;
 
    DEBUGC(DBCLASS_PROXY,"deleting topmost VIA");
    via = osip_list_get (&(ticket->sipmsg->vias), 0);
@@ -630,7 +629,7 @@ int sip_del_myvia (sip_ticket_t *ticket) {
       return STS_FAILURE;
    }
 
-   sts = osip_list_remove(&(ticket->sipmsg->vias), 0);
+   osip_list_remove(&(ticket->sipmsg->vias), 0);
    osip_via_free (via);
    return STS_SUCCESS;
 }

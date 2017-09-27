@@ -55,9 +55,8 @@ extern int errno;
 void register_init(void) {
    FILE *stream;
    int sts, i;
-//   size_t len;
    char buff[128];
-   char *c;
+//   char *c;
 
    memset(urlmap, 0, sizeof(urlmap));
 
@@ -75,14 +74,14 @@ void register_init(void) {
          /* read the url table from file */
          DEBUGC(DBCLASS_REG,"loading registration table");
          for (i=0;i < URLMAP_SIZE; i++) {
-            c=fgets(buff, sizeof(buff), stream);
+            fgets(buff, sizeof(buff), stream);
             sts=sscanf(buff, "****:%i:%i", &urlmap[i].active, &urlmap[i].expires);
             if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
                #define R(X) {\
                sts=osip_uri_init(&X); \
                if (sts == 0) { \
-                  c=fgets(buff, sizeof(buff), stream);\
+                  fgets(buff, sizeof(buff), stream);\
                   buff[sizeof(buff)-1]='\0';\
                   if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
                   if (strchr(buff, 13)) *strchr(buff, 13)='\0';\

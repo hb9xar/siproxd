@@ -258,6 +258,9 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
             // fetch the media type value (first number field in value)
             attr_mediatype=0;
             sts=sscanf(sdp_attr->a_att_value, "%i", &attr_mediatype);
+            if (sts == 0) {
+               DEBUGC(DBCLASS_PLUGIN, "parsing SDP attribute mediatype failed");
+            }
             DEBUGC(DBCLASS_PLUGIN, "     +--Attr field=%s, val=%s [MT=%i]", 
                    sdp_attr->a_att_field, sdp_attr->a_att_value, attr_mediatype);
 
