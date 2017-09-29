@@ -135,7 +135,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
        set partial match
        compare username, if match
          all OK with this Contact header, return from plugin
-       if no math
+       if no match
          probably broken username part in header (as rest matches)
          remember urlmap index
    end loop

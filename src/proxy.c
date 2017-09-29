@@ -559,7 +559,7 @@ sts=sip_obscure_callid(ticket);
           * REGISTER returns *my* Contact header information.
           * Rewrite Contact header back to represent the true address.
           * Other responses do return the Contact header of the sender.
-          * also change the expiration timeout to the value returned by the
+          * Also change the expiration timeout to the value returned by the
           * server.
           */
          sts = register_set_expire(ticket);
