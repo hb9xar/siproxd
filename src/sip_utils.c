@@ -1048,6 +1048,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
     */
    for (i=0; i<URLMAP_SIZE; i++) {
       if (urlmap[i].active == 0) continue;
+      /* outgoing requests may include the grace period, do
+       * not filter for  urlmap[].expires */
+      
       if (get_ip_by_host(urlmap[i].true_url->host, &tmp_addr) == STS_FAILURE) {
          DEBUGC(DBCLASS_SIP, "sip_find_direction: cannot resolve host [%s]",
              urlmap[i].true_url->host);
@@ -1077,6 +1080,11 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    if (type == DIRTYP_UNKNOWN) {
       for (i=0; i<URLMAP_SIZE; i++) {
          if (urlmap[i].active == 0) continue;
+         /* an incoming REGISTER RESPONSE may be processed withing 
+          * the grace period, but no other incoming request/response */
+         if ((!MSG_IS_RESPONSE_FOR(ticket->sipmsg,"REGISTER")) &&
+            (urlmap[i].expires < ticket->timestamp)) continue;
+
          /* RFC3261:
           * 'To' contains a display name (Bob) and a SIP or SIPS URI
           * (sip:bob@biloxi.com) towards which the request was originally
@@ -1122,6 +1130,10 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    if ((type == DIRTYP_UNKNOWN) && (MSG_IS_REQUEST(ticket->sipmsg))) {
       for (i=0; i<URLMAP_SIZE; i++) {
          if (urlmap[i].active == 0) continue;
+         /* an incoming REGISTER RESPONSE may be processed withing 
+          * the grace period, but no other incoming request/response */
+         if ((!MSG_IS_RESPONSE_FOR(ticket->sipmsg,"REGISTER")) &&
+            (urlmap[i].expires < ticket->timestamp)) continue;
          /* incoming request (SIP URI == 'masq') || ((SIP URI == 'reg') && !REGISTER)*/
          if ((compare_url(request->req_uri, urlmap[i].masq_url)==STS_SUCCESS) ||
              (!MSG_IS_REGISTER(request) &&
@@ -1173,6 +1185,10 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
          if (sts == STS_SUCCESS) {
             for (i=0; i<URLMAP_SIZE; i++) {
                if (urlmap[i].active == 0) continue;
+               /* an incoming REGISTER RESPONSE may be processed withing 
+                * the grace period, but no other incoming request/response */
+               if ((!MSG_IS_RESPONSE_FOR(ticket->sipmsg,"REGISTER")) &&
+                  (urlmap[i].expires < ticket->timestamp)) continue;
                /* incoming response (1st via in list points to a registered UA) */
                sts=get_ip_by_host(urlmap[i].true_url->host, &addr_myself);
                if (sts == STS_FAILURE) {

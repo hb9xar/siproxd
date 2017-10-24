@@ -72,7 +72,7 @@ void register_init(void) {
          WARN("registration file not found, starting with empty table");
       } else {
          /* read the url table from file */
-         DEBUGC(DBCLASS_REG,"loading registration table");
+         DEBUGC(DBCLASS_REG,"loading registration table, size=%i",URLMAP_SIZE);
          for (i=0;i < URLMAP_SIZE; i++) {
             fgets(buff, sizeof(buff), stream);
             sts=sscanf(buff, "****:%i:%i", &urlmap[i].active, &urlmap[i].expires);
@@ -88,7 +88,7 @@ void register_init(void) {
                   if (strlen(buff) > 0) {\
                      sts = osip_uri_parse(X, buff); \
                      if (sts != 0) { \
-                        ERROR("Unable to parse To URI: %s", buff); \
+                        ERROR("Unable to parse URI: %s", buff); \
                         osip_uri_free(X); \
                         X = NULL; \
                      } \
@@ -110,12 +110,10 @@ void register_init(void) {
          }
          fclose(stream);
 
-         /* check for premature abort of reading the registration file */
+         /* check for premature abort of reading the registration file,
+            may happen if URLMAP_SIZE has been resized (bigger) */
          if (i < URLMAP_SIZE) {
-            /* clean up and delete it */
-            WARN("registration file corrupt, starting with empty table");
-            memset(urlmap, 0, sizeof(urlmap));
-            unlink(configuration.registrationfile);
+            WARN("registration file may be corrupt or URLMAP_SIZE has been resized");
          }
       }
    }
@@ -428,7 +426,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
 
       /*
        * for proxying: force device to be masqueraded
-       * as with the outbound IP (masq_url)
+       * with the outbound IP (masq_url)
        */
       if (force_lcl_masq) {
          struct in_addr addr;
@@ -438,9 +436,11 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
             return STS_FAILURE;
          }
 
+         /* do ensure that the host part (IP) is kept up to date
+          * as it might change */
          /* host part */
          addrstr = utils_inet_ntoa(addr);
-         DEBUGC(DBCLASS_REG,"masquerading UA %s@%s local %s@%s",
+         DEBUGC(DBCLASS_REG,"masquerading Contact %s@%s local %s@%s",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
                 (url1_contact->host) ? url1_contact->host : "*NULL*",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
@@ -455,13 +455,20 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
             sprintf(urlmap[i].masq_url->port, "%i",
                     configuration.sip_listen_port);
          }
+
+         /* A proxied REGISTER request does not yet mean that this is a 
+          * legit registration... So just give a few seconds here, 
+          * enough to receive the REGISTER response, then upon success (2XX)
+          * the full expiration time will be given to this record. */
+         /* &&& this may be reduced to 0 and left solely to the grace period */
+#define EXPIRE_NULL 5
+         expires = EXPIRE_NULL;
       }
 
-      /* give some safety margin for the next update */
-      if (expires > 0) expires+=30;
-
-      /* update registration timeout */
-      urlmap[i].expires=time_now+expires;
+      /* update registration timeout if we will give additional time */
+      if (urlmap[i].expires < time_now+expires) {
+         urlmap[i].expires=time_now+expires;
+      }
 
    /*
     * un-REGISTER
@@ -481,7 +488,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
             DEBUGC(DBCLASS_REG, "removing registration for %s@%s at slot=%i",
                    (url2_to->username) ? url2_to->username : "*NULL*",
                    (url2_to->host) ? url2_to->host : "*NULL*", i);
-            urlmap[i].expires=0;
+            urlmap[i].expires=time_now+EXPIRE_NULL;
             break;
          }
       }
@@ -501,11 +508,12 @@ void register_agemap(void) {
    int i;
    time_t t;
    
+#define REGISTER_GRACE	5
    /* expire old entries */
    time(&t);
    DEBUGC(DBCLASS_BABBLE,"sip_agemap, t=%i",(int)t);
    for (i=0; i<URLMAP_SIZE; i++) {
-      if ((urlmap[i].active == 1) && (urlmap[i].expires < t)) {
+      if ((urlmap[i].active == 1) && (urlmap[i].expires+REGISTER_GRACE < t)) {
          DEBUGC(DBCLASS_REG,"cleaned entry:%i %s@%s", i,
                 urlmap[i].masq_url->username,  urlmap[i].masq_url->host);
          urlmap[i].active=0;
@@ -635,11 +643,24 @@ int register_set_expire(sip_ticket_t *ticket) {
    time_t time_now;
    osip_header_t *expires_hdr=NULL;
    osip_uri_param_t *expires_param=NULL;
+   osip_message_t *response;
+
+   if (ticket == NULL) {
+      WARN("register_set_expire called with ticket == NULL");
+      return STS_FAILURE;
+   }
 
    if (ticket->direction != RESTYP_INCOMING) {
       WARN("register_set_expire called with != incoming response");
       return STS_FAILURE;
    }
+
+   if (ticket->sipmsg == NULL) {
+      WARN("register_set_expire called with ticket->sipmsg = NULL");
+      return STS_FAILURE;
+   }
+
+   response=ticket->sipmsg;
 
    time(&time_now);
 
@@ -674,19 +695,24 @@ int register_set_expire(sip_ticket_t *ticket) {
 
       DEBUGC(DBCLASS_REG,"Expires=%i, expires_param=%p, expires_hdr=%p",
              expires, expires_param, expires_hdr);
-      if (expires > 0) {
+      /* if 2xx response (success), then set full registration time,
+       * else if not 2XX, then don't touch existing expires value */
+      if (!MSG_IS_STATUS_2XX(response)) {
+         expires = 0;
+      }
 
+      if (expires > 0) {
          /* search for an entry */
          for (i=0;i<URLMAP_SIZE;i++){
             if (urlmap[i].active == 0) continue;
             if ((compare_url(contact->url, urlmap[i].masq_url)==STS_SUCCESS)) break;
-         }
+         } /* for i */
 
          /* found a mapping entry */
          if (i<URLMAP_SIZE) {
             /* update registration timeout */
             DEBUGC(DBCLASS_REG,"changing registration timeout to %i"
-                               " entry [%i]", expires, i);
+                               " in entry [%i]", expires, i);
             urlmap[i].expires=time_now+expires;
          } else {
             DEBUGC(DBCLASS_REG,"no urlmap entry found");

@@ -1,6 +1,29 @@
 TODOs, in random order:
 =======================
 
+- REGISTER: updatinf the registration table
+  currently done upon passing an REGISTER request through, independent of
+  the outcome of the registration, the registration entry will be put into
+  the table.
+  IF a client now tries to register a non-existent number, a fake entry ends
+  up in the table and may mess things up.
+  Solution: The lifetime of a REGISTER should be set at receiving the successful
+  REGISTER Response - before the successful response (at least initially) the
+  entry should be regarded as invalid.
+
+  1)
+  REGISTER request only gives 5 seconds registration time
+  unsuccessful REGISTER response does nothing (clock ticking)
+  successful REGISTER response gives full registration time
+  -> this reduces the window of opportunity 
+  
+  May want to do further: introduce negative grace time that makes REGISTER
+  dialog mapping work, but is ignored for all other methods
+  -> marking records as inactive upon -10 seconds (#define REGISTRATION_GRACE)
+  -> for REGISTER dialogs, have match if active && urlmatch
+  -> for all other dialogs, have match if active && expiration>0 && urlmatch
+
+
 - check via loop and private IP addresses
   can comment be used to store a unique ID in there?
 

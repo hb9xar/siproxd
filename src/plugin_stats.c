@@ -394,7 +394,9 @@ static void stats_prepare(void) {
    }
    
    for (i=0; i < URLMAP_SIZE; i++) {
-      if (urlmap[i].active == 1) { stats_num_reg_clients++; }
+      if ((urlmap[i].active == 1) && (urlmap[j].expires >= time(NULL))) {
+         stats_num_reg_clients++;
+      }
    }
 
 }

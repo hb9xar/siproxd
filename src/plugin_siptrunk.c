@@ -246,6 +246,7 @@ static int plugin_siptrunk_process(sip_ticket_t *ticket) {
          /* search for an Account entry in registration DB */
          for (j=0; j<URLMAP_SIZE; j++){
             if (urlmap[j].active == 0) continue;
+            if (urlmap[j].expires < ticket->timestamp) continue;
 
             if (compare_url(url, urlmap[j].reg_url) == STS_SUCCESS) {
                DEBUGC(DBCLASS_PLUGIN, "plugin_siptrunk: found registered client, idx=%i",j);

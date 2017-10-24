@@ -100,12 +100,20 @@ int  PLUGIN_INIT(plugin_def_t *plugin_def) {
 int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
    /* stage contains the PLUGIN_* value - the stage of SIP processing. */
    int type;
-   osip_contact_t *contact;
+   osip_contact_t *contact=NULL;
+   osip_uri_t *to_url=NULL;
    int idx=0;
-   int param_match_idx=0;
-   int user_match=0;
+   int full_match=0;
    int param_match=0;
+   int param_match_idx=0;
+   int to_user_match=0;
+   int to_user_match_idx=0;
    char *tmp=NULL;
+
+   if (ticket == NULL) {
+      ERROR("being called with ticket == NULL");
+      return STS_FAILURE;
+   }
 
    type = ticket->direction;
 
@@ -128,23 +136,30 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
          return STS_SUCCESS;
       }
 
+      if (ticket->sipmsg && ticket->sipmsg->to && ticket->sipmsg->to->url) {
+         to_url=ticket->sipmsg->to->url;
+      }
+
 
 /* 
-   loop through URLMAP table
-     compare IP, param, if match
-       set partial match
-       compare username, if match
-         all OK with this Contact header, return from plugin
-       if no match
-         probably broken username part in header (as rest matches)
-         remember urlmap index
-   end loop
-   if partial match == 0
-     unable to figure out how to fix contact header.
-     dump some info
-   if partial match == 1
-     replace username part from urlmap[saved_index].true_url
-   return from plugin
+   - loop through URLMAP table
+     - skip if IP does not match
+     - set full_match if IP and user do match and break out of loop
+     - param_match++ if uniq= matches
+     - user_match++ if to: user matches
+   - end loop
+   - if full_match, then we do not need to fiddle around with the
+     contact header, it has not been anonymized.
+   - if param_match==1, we have found a possibly matching entry
+     do fixup Contact header
+   - if to_user_match==1, we have found a possibly matching entry
+     do fixup Contact header
+   - if no param_match and no to_user_match, complain
+   - return from plugin
+
+Unfortunately, FritzBox does use the same 'uniq=' value for all lines, so if
+having a Fritzbox using multiple lines we are screwed here. I may need to 
+find some additional markers that allow nailing the actual phone number
 
 */
 
@@ -157,12 +172,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
          /* Sender IP is in list, fix check and fix Contact header */
          DEBUGC(DBCLASS_PLUGIN, "checking for bogus Contact header");
 
+
          /* loop through urlmap table */
          for (idx=0; idx<URLMAP_SIZE; idx++){
             if (urlmap[idx].active == 0) continue;
+            if (urlmap[idx].expires < ticket->timestamp) continue;
             if (urlmap[idx].true_url == NULL) continue;
 
-            /* outgoing response - only look for true_url */
+            /* outgoing response - only look at true_url */
+
             /* 1) check host, skip of no match */
             if (contact->url->host && urlmap[idx].true_url->host) {
                if (osip_strcasecmp(contact->url->host, urlmap[idx].true_url->host) != 0) { 
@@ -186,12 +204,12 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                DEBUGC(DBCLASS_PLUGIN, "check username: "
                       "contact->url->username [%s] <-> true_url->username [%s]",
                       contact->url->username, urlmap[idx].true_url->username);
-              if (osip_strcasecmp(contact->url->username, urlmap[idx].true_url->username) == 0) {
-                 /* MATCH, all OK - return */
-                 user_match=1;
-                 DEBUGC(DBCLASS_PLUGIN, "username matches");
-                 break;
-              }
+               if (osip_strcasecmp(contact->url->username, urlmap[idx].true_url->username) == 0) {
+                  /* MATCH, all OK - return */
+                  full_match=1;
+                  DEBUGC(DBCLASS_PLUGIN, "username matches");
+                  break;
+               }
             } else {
                DEBUGC(DBCLASS_PLUGIN, "NULL username: "
                       "contact->username 0x%p <-> true_url->username 0x%p",
@@ -215,7 +233,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                   if ((osip_strcasecmp(p1->gname, p2->gname) == 0) &&
                         (osip_strcasecmp(p1->gvalue, p2->gvalue) == 0) ) {
                      /* MATCH */
-                     param_match=1;
+                     param_match += 1;
                      param_match_idx=idx;
                      DEBUGC(DBCLASS_PLUGIN, "uniq param matches");
                   }
@@ -230,31 +248,68 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                          p1, p2);
                   }
                }
+            } /* */
+
+            /* 4) search for match on To: user field */
+            if (to_url && to_url->username && urlmap[idx].true_url->username) {
+               DEBUGC(DBCLASS_PLUGIN, "check username: "
+                      "to_url->username [%s] <-> true_url->username [%s]",
+                      to_url->username, urlmap[idx].true_url->username);
+               if (osip_strcasecmp(to_url->username, urlmap[idx].true_url->username) == 0) {
+                  /* MATCH, all OK - return */
+                  to_user_match += 1;
+                  to_user_match_idx=idx;
+                  DEBUGC(DBCLASS_PLUGIN, "To: username [%s] matches", to_url->username);
+                  break;
+               }
+            } else {
+               DEBUGC(DBCLASS_PLUGIN, "NULL username: "
+                      "to_url(0x%p)->username(0x%p) <-> true_url->username(0x%p)",
+                      (to_url)?to_url:NULL,
+                      (to_url && to_url->username)?to_url->username:NULL,
+                      urlmap[idx].true_url->username);
             }
-               
-         } // for
+
+         } /* for idx */
+
+
 
          /* full match (host & user) */
-         if (user_match == 1) {
+         if (full_match == 1) {
             DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS exit: got a user@host match - OK");
             return STS_SUCCESS;
          }
 
-         /* no partial match (no host, or no user / no param match) */
-         if (param_match == 0) {
-            DEBUGC(DBCLASS_PLUGIN, "PLUGIN_PROCESS exit: bogus outgoing response Contact header from [%s], "
-                   "unable to sanitize!", utils_inet_ntoa(ticket->from.sin_addr));
-            return STS_SUCCESS;
+         /* partial match (uniq=) found */
+         if (param_match == 1) {
+            /* replace the username part from [param_match_idx] -> Contact */
+            osip_free(contact->url->username);
+            osip_uri_set_username(contact->url, 
+                                  osip_strdup(urlmap[param_match_idx].true_url->username));
+
+            DEBUGC(DBCLASS_PLUGIN, "sanitized Contact from [%s] (uniq= match)",
+                   utils_inet_ntoa(ticket->from.sin_addr));
+
+
+         /* partial match To: user match found */
+         } else if (to_user_match == 1) {
+            /* replace the username part from [to_user_match_idx] -> Contact */
+            osip_free(contact->url->username);
+            osip_uri_set_username(contact->url, 
+                                  osip_strdup(urlmap[to_user_match_idx].true_url->username));
+
+            DEBUGC(DBCLASS_PLUGIN, "sanitized Contact from [%s]"
+                   " (To: user match)", utils_inet_ntoa(ticket->from.sin_addr));
+
+
+         /* no matches at all -> log something */
+         } else {
+            DEBUGC(DBCLASS_PLUGIN, "unable to sanitize bogus outgoing"
+                   " response Contact header from [%s]"
+                   " param_match=%i, to_user_match=%i",
+                   utils_inet_ntoa(ticket->from.sin_addr), 
+                   param_match, to_user_match);
          }
-
-         /* param_match - replace the username part from [param_match_idx] -> Contact */
-         /* replace contact URI (username part) */
-         osip_free(contact->url->username);
-         osip_uri_set_username(contact->url, 
-                               osip_strdup(urlmap[param_match_idx].true_url->username));
-
-         DEBUGC(DBCLASS_PLUGIN, "sanitized Contact from [%s]",
-                utils_inet_ntoa(ticket->from.sin_addr));
 
 
       } else {
