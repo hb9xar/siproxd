@@ -1,5 +1,8 @@
 0.8.3dev
 ========
+  17-Jan-2018:  - Deal with OPTION requests that have Max-Forwards=0
+                  (RFC3261, "11.2 Processing of OPTIONS Request" and
+                  "16.3 Request Validation, step 3")
   30-Sep-2017:  - plugin_fix_fbox_anoncall: better handling of multiple
                   registered numbers on same device
   27-Sep-2017:  - resized URLMAP_SIZE=512, RTPPROXY_SIZE=1024

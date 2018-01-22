@@ -490,9 +490,19 @@ int main (int argc, char *argv[])
 
          DEBUGC(DBCLASS_PROXY,"checking Max-Forwards (=%i)",forwards_count);
          if (forwards_count <= 0) {
-            DEBUGC(DBCLASS_SIP, "Forward count reached 0 -> 483 response");
-            sip_gen_response(&ticket, 483 /*Too many hops*/);
-            goto end_loop; /* skip and free resources */
+            if (MSG_IS_REQUEST(ticket.sipmsg) && MSG_IS_OPTIONS(ticket.sipmsg)) {
+               // special treatment for an OPTIONS message with Max-Forwards=0
+               // -> RFC3261, 11.2 Processing of OPTIONS Request
+               //    and  16.3 Request Validation, step 3
+               // as this may be a request directed to us as proxy, reply to it.
+               DEBUGC(DBCLASS_SIP, "OPTION request with Max-Forwards=0 -> 200 response");
+               sip_gen_response(&ticket, 200);
+               goto end_loop; /* skip and free resources */
+            } else {
+               DEBUGC(DBCLASS_SIP, "Forward count reached 0 -> 483 response");
+               sip_gen_response(&ticket, 483 /*Too many hops*/);
+               goto end_loop; /* skip and free resources */
+            }
          }
       }
 
