@@ -77,7 +77,7 @@ static int silence_level=1;
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void log_init(void) {
-   openlog(NULL,LOG_NDELAY|LOG_PID,LOG_DAEMON);
+   openlog("siproxd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
 }
 
 void log_end(void) {
@@ -257,7 +257,7 @@ static void output_to_syslog(const char *label, int level, va_list ap,
    va_copy(ap_copy, ap);
    vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
    va_end(ap_copy);
-   syslog(LOG_USER|level, "%s:%i %s%s", file, line, label, outbuf);
+   syslog(LOG_DAEMON|level, "%s:%i %s%s", file, line, label, outbuf);
    return;
 }
 
