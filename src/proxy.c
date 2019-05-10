@@ -382,11 +382,15 @@ sts=sip_obscure_callid(ticket);
     */
    } else {
       /* get the destination from the SIP URI */
+
+      /* 1) try SRV record */
 /*&&&& Here, the SRV record lookup magic must go.
 In a first implementation we may just try to get the lowest priority,
 max weighted '_sip._udp.domain' entry and port number.
 No load balancing and no failover are supported with this.
 &&&*/
+
+      /* 2) if no SRV record found, resolve A record */
       sts = get_ip_by_host(request->req_uri->host, &ticket->next_hop.sin_addr);
       if (sts == STS_FAILURE) {
          DEBUGC(DBCLASS_PROXY, "proxy_request: cannot resolve URI [%s]",

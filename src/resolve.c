@@ -52,10 +52,14 @@ static int _resolve(char *name, int class, int type,
  * dnamelen	length of return buffer
  * port		port number of service
  */
-int resolve_SRV(char *name, char *dname, int dnamelen, int *port) {
+int resolve_SRV(char *name, int proto, char *dname, int dnamelen, int *port) {
    char nname[256];
-   snprintf(nname, sizeof(nname), "_sip._udp.%s", name);
-   return _resolve(name, C_IN, T_SRV, dname, dnamelen, port);
+   if (proto == IPPROTO_TCP) {
+      snprintf(nname, sizeof(nname), "_sip._tcp.%s", name);
+   } else {
+      snprintf(nname, sizeof(nname), "_sip._udp.%s", name);
+   }
+   return _resolve(nname, C_IN, T_SRV, dname, dnamelen, port);
 }
 
 #if USE_NAPTR
