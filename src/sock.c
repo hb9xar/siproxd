@@ -374,6 +374,7 @@ for (i=0; i< highest_fd; i++) {
                if (sip_tcp_cache[i].rxbuf_len <= bufsize) {
                   memcpy (buf, sip_tcp_cache[i].rx_buffer, sip_tcp_cache[i].rxbuf_len);
                   length = sip_tcp_cache[i].rxbuf_len;
+                  sip_tcp_cache[i].rxbuf_len=0;
                } else {
                   /* TCP RX buffer bigger than callers buffer... */
                   DEBUGC(DBCLASS_NET, "buffer passed to sipsock_waitfordata is too small");

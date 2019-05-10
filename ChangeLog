@@ -1,5 +1,6 @@
 0.8.3dev
 ========
+  10-May-2019:  - fix: TCP fragment reassembly fails
   17-Mar-2018:  - Improved syslog output (more consistent behavior)
   17-Jan-2018:  - Deal with OPTION requests that have Max-Forwards=0
                   (RFC3261, "11.2 Processing of OPTIONS Request" and
