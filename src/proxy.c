@@ -148,8 +148,8 @@ DEBUGC(DBCLASS_PROXY,"index i=%i",i);
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream(s) */
-         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING);
-         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING, -1);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING, -1);
 
       /* check for incoming request */
       } else if (MSG_IS_INVITE(request)) {
@@ -221,8 +221,8 @@ sts=sip_obscure_callid(ticket);
       /* if this is CANCEL/BYE request, stop RTP proxying */
       if (MSG_IS_BYE(request) || MSG_IS_CANCEL(request)) {
          /* stop the RTP proxying stream(s) */
-         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING);
-         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_INCOMING, -1);
+         rtp_stop_fwd(osip_message_get_call_id(request), DIR_OUTGOING, -1);
       }
 
 sts=sip_obscure_callid(ticket);
@@ -487,6 +487,7 @@ int proxy_response (sip_ticket_t *ticket) {
    char *buffer;
    size_t buflen;
    osip_message_t *response;
+   int cseq;
 
    DEBUGC(DBCLASS_PROXY,"proxy_response");
 
@@ -550,8 +551,24 @@ sts=sip_obscure_callid(ticket);
          } else if ((MSG_IS_STATUS_4XX(response))  ||
                      (MSG_IS_STATUS_5XX(response)) ||
                      (MSG_IS_STATUS_6XX(response))) {
-            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING);
-            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING);
+//&&& in case of repetitions, this logic breaks!
+// INVITE w/o auth credentials
+// repeated INVITE w/o auth credentials
+// 407 response to 1st INVITE
+// INVITE w/ auth credentials
+// 407 response to 2nd INVITE
+// -> Bzzz, siproxd cancels the set-up RTP ports from INVITE(3) above
+// I could:
+// - simply ingore these stati (rtp relay would time-out eventually)
+// - reduce rtp timeout for this stream and have if time-out quicker
+// - somehow remember the CSEQ number of the last request and only do
+//   something if this CSEQ is equal (or higher) to the last request that changed 
+//   the RTP relay setup
+//      tmp = osip_cseq_get_number(sip_msg->cseq);
+            cseq = atoi(osip_cseq_get_number(response->cseq));
+
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING, cseq);
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING, cseq);
          }
       } /* if INVITE */
 
@@ -637,8 +654,11 @@ sts=sip_obscure_callid(ticket);
          } else if ((MSG_IS_STATUS_4XX(response))  ||
                      (MSG_IS_STATUS_5XX(response)) ||
                      (MSG_IS_STATUS_6XX(response))) {
-            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING);
-            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING);
+//&&& same here, repetitions break this logic
+            cseq = atoi(osip_cseq_get_number(response->cseq));
+
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_INCOMING, cseq);
+            rtp_stop_fwd(osip_message_get_call_id(response), DIR_OUTGOING, cseq);
          }
       } /* if INVITE */
 
@@ -782,6 +802,7 @@ int proxy_rewrite_invitation_body(sip_ticket_t *ticket, int direction){
    int call_direction=0;
    int have_c_media=0;
    int isrtp = 0 ;
+   int cseq = 0;
 
    if (configuration.rtp_proxy_enable == 0) return STS_SUCCESS;
 
@@ -1116,13 +1137,14 @@ if (configuration.debuglevel)
             /*
              * Start the RTP stream
              */
+            cseq = atoi(osip_cseq_get_number(mymsg->cseq));
             sts = rtp_start_fwd(osip_message_get_call_id(mymsg),
                                 client_id,
                                 rtp_direction, call_direction,
                                 media_stream_no,
                                 map_addr, &map_port,
                                 addr_media, msg_port,
-                                isrtp);
+                                isrtp, cseq);
 
             if (sts == STS_SUCCESS) {
                /* and rewrite the port */

@@ -1,5 +1,7 @@
 0.8.3dev
 ========
+  09-Nov-2019:  - fix: Repetitions (T1 timer) during INVITE could 
+                  cause loss of audio
   10-May-2019:  - fix: TCP fragment reassembly fails
   17-Mar-2018:  - Improved syslog output (more consistent behavior)
   17-Jan-2018:  - Deal with OPTION requests that have Max-Forwards=0

@@ -237,8 +237,8 @@ int  rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,	/*X*/
                     int direction, int call_direction, int media_stream_no,
                     struct in_addr outbound_ipaddr, int *outboundport,
                     struct in_addr lcl_client_ipaddr, int lcl_clientport,
-                    int isrtp);
-int  rtp_stop_fwd (osip_call_id_t *callid, int direction);		/*X*/
+                    int isrtp, int cseq);
+int  rtp_stop_fwd (osip_call_id_t *callid, int direction, int cseq);	/*X*/
 
 /* accessctl.c */
 int  accesslist_check(struct sockaddr_in from);

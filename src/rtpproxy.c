@@ -77,7 +77,7 @@ int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                    int direction, int call_direction, int media_stream_no,
                    struct in_addr local_ipaddr, int *local_port,
                    struct in_addr remote_ipaddr, int remote_port,
-                   int isrtp) {
+                   int isrtp, int cseq) {
    int sts=STS_FAILURE;
    int dejitter=0;
 
@@ -94,7 +94,8 @@ int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
       sts = rtp_relay_start_fwd (callid, client_id,
                                  direction, call_direction, media_stream_no,
                                  local_ipaddr, local_port,
-                                 remote_ipaddr, remote_port, dejitter);
+                                 remote_ipaddr, remote_port, dejitter,
+                                 cseq);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);
@@ -111,13 +112,13 @@ int rtp_start_fwd (osip_call_id_t *callid, client_id_t client_id,
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
-int rtp_stop_fwd (osip_call_id_t *callid, int direction) {
+int rtp_stop_fwd (osip_call_id_t *callid, int direction, int cseq) {
    int sts = STS_FAILURE;
 
    if (configuration.rtp_proxy_enable == 0) {
       sts = STS_SUCCESS;
    } else if (configuration.rtp_proxy_enable == 1) { // Relay
-      sts = rtp_relay_stop_fwd(callid, direction, -1, LOCK_FDSET);
+      sts = rtp_relay_stop_fwd(callid, direction, -1, cseq, LOCK_FDSET);
    } else {
       ERROR("CONFIG: rtp_proxy_enable has invalid value: %d",
             configuration.rtp_proxy_enable);

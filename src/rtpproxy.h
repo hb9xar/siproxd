@@ -49,6 +49,7 @@ typedef struct {
    char callid_number[CALLIDNUM_SIZE];		/* call ID */
    char callid_host[CALLIDHOST_SIZE];		/*  --"--  */
    client_id_t client_id;
+   int  cseq;
    int  direction;				/* Direction of RTP stream */
    int  call_direction;				/* Direction of Call DIR_x */
    int  media_stream_no;
@@ -69,9 +70,9 @@ int  rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                           int rtp_direction, int call_direction, int media_stream_no,
                           struct in_addr local_ipaddr, int *local_port,
                           struct in_addr remote_ipaddr, int remote_port,
-                          int dejitter);
+                          int dejitter, int cseq);
 int  rtp_relay_stop_fwd (osip_call_id_t *callid, int rtp_direction,
-                         int media_stream_no, int nolock);
+                         int media_stream_no, int cseq, int nolock);
 
 #define NOLOCK_FDSET	1
 #define LOCK_FDSET	0

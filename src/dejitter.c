@@ -417,7 +417,7 @@ static void send_top_of_que(int nolock) {
             sts = rtp_relay_stop_fwd(&callid, 
                                      m->errret->direction,
                                      m->errret->media_stream_no,
-                                     nolock);
+                                     -1, nolock);
             if (sts != STS_SUCCESS) {
                /* force the streams to timeout on next occasion */
                m->errret->timestamp=0;

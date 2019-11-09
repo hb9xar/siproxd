@@ -391,7 +391,7 @@ static void *rtpproxy_main(void *arg) {
                            sts = rtp_relay_stop_fwd(&callid,
                                                     rtp_proxytable[i].direction,
                                                     rtp_proxytable[i].media_stream_no,
-                                                    NOLOCK_FDSET);
+                                                    -1, NOLOCK_FDSET);
                            if (sts != STS_SUCCESS) {
                               /* force the streams to timeout on next occasion */
                               rtp_proxytable[i].timestamp=0;
@@ -426,7 +426,7 @@ static void *rtpproxy_main(void *arg) {
                         sts = rtp_relay_stop_fwd(&callid,
                                                  rtp_proxytable[i].direction,
                                                  rtp_proxytable[i].media_stream_no,
-                                                 NOLOCK_FDSET);
+                                                 -1, NOLOCK_FDSET);
                         if (sts != STS_SUCCESS) {
                            /* force the streams to timeout on next occasion */
                            rtp_proxytable[i].timestamp=0;
@@ -482,7 +482,7 @@ static void *rtpproxy_main(void *arg) {
                 * just one (unused?) has timed out. Seen with VoIPEX PBX! */
                rtp_relay_stop_fwd(&callid, rtp_proxytable[i].direction,
                                   rtp_proxytable[i].media_stream_no,
-                                  NOLOCK_FDSET);
+                                  -1, NOLOCK_FDSET);
             } /* if */
          } /* for i */
       } /* if (t>...) */
@@ -512,7 +512,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                          int rtp_direction, int call_direction,
                          int media_stream_no, struct in_addr local_ipaddr,
                          int *local_port, struct in_addr remote_ipaddr,
-                         int remote_port, int dejitter) {
+                         int remote_port, int dejitter, int cseq) {
    static int prev_used_port = 0;
    int num_ports;
    int i2, i, j;
@@ -548,11 +548,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: starting RTP proxy "
-          "stream for: CallID=%s@%s [Client-ID=%s] (%s,%s) #=%i",
+          "stream for: CallID=%s@%s [Client-ID=%s] (%s,%s) "
+          "cseq=%i #=%i",
           callid->number, callid->host, client_id.idstring,
           ((rtp_direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
           ((call_direction == DIR_INCOMING) ? "incoming Call" : "outgoing Call"),
-          media_stream_no);
+          cseq, media_stream_no);
 
    /* lock mutex */
    #define return is_forbidden_in_this_code_section
@@ -603,6 +604,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
                      sizeof(remote_ipaddr));
          }
 
+         /* update CSEQ in proxytable if the current request has a higher one */
+         if (cseq > rtp_proxytable[i].cseq) {
+            rtp_proxytable[i].cseq = cseq;
+         }
+
+
 #ifdef USE_DEJITTER
          /* Initialize up timecrontrol for dejitter function */
          if ((configuration.rtp_input_dejitter > 0) || 
@@ -614,11 +621,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
 
          /* return the already known local port number */
          DEBUGC(DBCLASS_RTP,"RTP stream already active idx=%i (remaddr=%s, "
-                "remport=%i, lclport=%i, id=%s, #=%i)",
+                "remport=%i, lclport=%i, id=%s, cseq=%i, #=%i)",
                 i, utils_inet_ntoa(remote_ipaddr),
                 rtp_proxytable[i].remote_port,
                 rtp_proxytable[i].local_port,
                 rtp_proxytable[i].callid_number,
+                rtp_proxytable[i].cseq,
                 rtp_proxytable[i].media_stream_no);
          *local_port=rtp_proxytable[i].local_port;
          sts = STS_SUCCESS;
@@ -759,6 +767,7 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
    /* store the passed Client-ID data */
    memcpy(&rtp_proxytable[freeidx].client_id, &client_id, sizeof(client_id_t));
 
+   rtp_proxytable[freeidx].cseq = cseq;
    rtp_proxytable[freeidx].direction = rtp_direction;
    rtp_proxytable[freeidx].call_direction = call_direction;
    rtp_proxytable[freeidx].media_stream_no = media_stream_no;
@@ -807,12 +816,13 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
 
 //&&&
    DEBUGC(DBCLASS_RTP,"rtp_relay_start_fwd: started RTP proxy "
-          "stream for: CallID=%s@%s [Client-ID=%s] %s #=%i idx=%i",
+          "stream for: CallID=%s@%s [Client-ID=%s] %s cseq=%i, "
+          "#=%i idx=%i",
           rtp_proxytable[freeidx].callid_number,
           rtp_proxytable[freeidx].callid_host,
           rtp_proxytable[freeidx].client_id.idstring,
           ((rtp_proxytable[freeidx].direction == DIR_INCOMING) ? "incoming RTP" : "outgoing RTP"),
-          rtp_proxytable[freeidx].media_stream_no, freeidx);
+          cseq, rtp_proxytable[freeidx].media_stream_no, freeidx);
 
 unlock_and_exit:
    /* unlock mutex */
@@ -829,13 +839,15 @@ unlock_and_exit:
  * if media_stream_no == -1, all media streams will be stopped,
  * otherwise only the specified one.
  *
+ * if cseq == -1, it will be ignored.
+ *
  * RETURNS
  *	STS_SUCCESS on success
  *	STS_FAILURE on error
  */
 int rtp_relay_stop_fwd (osip_call_id_t *callid,
                         int rtp_direction,
-                        int media_stream_no, int nolock) {
+                        int media_stream_no, int cseq, int nolock) {
    int i, sts;
    int retsts=STS_SUCCESS;
    int got_match=0;
@@ -847,10 +859,10 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
    }
 
    DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd: stopping RTP proxy "
-          "stream for: %s@%s (%s) (nolock=%i)",
+          "stream for: %s@%s (%s), cseq=%i (nolock=%i)",
           callid->number, callid->host,
           ((rtp_direction == DIR_INCOMING) ? "incoming" : "outgoing"),
-          nolock);
+          cseq, nolock);
 
    /*
     * lock mutex - only if not requested to skip the lock.
@@ -892,7 +904,11 @@ int rtp_relay_stop_fwd (osip_call_id_t *callid,
          (compare_callid(callid, &cid) == STS_SUCCESS) &&
          (rtp_proxytable[i].direction == rtp_direction) &&
          ((media_stream_no < 0) ||
-          (media_stream_no == rtp_proxytable[i].media_stream_no))) {
+          (media_stream_no == rtp_proxytable[i].media_stream_no)) &&
+         ((cseq < 0) ||
+          (cseq >= rtp_proxytable[i].cseq))
+         ) {
+
          /* close RTP sockets */
          if (rtp_proxytable[i].rtp_rx_sock > 0) {
             sts = close(rtp_proxytable[i].rtp_rx_sock);
@@ -1024,7 +1040,7 @@ static void rtpproxy_kill( void ) {
          cid.host   = rtp_proxytable[i].callid_host;
          sts = rtp_relay_stop_fwd(&cid, rtp_proxytable[i].direction,
                                   rtp_proxytable[i].media_stream_no,
-                                  LOCK_FDSET);
+                                  -1, LOCK_FDSET);
          if (sts != STS_SUCCESS) {
             DEBUGC(DBCLASS_RTP,"rtp_relay_stop_fwd did return error");
          }
