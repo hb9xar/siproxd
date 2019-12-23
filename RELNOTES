@@ -98,22 +98,12 @@ Requirements:
 Mainly tested on:
 - CentOS
   This is the main development and testing environment. Other platforms
-  are not extensively tested.
+  are not extensively tested. However, the code should be quite portable
+  and build on many UNIX/Linux flavors. 
 
 Builds on (tested by dev-team or reported to build):
 - Linux:	CentOS/RedHat
-- FreeBSD:	FreeBSD 10.1
-
-Note: A current siproxd version for pfsense (2.2.x - FreeBSD 10 based) 
-      can be provided, please contact the author. Only i386 and amd64 
-      Plattform!
-
-Note: As the compile farm of sourceforge.net has been discontinued our
-      building test possibilities are now somehow limited. Currently
-      no explicit testing for systems/distributions other than
-      CentOS/RHEL (x86 architecture) is made. We'll be looking into
-      possibilities to perform some broader testing in future.
-      Of course, external testers are welcome :-)
+- FreeBSD:	FreeBSD 10
 
 Reported interoperability with softphones:
  - SNOM series
@@ -122,16 +112,18 @@ Reported interoperability with softphones:
  - Linphone (local and remote UA) (http://www.linphone.org)
  - Kphone (local and remote UA) (http://www.wirlab.net/kphone/)
  - MSN messenger 4.6 (remote and local UA)
- - X-Lite (Win XP Professional)
+ - X-Lite
  - SJPhone softphone
- - Asterisk PBX (using a SIP Trunk, masqueraded via siproxd)
+ - Asterisk PBX (using a SIP Trunk, masqueraded via siproxd, chan_sip driver)
  - Ekiga
  - FreePBX
+ - Yealink series
 
 Reported interoperability with SIP service providers:
  - Sipgate	(http://www.sipgate.de)
  - Stanaphone	(SIP Gateway to PSTN)
  - Sipcall.ch	(Swiss VoIP provider)
+ - Nexphone.ch	(Swiss VoIP provider - via resellers)
  - Ekiga
  - DTAG (Deutsche Telecom AG) -> requires plugin_fix_DTAG to work around
                                  some issues with this provider

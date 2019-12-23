@@ -15,7 +15,7 @@
   12-Aug-2017:  - performance and code inprovements in plugin_blacklist
                 - logging timestamp now includes milliseconds
   28-May-2017:  - updated autogen/automake/libtool/libltdl to a recent
-                  version. Personal note: libtool/libltr is a steaming 
+                  version. Personal note: libtool/libltdl is a steaming 
                   pile of fertilizer - a voodoo driven toolbox
   14-May-2017:  - [dev4]
   16-Apr-2017:  - plugin_blacklist: new plugin to block UACs that cause
@@ -23,7 +23,8 @@
   27-Feb-2017:  - improved memory behavior of some plugins during shutdown
                 - fixed 2 minor memory leaks
   02-Aug-2016:  - rtpproxy_relay: more robustness when closing sockets.
-  31-Aug-2016:  - plugin_stats: write some statistics about currently active calls
+  31-Aug-2016:  - plugin_stats: write some statistics about currently active
+                  calls
   30-Aug-2016:  - rtpproxy.h: rtp_proxytable_t.opposite_entry has been
                   changed to zero-based index (was 1 based before)
   25-Aug-2016:  - more info in plugin_logcall (add CID)
