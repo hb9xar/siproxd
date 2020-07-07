@@ -1,5 +1,8 @@
 0.8.3dev
 ========
+  10-Jun-2020:  - fix: eliminated a possible deadlock in logging routines.
+  04-Jun-2020:  - fix: better handling of strange usernames in SIP URIs
+                  when comparing.
   09-Nov-2019:  - fix: Repetitions (T1 timer) during INVITE could 
                   cause loss of audio
   10-May-2019:  - fix: TCP fragment reassembly fails

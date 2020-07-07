@@ -290,19 +290,28 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
       WARN("compare_url: NULL scheme - ignoring");
    }
 
-   /* compare username (if present) case sensitive */
+   /*
+    * first compare the username, avoid unneccesaery DNS lookups
+    * compare username
+    * - if present on both: must match case sensitive
+    * - if present only on one side -> failure (mismatch)
+    * - if not present (NULL) on both sides: -> match
+    */
    if (url1->username && url2->username) {
       if (strcmp(url1->username, url2->username) != 0) {
-//         DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch");
+//         DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch [%s <-> %s]",
+//                url1->username, url2->username);
          return STS_FAILURE;
       }
+   } else if (! ((url1->username==NULL) && (url2->username==NULL))) {
+//      DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch (NULL/not-NULL");
+      return STS_FAILURE;
    } else {
-//      DEBUGC(DBCLASS_BABBLE, "compare_url: NULL username - ignoring");
+//      DEBUGC(DBCLASS_BABBLE, "compare_url: both NULL username - consider it a match");
    }
 
-
    /*
-    * now, try to resolve the host. If resolveable, compare
+    * finally, try to resolve the host. If resolveable, compare
     * IP addresses - if not resolveable, compare the host names
     * itselfes
     */
@@ -323,13 +332,13 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
    if ((sts1 == STS_SUCCESS) && (sts2 == STS_SUCCESS)) {
       /* compare IP addresses */
       if (memcmp(&addr1, &addr2, sizeof(addr1))!=0) {
-         DEBUGC(DBCLASS_BABBLE, "compare_url: IP mismatch");
+//         DEBUGC(DBCLASS_BABBLE, "compare_url: IP mismatch");
          return STS_FAILURE;
       }
    } else {
       /* compare hostname strings case INsensitive */
       if (osip_strcasecmp(url1->host, url2->host) != 0) {
-         DEBUGC(DBCLASS_BABBLE, "compare_url: host name mismatch");
+//         DEBUGC(DBCLASS_BABBLE, "compare_url: host name mismatch");
          return STS_FAILURE;
       }
    }
@@ -1063,6 +1072,9 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
             } else {
                type=RESTYP_OUTGOING;
             }
+            DEBUGC(DBCLASS_SIP, "sip_find_direction: found internal client, "
+                   "type=%i, ip=%s",
+                   type, utils_inet_ntoa(from->sin_addr));
             break;
          }
       }
@@ -1104,6 +1116,7 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
                 (!MSG_IS_REGISTER(request) &&
                  (compare_url(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
                type=REQTYP_INCOMING;
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: found - incoming request");
                break;
             }
          } else { 
@@ -1112,13 +1125,14 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
             if ((compare_url(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
                 (compare_url(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
                type=RESTYP_INCOMING;
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: found - incoming response");
                break;
             }
          } /* is request */
       } /* for i */
    } /* if type == DIRTYP_UNKNOWN */
    if (type == DIRTYP_UNKNOWN) {
-      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING (To:) found");
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING (To:/From:) found");
    }
 
 
@@ -1265,11 +1279,17 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    if (i < URLMAP_SIZE) {
       if (urlidx) *urlidx=i;
       DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, urlmap %i, "
-                          "trueurl [%s:%s] / masqurl [%s:%s] / regurl [%s:%s]",
+                          "trueurl [%s@%s:%s] / masqurl [%s@%s:%s] / regurl [%s@%s:%s]",
                           type, i,
-                          urlmap[i].true_url->host, urlmap[i].true_url->port,
-                          urlmap[i].masq_url->host, urlmap[i].masq_url->port,
-                          urlmap[i].reg_url->host, urlmap[i].reg_url->port);
+                          (urlmap[i].true_url->username)? urlmap[i].true_url->username : "(null)", 
+                          (urlmap[i].true_url->host)? urlmap[i].true_url->host : "(null)", 
+                          urlmap[i].true_url->port,
+                          (urlmap[i].masq_url->username)? urlmap[i].masq_url->username : "(null)", 
+                          (urlmap[i].masq_url->host)? urlmap[i].masq_url->host : "(null)", 
+                          urlmap[i].masq_url->port,
+                          (urlmap[i].reg_url->username)? urlmap[i].reg_url->username : "(null)", 
+                          (urlmap[i].reg_url->host)? urlmap[i].reg_url->host : "(null)", 
+                          urlmap[i].reg_url->port);
    } else {
       if (urlidx) *urlidx=-1;
       DEBUGC(DBCLASS_SIP, "sip_find_direction: dir=%i, not found in URLMAP", type);

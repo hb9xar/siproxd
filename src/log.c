@@ -74,10 +74,17 @@ static int silence_level=1;
  *
  * use a 'fast' mutex for synchronizing - as these are portable... 
  */
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t log_mutex; //&&& = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutexattr_t log_mutex_attr;
 
 void log_init(void) {
    openlog("siproxd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
+   pthread_mutexattr_init(&log_mutex_attr);
+   // need a recussive mutex, as logging itself does call ERROR/WARN/INFO while
+   // the mutex is locked by this thread.
+   // Otherwise we may end in a deadlock.
+   pthread_mutexattr_settype(&log_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+   pthread_mutex_init(&log_mutex, &log_mutex_attr);
 }
 
 void log_end(void) {
@@ -187,9 +194,10 @@ void log_tcp_connect(void) {
    sts=select(debug_listen_fd+1, &fdset, NULL, NULL, &timeout);
    if (sts > 0) {
       if (debug_fd != 0) {
-         tmpfd=accept(debug_listen_fd, NULL, NULL);
-         close(tmpfd);
-         INFO("Rejected DEBUG TCP connection");
+         while ((tmpfd=accept(debug_listen_fd, NULL, NULL)>=0)) {
+            close(tmpfd);
+            INFO("Rejected DEBUG TCP connection");
+         }
       } else {
          debug_fd=accept(debug_listen_fd, NULL, NULL);
          INFO("Accepted DEBUG TCP connection [fd=%i], debugpattern=%i",
@@ -281,12 +289,27 @@ static void output_to_TCP(const char *label, va_list ap, char *file,
             tim->tm_hour, tim->tm_min, tim->tm_sec, 
             (int)(tv.tv_usec/1000), label, file, line);
    sts=write(debug_fd, outbuf, strlen(outbuf));
+   if (sts < 0) {
+      // assume TCP debug connection has been aborted in some bad way
+      close(debug_fd);
+      debug_fd=0;
+   }
    va_copy(ap_copy, ap);
    vsnprintf(outbuf, sizeof(outbuf), format, ap_copy);
    va_end(ap_copy);
    sts=write(debug_fd, outbuf, strlen(outbuf));
+   if (sts < 0) {
+      // assume TCP debug connection has been aborted in some bad way
+      close(debug_fd);
+      debug_fd=0;
+   }
    snprintf(outbuf, sizeof(outbuf), "\n");
    sts=write(debug_fd, outbuf, strlen(outbuf));
+   if (sts < 0) {
+      // assume TCP debug connection has been aborted in some bad way
+      close(debug_fd);
+      debug_fd=0;
+   }
    return;
 }
 
@@ -385,6 +408,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
       sts=write(debug_fd, outbuf, strlen(outbuf));
       if (sts < 0) {
          ERROR("write returned error [%i:%s]",errno, strerror(errno));
+         // assume TCP debug connection has been aborted in some bad way
+         close(debug_fd);
+         debug_fd=0;
       }
    }
 
@@ -406,6 +432,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
          sts=write(debug_fd, outbuf, strlen(outbuf));
          if (sts < 0) {
             ERROR("write returned error [%i:%s]",errno, strerror(errno));
+            // assume TCP debug connection has been aborted in some bad way
+            close(debug_fd);
+            debug_fd=0;
          }
       }
    }
@@ -419,6 +448,9 @@ void log_dump_buffer(unsigned int class, char *file, int line,
       sts=write(debug_fd, outbuf, strlen(outbuf));
       if (sts < 0) {
          ERROR("write returned error [%i:%s]",errno, strerror(errno));
+         // assume TCP debug connection has been aborted in some bad way
+         close(debug_fd);
+         debug_fd=0;
       }
    }
    pthread_mutex_unlock(&log_mutex);

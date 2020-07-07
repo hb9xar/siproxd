@@ -138,8 +138,10 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
             idx=i;
             break;
          }
-         DEBUGC(DBCLASS_BABBLE, "DNS lookup - from cache: %s -> %s",
-                hostname, utils_inet_ntoa(*addr));
+// avoid: causes tremendous logging during URL lookups through
+//        the urlmap...
+//         DEBUGC(DBCLASS_BABBLE, "DNS lookup - from cache: %s -> %s",
+//                hostname, utils_inet_ntoa(*addr));
          return STS_SUCCESS;
       }
    }

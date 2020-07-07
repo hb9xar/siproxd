@@ -56,6 +56,11 @@ static char desc[]="Upon receiving SIGUSR1, dump some call statistics";
 /* global configuration storage - required for config file location */
 extern struct siproxd_config configuration;
 /* need access to the proxy table */
+/*&&& should not do that. Instead, should get a copy/clone of the proxytable
+      (lock mutex, clone, unlock mutex) and work with this copy.
+      Avoids a possible race condition if RTP thread starts/stops
+      a stream during stats dump.
+*/
 extern rtp_proxytable_t rtp_proxytable[];
 extern struct urlmap_s urlmap[];
 
