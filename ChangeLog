@@ -1,5 +1,7 @@
 0.8.3dev
 ========
+  26-Jul-2020:  - fix: compile error with gcc10
+                - fix: debug log lines during startup not written to syslog
   10-Jun-2020:  - fix: eliminated a possible deadlock in logging routines.
   04-Jun-2020:  - fix: better handling of strange usernames in SIP URIs
                   when comparing.
