@@ -324,7 +324,7 @@ void log_debug(unsigned int class, char *file, int line, const char *format, ...
 
    output_to_stderr("", ap, file, line, format);
 
-   if (!log_to_stderr && silence_level < 1) {
+   if (silence_level < 1) {
       output_to_syslog("", LOG_DEBUG, ap, file, line, format);
    }
 

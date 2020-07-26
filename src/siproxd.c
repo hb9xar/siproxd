@@ -150,8 +150,13 @@ int main (int argc, char *argv[])
    char *pidfilename=NULL;
    struct sigaction act;
 
+/*
+ * initialize the loggin subsystem
+ */
    log_init();
-
+   /* set log silencing for syslog as requested in config */
+   log_set_silence(configuration.silence_log);
+   /* while not daemonized, log also to stderr */
    log_set_stderr(1);
 
 /*
@@ -276,6 +281,7 @@ int main (int argc, char *argv[])
       setsid();
       if (fork()!=0) exit(0);
 
+      /* we are daemonizing, no more logging to stderr */
       log_set_stderr(0);
 
       /* detach STDIN/OUT/ERR file */
@@ -342,11 +348,6 @@ int main (int argc, char *argv[])
 
    /* initialize the registration facility */
    register_init();
-
-/*
- * silence the log - if so required...
- */
-   log_set_silence(configuration.silence_log);
 
    INFO(PACKAGE"-"VERSION"-"BUILDSTR" "BUILDDATE" "UNAME" started");
 
