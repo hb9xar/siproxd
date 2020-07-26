@@ -34,7 +34,7 @@
 static char const ident[]="$Id$";
 
 /* configuration storage */
-struct siproxd_config configuration;
+extern struct siproxd_config configuration;
 
 
 /*
