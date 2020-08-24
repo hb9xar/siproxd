@@ -1,19 +1,16 @@
-Release Notes for siproxd-0.8.3
+Release Notes for siproxd-0.8.4
 ===============================
 
 
 
-Major changes since 0.8.2:
- - mostly bugfixes and performance improvements
+Major changes since 0.8.3:
+ - 
 
 
  New plugins:
- - plugin_stats: write some statistics about currently active calls
- - plugin_blacklist: new plugin to block UACs that cause excessive 
-   failures during REGISTER attempts
- 
+ - 
 
-Upgrade Notes 0.8.2 to 0.8.3:
+Upgrade Notes 0.8.3 to 0.8.4:
  - Merge the configuration file
 
 General Overview:
@@ -96,7 +93,7 @@ Plugins:
 Requirements:
  - pthreads (Linux)
  - glibc2 / libc5 / uClibc
- - libosip2 (3.x.x)
+ - libosip2 (4.x.x)
 
 Mainly tested on:
 - CentOS
@@ -159,27 +156,11 @@ distribution I'd be happy to get a short notice.
 
 
 -----
-Signatures for siproxd-0.8.3.tar.gz archive:
-SHA-256 Hash:	9a6d7a6bb6fff162775b1e1fb7018de9c69642cbf8626185dc6ffceeeba07736
+Signatures for siproxd-0.8.4.tar.gz archive:
+SHA-256 Hash:	
 
-GnuPG signature for siproxd-0.8.3.tar.gz:
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIcBAABCgAGBQJfRBlxAAoJEJ13f30qwnQAf3wP/RWBUqZHZgEVTAYyrXglZtFK
-bA1BPTpcOxyD4F2+wtuOCnyLJYjMLqA2+A6QCMImBhimBQ4ihtOpZZD/dka9Bjz/
-tYzY4YbAODDrCJoWtyRkGSXD3rgiOnwoa3r141HrIm0bfXBD8KK58a96nTavBG7b
-t09S9GmTaj6UW8ObfRarS6yfAer00F6EdA5U/cTIEh3HHwBjxi6uCe6XocduzEfl
-56RwFEcSqnd1QBXMMkJo0C9xfYpwbU4Iam8nYLtf7YCXEimZS+N2XSBCq/gMow7V
-5DZXLIFCyEAeA1Rp+/+Qf7HZmCbZG+MZgWj/ISoigon/xRzuaAjprJDPlBEFJuyh
-bapgXvqxBO+RzPK7TutTK+U3jwwuvtNH3+EUaYkognMS6C0KARrtTj7oKI3OyU/s
-xdHN22vspWQjxRZ3WUd2Oo3fuPdnhFScgfmwI1eSzD/9VbIsuWWXuTTIm3rlFkXM
-5cCwHvT/JppHp2j0bj35/LAtwb3FlOY+WPt6jX52Lh/VKWi1I2SIbSYU0MQGuPyX
-asqp4ZdmyEP2vsHl/DaYyMEJwo2Lgdqp9UUhkbIsI7yZOEHquKcWrD04RdsIEBTG
-DbpIcbgc/O3Bf0ZGuKDxgvSxwDLtDIvoTxRGOAaIQ+DRo1E0WV+h0yx8PbWGWuui
-brwhMLv9ZERzLcsXF2t4
-=DkVM
------END PGP SIGNATURE-----
+GnuPG signature for siproxd-0.8.4.tar.gz:
+<!-- -->
 
 NEW GPG KEY!
 pub  4096R/2AC27400 2017-07-11 Thomas Ries (HB9XAR) <thomas.ries@easytux.ch>

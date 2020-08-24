@@ -1,5 +1,9 @@
-0.8.3dev
+0.8.4dev
 ========
+
+
+0.8.3
+=====
   25-Aug-2020:  - Released 0.8.3
   26-Jul-2020:  - fix: compile error with gcc10
                 - fix: debug log lines during startup not written to syslog

@@ -3,7 +3,7 @@ The following procedure shall be used to make a new release (siproxd-stable):
 Make the release:
 - check in all tested changes
 - update configure.ac (version number)
-- update ChangeLog
+- update ChangeLog (remove dev)
 - update RELNOTES
   Changes since last version
   General Overview
@@ -25,16 +25,16 @@ Make the release:
   svn://easytux.ch/siproxd/tags/rel_0_8_1
 - publish on SF.net
   publish RELNOTES as README file on sf.net
-[- publish on freshmeat.net << DOWN]
 - SF Webpage:
   - copy html documentation to SF web page
   - set current.inc to new version SF 
   - text/RELNOTES
-  - create a news entry
+  - create a news entry (News announcement on SF.net)
 - Mailinglist announcement
-- News announcement on SF.net
+
 
 Open new working release:
-- change version number in configure.in
-- ChangeLog
+- change version number in configure.ac
+- ChangeLog (add new dev release)
 - RELNOTES
+- checkin
