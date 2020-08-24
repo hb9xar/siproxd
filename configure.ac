@@ -57,12 +57,13 @@ dnl	17-Jul-2015	tries	added --with-ltdl-fix
 dnl	28-May-2017	tries	going for CentOS7 as development platform,
 dnl				lots of cleanup needed for autoconf (2.69),
 dnl				automake (1.13.4), libtool/libltdl (2.4.2)
+dnl	25-Aug-2020	tries	releae 0.8.3
 dnl
 dnl
 
 
 dnl Version Number
-AC_INIT([siproxd], [0.8.3dev])
+AC_INIT([siproxd], [0.8.3])
 
 dnl Initialize autoconf / automake stuff
 AC_CONFIG_SRCDIR([src/siproxd.c])

@@ -1,5 +1,6 @@
 0.8.3dev
 ========
+  25-Aug-2020:  - Released 0.8.3
   26-Jul-2020:  - fix: compile error with gcc10
                 - fix: debug log lines during startup not written to syslog
   10-Jun-2020:  - fix: eliminated a possible deadlock in logging routines.

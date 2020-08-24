@@ -4,11 +4,14 @@ Release Notes for siproxd-0.8.3
 
 
 Major changes since 0.8.2:
- - 
+ - mostly bugfixes and performance improvements
 
 
  New plugins:
-
+ - plugin_stats: write some statistics about currently active calls
+ - plugin_blacklist: new plugin to block UACs that cause excessive 
+   failures during REGISTER attempts
+ 
 
 Upgrade Notes 0.8.2 to 0.8.3:
  - Merge the configuration file
@@ -157,14 +160,29 @@ distribution I'd be happy to get a short notice.
 
 -----
 Signatures for siproxd-0.8.3.tar.gz archive:
-MD5 Hash:	
-SHA-256 Hash:	
+SHA-256 Hash:	9a6d7a6bb6fff162775b1e1fb7018de9c69642cbf8626185dc6ffceeeba07736
 
-GnuPG signature:
+GnuPG signature for siproxd-0.8.3.tar.gz:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
 
+iQIcBAABCgAGBQJfRBlxAAoJEJ13f30qwnQAf3wP/RWBUqZHZgEVTAYyrXglZtFK
+bA1BPTpcOxyD4F2+wtuOCnyLJYjMLqA2+A6QCMImBhimBQ4ihtOpZZD/dka9Bjz/
+tYzY4YbAODDrCJoWtyRkGSXD3rgiOnwoa3r141HrIm0bfXBD8KK58a96nTavBG7b
+t09S9GmTaj6UW8ObfRarS6yfAer00F6EdA5U/cTIEh3HHwBjxi6uCe6XocduzEfl
+56RwFEcSqnd1QBXMMkJo0C9xfYpwbU4Iam8nYLtf7YCXEimZS+N2XSBCq/gMow7V
+5DZXLIFCyEAeA1Rp+/+Qf7HZmCbZG+MZgWj/ISoigon/xRzuaAjprJDPlBEFJuyh
+bapgXvqxBO+RzPK7TutTK+U3jwwuvtNH3+EUaYkognMS6C0KARrtTj7oKI3OyU/s
+xdHN22vspWQjxRZ3WUd2Oo3fuPdnhFScgfmwI1eSzD/9VbIsuWWXuTTIm3rlFkXM
+5cCwHvT/JppHp2j0bj35/LAtwb3FlOY+WPt6jX52Lh/VKWi1I2SIbSYU0MQGuPyX
+asqp4ZdmyEP2vsHl/DaYyMEJwo2Lgdqp9UUhkbIsI7yZOEHquKcWrD04RdsIEBTG
+DbpIcbgc/O3Bf0ZGuKDxgvSxwDLtDIvoTxRGOAaIQ+DRo1E0WV+h0yx8PbWGWuui
+brwhMLv9ZERzLcsXF2t4
+=DkVM
+-----END PGP SIGNATURE-----
 
-GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries (tries at gmx.net)
--      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
--      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
-VoIP:  sip:17476691342@proxy01.sipphone.com | sip:431783@fwd.pulver.com
+NEW GPG KEY!
+pub  4096R/2AC27400 2017-07-11 Thomas Ries (HB9XAR) <thomas.ries@easytux.ch>
+      Key fingerprint = 6560 75BE 4D4D 6C4D 8005  D4B4 9D77 7F7D 2AC2 7400
+      Key available at http://siproxd.tuxworld.ch/2AC27400.pub
 

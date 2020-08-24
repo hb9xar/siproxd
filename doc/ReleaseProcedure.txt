@@ -2,7 +2,7 @@ The following procedure shall be used to make a new release (siproxd-stable):
 
 Make the release:
 - check in all tested changes
-- update configure.in (version number)
+- update configure.ac (version number)
 - update ChangeLog
 - update RELNOTES
   Changes since last version
@@ -16,8 +16,8 @@ Make the release:
   - Linux 64bit
 - $ make dist
 - calculate MD5 checksum, sha256 (shasum -a256) & GPG
-  $ gpg  --armor  --detach-sig siproxd-0.8.2.tar.gz
-  $ gpg --verify siproxd-0.8.2.tar.gz.asc siproxd-0.8.2.tar.gz
+  $ gpg  --armor  --detach-sig siproxd-0.8.3.tar.gz
+  $ gpg --verify siproxd-0.8.3.tar.gz.asc siproxd-0.8.3.tar.gz
 - update RELNOTES with checksums
 - check in outstanding changes
 - create SVN tag
