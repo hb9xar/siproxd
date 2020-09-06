@@ -63,7 +63,7 @@ dnl
 
 
 dnl Version Number
-AC_INIT([siproxd], [0.8.3])
+AC_INIT([siproxd], [0.8.4dev])
 
 dnl Initialize autoconf / automake stuff
 AC_CONFIG_SRCDIR([src/siproxd.c])
