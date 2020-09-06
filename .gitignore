@@ -1,0 +1,14 @@
+Makefile
+Makefile.in
+configure
+config.log
+libltdl
+config.h
+config.h.in
+siproxd.spec
+config.status
+stamp-h1
+libtool
+autom4te.cache
+aclocal.m4
+m4
