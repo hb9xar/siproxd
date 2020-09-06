@@ -12,3 +12,4 @@ libtool
 autom4te.cache
 aclocal.m4
 m4
+siproxd-[0-9]*.[0-9]*.[0-9]*.tar.gz

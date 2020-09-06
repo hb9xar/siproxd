@@ -2,3 +2,5 @@ html
 pdf
 Makefile.in
 Makefile
+mysiproxd*.conf
+mysiproxd*.cfg

@@ -31,10 +31,10 @@ Make the release:
   - text/RELNOTES
   - create a news entry (News announcement on SF.net)
 - Mailinglist announcement
-
+- copy release traballs & signature to tuxworld/siproxd/Releases/
 
 Open new working release:
 - change version number in configure.ac
 - ChangeLog (add new dev release)
 - RELNOTES
-- checkin
+- check-in

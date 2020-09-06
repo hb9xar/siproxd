@@ -2,4 +2,9 @@ Makefile
 Makefile.in
 .deps
 .buildno
+.libs
+*.o
+*.a
+*.la
+*.lo
 siproxd

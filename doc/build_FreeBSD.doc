@@ -1,0 +1,28 @@
+- install ports
+- fetch ports from GIT (pfSense)
+
+- update siproxd Makefile
+
+
+   PORTNAME=	siproxd
+** PORTVERSION=	0.8.3dev1
+** DISTNAME=	siproxd-0.8.3dev
+   CATEGORIES=	net
+** MASTER_SITES=	http://siproxd.tuxworld.ch/
+** DISTFILES=	siproxd-bleedingedge.tar.gz
+
+
+- clean dist cache
+  rm /usr/ports/distcache/siproxd*
+
+- fetch and build checksum
+  make makesum
+
+
+- build
+  make
+  
+- create package
+  make package
+  -> /usr/ports/packages/All/
+
