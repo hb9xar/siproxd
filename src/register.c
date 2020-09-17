@@ -401,9 +401,15 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                    (url1_contact->host) ? url1_contact->host : "*NULL*",
                    (url1_contact->username) ? url1_contact->username : "*NULL*",
                    configuration.masked_host.string[j]);
-            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                    strlen(configuration.masked_host.string[j])+1);
-            strcpy(urlmap[i].masq_url->host, configuration.masked_host.string[j]);
+
+            if (strcmp(urlmap[i].masq_url->host, configuration.masked_host.string[j]) != 0) {
+               /* new/different host, update urlmap (+1 includes terminating \0) */
+               urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+                                       strlen(configuration.masked_host.string[j])+1);
+               strncpy(urlmap[i].masq_url->host, configuration.masked_host.string[j], 
+                       strlen(configuration.masked_host.string[j])+1);
+               urlmap[i].masq_url->host[strlen(configuration.masked_host.string[j])]='\0';
+            }
          }
       } else { /* if new entry */
          /* This is an existing entry */
@@ -440,19 +446,25 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
           * as it might change */
          /* host part */
          addrstr = utils_inet_ntoa(addr);
+
          DEBUGC(DBCLASS_REG,"masquerading Contact %s@%s local %s@%s",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
                 (url1_contact->host) ? url1_contact->host : "*NULL*",
                 (url1_contact->username) ? url1_contact->username : "*NULL*",
                 addrstr);
-         urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
+
+         if (strcmp(urlmap[i].masq_url->host, addrstr) != 0) {
+            /* new address, update urlmap (+1 includes terminating \0) */
+            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
                                           strlen(addrstr)+1);
-         strcpy(urlmap[i].masq_url->host, addrstr);
+            strncpy(urlmap[i].masq_url->host, addrstr, strlen(addrstr)+1);
+            urlmap[i].masq_url->host[strlen(addrstr)]='\0';
+         }
 
          /* port number if required */
          if (configuration.sip_listen_port != SIP_PORT) {
             urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
-            sprintf(urlmap[i].masq_url->port, "%i",
+            snprintf(urlmap[i].masq_url->port, 16, "%i",
                     configuration.sip_listen_port);
          }
 

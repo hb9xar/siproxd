@@ -753,13 +753,15 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
    rtp_proxytable[freeidx].rtp_con_rx_sock = sock_con;
 
    if (callid->number) {
-      strcpy(rtp_proxytable[freeidx].callid_number, callid->number);
+      strncpy(rtp_proxytable[freeidx].callid_number, callid->number, CALLIDNUM_SIZE);
+      rtp_proxytable[freeidx].callid_number[CALLIDNUM_SIZE-1]='\0';
    } else {
       rtp_proxytable[freeidx].callid_number[0]='\0';
    }
 
    if (callid->host) {
-      strcpy(rtp_proxytable[freeidx].callid_host, callid->host);
+      strncpy(rtp_proxytable[freeidx].callid_host, callid->host, CALLIDHOST_SIZE);
+      rtp_proxytable[freeidx].callid_host[CALLIDHOST_SIZE-1]='\0';
    } else {
       rtp_proxytable[freeidx].callid_host[0]='\0';
    }
@@ -1093,17 +1095,21 @@ static int match_socket (int rtp_proxytable_idx) {
            (call_direction == rtp_proxytable[j].call_direction) &&	// same Call direction
            (media_stream_no == rtp_proxytable[j].media_stream_no) &&	// same stream
            (rtp_direction != rtp_proxytable[j].direction) ) {		// opposite RTP dir
-         char remip1[16], remip2[16];
-         char lclip1[16], lclip2[16];
+         char remip1[IPSTRING_SIZE], remip2[IPSTRING_SIZE];
+         char lclip1[IPSTRING_SIZE], lclip2[IPSTRING_SIZE];
          
          /* connect the two sockets */
          rtp_proxytable[rtp_proxytable_idx].rtp_tx_sock = rtp_proxytable[j].rtp_rx_sock;
          rtp_proxytable[rtp_proxytable_idx].rtp_con_tx_sock = rtp_proxytable[j].rtp_con_rx_sock;
 
-         strcpy(remip1, utils_inet_ntoa(rtp_proxytable[j].remote_ipaddr));
-         strcpy(lclip1, utils_inet_ntoa(rtp_proxytable[j].local_ipaddr));	
-         strcpy(remip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].remote_ipaddr));
-         strcpy(lclip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr));
+         strncpy(remip1, utils_inet_ntoa(rtp_proxytable[j].remote_ipaddr), IPSTRING_SIZE);
+         remip1[IPSTRING_SIZE-1]='\0';
+         strncpy(lclip1, utils_inet_ntoa(rtp_proxytable[j].local_ipaddr), IPSTRING_SIZE);
+         lclip1[IPSTRING_SIZE-1]='\0';
+         strncpy(remip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].remote_ipaddr), IPSTRING_SIZE);
+         remip2[IPSTRING_SIZE-1]='\0';
+         strncpy(lclip2, utils_inet_ntoa(rtp_proxytable[rtp_proxytable_idx].local_ipaddr), IPSTRING_SIZE);
+         lclip2[IPSTRING_SIZE-1]='\0';
 
          rtp_proxytable[rtp_proxytable_idx].opposite_entry=j;
          rtp_proxytable[j].opposite_entry=rtp_proxytable_idx;

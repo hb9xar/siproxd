@@ -234,8 +234,7 @@ static int plugin_shortdial_redirect(sip_ticket_t *ticket, int shortcut_no) {
    /* HOST part is optional */
    if (new_to_host) {
       osip_free(contact->url->host);
-      contact->url->host=osip_malloc(host_len+1); /* *_len excluding \0 */
-      strcpy(contact->url->host, new_to_host);
+      contact->url->host=osip_strdup(new_to_host);
    }
 
    osip_list_add(&(ticket->sipmsg->contacts),contact,0);

@@ -78,10 +78,9 @@ int load_plugins (void) {
    for (i=0; i<configuration.load_plugin.used; i++) {
       /* construct the path where the plugin is */
       if (configuration.plugin_dir) {
-         strcpy(path, configuration.plugin_dir);
-         strcat(path, configuration.load_plugin.string[i]);
+         snprintf(path, sizeof(path), "%s%s", configuration.plugin_dir, configuration.load_plugin.string[i]);
       } else {
-         strcpy(path, configuration.load_plugin.string[i]);
+         snprintf(path, sizeof(path), "%s", configuration.load_plugin.string[i]);
       }
 
       /* dlopen() the plugin */

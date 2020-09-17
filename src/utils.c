@@ -518,7 +518,8 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
    }
 
 /*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&6 ifname=0x%p",ifname);
-   strcpy(ifr.ifr_name, ifname);
+   strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)); 
+   ifr.ifr_name[sizeof(ifr.ifr_name)]='\0';
    sin->sin_family = AF_INET;
 
    /* get interface flags */
@@ -589,7 +590,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
  *
  * Returns pointer to a STATIC character string.
  * NOte: BE AWARE OF THE STATIC NATURE of the string! Never pass it as
- * calling argument to a function and use it immediately or strcpy()
+ * calling argument to a function and use it immediately or str(n)cpy()
  * it into a buffer.
  * !! Any subsequent call to this function will DESTROY the previous
  * !! value - and may result in very strange effects like magically

@@ -225,7 +225,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                             ip[0], ip[1], ip[2], ip[3], port);
                      /* remember normal IP address only if not yet known */
                      if (got_address == 0) {
-                        snprintf(ipstring, IPSTRING_SIZE-1, "%u.%u.%u.%u",
+                        snprintf(ipstring, IPSTRING_SIZE, "%u.%u.%u.%u",
                                  ip[0], ip[1], ip[2], ip[3]);
                         ipstring[IPSTRING_SIZE-1]='\0';
                         got_address=1;
@@ -257,7 +257,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                             ip[0], ip[1], ip[2], ip[3], port);
 
                      /* remember XORed IP address always (preferred) */
-                     snprintf(ipstring, IPSTRING_SIZE-1, "%u.%u.%u.%u",
+                     snprintf(ipstring, IPSTRING_SIZE, "%u.%u.%u.%u",
                               ip[0], ip[1], ip[2], ip[3]);
                      ipstring[IPSTRING_SIZE-1]='\0';
                      got_address=1;
@@ -280,12 +280,15 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                     configuration.outbound_host:"NULL" ,
                     ipstring);
 
-               if (configuration.outbound_host) {
-                  free(configuration.outbound_host);
+               if (configuration.outbound_host == NULL) {
+                  configuration.outbound_host=malloc(IPSTRING_SIZE);
+                  if (configuration.outbound_host == NULL) {
+                     ERROR("Plugin '%s': could not mallo() %i bytes", name, IPSTRING_SIZE);
+                     return STS_FAILURE;
+                  }
                }
-               configuration.outbound_host=malloc(IPSTRING_SIZE);
-
-               strcpy(configuration.outbound_host, ipstring);
+               strncpy(configuration.outbound_host, ipstring, IPSTRING_SIZE);
+               configuration.outbound_host[IPSTRING_SIZE-1]='\0';
             }
 
 }

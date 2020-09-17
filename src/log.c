@@ -415,8 +415,8 @@ void log_dump_buffer(unsigned int class, char *file, int line,
    }
 
    for (i=0; i<length; i+=16) {
-      strcpy(tmplin1,"");
-      strcpy(tmplin2,"");
+      tmplin1[0]='\0';
+      tmplin2[0]='\0';
       for (j=0;(j<16) && (i+j)<length ;j++) {
          sprintf(tmp,"%2.2x ",(unsigned char)buffer[i+j]);
          strcat(tmplin1, tmp);

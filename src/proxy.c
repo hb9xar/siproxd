@@ -1052,14 +1052,17 @@ if (configuration.debuglevel)
                 /* I have a full FROM SIP URI 'user@host' */
                 if (mymsg->from && mymsg->from->url && 
                     mymsg->from->url->username && mymsg->from->url->host) {
-                   snprintf(client_id.idstring, CLIENT_ID_SIZE-1, "%s@%s", 
+                   snprintf(client_id.idstring, CLIENT_ID_SIZE, "%s@%s", 
                             mymsg->from->url->username, mymsg->from->url->host);
                 } else {
                    char *tmp=NULL;
                    /* get the Contact Header if present */
                    osip_message_get_contact(mymsg, 0, &contact);
                    if (contact) osip_contact_to_str(contact, &tmp);
-                   if (tmp) strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE-1);
+                   if (tmp) {
+                      strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE);
+                      client_id.idstring[CLIENT_ID_SIZE-1]='\0';
+                   }
                 } /* if from header */
 
             /* Incoming call (RQ in,  RS out => use the "to" field to identify local client */
@@ -1069,14 +1072,17 @@ if (configuration.debuglevel)
                 /* I have a full TO SIP URI 'user@host' */
                 if (mymsg->to && mymsg->to->url && 
                     mymsg->to->url->username && mymsg->to->url->host) {
-                   snprintf(client_id.idstring, CLIENT_ID_SIZE-1, "%s@%s", 
+                   snprintf(client_id.idstring, CLIENT_ID_SIZE, "%s@%s", 
                             mymsg->to->url->username, mymsg->to->url->host);
                 } else {
                    char *tmp=NULL;
                    /* get the Contact Header if present */
                    osip_message_get_contact(mymsg, 0, &contact);
                    if (contact) osip_contact_to_str(contact, &tmp);
-                   if (tmp) strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE-1);
+                   if (tmp) {
+                      strncpy(client_id.idstring, tmp, CLIENT_ID_SIZE);
+                      client_id.idstring[CLIENT_ID_SIZE-1]='\0';
+                   }
                 } /* if to header */
             }
 
@@ -1273,8 +1279,7 @@ int proxy_rewrite_useragent(sip_ticket_t *ticket){
       DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: [%s] -> [%s]",
              ua_hdr->hvalue, configuration.ua_string);
       osip_free(ua_hdr->hvalue);
-      ua_hdr->hvalue=osip_malloc(strlen(configuration.ua_string)+1);
-      strcpy(ua_hdr->hvalue, configuration.ua_string);
+      ua_hdr->hvalue=osip_strdup(configuration.ua_string);
    }
    return STS_SUCCESS;
 }

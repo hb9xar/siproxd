@@ -415,8 +415,8 @@ static void stats_to_file(void) {
    int i;
    int ii;
    FILE *stream;
-   char remip[16];
-   char lclip[16];
+   char remip[IPSTRING_SIZE];
+   char lclip[IPSTRING_SIZE];
    time_t now;
 
    if (plugin_cfg.filename) {
@@ -465,9 +465,11 @@ static void stats_to_file(void) {
            fprintf(stream, "%s@%s;", rtp_proxytable[ii].callid_number, rtp_proxytable[ii].callid_host);
            fprintf(stream, "%s;", (rtp_proxytable[ii].call_direction==DIR_INCOMING)? "Incoming":"Outgoing");
            fprintf(stream, "%s;", (rtp_proxytable[ii].direction==DIR_INCOMING)? "Incoming":"Outgoing");
-           strcpy(lclip, utils_inet_ntoa(rtp_proxytable[ii].local_ipaddr));
+           strncpy(lclip, utils_inet_ntoa(rtp_proxytable[ii].local_ipaddr), sizeof(lclip));
+           lclip[sizeof(lclip)-1]='\0';
            fprintf(stream, "%s;", lclip);
-           strcpy(remip, utils_inet_ntoa(rtp_proxytable[ii].remote_ipaddr));
+           strncpy(remip, utils_inet_ntoa(rtp_proxytable[ii].remote_ipaddr), sizeof(lclip));
+           remip[sizeof(remip)-1]='\0';
            fprintf(stream, "%s", remip);
            fprintf(stream, "\n");
 
