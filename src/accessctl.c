@@ -115,14 +115,13 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
    char *p1, *p2;
    char address[HOSTNAME_SIZE+1]; /* dotted decimal IP - max 15 chars */
                                   /* or hostname*/
-   char mask[8];     /* mask - max 2 digits */
+   char mask[8];                  /* mask - max 2 digits */
    int  mask_int;
    struct in_addr inaddr;
    unsigned int bitmask;
 
 
-   for (i=0, p1=aclist, lastentry=0;
-        !lastentry; i++) {
+   for (i=0, p1=aclist, lastentry=0; !lastentry && p1-aclist<strlen(aclist); i++) {
 
 /*
  * extract one entry from the access list
@@ -131,17 +130,27 @@ int process_aclist (char *aclist, struct sockaddr_in from) {
       p2=strchr(p1,'/');
       if (!p2) {
          ERROR("CONFIG: accesslist [%s]- no mask separator found", aclist);
-	 return STS_FAILURE;
+         return STS_FAILURE;
+      }
+
+      if (p2-p1 >= sizeof(address)) {
+         ERROR("CONFIG: accesslist [%s]- illegal ip address format or netmask separator", aclist);
+         return STS_FAILURE;
       }
       memset(address,0,sizeof(address));
       memcpy(address,p1,p2-p1);
+      p1=p2+1;
 
       /* mask */
-      p1=p2+1;
       p2=strchr(p1,',');
       if (!p2) { /* then this must be the last entry in the list */
          p2=strchr(p1,'\0');
-	 lastentry=1;
+         lastentry=1;
+      }
+
+      if (p2-p1 >= sizeof(mask)) {
+         ERROR("CONFIG: accesslist [%s]- illegal netmask format or IP separator", aclist);
+         return STS_FAILURE;
       }
       memset(mask,0,sizeof(mask));
       memcpy(mask,p1,p2-p1);
