@@ -1,8 +1,10 @@
 0.8.4dev
 ========
+  27-Dec-2020:  - plugin_stripheaders: deal with mode header field
   17-Sep-2020:  - fix: buffer overflow in process_aclist if a
                   wrong syntax in config file was used for ACLs.
                 - Improved string handling on some more places.
+
 0.8.3
 =====
   25-Aug-2020:  - Released 0.8.3

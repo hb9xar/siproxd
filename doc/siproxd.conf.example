@@ -448,16 +448,21 @@ plugin_regex_replace = \1:001
 #
 # unconditionally strip the specified SIP header from the packet.
 # May be used to workaround IP fragmentation by removing "unimportant"
-# SIP headers - this is clearly a ugly hack but sometimes saves on
+# SIP headers - this is clearly a ugly hack but sometimes saves one
 # from headache.
 # Format is <header>[:<value>], the :<value> part is optional - if not 
 # present the full header will be removed.
+# NOTE: not all headers are surrently supported due to how libosip
+#       does store them internally.
 #
 # remove entire header (all values attached to this header)
 plugin_stripheader_remove = Allow
 plugin_stripheader_remove = User-Agent
 # remove only a particular value from a header (no spaces allowed)
 plugin_stripheader_remove = Supported:100rel
+# remove all Record-Route headers (only full removal is supported)
+plugin_stripheader_remove = Record-Route
+
 
 ######################################################################
 # Plugin_codecfilter

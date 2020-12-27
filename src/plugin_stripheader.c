@@ -112,6 +112,12 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
           header_remove = strdup(plugin_cfg.header_remove.string[i]);
       }
 
+      /*
+       * some headers are stored in their own struncture in the SIP message structure
+       * -> special cases
+       * and other headers are stored in a generic header structure 
+       * -> generic headers
+       */
 
       /* special case Allow header */
       if (strcasecmp(header_remove, "allow") == 0) {
@@ -121,7 +127,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                        pos, &allow)) != -1) {
              if (--dlc <= 0) { ERROR("deadlock counter has triggered. Likely a bug in code."); return STS_FAILURE;}
              if (header_remove_args == NULL) {
-                /* remova all values for header */
+                /* remove all values for header */
                 DEBUGC(DBCLASS_PLUGIN, "%s: removing Allow header pos=%i, val=%s", name, 
                        pos, allow->value);
                 osip_list_remove(&ticket->sipmsg->allows, pos);
@@ -139,6 +145,24 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
                    pos++;
                 }
              }
+          }
+
+      /* special case: Record-Route headers */
+      } else if (strcasecmp(header_remove, "record-route") == 0) {
+         osip_record_route_t *rroute=NULL;
+         pos=0;
+         while ((pos = osip_message_get_record_route(ticket->sipmsg, 
+                       pos, &rroute)) != -1) {
+             if (--dlc <= 0) { ERROR("deadlock counter has triggered. Likely a bug in code."); return STS_FAILURE;}
+             /* remove all values for header */
+             char *tmpstr=NULL;
+             osip_record_route_to_str(rroute, &tmpstr);
+             DEBUGC(DBCLASS_PLUGIN, "%s: removing Record-Route header pos=%i, val=%s", name, 
+                    pos, tmpstr);
+             osip_free(tmpstr);
+             osip_list_remove(&ticket->sipmsg->record_routes, pos);
+             osip_record_route_free(rroute);
+             rroute=NULL;
           }
 
       /* generic headers */
