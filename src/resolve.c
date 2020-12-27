@@ -48,7 +48,8 @@ static int _resolve(char *name, int class, int type,
  * perform a SRV record lookup
  *
  * name		name of service
- * dname	return
+ * proto    IPPROTO_TCP / IPPROTO_UDP
+ * dname	returned value
  * dnamelen	length of return buffer
  * port		port number of service
  */
@@ -175,8 +176,8 @@ static int _resolve(char *name, int class, int type,
             if( j < 0 ) {
                break;
             } else {
-                DEBUGC(DBCLASS_DNS, "_resolve: A[%i] - type SRV pr=%i, we=%i, "
-                       "po=%i name=[%s]", i, pr, we, po, tmpname);
+                DEBUGC(DBCLASS_DNS, "_resolve: A[%i] - type SRV prio=%i, weight=%i, "
+                       "port=%i name=[%s]", i, pr, we, po, tmpname);
                if( !priority || pr < priority ||
                    (pr == priority && we > weight) ) {
                   priority = pr;
