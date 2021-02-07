@@ -154,8 +154,8 @@ static int sip_patch_topvia(sip_ticket_t *ticket) {
 
       /* set new port number */
       osip_free(via->port);
-      via->port=osip_malloc(6); /* 5 digits + \0 */
-      snprintf(via->port, 5, "%u", ntohs(ticket->from.sin_port));
+      via->port=osip_malloc(PORTSTRING_SIZE); /* 5 digits + \0 */
+      snprintf(via->port, PORTSTRING_SIZE, "%u", ntohs(ticket->from.sin_port));
       via->port[5-1] ='\0';
 
       DEBUGC(DBCLASS_PLUGIN, "plugin_fix_bogus_via:  -> %s:%s",

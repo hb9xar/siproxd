@@ -309,7 +309,8 @@ int unload_plugins(void);
 #define HOSTNAME_SIZE	128	/* max string length of a hostname	*/
 #define USERNAME_SIZE	128	/* max string length of a username (auth) */
 #define PASSWORD_SIZE	128	/* max string length of a password (auth) */
-#define IPSTRING_SIZE	16	/* stringsize of IP address xxx.xxx.xxx.xxx */
+#define IPSTRING_SIZE	16	/* stringsize of IP address xxx.xxx.xxx.xxx\0 */
+#define PORTSTRING_SIZE	6	/* stringsize of port number xxxxx\0 */
 #define VIA_BRANCH_SIZE	128	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
 
