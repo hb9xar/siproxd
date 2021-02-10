@@ -35,8 +35,6 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* configuration storage */
 extern struct siproxd_config configuration;
 
@@ -56,7 +54,7 @@ void register_init(void) {
    FILE *stream;
    int sts, i;
    char buff[128];
-//   char *c;
+   char *t;
 
    memset(urlmap, 0, sizeof(urlmap));
 
@@ -74,14 +72,15 @@ void register_init(void) {
          /* read the url table from file */
          DEBUGC(DBCLASS_REG,"loading registration table, size=%i",URLMAP_SIZE);
          for (i=0;i < URLMAP_SIZE; i++) {
-            fgets(buff, sizeof(buff), stream);
+            t=fgets(buff, sizeof(buff), stream);
+            if (t==NULL) { break;}
             sts=sscanf(buff, "****:%i:%i", &urlmap[i].active, &urlmap[i].expires);
             if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
                #define R(X) {\
                sts=osip_uri_init(&X); \
                if (sts == 0) { \
-                  fgets(buff, sizeof(buff), stream);\
+                  t=fgets(buff, sizeof(buff), stream);\
                   buff[sizeof(buff)-1]='\0';\
                   if (strchr(buff, 10)) *strchr(buff, 10)='\0';\
                   if (strchr(buff, 13)) *strchr(buff, 13)='\0';\
@@ -403,11 +402,10 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                    configuration.masked_host.string[j]);
 
             if (strcmp(urlmap[i].masq_url->host, configuration.masked_host.string[j]) != 0) {
+               int len=strlen(configuration.masked_host.string[j])+1;
                /* new/different host, update urlmap (+1 includes terminating \0) */
-               urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                       strlen(configuration.masked_host.string[j])+1);
-               strncpy(urlmap[i].masq_url->host, configuration.masked_host.string[j], 
-                       strlen(configuration.masked_host.string[j])+1);
+               urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len);
+               strncpy(urlmap[i].masq_url->host, configuration.masked_host.string[j], len);
                urlmap[i].masq_url->host[strlen(configuration.masked_host.string[j])]='\0';
             }
          }
@@ -454,17 +452,17 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                 addrstr);
 
          if (strcmp(urlmap[i].masq_url->host, addrstr) != 0) {
+            int len=strlen(addrstr)+1;
             /* new address, update urlmap (+1 includes terminating \0) */
-            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host,
-                                          strlen(addrstr)+1);
-            strncpy(urlmap[i].masq_url->host, addrstr, strlen(addrstr)+1);
+            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len);
+            strncpy(urlmap[i].masq_url->host, addrstr, len);
             urlmap[i].masq_url->host[strlen(addrstr)]='\0';
          }
 
          /* port number if required */
          if (configuration.sip_listen_port != SIP_PORT) {
-            urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, 16);
-            snprintf(urlmap[i].masq_url->port, 16, "%i",
+            urlmap[i].masq_url->port=realloc(urlmap[i].masq_url->port, PORTSTRING_SIZE);
+            snprintf(urlmap[i].masq_url->port, PORTSTRING_SIZE, "%i",
                     configuration.sip_listen_port);
          }
 

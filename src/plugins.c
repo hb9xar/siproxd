@@ -35,8 +35,6 @@
 #include "log.h"
 #include "plugins.h"
 
-static char const ident[]="$Id$";
-
 /* configuration storage */
 extern struct siproxd_config configuration;
 

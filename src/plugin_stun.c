@@ -39,8 +39,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_stun";
 static char desc[]="Use an external STUN server to determine my public IP";

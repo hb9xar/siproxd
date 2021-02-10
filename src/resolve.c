@@ -37,9 +37,6 @@
 
 #define USE_NAPTR	0
 
-static char const ident[]="$Id$";
-
-
 /* local functions */
 static int _resolve(char *name, int class, int type,
                     char *dname, int dnamelen, int *port);

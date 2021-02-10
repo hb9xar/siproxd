@@ -41,9 +41,6 @@
 #include "plugins.h"
 #include "log.h"
 
-
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_stats";
 static char desc[]="Upon receiving SIGUSR1, dump some call statistics";

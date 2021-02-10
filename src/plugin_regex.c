@@ -45,8 +45,6 @@
 #include "redirect_cache.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_regex";
 static char desc[]="Use regular expressions to rewrite SIP targets";

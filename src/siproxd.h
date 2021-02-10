@@ -311,7 +311,7 @@ int unload_plugins(void);
 #define PASSWORD_SIZE	128	/* max string length of a password (auth) */
 #define IPSTRING_SIZE	16	/* stringsize of IP address xxx.xxx.xxx.xxx\0 */
 #define PORTSTRING_SIZE	6	/* stringsize of port number xxxxx\0 */
-#define VIA_BRANCH_SIZE	128	/* max string length for via branch param */
+#define VIA_BRANCH_SIZE	64	/* max string length for via branch param */
 				/* scratch buffer for gethostbyname_r() */
 
 #if defined(PR_NETDB_BUF_SIZE)

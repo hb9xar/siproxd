@@ -35,9 +35,6 @@
 #include "plugins.h"
 #include "log.h"
 
-
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_demo";
 static char desc[]="This is just a demo plugin without any purpose";

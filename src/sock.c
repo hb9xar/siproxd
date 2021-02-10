@@ -39,9 +39,6 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
-
 /* configuration storage */
 extern struct siproxd_config configuration;
 
@@ -95,7 +92,12 @@ int sipsock_listen (void) {
       uid=getuid();
       euid=geteuid();
       DEBUGC(DBCLASS_SIP,"uid=%i, euid=%i", uid, euid);
-      if (uid != euid) seteuid(0);
+      if (uid != euid) {
+         if (seteuid(0) != 0) {
+            ERROR("sipsock_listen: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
       if (geteuid()==0) {
          /* now I'm root */
          if (!(configuration.sip_dscp & ~0x3f)) {
@@ -115,7 +117,13 @@ int sipsock_listen (void) {
          configuration.rtp_dscp = 0; /* inhibit further attempts */
       }
       /* drop privileges */
-      if (uid != euid) seteuid(euid);
+      if (uid != euid) {
+         if (seteuid(euid) != 0) {
+            ERROR("sipsock_listen: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
+
    }
 
    /* listen on TCP port */

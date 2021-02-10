@@ -36,8 +36,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_fix_fbox_anoncall";
 static char desc[]="Fixes issues with incoming anonymous calls on Fritzbox UAs";

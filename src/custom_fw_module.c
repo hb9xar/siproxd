@@ -55,8 +55,6 @@
 #include "fwapi.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /*
  * some prototypes of util.c - so I don't have to suck in the
  * whole bunch of include files. You probably will not use this

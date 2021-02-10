@@ -35,8 +35,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_fix_DTAG";
 static char desc[]="Fixes issues with DTAG (t-online.de) broken SIP headers";

@@ -40,8 +40,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /*&&&+++ Workaround sqlite3 3.3.6 (header/symbol errors)*/
 #define sqlite3_clear_bindings		UNDEFINED_SYMBOL
 #define sqlite3_prepare_v2		UNDEFINED_SYMBOL
@@ -604,7 +602,7 @@ static int sqlite_begin(void){
 
    /* create prepared statements */
    DEBUGC(DBCLASS_BABBLE, "PLUGIN_INIT: preparing %li statements", 
-          sizeof(sql_statement) / sizeof(sql_statement[0]));
+          (long int)(sizeof(sql_statement) / sizeof(sql_statement[0])));
    for (i=0; i < sizeof(sql_statement) / sizeof(sql_statement[0]); i++) {
       if (sql_statement[i].sql_query == NULL) {
          DEBUGC(DBCLASS_BABBLE, "PLUGIN_INIT: skiping empty SQL statement");

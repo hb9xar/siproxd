@@ -40,8 +40,6 @@
 
 #include <signal.h>
 
-static char const ident[]="$Id$";
-
 /* static functions */
 static void output_to_stderr(const char *label, va_list ap, char *file,
                              int line, const char *format);

@@ -21,8 +21,6 @@
 #include <osipparser2/osip_parser.h>
 #include <log.h>
 
-static char const ident[]="$Id$";
-
 /*
  * This file contains wrapper functions to call the osip2_ library.
  * depending on the used version of libosip2, the calling arguments

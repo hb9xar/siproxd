@@ -33,8 +33,6 @@
 #include "siproxd.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /*
  * do security and integrity checks on the received packet
  * (raw buffer, \0 terminated)

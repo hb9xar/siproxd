@@ -46,8 +46,6 @@
    #include "dejitter.h"
 #endif
 
-static char const ident[]="$Id$";
-
 /* configuration storage */
 extern struct siproxd_config configuration;
 
@@ -149,7 +147,12 @@ int rtp_relay_init( void ) {
       uid=getuid();
       euid=geteuid();
       DEBUGC(DBCLASS_RTP,"uid=%i, euid=%i", uid, euid);
-      if (uid != euid) seteuid(0);
+      if (uid != euid) {
+         if (seteuid(0) != 0) {
+            ERROR("rtp_relay_init: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
 
       if (geteuid()==0) {
 #endif
@@ -176,7 +179,12 @@ int rtp_relay_init( void ) {
          INFO("Unable to use realtime scheduling for RTP proxy");
          INFO("You may want to start siproxd as root and switch UID afterwards");
       }
-      if (uid != euid)  seteuid(euid);
+      if (uid != euid) {
+         if (seteuid(euid) != 0) {
+            ERROR("rtp_relay_init: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
 #endif
    }
 #endif
@@ -725,7 +733,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
       uid=getuid();
       euid=geteuid();
       DEBUGC(DBCLASS_RTP,"uid=%i, euid=%i", uid, euid);
-      if (uid != euid) seteuid(0);
+      if (uid != euid) {
+         if (seteuid(0) != 0) {
+            ERROR("rtp_relay_start_fwd: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
       if (geteuid()==0) {
          /* now I'm root */
          if (!(configuration.rtp_dscp & ~0x3f)) {
@@ -745,7 +758,12 @@ int rtp_relay_start_fwd (osip_call_id_t *callid, client_id_t client_id,
          configuration.rtp_dscp = 0; /* inhibit further attempts */
       }
       /* drop privileges */
-      if (uid != euid) seteuid(euid);
+      if (uid != euid) {
+         if (seteuid(euid) != 0) {
+            ERROR("rtp_relay_start_fwd: seteuid() failed while "
+                  "setting DSCP value: %s", strerror(errno));
+         }
+      }
    }
 
    /* write entry into rtp_proxytable slot (freeidx) */

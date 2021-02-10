@@ -35,8 +35,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_defaulttarget";
 static char desc[]="Forwards all unknown calls to a default internal location";

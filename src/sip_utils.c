@@ -42,9 +42,6 @@
 #include "digcalc.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
-
 /* configuration storage */
 extern struct siproxd_config configuration;
 
@@ -590,16 +587,17 @@ int sip_add_myvia (sip_ticket_t *ticket, int interface) {
 
    myaddr=utils_inet_ntoa(addr);
    if (ticket->protocol == PROTO_UDP) {
-      sprintf(tmp, "SIP/2.0/UDP %s:%i;branch=%s%s",
+      snprintf(tmp, URL_STRING_SIZE, "SIP/2.0/UDP %s:%i;branch=%s%s",
               myaddr, configuration.sip_listen_port,
               branch_id,
               (add_rport)? ";rport":"");
    } else {
-      sprintf(tmp, "SIP/2.0/TCP %s:%i;branch=%s%s",
+      snprintf(tmp, URL_STRING_SIZE, "SIP/2.0/TCP %s:%i;branch=%s%s",
               myaddr, configuration.sip_listen_port,
               branch_id,
               (add_rport)? ";rport":"");
    }
+   tmp[URL_STRING_SIZE-1]='\0';
 
    DEBUGC(DBCLASS_BABBLE,"adding VIA:%s",tmp);
 

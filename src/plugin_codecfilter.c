@@ -37,8 +37,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_codecfilter";
 static char desc[]="Allows filtering the codec list in SDP";

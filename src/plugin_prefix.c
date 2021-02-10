@@ -48,8 +48,6 @@
 #include "redirect_cache.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_prefix";
 static char desc[]="Adds a dial-prefix as defined in config file";

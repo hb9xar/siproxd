@@ -35,8 +35,6 @@
 #include "redirect_cache.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 #define CACHE_TIMEOUT  20
 
 /*

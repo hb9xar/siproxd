@@ -37,8 +37,6 @@
 #include "plugins.h"
 #include "log.h"
 
-static char const ident[]="$Id$";
-
 /* Plug-in identification */
 static char name[]="plugin_siptrunk";
 static char desc[]="Handles SIP trunks with multiple numbers on same SIP account";
