@@ -240,17 +240,16 @@ Please feel free to contact the author to:
    - request for additional features
    - report interoperability with various phones
    - ...
-
 and visit the website at http://siproxd.sourceforge.net/
 
+A siproxd mailing list is available on sourceforge.
 
-There is a siproxd mailing list available on sourceforge.
+IRC: Libera.Chat #siproxd
 
-Thomas Ries  (tries@gmx.net)
-GnuPG: pub  1024D/87BCDC94 2000-03-19 Thomas Ries <tries@gmx.net>
--      Fingerprint = 13D1 19F5 77D0 4CEC 8D3F  A24E 09FC C18A 87BC DC94
--      Key via pgp.openpkg.org / http://www.ries.ch.vu/87BCDC94.pub
-VoIP:  sip:17476691342@proxy01.sipphone.com | sip:431783@fwd.pulver.com
+
+GnuPG: pub  4096R/9D777F7D2AC27400 2017-07-11 <thomas.ries@easytux.ch>
+-      Fingerprint = 6560 75BE 4D4D 6C4D 8005 D4B4 9D77 7F7D 2AC2 7400
+-      PubKey via keys.openpgp.org
 
 
 CREDITS
