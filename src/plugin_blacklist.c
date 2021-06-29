@@ -241,7 +241,7 @@ int  PLUGIN_PROCESS(int stage, sip_ticket_t *ticket){
               && MSG_IS_RESPONSE(ticket->sipmsg)
               && MSG_IS_RESPONSE_FOR(ticket->sipmsg, "REGISTER")) {
       sts = blacklist_update(ticket);
-   } else if ((stage == PLUGIN_TIMER)) {
+   } else if (stage == PLUGIN_TIMER) {
       static int count=0;
       /*&&&TODO: hmmm, still hardcoded... will be executed once per minute */
       if (++count >= 12) {

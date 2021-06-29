@@ -1,5 +1,7 @@
 0.8.4dev
 ========
+  29-Jun-2021:  - fix: silence_log handling - was always logging 
+                  everything to syslog,even if set to >0
   27-Dec-2020:  - plugin_stripheaders: deal with mode header field
   17-Sep-2020:  - fix: buffer overflow in process_aclist if a
                   wrong syntax in config file was used for ACLs.

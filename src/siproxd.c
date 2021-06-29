@@ -152,8 +152,6 @@ int main (int argc, char *argv[])
  * initialize the loggin subsystem
  */
    log_init();
-   /* set log silencing for syslog as requested in config */
-   log_set_silence(configuration.silence_log);
    /* while not daemonized, log also to stderr */
    log_set_stderr(1);
 
@@ -256,6 +254,9 @@ int main (int argc, char *argv[])
    if (cmdline_debuglevel != 0) {
       configuration.debuglevel=cmdline_debuglevel;
    }
+
+   /* set log silencing for syslog as requested in config */
+   log_set_silence(configuration.silence_log);
 
 /*
  * open a the pwfile instance, so we still have access after
