@@ -35,6 +35,14 @@
 #include "siproxd.h"
 #include "log.h"
 
+#ifndef TIME_T_INT_FMT
+#ifdef __USE_TIME_BITS64
+#define TIME_T_INT_FMT PRId64
+#else
+#define TIME_T_INT_FMT "ld"
+#endif
+#endif
+
 /* configuration storage */
 extern struct siproxd_config configuration;
 
@@ -336,7 +344,7 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          /* check address-of-record ("public address" of user) */
          if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
             DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
-                   "slot=%i, exp=%li",
+                   "slot=%i, exp=%" TIME_T_INT_FMT,
                    (url1_contact->username) ? url1_contact->username : "*NULL*",
                    (url1_contact->host) ? url1_contact->host : "*NULL*",
                    (url2_to->username) ? url2_to->username : "*NULL*",
