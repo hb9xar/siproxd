@@ -74,7 +74,7 @@ void register_init(void) {
          for (i=0;i < URLMAP_SIZE; i++) {
             t=fgets(buff, sizeof(buff), stream);
             if (t==NULL) { break;}
-            sts=sscanf(buff, "****:%i:%i", &urlmap[i].active, &urlmap[i].expires);
+            sts=sscanf(buff, "****:%i:%"TIME_T_INT_FMT , &urlmap[i].active, &urlmap[i].expires);
             if (sts == 0) break; /* format error */
             if (urlmap[i].active) {
                #define R(X) {\
@@ -146,7 +146,7 @@ void register_save(void) {
       }
 
       for (i=0;i < URLMAP_SIZE; i++) {
-         fprintf(stream, "****:%i:%i\n", urlmap[i].active, urlmap[i].expires);
+         fprintf(stream, "****:%i:%"TIME_T_INT_FMT "\n", urlmap[i].active, urlmap[i].expires);
          if (urlmap[i].active) {
             #define W(X) { \
             char *tmp=NULL; \
@@ -336,12 +336,12 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
          /* check address-of-record ("public address" of user) */
          if (compare_url(url1_to, url2_to)==STS_SUCCESS) {
             DEBUGC(DBCLASS_REG, "found entry for %s@%s <-> %s@%s at "
-                   "slot=%i, exp=%li",
+                   "slot=%i, exp=%"TIME_T_INT_FMT,
                    (url1_contact->username) ? url1_contact->username : "*NULL*",
                    (url1_contact->host) ? url1_contact->host : "*NULL*",
                    (url2_to->username) ? url2_to->username : "*NULL*",
                    (url2_to->host) ? url2_to->host : "*NULL*",
-                   i, (long)urlmap[i].expires-time_now);
+                   i, urlmap[i].expires-time_now);
             break;
          }
       }

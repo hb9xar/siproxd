@@ -1,5 +1,7 @@
 0.8.4dev
 ========
+  25-Oct-2021:  - fixed some Y2038 issues related to 64bit time
+                  support for 32bit plattforms
   29-Jun-2021:  - fix: silence_log handling - was always logging 
                   everything to syslog,even if set to >0
   27-Dec-2020:  - plugin_stripheaders: deal with mode header field

@@ -30,7 +30,7 @@
  */
 struct urlmap_s {
    int  active;
-   int  expires;
+   time_t     expires;
    osip_uri_t *true_url;	// true URL of UA  (inbound URL)
    osip_uri_t *masq_url;	// masqueraded URL (outbound URL)
    osip_uri_t *reg_url;		// registered URL  (masq URL as wished by UA)
@@ -352,6 +352,22 @@ int unload_plugins(void);
 #define satoi atoi  /* used in libosips MSG_TEST_CODE macro ... */
 #endif
 
+/*
+ * Y2038 stuff (64bit time_t in 32bit C libs)
+ * reason:
+ *   libc64: long int ("ld") -> 64bit
+ *   libc32: long int ("ld") -> 32bit
+ * also see: https://sourceware.org/glibc/wiki/Y2038ProofnessDesign
+ *
+ * TIME_T_INT_FMT: time_t format string to use in printf/scanf
+ */
+#ifndef TIME_T_INT_FMT
+#ifdef __USE_TIME_BITS64
+#define TIME_T_INT_FMT PRId64
+#else
+#define TIME_T_INT_FMT "ld"
+#endif
+#endif
 
 /*
  * Macro that limits the frequency of this particular code
