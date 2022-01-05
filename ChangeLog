@@ -1,5 +1,6 @@
 0.8.4dev
 ========
+  05-Jan-2022:  - reworked Y2038 fix
   25-Oct-2021:  - fixed some Y2038 issues related to 64bit time
                   support for 32bit plattforms
   29-Jun-2021:  - fix: silence_log handling - was always logging 

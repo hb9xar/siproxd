@@ -353,23 +353,6 @@ int unload_plugins(void);
 #endif
 
 /*
- * Y2038 stuff (64bit time_t in 32bit C libs)
- * reason:
- *   libc64: long int ("ld") -> 64bit
- *   libc32: long int ("ld") -> 32bit
- * also see: https://sourceware.org/glibc/wiki/Y2038ProofnessDesign
- *
- * TIME_T_INT_FMT: time_t format string to use in printf/scanf
- */
-#ifndef TIME_T_INT_FMT
-#ifdef __USE_TIME_BITS64
-#define TIME_T_INT_FMT PRId64
-#else
-#define TIME_T_INT_FMT "ld"
-#endif
-#endif
-
-/*
  * Macro that limits the frequency of this particular code
  * block to no faster than every 'a' seconds. Used for logging
  */
