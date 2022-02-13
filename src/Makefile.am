@@ -18,11 +18,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 #
 
+if REPRODUCIBLE_BUILD
+BUILDDATE="\"unknown\""
+else
+BUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+endif
 
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \
             -Werror-implicit-function-declaration \
             -DBUILDSTR="\"`cat .buildno`\"" \
-            -DBUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+            -DBUILDDATE=$(BUILDDATE)
 #&&&INCLUDES = $(LTDLINCL)
 AM_CPPFLAGS = $(LTDLINCL)
 

@@ -388,6 +388,22 @@ dnl    --with-custom-fwmodule
       AC_DEFINE(CUSTOM_FWMODULE, 1,[use custom firewall control module])
       AC_MSG_RESULT($FWLIBS), AC_MSG_RESULT(no))
 
+dnl
+dnl add
+dnl    --enable-reproducible-build
+   reproducible_build="no"
+   AC_MSG_CHECKING(whether to enable a reproducible build)
+   AC_ARG_ENABLE(reproducible-build,
+      [  --enable-reproducible-build
+                          enable reproducible build (default is no)],
+      [  if test "x$enableval" = "xyes"; then
+           reproducible_build="yes"
+           AC_MSG_RESULT(yes)
+         else
+           AC_MSG_RESULT(no)
+         fi
+      ], [AC_MSG_RESULT(no)])
+   AM_CONDITIONAL([REPRODUCIBLE_BUILD],  [test "x$reproducible_build" = "xyes"])
 
 dnl
 dnl Checks for header files.
