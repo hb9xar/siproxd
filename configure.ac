@@ -58,6 +58,7 @@ dnl	28-May-2017	tries	going for CentOS7 as development platform,
 dnl				lots of cleanup needed for autoconf (2.69),
 dnl				automake (1.13.4), libtool/libltdl (2.4.2)
 dnl	25-Aug-2020	tries	releae 0.8.3
+dnl	17-Feb-2022	tries	add option for reproducible builds
 dnl
 dnl
 
@@ -388,6 +389,23 @@ dnl    --with-custom-fwmodule
       AC_DEFINE(CUSTOM_FWMODULE, 1,[use custom firewall control module])
       AC_MSG_RESULT($FWLIBS), AC_MSG_RESULT(no))
 
+
+dnl
+dnl add
+dnl    --enable-reproducible-build
+   reproducible_build="no"
+   AC_MSG_CHECKING(whether to enable a reproducible build)
+   AC_ARG_ENABLE(reproducible-build,
+      [  --enable-reproducible-build
+                          enable reproducible build (default is no)],
+      [  if test "x$enableval" = "xyes"; then
+           reproducible_build="yes"
+           AC_MSG_RESULT(yes)
+         else
+           AC_MSG_RESULT(no)
+         fi
+      ], [AC_MSG_RESULT(no)])
+   AM_CONDITIONAL(REPRODUCIBLE_BUILD, test "x$reproducible_build" = "xyes")
 
 dnl
 dnl Checks for header files.

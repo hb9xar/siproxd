@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2002-2017  Thomas Ries <tries@gmx.net>
+#    Copyright (C) 2002-2022  Thomas Ries <tries@gmx.net>
 #
 #    This file is part of Siproxd.
 #    
@@ -19,10 +19,18 @@
 #
 
 
+if REPRODUCIBLE_BUILD
+BUILDDATE="\"unknown\""
+BUILDSTR="\"none\""
+else
+BUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+BUILDSTR="\"`cat .buildno`\""
+endif
+
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \
             -Werror-implicit-function-declaration \
-            -DBUILDSTR="\"`cat .buildno`\"" \
-            -DBUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+            -DBUILDSTR=$(BUILDSTR) \
+            -DBUILDDATE=$(BUILDDATE)
 #&&&INCLUDES = $(LTDLINCL)
 AM_CPPFLAGS = $(LTDLINCL)
 
