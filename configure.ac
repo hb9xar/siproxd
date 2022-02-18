@@ -400,11 +400,9 @@ dnl    --enable-reproducible-build
                           enable reproducible build (default is no)],
       [  if test "x$enableval" = "xyes"; then
            reproducible_build="yes"
-           AC_MSG_RESULT(yes)
-         else
-           AC_MSG_RESULT(no)
          fi
-      ], [AC_MSG_RESULT(no)])
+      ])
+   AC_MSG_RESULT($reproducible_build)
    AM_CONDITIONAL(REPRODUCIBLE_BUILD, test "x$reproducible_build" = "xyes")
 
 dnl
