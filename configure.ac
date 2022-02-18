@@ -395,6 +395,9 @@ dnl add
 dnl    --enable-reproducible-build
    reproducible_build="no"
    AC_MSG_CHECKING(whether to enable a reproducible build)
+   if test "x$SOURCE_DATE_EPOCH" != "x"; then
+     reproducible_build="yes"
+   fi
    AC_ARG_ENABLE(reproducible-build,
       [  --enable-reproducible-build
                           enable reproducible build (default is no)],
