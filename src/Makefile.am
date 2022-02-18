@@ -18,13 +18,18 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 #
 
-
-if REPRODUCIBLE_BUILD
-BUILDDATE="\"unknown\""
-BUILDSTR="\"none\""
+# some magic for reproducible builds
+if HAVE_SOURCE_DATE_EPOCH
+  BUILDDATE="\"`date -d @$(SOURCE_DATE_EPOCH) -u '+%Y-%m-%dT%H:%M:%S'`\""
+  BUILDSTR="\"none\""
 else
-BUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
-BUILDSTR="\"`cat .buildno`\""
+if REPRODUCIBLE_BUILD
+  BUILDDATE="\"unknown\""
+  BUILDSTR="\"none\""
+else
+  BUILDDATE="\"`date -u '+%Y-%m-%dT%H:%M:%S'`\""
+  BUILDSTR="\"`cat .buildno`\""
+endif
 endif
 
 AM_CFLAGS = -D_GNU_SOURCE $(LTDLDEF) \

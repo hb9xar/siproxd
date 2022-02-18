@@ -391,20 +391,31 @@ dnl    --with-custom-fwmodule
 
 
 dnl
-dnl add
-dnl    --enable-reproducible-build
+dnl reproducible-build:
+dnl SOURCE_DATE_EPOCH defined, or --enable-reproducible-build given
+dnl
    reproducible_build="no"
+   dnl check SOURCE_DATE_EPOCH
+   AC_MSG_CHECKING(whether we have SOURCE_DATE_EPOCH defined)
+   if test "x$SOURCE_DATE_EPOCH" != "x"; then
+     AC_SUBST(SOURCE_DATE_EPOCH, $SOURCE_DATE_EPOCH)
+     AC_MSG_RESULT(yes)
+   else
+     AC_MSG_RESULT(no)
+   fi
+   AM_CONDITIONAL(HAVE_SOURCE_DATE_EPOCH, test "x$SOURCE_DATE_EPOCH" != "x")
+
+   dnl check --enable-reproducible-build
    AC_MSG_CHECKING(whether to enable a reproducible build)
    AC_ARG_ENABLE(reproducible-build,
       [  --enable-reproducible-build
                           enable reproducible build (default is no)],
       [  if test "x$enableval" = "xyes"; then
            reproducible_build="yes"
-           AC_MSG_RESULT(yes)
-         else
-           AC_MSG_RESULT(no)
          fi
-      ], [AC_MSG_RESULT(no)])
+      ]
+   )
+   AC_MSG_RESULT($reproducible_build)
    AM_CONDITIONAL(REPRODUCIBLE_BUILD, test "x$reproducible_build" = "xyes")
 
 dnl

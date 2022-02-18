@@ -1,5 +1,6 @@
 0.8.4dev
 ========
+  18-Feb-2022:  - support for reproducible builds and SOURCE_DATE_EPOCH
   05-Jan-2022:  - reworked Y2038 fix
   25-Oct-2021:  - fixed some Y2038 issues related to 64bit time
                   support for 32bit plattforms
