@@ -20,6 +20,10 @@
 
 /* $Id$ */
 
+#if defined(HAVE_SYS_TIME_H)
+# include <sys/time.h>
+#endif
+
 #define CALLIDNUM_SIZE	256
 #define CALLIDHOST_SIZE	128
 
