@@ -1270,14 +1270,35 @@ int proxy_rewrite_request_uri(osip_message_t *mymsg, int idx){
 int proxy_rewrite_useragent(sip_ticket_t *ticket){
    osip_header_t *ua_hdr=NULL;
 
+//&&& with libosip-3.5.0, this call always returns NULL, even if an 
+//&&& User-Agent header is present.
+//&&& Need to find a workaround!
+//&&& might be a bug in parsing the SIP packet?
    osip_message_get_user_agent(ticket->sipmsg, 0, &ua_hdr);
+//&&&+++
+   DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: 1) ua_hdr=0x%p", ua_hdr);
+   if (ua_hdr) {
+       DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: 1) ua_hdr->hvalue=0x%p",
+          ua_hdr->hvalue);
+   }
+   if (ua_hdr && ua_hdr->hvalue) {
+      DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: 1) have UA string: [%s]",
+             ua_hdr->hvalue);
+   }
+//&&&---
 
-   /* Configured? & Does User-Agent header exist? */
+   /* Configured? & Does User-Agent header exist? -> replace it */
    if ((configuration.ua_string) && (ua_hdr && ua_hdr->hvalue)) {
-      DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: [%s] -> [%s]",
+      DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: modifying UA [%s] -> [%s]",
              ua_hdr->hvalue, configuration.ua_string);
       osip_free(ua_hdr->hvalue);
       ua_hdr->hvalue=osip_strdup(configuration.ua_string);
+   /* if UA string configured an no header present, add one */
+   } else if (configuration.ua_string) {
+      DEBUGC(DBCLASS_PROXY,"proxy_rewrite_useragent: setting new UA NULL -> [%s]",
+             configuration.ua_string);
+      if (ua_hdr) { osip_free(ua_hdr); }
+      osip_message_set_user_agent(ticket->sipmsg, osip_strdup(configuration.ua_string));
    }
    return STS_SUCCESS;
 }
