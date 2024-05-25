@@ -346,6 +346,52 @@ int compare_url(osip_uri_t *url1, osip_uri_t *url2) {
 
 
 /*
+ * compares user part of two URLs (host is ignored)
+ * (only schemeand username are compared)
+ *
+ * RETURNS
+ *	STS_SUCCESS if equal
+ *	STS_FAILURE if non equal or error
+ */
+int compare_url_user(osip_uri_t *url1, osip_uri_t *url2) {
+
+   /* sanity checks */
+   if ((url1 == NULL) || (url2 == NULL)) {
+      ERROR("compare_url: NULL ptr: url1=0x%p, url2=0x%p",url1, url2);
+      return STS_FAILURE;
+   }
+
+   /* compare SCHEME (if present) case INsensitive */
+   if (url1->scheme && url2->scheme) {
+      if (osip_strcasecmp(url1->scheme, url2->scheme) != 0) {
+         DEBUGC(DBCLASS_BABBLE, "compare_url: scheme mismatch");
+         return STS_FAILURE;
+      }
+   } else {
+      WARN("compare_url: NULL scheme - ignoring");
+   }
+
+   /*
+    * compare username
+    * - must match case sensitive
+    */
+   if (url1->username && url2->username) {
+      if (strcmp(url1->username, url2->username) != 0) {
+//       DEBUGC(DBCLASS_BABBLE, "compare_url: username mismatch [%s <-> %s]",
+//              url1->username, url2->username);
+         return STS_FAILURE;
+      }
+   } else {
+//    DEBUGC(DBCLASS_BABBLE, "compare_url: one or both NULL username - no match");
+      return STS_FAILURE;
+   }
+
+   /* the two URLs did pass all tests successfully - MATCH */
+   return STS_SUCCESS;
+}
+
+
+/*
  * compares two Call IDs
  * (by now, only hostname and username are compared)
  *
@@ -1157,6 +1203,41 @@ int  sip_find_direction(sip_ticket_t *ticket, int *urlidx) {
    } /* if type == DIRTYP_UNKNOWN */
    if (type == DIRTYP_UNKNOWN) {
       DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING RQ (SIP URI) found");
+   }
+
+
+   /*
+    * compare user part only - some providers use an host part that does not
+    * match the local IP nor the registered host part. :-/
+    */
+   if (type == DIRTYP_UNKNOWN) {
+      for (i=0; i<URLMAP_SIZE; i++) {
+         if (urlmap[i].active == 0) continue;
+
+         if (MSG_IS_REQUEST(ticket->sipmsg)) {
+            /* REQUEST */
+            /* incoming request ('to' == 'masq') || (('to' == 'reg') && !REGISTER)*/
+            if ((compare_url_user(request->to->url, urlmap[i].masq_url)==STS_SUCCESS) ||
+                (!MSG_IS_REGISTER(request) &&
+                 (compare_url_user(request->to->url, urlmap[i].reg_url)==STS_SUCCESS))) {
+               type=REQTYP_INCOMING;
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: found - incoming request (To:/From: useronly)");
+               break;
+            }
+         } else { 
+            /* RESPONSE */
+            /* incoming response ('from' == 'masq') || ('from' == 'reg') */
+            if ((compare_url_user(response->from->url, urlmap[i].reg_url)==STS_SUCCESS) ||
+                (compare_url_user(response->from->url, urlmap[i].masq_url)==STS_SUCCESS)) {
+               type=RESTYP_INCOMING;
+               DEBUGC(DBCLASS_SIP, "sip_find_direction: found - incoming response (To:/From: useronly)");
+               break;
+            }
+         } /* is request */
+      } /* for i */
+   } /* if type == DIRTYP_UNKNOWN */
+   if (type == DIRTYP_UNKNOWN) {
+      DEBUGC(DBCLASS_SIP, "sip_find_direction: no INCOMING (To:/From: useronly) found");
    }
 
 

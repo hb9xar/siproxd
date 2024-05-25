@@ -1,5 +1,8 @@
 0.8.4dev
 ========
+  25-May-2024:  - be more permissing in URL matching when determining
+                  the direction. Some SIP Providers use different IPs
+                  (host part) in the To/From URL than registered.
   18-Feb-2022:  - support for reproducible builds and SOURCE_DATE_EPOCH
   05-Jan-2022:  - reworked Y2038 fix
   25-Oct-2021:  - fixed some Y2038 issues related to 64bit time

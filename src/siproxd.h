@@ -212,6 +212,7 @@ osip_message_t * msg_make_template_reply (sip_ticket_t *ticket, int code);
 int  check_vialoop (sip_ticket_t *ticket);				/*X*/
 int  is_via_local (osip_via_t *via);					/*X*/
 int  compare_url(osip_uri_t *url1, osip_uri_t *url2);			/*X*/
+int  compare_url_user(osip_uri_t *url1, osip_uri_t *url2);		/*X*/
 int  compare_callid(osip_call_id_t *cid1, osip_call_id_t *cid2);	/*X*/
 int  is_sipuri_local (sip_ticket_t *ticket);				/*X*/
 int  sip_gen_response(sip_ticket_t *ticket, int code);			/*X*/
