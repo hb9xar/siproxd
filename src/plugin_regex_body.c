@@ -170,8 +170,7 @@ static int plugin_regex_body_init(void) {
    
    return retsts;
 }
-/* returns STS_SIP_SENT if processing is to be terminated,
- * otherwise STS_SUCCESS (go on with processing) */
+
 /* code (entry point) */
 static int plugin_regex_body_process(sip_ticket_t *ticket) {
    int sts=STS_SUCCESS;
@@ -205,8 +204,7 @@ static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
 
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
-      DEBUGC(DBCLASS_PROXY, "rewrite_invitation_body: "
-                            "no body found in message");
+      DEBUGC(DBCLASS_PROXY, "regex_body: no body found in message, skipping");
       return STS_SUCCESS;
    }
    sts = sip_body_to_str(body, &body_string, &body_length);
