@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2002-2011  Thomas Ries <tries@gmx.net>
+    Copyright (C) 2002-2024  Thomas Ries <tries@gmx.net> and Matthew Esper <matt@esper.ca>
 
     This file is part of Siproxd.
     
@@ -215,7 +215,7 @@ static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
       pmatch = rmatch(body_string, WORKSPACE_SIZE, &re[i]);
       if (pmatch == NULL) continue; /* no match, next */
 
-      /* have a match, do the replacement */
+      /* have at least one match, do the replacements */
       INFO("Matched rexec rule: %s",plugin_cfg.regex_body_desc.string[i] );
       strncpy (in, body_string, WORKSPACE_SIZE);
       in[WORKSPACE_SIZE]='\0';
