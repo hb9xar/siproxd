@@ -296,11 +296,12 @@ static int sdp_filter_codec(sdp_message_t *sdp) {
                         // attributes are shifted one down, so for the next iteration
                         // I must not increment the index or I will skip one attribute
                         skip_media_attr_inc=1;
+                        break;
                      }
                   }
 
                   //
-                  // find corresponding (m) payload and remove it as well$
+                  // find corresponding (m) payload and remove it as well
                   //
                   
                   // loop through all payloads of the current media description

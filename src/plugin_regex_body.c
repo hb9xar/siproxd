@@ -73,8 +73,7 @@ static cfgopts_t plugin_cfg_opts[] = {
 
 /* local storage needed for regular expression handling */
 static regex_t *re;
-/* Redirect Cache: Queue Head is static */
-static redirected_cache_element_t redirected_cache;
+
 
 
 /* local prototypes */
@@ -174,9 +173,7 @@ static int plugin_regex_body_init(void) {
 /* code (entry point) */
 static int plugin_regex_body_process(sip_ticket_t *ticket) {
    int sts=STS_SUCCESS;
-   osip_uri_t *req_url;
-   osip_uri_t *to_url;
-   osip_generic_param_t *r=NULL;
+
 
    /* plugin loaded and not configured, return with success */
    if (plugin_cfg.regex_body_pattern.used==0) return STS_SUCCESS;

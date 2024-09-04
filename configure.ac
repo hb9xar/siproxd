@@ -59,6 +59,7 @@ dnl				lots of cleanup needed for autoconf (2.69),
 dnl				automake (1.13.4), libtool/libltdl (2.4.2)
 dnl	25-Aug-2020	tries	releae 0.8.3
 dnl	17-Feb-2022	tries	add option for reproducible builds
+dnl	04-Sep-2024	tries	enable subdir-objects
 dnl
 dnl
 
@@ -72,7 +73,7 @@ AC_CONFIG_AUX_DIR(scripts)
 AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 
 
 dnl
