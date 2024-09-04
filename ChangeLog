@@ -1,5 +1,6 @@
 0.8.4dev
 ========
+  06-Sep-2024:  - fixed SEGV in plugin_codecfilter
   25-May-2024:  - be more permissing in URL matching when determining
                   the direction. Some SIP Providers use different IPs
                   (host part) in the To/From URL than registered.
