@@ -339,6 +339,7 @@ load_plugin=plugin_logcall.la
 #load_plugin=plugin_stun.la
 #load_plugin=plugin_prefix.la
 #load_plugin=plugin_regex.la
+#load_plugin=plugin_regex_body.la
 #load_plugin=plugin_stripheader.la
 #load_plugin=plugin_codecfilter.la
 #load_plugin=plugin_siptrunk.la
@@ -442,6 +443,17 @@ plugin_regex_replace = \1+a
 plugin_regex_desc    = Test Regex 3
 plugin_regex_pattern = ^(sips?:)01
 plugin_regex_replace = \1:001
+
+######################################################################
+# Plugin_regex_body
+#
+# Applies an extended regular expression to a message body. A typical
+#
+# Backreferences \1 .. \9 are supported.
+#
+plugin_regex_body_desc    = Test Body Regex 1
+plugin_regex_body_pattern = 1.2.3.4
+plugin_regex_body_replace = host.domain.com
 
 ######################################################################
 # Plugin_stripheader

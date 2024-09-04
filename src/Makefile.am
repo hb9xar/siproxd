@@ -51,6 +51,7 @@ pkglib_LTLIBRARIES =	plugin_demo.la \
 			plugin_stun.la \
 			plugin_prefix.la \
 			plugin_regex.la \
+			plugin_regex_body.la \
 			plugin_codecfilter.la \
 			plugin_stripheader.la \
 			plugin_siptrunk.la \
@@ -67,6 +68,7 @@ DLOPENPLUGINS = 	-dlopen plugin_demo.la \
 			-dlopen plugin_stun.la \
 			-dlopen plugin_prefix.la \
 			-dlopen plugin_regex.la \
+			-dlopen plugin_regex_body.la \
 			-dlopen plugin_codecfilter.la \
 			-dlopen plugin_stripheader.la \
 			-dlopen plugin_siptrunk.la \
@@ -100,6 +102,9 @@ plugin_prefix_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrex
 #
 plugin_regex_la_SOURCES = plugin_regex.c
 plugin_regex_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
+#
+plugin_regex_body_la_SOURCES = plugin_regex_body.c
+plugin_regex_body_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
 #
 plugin_codecfilter_la_SOURCES = plugin_codecfilter.c
 plugin_codecfilter_la_LDFLAGS = -module -avoid-version -shared -export-dynamic -shrext '.so'
