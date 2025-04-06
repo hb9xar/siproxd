@@ -100,7 +100,7 @@ static const char str_helpmsg[] =
 PACKAGE "-" VERSION "-" BUILDSTR "\n" \
 "Build date: " BUILDDATE "\n" \
 "Plattform:  " UNAME "\n" \
-"(c) 2002-2016 Thomas Ries\n"
+"(c) 2002-2026 Thomas Ries\n"
 "\nUsage: siproxd [options]\n\n"
 "options:\n"
 #ifdef  HAVE_GETOPT_LONG
