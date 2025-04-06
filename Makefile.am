@@ -21,7 +21,7 @@
 
 OPT_LTDL_DIR = libltdl
 
-SUBDIRS = $(OPT_LTDL_DIR) src doc scripts contrib
+SUBDIRS = $(OPT_LTDL_DIR) src doc contrib
 #&&&INCLUDES = $(LTDLINCL)
 ACLOCAL_AMFLAGS = -I m4
 

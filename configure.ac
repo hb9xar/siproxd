@@ -60,6 +60,7 @@ dnl				automake (1.13.4), libtool/libltdl (2.4.2)
 dnl	25-Aug-2020	tries	releae 0.8.3
 dnl	17-Feb-2022	tries	add option for reproducible builds
 dnl	04-Sep-2024	tries	enable subdir-objects
+dnl	06-Apr-2025	tries	remoce scripts subdir from autoconf process
 dnl
 dnl
 
@@ -547,6 +548,5 @@ siproxd.spec \
 Makefile \
 src/Makefile \
 doc/Makefile \
-scripts/Makefile \
 contrib/Makefile \
 )
