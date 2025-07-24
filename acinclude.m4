@@ -340,7 +340,7 @@ dnl pointer to the structure (bad)
 AC_COMPILE_IFELSE(
 [AC_LANG_SOURCE([
   #include <osipparser2/osip_parser.h>
-  main() {
+  int main() {
   osip_message_t t;
   int  e;
   e=t.contacts.nb_elt;
