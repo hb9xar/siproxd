@@ -1,5 +1,6 @@
 0.8.4dev
 ========
+  12-Mar-2026:  - rectified Y2028 issue in plugin_blacklist
   04-Sep-2024:  - added plugin_regex_body
                 - fixed SEGV in plugin_codecfilter
   25-May-2024:  - be more permissing in URL matching when determining

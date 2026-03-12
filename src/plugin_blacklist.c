@@ -321,7 +321,7 @@ static int blacklist_check(sip_ticket_t *ticket) {
    if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
    sts = sqlite3_bind_text(sql_stmt->stmt, 002, from, -1, SQLITE_TRANSIENT);
    if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
-   sts = sqlite3_bind_int(sql_stmt->stmt,  003, ticket->timestamp);
+   sts = sqlite3_bind_int64(sql_stmt->stmt,  003, ticket->timestamp);
    if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
    /* execute & eval result */
    sts = sqlite_exec_stmt_none(sql_stmt);
@@ -339,7 +339,7 @@ static int blacklist_check(sip_ticket_t *ticket) {
       /* Query 3: UPDATE OR IGNORE REGISTER request into requests DB */
       /* bind */
       sql_stmt = &sql_statement[SQL_CHECK_3];
-      sts = sqlite3_bind_int(sql_stmt->stmt,  001, ticket->timestamp);
+      sts = sqlite3_bind_int64(sql_stmt->stmt,  001, ticket->timestamp);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
       sts = sqlite3_bind_text(sql_stmt->stmt, 002, srcip, -1, SQLITE_TRANSIENT);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
@@ -355,7 +355,7 @@ static int blacklist_check(sip_ticket_t *ticket) {
       /* Query 4: INSERT OR IGNORE REGISTER request into requests DB */
       /* bind */
       sql_stmt = &sql_statement[SQL_CHECK_4];
-      sts = sqlite3_bind_int(sql_stmt->stmt,  001, ticket->timestamp);
+      sts = sqlite3_bind_int64(sql_stmt->stmt,  001, ticket->timestamp);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
       sts = sqlite3_bind_text(sql_stmt->stmt, 002, srcip, -1, SQLITE_TRANSIENT);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
@@ -422,7 +422,7 @@ static int blacklist_update(sip_ticket_t *ticket) {
    /* Query 1: remove old records (> register_window seconds) */
    /* bind */
    sql_stmt = &sql_statement[SQL_UPDATE_1];
-   sts = sqlite3_bind_int(sql_stmt->stmt,  001, ticket->timestamp - plugin_cfg.register_window);
+   sts = sqlite3_bind_int64(sql_stmt->stmt,  001, ticket->timestamp - plugin_cfg.register_window);
    if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
    /* execute & eval result */
    sts = sqlite_exec_stmt_none(sql_stmt);
@@ -483,7 +483,7 @@ static int blacklist_update(sip_ticket_t *ticket) {
          if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
          sts = sqlite3_bind_text(sql_stmt->stmt, 002, from, -1, SQLITE_TRANSIENT);
          if( sts != SQLITE_OK ){ WARN("sqlite3_bind_text failed with %i", sts); }
-         sts = sqlite3_bind_int(sql_stmt->stmt,  003, ticket->timestamp);
+         sts = sqlite3_bind_int64(sql_stmt->stmt,  003, ticket->timestamp);
          if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
          /* execute query */
          sts = sqlite_exec_stmt_none(sql_stmt);
@@ -524,7 +524,7 @@ static int blacklist_expire(sip_ticket_t *ticket) {
       sql_stmt = &sql_statement[SQL_EXPIRE_1];
       sts = sqlite3_bind_int(sql_stmt->stmt,  001, plugin_cfg.hitcount);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
-      sts = sqlite3_bind_int(sql_stmt->stmt,  002, now-plugin_cfg.duration);
+      sts = sqlite3_bind_int64(sql_stmt->stmt,  002, now-plugin_cfg.duration);
       if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
       /* execute query */
       sts = sqlite_exec_stmt_none(sql_stmt);
@@ -537,7 +537,7 @@ static int blacklist_expire(sip_ticket_t *ticket) {
    /* Query8 */
    /* bind */
    sql_stmt = &sql_statement[SQL_EXPIRE_2];
-   sts = sqlite3_bind_int(sql_stmt->stmt,  001, now-86400);
+   sts = sqlite3_bind_int64(sql_stmt->stmt,  001, now-86400);
    if( sts != SQLITE_OK ){ WARN("sqlite3_bind_int failed with %i", sts); }
    /* execute query */
    sts = sqlite_exec_stmt_none(sql_stmt);
