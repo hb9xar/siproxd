@@ -262,6 +262,7 @@ int get_ip_by_host(char *hostname, struct in_addr *addr) {
     */
    DEBUGC(DBCLASS_DNS, "DNS lookup - store into cache, entry %i)", idx);
    strncpy(dns_cache[idx].hostname, hostname, HOSTNAME_SIZE);
+   dns_cache[idx].hostname[HOSTNAME_SIZE]='\0';
    dns_cache[idx].expires_timestamp = time(NULL) + DNS_GOOD_AGE;
    if (hostentry) {
       memcpy(&dns_cache[idx].addr, addr, sizeof(struct in_addr));
