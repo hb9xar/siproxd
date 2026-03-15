@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <sys/time.h>
+#include <sys/random.h>
 
 #include <netinet/in.h>
 
@@ -124,16 +125,26 @@ int auth_include_authrq(osip_message_t *sipmsg) {
  */
 static char *auth_generate_nonce() {
    static char nonce[40];
-   struct timeval tv;
-   
-   gettimeofday (&tv, NULL);
+   static const char hexchars[] = "0123456789abcdef";
+   unsigned char random_bytes[16];
+   int i;
 
-/* yeah, I know... should be a better algorithm */
-/* enclose it in double quotes, as libosip does *not* do it (2.0.6) */
-   sprintf(nonce, "\"%8.8lx%8.8lx%8.8x%8.8x\"",
-           (long)tv.tv_sec, (long)tv.tv_usec, rand(), rand() );
+   /* Use POSIX getrandom() - available since POSIX.1-2013 */
+   if (getrandom(random_bytes, sizeof(random_bytes), 0) != sizeof(random_bytes)) {
+      ERROR("getrandom() failed for nonce generation");
+      return NULL;
+   }
 
-   DEBUGC(DBCLASS_AUTH,"created nonce=\"%s\"",nonce);
+   /* Convert to hex string */
+   nonce[0] = '"';
+   for (i = 0; i < 16; i++) {
+      nonce[1 + i*2] = hexchars[(random_bytes[i] >> 4) & 0x0f];
+      nonce[1 + i*2 + 1] = hexchars[random_bytes[i] & 0x0f];
+   }
+   nonce[33] = '"';
+   nonce[34] = '\0';
+
+   DEBUGC(DBCLASS_AUTH, "created nonce=%s", nonce);
    return nonce;
 }
 
@@ -302,7 +313,7 @@ static char *auth_getpwd(char *username) {
 	    }
          } /* cnt > size */
 
-         i=sscanf(buff,"%s %s",auth_cache[auth_cache_count].username,
+         i=sscanf(buff,"%127s %127s",auth_cache[auth_cache_count].username,
 	                       auth_cache[auth_cache_count].password);
          /* if I got username & passwd, make it valid and increment counter */
          if (i == 2) auth_cache_count++;

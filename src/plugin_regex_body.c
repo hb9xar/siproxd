@@ -73,6 +73,7 @@ static cfgopts_t plugin_cfg_opts[] = {
 
 /* local storage needed for regular expression handling */
 static regex_t *re;
+#define NMATCHES 10
 
 
 /* local prototypes */
@@ -187,15 +188,19 @@ static int plugin_regex_body_process(sip_ticket_t *ticket) {
 
 /* private plugin code */
 static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
-   int sts;
+   int i, sts;
    osip_message_t *mymsg=ticket->sipmsg;
    osip_body_t *body;
    char* body_string;
    size_t body_length;
-   char clen[8];
+   char clen[32];  // Enough for max size_t (20 digits) + null terminator
 
-   #define WORKSPACE_SIZE 1024
-   static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
+   /* character workspaces for regex */
+   #define WORKSPACE_SIZE     2048
+   #define REPLACE_SIZE       2048
+   #define MAX_BACKREF_EXPANSION  512   /* Extra space for backreferences */
+   static char in[WORKSPACE_SIZE + MAX_BACKREF_EXPANSION];
+   static char rp[REPLACE_SIZE + MAX_BACKREF_EXPANSION];
 
    sts = osip_message_get_body(mymsg, 0, &body);
    if (sts != 0) {
@@ -204,8 +209,13 @@ static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
    }
    sts = sip_body_to_str(body, &body_string, &body_length);
 
+   if (strlen(body_string) >= WORKSPACE_SIZE) {
+      WARN("plugin_regex: body string truncated (len=%zu, max=%d)", 
+           strlen(body_string), WORKSPACE_SIZE);
+   }
+
    /* perform search and replace of the regexes, first match hits */
-   for (int i = 0; i < plugin_cfg.regex_body_pattern.used; i++) {
+   for (i = 0; i < plugin_cfg.regex_body_pattern.used; i++) {
       regmatch_t *pmatch = NULL;
       pmatch = rmatch(body_string, WORKSPACE_SIZE, &re[i]);
       if (pmatch == NULL) continue; /* no match, next */
@@ -214,11 +224,11 @@ static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
       INFO("Matched rexec rule: %s",plugin_cfg.regex_body_desc.string[i] );
       strncpy (in, body_string, WORKSPACE_SIZE);
       in[WORKSPACE_SIZE]='\0';
-      strncpy (rp, plugin_cfg.regex_body_replace.string[i], WORKSPACE_SIZE);
-      rp[WORKSPACE_SIZE]='\0';
+      strncpy (rp, plugin_cfg.regex_body_replace.string[i], REPLACE_SIZE);
+      rp[REPLACE_SIZE]='\0';
 
-      for (int match_num = 0; match_num < sizeof(pmatch); match_num++) {
-         sts = rreplace(in, WORKSPACE_SIZE, &re[i], pmatch, rp);
+      for (int match_num = 0; match_num < NMATCHES; match_num++) {
+         sts = rreplace(in, sizeof(in), &re[i], pmatch, rp);
          if (sts != STS_SUCCESS) {
             ERROR("regex replace failed: pattern:[%s] replace:[%s]",
                   plugin_cfg.regex_body_pattern.string[i],
@@ -258,7 +268,6 @@ static int plugin_regex_body_redirect(sip_ticket_t *ticket) {
  * This eliminates the need to copy the 'rp' string before knowing
  * if a match is actually there.
  */
-#define NMATCHES 10
 static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
    static regmatch_t pm[NMATCHES]; /* regoff_t is int so size is int */
 
@@ -272,6 +281,19 @@ static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
 static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
    char *pos;
    int sub, so, n;
+   size_t buflen, rplen, required;
+
+   /* Calculate required space before modification */
+   buflen = strlen(buf);
+   rplen = strlen(rp);
+
+   /* Check if we have enough space for the replacement */
+   required = buflen + rplen + MAX_BACKREF_EXPANSION;
+   if (required > (size_t)size) {
+      ERROR("rreplace: buffer too small (required=%zu, available=%d)", 
+            required, size);
+      return STS_FAILURE;
+   }
 
    /* match(es) found: */
    for (pos = rp; *pos; pos++) {
@@ -279,7 +301,19 @@ static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char
       if (*pos == '\\' && *(pos + 1) > '0' && *(pos + 1) <= '9') {
          so = pmatch[*(pos + 1) - 48].rm_so;	/* pmatch[1..9] */
          n = pmatch[*(pos + 1) - 48].rm_eo - so;
-         if (so < 0 || strlen (rp) + n - 1 > size) return STS_FAILURE;
+
+         /* Validate match index */
+         if (so < 0) {
+            ERROR("rreplace: invalid backreference");
+            return STS_FAILURE;
+         }
+
+         /* Check bounds before modifying */
+         if (strlen (rp) + n - 1 > size) {
+            ERROR("rreplace: buffer overflow in backreference expansion");
+            return STS_FAILURE;
+         }
+
          memmove (pos + n, pos + 2, strlen (pos) - 1);
          memmove (pos, buf + so, n);
          pos = pos + n - 2;

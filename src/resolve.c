@@ -181,6 +181,7 @@ static int _resolve(char *name, int class, int type,
                   weight = we;
                   *port = po;
                   strncpy(dname, tmpname, dnamelen);
+                  dname[dnamelen]='\0';
 /*&&& here the magic with the priorities should go.
 which one do we use? RFC3263 talks a bit on how a stateless
 SIP proxy should handle it - BY GOING STATEFUL if the lowest priority

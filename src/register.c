@@ -406,11 +406,11 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                    configuration.masked_host.string[j]);
 
             if (strcmp(urlmap[i].masq_url->host, configuration.masked_host.string[j]) != 0) {
-               int len=strlen(configuration.masked_host.string[j])+1;
+               int len=strlen(configuration.masked_host.string[j]);
                /* new/different host, update urlmap (+1 includes terminating \0) */
-               urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len);
-               strncpy(urlmap[i].masq_url->host, configuration.masked_host.string[j], len);
-               urlmap[i].masq_url->host[strlen(configuration.masked_host.string[j])]='\0';
+               urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len+1);
+               snprintf(urlmap[i].masq_url->host, len+1, "%s", configuration.masked_host.string[j]);
+               urlmap[i].masq_url->host[len]='\0';
             }
          }
       } else { /* if new entry */
@@ -456,11 +456,11 @@ int register_client(sip_ticket_t *ticket, int force_lcl_masq) {
                 addrstr);
 
          if (strcmp(urlmap[i].masq_url->host, addrstr) != 0) {
-            int len=strlen(addrstr)+1;
+            int len=strlen(addrstr);
             /* new address, update urlmap (+1 includes terminating \0) */
-            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len);
-            strncpy(urlmap[i].masq_url->host, addrstr, len);
-            urlmap[i].masq_url->host[strlen(addrstr)]='\0';
+            urlmap[i].masq_url->host=realloc(urlmap[i].masq_url->host, len+1);
+            snprintf(urlmap[i].masq_url->host, len+1, "%s", addrstr);
+            urlmap[i].masq_url->host[len]='\0';
          }
 
          /* port number if required */

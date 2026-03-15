@@ -347,7 +347,7 @@ for (i=0; i< highest_fd; i++) {
              (memcmp(&buf[length-2], "\x0d\x0a", 2) != 0)) {
             /* not terminated */
             DEBUGC(DBCLASS_NET, "received incomplete fragment, buffering...");
-            /* append to RX buffer of his connection */
+            /* append to RX buffer of this connection */
             if (sip_tcp_cache[i].rxbuf_len+length < sip_tcp_cache[i].rxbuf_size) {
                memcpy(&sip_tcp_cache[i].rx_buffer[sip_tcp_cache[i].rxbuf_len],
                       buf, length);

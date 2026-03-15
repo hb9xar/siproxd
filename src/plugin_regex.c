@@ -73,6 +73,8 @@ static cfgopts_t plugin_cfg_opts[] = {
 
 /* local storage needed for regular expression handling */
 static regex_t *re;
+#define NMATCHES 10
+
 /* Redirect Cache: Queue Head is static */
 static redirected_cache_element_t redirected_cache;
 
@@ -261,9 +263,13 @@ static int plugin_regex_redirect(sip_ticket_t *ticket) {
    osip_uri_t *new_to_url;
    int  i, sts;
    osip_contact_t *contact = NULL;
+
    /* character workspaces for regex */
-   #define WORKSPACE_SIZE 128
-   static char in[WORKSPACE_SIZE+1], rp[WORKSPACE_SIZE+1];
+   #define WORKSPACE_SIZE     2048
+   #define REPLACE_SIZE       2048
+   #define MAX_BACKREF_EXPANSION  512   /* Extra space for backreferences */
+   static char in[WORKSPACE_SIZE + MAX_BACKREF_EXPANSION];
+   static char rp[REPLACE_SIZE + MAX_BACKREF_EXPANSION];
 
    /* do apply to full To URI... */
    sts = osip_uri_to_str(to_url, &url_string);
@@ -272,6 +278,11 @@ static int plugin_regex_redirect(sip_ticket_t *ticket) {
       return STS_FAILURE;
    }
    DEBUGC(DBCLASS_BABBLE, "To URI string: [%s]", url_string);
+
+   if (strlen(url_string) >= WORKSPACE_SIZE) {
+      WARN("plugin_regex: URI string truncated (len=%zu, max=%d)", 
+           strlen(url_string), WORKSPACE_SIZE);
+   }
 
    /* perform search and replace of the regexes, first match hits */
    for (i = 0; i < plugin_cfg.regex_pattern.used; i++) {
@@ -283,10 +294,10 @@ static int plugin_regex_redirect(sip_ticket_t *ticket) {
       INFO("Matched rexec rule: %s",plugin_cfg.regex_desc.string[i] );
       strncpy (in, url_string, WORKSPACE_SIZE);
       in[WORKSPACE_SIZE]='\0';
-      strncpy (rp, plugin_cfg.regex_replace.string[i], WORKSPACE_SIZE);
-      rp[WORKSPACE_SIZE]='\0';
+      strncpy (rp, plugin_cfg.regex_replace.string[i], REPLACE_SIZE);
+      rp[REPLACE_SIZE]='\0';
 
-      sts = rreplace(in, WORKSPACE_SIZE, &re[i], pmatch, rp);
+      sts = rreplace(in, sizeof(in), &re[i], pmatch, rp);
       if (sts != STS_SUCCESS) {
          ERROR("regex replace failed: pattern:[%s] replace:[%s]",
                plugin_cfg.regex_pattern.string[i],
@@ -376,7 +387,6 @@ static int plugin_regex_redirect(sip_ticket_t *ticket) {
  * This eliminates the need to copy the 'rp' string before knowing
  * if a match is actually there.
  */
-#define NMATCHES 10
 static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
    static regmatch_t pm[NMATCHES]; /* regoff_t is int so size is int */
 
@@ -390,6 +400,19 @@ static regmatch_t * rmatch (char *buf, int size, regex_t *re) {
 static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char *rp) {
    char *pos;
    int sub, so, n;
+   size_t buflen, rplen, required;
+
+   /* Calculate required space before modification */
+   buflen = strlen(buf);
+   rplen = strlen(rp);
+
+   /* Check if we have enough space for the replacement */
+   required = buflen + rplen + MAX_BACKREF_EXPANSION;
+   if (required > (size_t)size) {
+      ERROR("rreplace: buffer too small (required=%zu, available=%d)", 
+            required, size);
+      return STS_FAILURE;
+   }
 
    /* match(es) found: */
    for (pos = rp; *pos; pos++) {
@@ -397,7 +420,19 @@ static int rreplace (char *buf, int size, regex_t *re, regmatch_t pmatch[], char
       if (*pos == '\\' && *(pos + 1) > '0' && *(pos + 1) <= '9') {
          so = pmatch[*(pos + 1) - 48].rm_so;	/* pmatch[1..9] */
          n = pmatch[*(pos + 1) - 48].rm_eo - so;
-         if (so < 0 || strlen (rp) + n - 1 > size) return STS_FAILURE;
+
+         /* Validate match index */
+         if (so < 0) {
+            ERROR("rreplace: invalid backreference");
+            return STS_FAILURE;
+         }
+
+         /* Check bounds before modifying */
+         if (strlen (rp) + n - 1 > size) {
+            ERROR("rreplace: buffer overflow in backreference expansion");
+            return STS_FAILURE;
+         }
+
          memmove (pos + n, pos + 2, strlen (pos) - 1);
          memmove (pos, buf + so, n);
          pos = pos + n - 2;
