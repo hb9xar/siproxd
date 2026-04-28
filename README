@@ -1,9 +1,3 @@
-
-
-Be warned, this (and all the other) documentation is far from
-complete. This is still considered an alpha release.
-
-
 OVERVIEW
 ========
 Siproxd is a proxy/masquerading daemon for SIP (Session Initiation
@@ -30,11 +24,10 @@ however in some situations siproxd may bring advantages.
 PREREQUISITES
 =============
 - OS of either:
-  * Linux (preferred kernel 2.2.x or 2.4.x)
+  * Linux (mostly tested on RHEL derivatives)
   * FreeBSD
   * NetBSD
   * OpenBSD
-  * SunOS
   * Mac OS X
   
 - libosip2 package (http://www.fsf.org/software/osip/)
@@ -48,7 +41,6 @@ HOW TO GET STARTED
   /usr/local/lib, be sure to include this library path to /etc/ld.so.conf
 
 - ./configure
-  For Flifl: see doc/FLI4L_HOWTO.txt
 
 - make
 
@@ -58,7 +50,6 @@ HOW TO GET STARTED
   At least configure  'if_inbound' and 'if_outbound'. The must represent
   the interface names (e.g. on Linux: ppp0, eth1) for the inbound
   and outbound interface.
-
 
 - edit /usr/etc/siproxd_passwd.cfg if you enable client authentication
   in siproxd.conf
@@ -196,11 +187,6 @@ Scenario 2
    of the firewall (e.g. use some dynamic DNS service [1])
 
 
-IPCHAINS:
- Firewall rules for incoming traffic:
- # ipchains -A input --proto udp --dport 5060 --log  -j ACCEPT
- # ipchains -A input --proto udp --dport 7070:7080   -j ACCEPT
-
 IPTABLES:
  Firewall rules for incoming traffic:
  # iptables -A INPUT -i ppp0 -p udp -m udp --dport 5060      -j ACCEPT 
@@ -219,7 +205,6 @@ REFERENCES
 
 LIMITATIONS
 ===========
-- currently, the SIP part only supports UDP
 - very likely it does not follow the SIP spec (RFC3261) in all details
 - check the TODO file for more things that we-cannot-do-but-would-like-to
 
@@ -230,7 +215,6 @@ The gethostbyname() function leaks memory in glibc 2.1.1 (-> RedHat 6.0).
 The quick fix is to delete the nisplus service from hosts entry in
 /etc/nsswitch.conf.
 In my tests, memory usage remained stable after I made the mentioned change.
-
 (source: http://www.squid-cache.org/Doc/FAQ/FAQ-14.html)
 
 
@@ -255,9 +239,8 @@ GnuPG: pub  4096R/9D777F7D2AC27400 2017-07-11 <thomas.ries@easytux.ch>
 
 CREDITS
 =======
-
-Thanks to sourceforge.net for providing the distribution platform and
-infrastructure.
+Thanks to sourceforge.net anf GitHUB for providing the distribution 
+platform and infrastructure.
 
 Also credits to the maintainers of linphone from where I have taken some
 code parts for MD5 proxy authentication.
