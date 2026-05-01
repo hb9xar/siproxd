@@ -1,10 +1,11 @@
-0.8.4dev
-========
+0.8.4
+=====
+  01-May-2026:  - Released 0.8.4
   15-Mar-2026:  - redone nonce generation (more entropy)
                 - small changes that will eliminate some edge cases
                   that were handled incorrectly.
                 - reworked regex handling and avoid potetial overflows
-  12-Mar-2026:  - rectified Y2028 issue in plugin_blacklist
+  12-Mar-2026:  - rectified Y2038 issue in plugin_blacklist
   04-Sep-2024:  - added plugin_regex_body
                 - fixed SEGV in plugin_codecfilter
   25-May-2024:  - be more permissing in URL matching when determining

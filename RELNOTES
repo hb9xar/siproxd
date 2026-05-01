@@ -4,11 +4,12 @@ Release Notes for siproxd-0.8.4
 
 
 Major changes since 0.8.3:
- - 
+ - mostly bugfixes and minor things.
+ - no breaking changes
 
 
  New plugins:
- - 
+ - new plugin "plugin_regex_body"
 
 Upgrade Notes 0.8.3 to 0.8.4:
  - Merge the configuration file
@@ -157,12 +158,26 @@ distribution I'd be happy to get a short notice.
 
 -----
 Signatures for siproxd-0.8.4.tar.gz archive:
-SHA-256 Hash:	
+SHA-256 Hash:	ad5b9bf24713aed02906507a503ed0c85e26921c9bea63c72adac4a5ee39e416
 
 GnuPG signature for siproxd-0.8.4.tar.gz:
-<!-- -->
+-----BEGIN PGP SIGNATURE-----
 
-NEW GPG KEY!
+iQIzBAABCgAdFiEEZWB1vk1NbE2ABdS0nXd/fSrCdAAFAmn0qRQACgkQnXd/fSrC
+dABJkRAAhHpDlItJOi88jUyxCXbFgmfziSuitOGpm1FPFkXI2y6geul7uC0Yuloo
+KBEaKdb4JdO2snhVrfwAqvxG+oJQwDIvz03R8NlZBnEB32tR9CJ75DNU6xJcyGL2
+TRAF4SOaJoctJcOTH14Sm3749YbdbIk9ctqwatCNxhIyXK5Zs/YBVWSyxj481tUc
+bZfihDb0gS5M0q0Gc5BaQnZdjLWq5alFBY5RZTuAp2nsPtx+py2MbiKdB625FBRP
+oemmbW92/MItIxcAdwr52lhk/SW5I+SU9/Uig9tl9EESaPdJI4YtVcIZuL9sLMvO
+FB4WQvKx1GcXvQKMU6uuhApJeP+qxrBbSf9nucz9sQ/G3+Kt/xOIOZo/6Q77IwX6
+uIeYdxgmhySIKPA7tTBPIsx3SAt3F8UOMyq59Bt3U7T1A8PpKZMdugxY+vimEAwj
+i2FY+GDWJmf5KIfihwkPQu9CrxrOIxZimKbSVC4HzDAzNoFFIM0/ZW+V7YrpHx/Y
+AEkArkvODShMpkl4YwamM5J0QEfK3BesdHIxUdlLSfEoE+K4lo7bJD2uBplfk1vm
+pTCwZdbXZUQq54083ftomDzN9QKPCYbh1TTWj0W0iKRkAOpKSjdoSIBSiRAPFwUn
++w/BNfn3VFcuGJkcV7QODDvOzXpbMpaE4T9ONbaxMY7B2dFqoz4=
+=Fmxm
+-----END PGP SIGNATURE-----
+
 pub  4096R/2AC27400 2017-07-11 Thomas Ries (HB9XAR) <thomas.ries@easytux.ch>
       Key fingerprint = 6560 75BE 4D4D 6C4D 8005  D4B4 9D77 7F7D 2AC2 7400
       Key available at http://siproxd.tuxworld.ch/2AC27400.pub
