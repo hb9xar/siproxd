@@ -20,9 +20,9 @@ Make the release:
   $ gpg --verify siproxd-0.8.3.tar.gz.asc siproxd-0.8.3.tar.gz
 - update RELNOTES with checksums
 - check in outstanding changes
-- create SVN tag
-  $ svn cp svn://easytux.ch/siproxd/trunk \
-  svn://easytux.ch/siproxd/tags/rel_0_8_1
+- create GIT tag
+  $ git tag  rel_0_8_4
+  $ git push --tags
 - publish on SF.net
   publish RELNOTES as README file on sf.net
 - SF Webpage:
@@ -31,7 +31,7 @@ Make the release:
   - text/RELNOTES
   - create a news entry (News announcement on SF.net)
 - Mailinglist announcement
-- copy release traballs & signature to tuxworld/siproxd/Releases/
+- copy release tarballs & signature to tuxworld/siproxd/Releases/
 
 Open new working release:
 - change version number in configure.ac
