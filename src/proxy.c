@@ -273,7 +273,7 @@ sts=sip_obscure_callid(ticket);
    osip_message_get_max_forwards(request, 0, &max_forwards);
    if (max_forwards == NULL) {
       snprintf(mfwd, sizeof(mfwd), "%i", forwards_count);
-      mfwd[sizeof(mfwd)]='\0';
+      mfwd[sizeof(mfwd)-1]='\0';
       osip_message_set_max_forwards(request, mfwd);
    } else {
       if (max_forwards->hvalue) {

@@ -518,7 +518,7 @@ int get_ip_by_ifname(char *ifname, struct in_addr *retaddr) {
 
 /*&&&*/DEBUGC(DBCLASS_BABBLE,"&&&6 ifname=0x%p",ifname);
    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)); 
-   ifr.ifr_name[sizeof(ifr.ifr_name)]='\0';
+   ifr.ifr_name[sizeof(ifr.ifr_name)-1]='\0';
    sin->sin_family = AF_INET;
 
    /* get interface flags */
