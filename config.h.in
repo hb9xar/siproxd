@@ -6,6 +6,9 @@
 /* Define to 1 if you have the `accept' function. */
 #undef HAVE_ACCEPT
 
+/* Define to 1 if you have the `arc4random_buf' function. */
+#undef HAVE_ARC4RANDOM_BUF
+
 /* Define to 1 if you have the `argz_add' function. */
 #undef HAVE_ARGZ_ADD
 
@@ -108,6 +111,9 @@
 
 /* Define to 1 if you have the `getpwnam' function. */
 #undef HAVE_GETPWNAM
+
+/* Define to 1 if you have the `getrandom' function. */
+#undef HAVE_GETRANDOM
 
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID

@@ -61,7 +61,8 @@ dnl	25-Aug-2020	tries	releae 0.8.3
 dnl	17-Feb-2022	tries	add option for reproducible builds
 dnl	04-Sep-2024	tries	enable subdir-objects
 dnl	06-Apr-2025	tries	remove scripts subdir from autoconf process
-dnl	01-May-2026	tries	releae 0.8.4
+dnl	01-May-2026	tries	release 0.8.4
+dnl	02-May-2026	tries	check for fcn getrandom(), arc4random_buf()
 dnl
 dnl
 
@@ -516,6 +517,8 @@ AC_CHECK_FUNCS(inet_pton inet_ntop inet_aton inet_ntoa)
 AC_CHECK_FUNCS(pthread_setschedparam sched_get_priority_min)
 AC_CHECK_FUNCS(sched_get_priority_max)
 AC_CHECK_FUNCS(lt_dlopen lt_dlsym lt_dlclose)
+AC_CHECK_FUNCS(getrandom)
+AC_CHECK_FUNCS(arc4random_buf)
 
 
 dnl

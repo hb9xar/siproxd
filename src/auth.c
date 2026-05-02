@@ -26,7 +26,10 @@
 #include <string.h>
 
 #include <sys/time.h>
+
+#ifdef HAVE_GETRANDOM
 #include <sys/random.h>
+#endif
 
 #include <netinet/in.h>
 
@@ -130,8 +133,18 @@ static char *auth_generate_nonce() {
    struct timeval tv;
    int i;
 
+#if defined(HAVE_ARC4RANDOM_BUF)
+   arc4random_buf(random_bytes, sizeof(random_bytes));
+   /* arc4random_buf() does not fail (void return datatype) */
+   if (1) {
+#elif defined(HAVE_GETRANDOM)
    /* Use POSIX getrandom() - available since POSIX.1-2013 */
    if (getrandom(random_bytes, sizeof(random_bytes), 0) == sizeof(random_bytes)) {
+#else
+   #error "need getrandom() or arc4random_buf()"
+   if (0) {
+#endif
+
       nonce[0] = '"';
       /* Convert to hex string */
       for (i = 0; i < 16; i++) {
